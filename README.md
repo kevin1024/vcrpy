@@ -24,7 +24,7 @@ with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
 ```
 
 Run this test once, and VCR.py will record the http request to
-fixtures/vcr_cassettes/synopsis.yml. Run it again, and VCR.py will replay the
+`fixtures/vcr_cassettes/synopsis.yml`. Run it again, and VCR.py will replay the
 response from iana.org when the http request is made. This test is now fast (no
 real HTTP requests are made anymore), deterministic (the test will continue to
 pass, even if you are offline, or iana.org goes down for maintenance) and
