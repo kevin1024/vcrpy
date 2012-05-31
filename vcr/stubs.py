@@ -44,7 +44,7 @@ class VCRHTTPConnection(HTTPConnection):
         old_cassette = load_cassette(self._vcr_cassette_path)
         if old_cassette:
             return VCRHTTPResponse(old_cassette[0]['response'])
-        response = HTTPConnection.getresponse(self, buffering=buffering)
+        response = HTTPConnection.getresponse(self)
         self._cassette.responses.append({
             'status': {'code': response.status, 'message': response.reason},
             'headers': dict(response.getheaders()),
