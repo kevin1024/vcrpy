@@ -1,4 +1,4 @@
-from httplib import HTTPConnection
+from httplib import HTTPConnection, HTTPMessage
 from cStringIO import StringIO
 from .files import save_cassette, load_cassette
 from .cassette import Cassette
@@ -7,16 +7,16 @@ from .cassette import Cassette
 class VCRHTTPResponse(object):
     def __init__(self, recorded_response):
         self.recorded_response = recorded_response
-        self.msg = recorded_response['status']['message']
         self.reason = recorded_response['status']['message']
         self.status = recorded_response['status']['code']
         self._content = StringIO(self.recorded_response['body']['string'])
 
+        self.msg = HTTPMessage(StringIO(''))
+        for k, v in self.recorded_response['headers'].iteritems():
+            self.msg.addheader(k, v)
+
     def read(self, chunked=False):
         return self._content.read()
-
-    def getheaders(self):
-        return self.recorded_response['headers']
 
 
 class VCRHTTPConnection(HTTPConnection):
