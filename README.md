@@ -1,6 +1,6 @@
 #VCR.py
 
-This is a proof-of-concept start at a python version of [Ruby's VCR
+This is a proof-of-concept start at a Python version of [Ruby's VCR
 library](https://github.com/myronmarston/vcr).
 
 ##What it is supposed to do
