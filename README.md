@@ -12,6 +12,9 @@ again, they all just hit the text files instead of the internet.  This speeds up
 your tests and lets you work offline.
 
 ##Compatibility Notes
+This should work with Python 2.6 and 2.7.  There aren't any context managers in
+2.5 so I'm not bothering with that.
+
 Currently I've only tested this (a little bit) with urllib2.  It's known to *NOT
 WORK* with urllib.
 
