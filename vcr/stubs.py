@@ -42,16 +42,16 @@ class VCRHTTPConnection(HTTPConnection):
 
     def getresponse(self, buffering=False):
         old_cassette = load_cassette(self._vcr_cassette_path)
-        if old_cassette:
-            return VCRHTTPResponse(old_cassette[0]['response'])
-        response = HTTPConnection.getresponse(self)
-        self._cassette.responses.append({
-            'status': {'code': response.status, 'message': response.reason},
-            'headers': dict(response.getheaders()),
-            'body': {'string': response.read()},
-        })
-        self._save_cassette()
-        return VCRHTTPResponse(self._cassette[0]['response'])
+        if not old_cassette:
+            response = HTTPConnection.getresponse(self)
+            self._cassette.responses.append({
+                'status': {'code': response.status, 'message': response.reason},
+                'headers': dict(response.getheaders()),
+                'body': {'string': response.read()},
+            })
+            self._save_cassette()
+        old_cassette = load_cassette(self._vcr_cassette_path)
+        return VCRHTTPResponse(old_cassette[0]['response'])
 
 
 class VCRHTTPSConnection(VCRHTTPConnection):
