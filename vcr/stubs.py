@@ -51,7 +51,7 @@ class VCRHTTPConnection(HTTPConnection):
             'body': {'string': response.read()},
         })
         self._save_cassette()
-        return response
+        return VCRHTTPResponse(self._cassette[0]['response'])
 
 
 class VCRHTTPSConnection(VCRHTTPConnection):
