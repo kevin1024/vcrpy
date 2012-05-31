@@ -3,6 +3,8 @@
 This is a proof-of-concept start at a Python version of [Ruby's VCR
 library](https://github.com/myronmarston/vcr).
 
+[![Build Status](https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master)](http://travis-ci.org/kevin1024/vcrpy)
+
 ##What it is supposed to do
 Simplify testing by recording all HTTP interactions and saving them to
 "cassette" files, which are just yaml files.  Then when you run your tests
