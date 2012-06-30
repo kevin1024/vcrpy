@@ -43,7 +43,7 @@ doesn't have nearly as many features.
 
 ##Known Issues
  * Only works with the first HTTP request made in each use_cassette block.  That's because I haven't gotten around to implementing multiple requests yet.  This means anything that does a 301 / 302 won't work.
- * Probably only works with urllib2.  Hey, doesn't `requests` use urllib2?  Maybe that works too then.
+ * Probably only works with urllib2.  Hey, doesn't [requests](http://docs.python-requests.org/en/latest/index.html) use urllib2?  Maybe that works too then.
 
 ##Similar libraries in Python
 Neither of these really implement the API I want, but I have cribbed some code
