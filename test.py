@@ -31,6 +31,15 @@ class TestHttpRequest(unittest.TestCase):
             headers = urllib2.urlopen('http://www.iana.org/domains/example/').info().items()
             self.assertEqual(headers, urllib2.urlopen('http://www.iana.org/domains/example/').info().items())
 
+    def test_multiple_requests(self):
+        body1 = urllib2.urlopen('http://www.iana.org/domains/example/').read()
+	body2 = urllib2.urlopen('http://api.twitter.com/1/legal/tos.json').read()
+        with vcr.use_cassette(TEST_CASSETTE_FILE):
+            self.assertEqual(body1, urllib2.urlopen('http://www.iana.org/domains/example/').read())
+	    self.assertEqual(body2, urllib2.urlopen('http://api.twitter.com/1/legal/tos.json').read())
+            self.assertEqual(body1, urllib2.urlopen('http://www.iana.org/domains/example/').read())
+	    self.assertEqual(body2, urllib2.urlopen('http://api.twitter.com/1/legal/tos.json').read())
+
 
 class TestHttps(unittest.TestCase):
 
@@ -47,7 +56,7 @@ class TestHttps(unittest.TestCase):
             self.assertEqual(code, urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').getcode())
 
     def test_response_body(self):
-	body = urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').read()
+        body = urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').read()
         with vcr.use_cassette(TEST_CASSETTE_FILE):
             self.assertEqual(body, urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').read())
             self.assertEqual(body, urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').read())
