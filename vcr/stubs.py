@@ -28,9 +28,23 @@ class VCRHTTPConnection(HTTPConnection):
     def _save_cassette(self):
         save_cassette(self._vcr_cassette_path, self._cassette)
 
-    def request(self, method, url, body=None, headers={}):
+    def _load_old_response(self):
         old_cassette = load_cassette(self._vcr_cassette_path)
         if old_cassette:
+            return old_cassette.get_response(self._vcr)
+
+    def request(self, method, url, body=None, headers={}):
+        """
+        Persist the request metadata in self._vcr
+        """
+        self._vcr = {
+            'method': method,
+            'url': url,
+            'body': body,
+            'headers': headers,
+        }
+        old_cassette = load_cassette(self._vcr_cassette_path)
+        if old_cassette and old_cassette.get_request(self._vcr):
             return
         self._cassette.requests.append(dict(
             method=method,
@@ -41,8 +55,8 @@ class VCRHTTPConnection(HTTPConnection):
         return HTTPConnection.request(self, method, url, body=body, headers=headers)
 
     def getresponse(self, buffering=False):
-        old_cassette = load_cassette(self._vcr_cassette_path)
-        if not old_cassette:
+        old_response = self._load_old_response()
+        if not old_response:
             response = HTTPConnection.getresponse(self)
             self._cassette.responses.append({
                 'status': {'code': response.status, 'message': response.reason},
@@ -50,8 +64,8 @@ class VCRHTTPConnection(HTTPConnection):
                 'body': {'string': response.read()},
             })
             self._save_cassette()
-        old_cassette = load_cassette(self._vcr_cassette_path)
-        return VCRHTTPResponse(old_cassette[0]['response'])
+        old_response = self._load_old_response()
+        return VCRHTTPResponse(old_response)
 
 
 class VCRHTTPSConnection(VCRHTTPConnection):

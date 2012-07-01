@@ -1,10 +1,13 @@
 import os
 import yaml
+from .cassette import Cassette
 
 
 def load_cassette(cassette_path):
     try:
-        return yaml.load(open(cassette_path))
+        pc = yaml.load(open(cassette_path))
+        cassette = Cassette(pc)
+        return cassette
     except IOError:
         return None
 
@@ -14,4 +17,4 @@ def save_cassette(cassette_path, cassette):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
     with open(cassette_path, 'wc') as cassette_file:
-        cassette_file.write(cassette.serialize())
+        cassette_file.write(yaml.dump(cassette.serialize()))

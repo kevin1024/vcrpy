@@ -12,14 +12,15 @@ def install(cassette_path):
     httplib.HTTPConnection._vcr_cassette_path = cassette_path
     httplib.HTTPSConnection._vcr_cassette_path = cassette_path
 
+
 def reset():
     httplib.HTTPConnection = httplib.HTTP._connection_class = _HTTPConnection
     httplib.HTTPSConnection = httplib.HTTPS._connection_class = \
             _HTTPSConnection
+
 
 @contextmanager
 def use_cassette(cassette_path):
     install(cassette_path)
     yield
     reset()
-

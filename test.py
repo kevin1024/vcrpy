@@ -1,6 +1,7 @@
 import os
 import unittest
 import vcr
+from vcr.cassette import Cassette
 import urllib2
 
 TEST_CASSETTE_FILE = 'test/test_req.yaml'
@@ -48,7 +49,7 @@ class TestHttps(unittest.TestCase):
             os.remove(TEST_CASSETTE_FILE)
         except OSError:
             pass
-    
+
     def test_response_code(self):
         code = urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').getcode()
         with vcr.use_cassette(TEST_CASSETTE_FILE):
@@ -65,7 +66,19 @@ class TestHttps(unittest.TestCase):
         with vcr.use_cassette(TEST_CASSETTE_FILE):
             headers = urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').info().items()
             self.assertEqual(headers, urllib2.urlopen('https://api.twitter.com/1/legal/tos.json').info().items())
-   
+
+class TestCassette(unittest.TestCase):
+    def test_serialize_cassette(self):
+        c1 = Cassette()
+	c1.requests = ['a','b','c']
+	c1.responses = ['d','e','f']
+	ser = c1.serialize()
+	c2 = Cassette(ser)
+	self.assertEqual(c1.requests,c2.requests)
+	self.assertEqual(c1.responses,c2.responses)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
