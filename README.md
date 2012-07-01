@@ -44,10 +44,13 @@ doesn't have nearly as many features.
 ##Known Issues
  * Probably only works with urllib2.  Hey, doesn't [requests](http://docs.python-requests.org/en/latest/index.html) use urllib2?  Maybe that works too then.
  * Loading urls that do a 301/302 redirect don't work
- * I haven't tested POST/PUT/DELETE requests
+ * I haven't tested PUT/DELETE requests
 
 ##Similar libraries in Python
 Neither of these really implement the API I want, but I have cribbed some code
 from them.
  * https://github.com/bbangert/Dalton
  * https://github.com/storborg/replaylib
+
+#License
+This library uses the MIT license
