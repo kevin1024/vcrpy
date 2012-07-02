@@ -75,19 +75,16 @@ class VCRHTTPSConnection(HTTPSConnection):
     I frankly don't understand.
     """
 
-    def __init__(self, host, port=None, key_file=None, cert_file=None,
-                         strict=None, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-                         source_address=None):
+    def __init__(self, *args, **kwargs):
         """
-        I override the init and copied a lot of the code from the parent
+        I overrode the init and copied a lot of the code from the parent
         class because HTTPConnection when this happens has been replaced
         by VCRHTTPConnection,  but doing it here lets us use the original
         one.
         """
-        HTTPConnection.__init__(self, host, port, strict, timeout,
-                                source_address)
-        self.key_file = key_file
-        self.cert_file = cert_file
+        HTTPConnection.__init__(self, *args, **kwargs)
+        self.key_file = kwargs.pop('key_file',None)
+        self.cert_file = kwargs.pop('cert_file',None)
         self._cassette = Cassette()
 
     def _load_old_response(self):
