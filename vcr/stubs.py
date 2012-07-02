@@ -1,4 +1,3 @@
-import socket
 from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
 from cStringIO import StringIO
 from .files import save_cassette, load_cassette
@@ -83,8 +82,8 @@ class VCRHTTPSConnection(HTTPSConnection):
         one.
         """
         HTTPConnection.__init__(self, *args, **kwargs)
-        self.key_file = kwargs.pop('key_file',None)
-        self.cert_file = kwargs.pop('cert_file',None)
+        self.key_file = kwargs.pop('key_file', None)
+        self.cert_file = kwargs.pop('cert_file', None)
         self._cassette = Cassette()
 
     def _load_old_response(self):

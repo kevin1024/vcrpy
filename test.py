@@ -39,9 +39,9 @@ class TestHttpRequest(unittest.TestCase):
         body2 = urllib2.urlopen('http://httpbin.org/get').read()
         with vcr.use_cassette(TEST_CASSETTE_FILE):
             self.assertEqual(body1, urllib2.urlopen('http://httpbin.org/').read())
-	    self.assertEqual(body2, urllib2.urlopen('http://httpbin.org/get').read())
+            self.assertEqual(body2, urllib2.urlopen('http://httpbin.org/get').read())
             self.assertEqual(body1, urllib2.urlopen('http://httpbin.org/').read())
-	    self.assertEqual(body2, urllib2.urlopen('http://httpbin.org/get').read())
+            self.assertEqual(body2, urllib2.urlopen('http://httpbin.org/get').read())
 
 
 class TestHttps(unittest.TestCase):
@@ -70,35 +70,33 @@ class TestHttps(unittest.TestCase):
             self.assertEqual(headers, urllib2.urlopen('https://httpbin.org/').info().items())
 
     def test_get_data(self):
-        TEST_DATA = urlencode({'some':1,'data':'here'})
+        TEST_DATA = urlencode({'some': 1, 'data': 'here'})
         with vcr.use_cassette(TEST_CASSETTE_FILE):
             body = urllib2.urlopen('https://httpbin.org/get?' + TEST_DATA).read()
             self.assertEqual(body, urllib2.urlopen('https://httpbin.org/get?' + TEST_DATA).read())
 
     def test_post_data(self):
-        TEST_DATA = urlencode({'some':1,'data':'here'})
+        TEST_DATA = urlencode({'some': 1, 'data': 'here'})
         with vcr.use_cassette(TEST_CASSETTE_FILE):
-            body = urllib2.urlopen('https://httpbin.org/post',TEST_DATA).read()
-            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/post',TEST_DATA).read())
+            body = urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read()
+            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read())
 
     def test_post_unicode(self):
-        TEST_DATA = urlencode({'snowman':u'☃'.encode('utf-8')})
+        TEST_DATA = urlencode({'snowman': u'☃'.encode('utf-8')})
         with vcr.use_cassette(TEST_CASSETTE_FILE):
-            body = urllib2.urlopen('https://httpbin.org/post',TEST_DATA).read()
-            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/post',TEST_DATA).read())
+            body = urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read()
+            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read())
+
 
 class TestCassette(unittest.TestCase):
     def test_serialize_cassette(self):
         c1 = Cassette()
-	c1.requests = ['a','b','c']
-	c1.responses = ['d','e','f']
-	ser = c1.serialize()
-	c2 = Cassette(ser)
-	self.assertEqual(c1.requests,c2.requests)
-	self.assertEqual(c1.responses,c2.responses)
-
-
-
+        c1.requests = ['a', 'b', 'c']
+        c1.responses = ['d', 'e', 'f']
+        ser = c1.serialize()
+        c2 = Cassette(ser)
+        self.assertEqual(c1.requests, c2.requests)
+        self.assertEqual(c1.responses, c2.responses)
 
 if __name__ == '__main__':
     unittest.main()
