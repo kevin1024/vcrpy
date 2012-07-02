@@ -42,8 +42,10 @@ Ruby's VCR are not compatible with VCR.py.  The API is similar but VCR.py
 doesn't have nearly as many features.
 
 ##Known Issues
- * Probably only works with urllib2.  Hey, doesn't [requests](http://docs.python-requests.org/en/latest/index.html) use urllib2?  Maybe that works too then.
- * Loading urls that do a 301/302 redirect don't work
+ * Probably only works with urllib2.
+ * [requests](http://docs.python-requests.org/en/latest/index.html) kinda works as long as you just do HTTP GETS and don't get too fancy.
+ * Loading a HTTPS url and then a HTTP url in the same cassette will cause the second load to use the data from the HTTPS version of the URL (Issue #3)
+ * Loading urls that do a 301/302 redirect don't work (Issue #4)
  * I haven't tested PUT/DELETE requests
 
 ##Similar libraries in Python
