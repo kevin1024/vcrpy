@@ -150,6 +150,27 @@ class TestRequestsPost(unittest.TestCase):
     def test_cached_post_response_text(self):
         self.assertEqual(self.unmolested_response.text, self.cached_response.text)
 
+class TestRequestsHTTPS(unittest.TestCase):
+    def setUp(self):
+        self.unmolested_response = requests.get('https://github.com')
+        with vcr.use_cassette(TEST_CASSETTE_FILE):
+            self.initial_response = requests.get('https://github.com')
+            self.cached_response = requests.get('https://github.com')
+
+    def tearDown(self):
+        try:
+            os.remove(TEST_CASSETTE_FILE)
+        except OSError:
+            pass
+
+    def test_initial_https_response_text(self):
+        self.assertEqual(self.unmolested_response.text, self.initial_response.text)
+
+    def test_cached_https_response_text(self):
+        self.assertEqual(self.unmolested_response.text, self.cached_response.text)
+
+    
+
 
 if __name__ == '__main__':
     unittest.main()
