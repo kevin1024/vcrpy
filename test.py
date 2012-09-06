@@ -5,9 +5,9 @@ import vcr
 from vcr.cassette import Cassette
 import urllib2
 from urllib import urlencode
-import requests
 
-TEST_CASSETTE_FILE = 'test/test_req.yaml'
+TEST_CASSETTE_FILE = 'cassettes/test_req.yaml'
+
 
 class TestHttpRequest(unittest.TestCase):
 
@@ -98,79 +98,10 @@ class TestCassette(unittest.TestCase):
         self.assertEqual(c1.requests, c2.requests)
         self.assertEqual(c1.responses, c2.responses)
 
-class TestRequestsGet(unittest.TestCase):
-
-    def setUp(self):
-        self.unmolested_response = requests.get('http://httpbin.org/')
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.initial_response = requests.get('http://httpbin.org/')
-            self.cached_response = requests.get('http://httpbin.org/')
-
-    def tearDown(self):
-        try:
-            os.remove(TEST_CASSETTE_FILE)
-        except OSError:
-            pass
-
-    def test_initial_response_code(self):
-        self.assertEqual(self.unmolested_response.status_code, self.initial_response.status_code)
-
-    def test_cached_response_code(self):
-        self.assertEqual(self.unmolested_response.status_code, self.cached_response.status_code)
-
-    def test_initial_response_headers(self):
-        self.assertEqual(self.unmolested_response.headers['content-type'], self.initial_response.headers['content-type'])
-
-    def test_cached_response_headers(self):
-        self.assertEqual(self.unmolested_response.headers['content-type'], self.cached_response.headers['content-type'])
-
-    def test_initial_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.initial_response.text)
-
-    def test_cached_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.cached_response.text)
-
-class TestRequestsPost(unittest.TestCase):
-    def setUp(self):
-        payload = {'key1': 'value1', 'key2': 'value2'}
-        self.unmolested_response = requests.post('http://httpbin.org/post', payload)
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.initial_response = requests.post('http://httpbin.org/post', payload)
-            self.cached_response = requests.post('http://httpbin.org/post', payload)
-
-    def tearDown(self):
-        try:
-            os.remove(TEST_CASSETTE_FILE)
-        except OSError:
-            pass
-
-    def test_initial_post_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.initial_response.text)
-
-    def test_cached_post_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.cached_response.text)
-
-class TestRequestsHTTPS(unittest.TestCase):
-    def setUp(self):
-        self.unmolested_response = requests.get('https://github.com')
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.initial_response = requests.get('https://github.com')
-            self.cached_response = requests.get('https://github.com')
-
-    def tearDown(self):
-        try:
-            os.remove(TEST_CASSETTE_FILE)
-        except OSError:
-            pass
-
-    def test_initial_https_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.initial_response.text)
-
-    def test_cached_https_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.cached_response.text)
-
-    
-
+try:
+    from test_requests import *
+except ImportError:
+    pass
 
 if __name__ == '__main__':
     unittest.main()

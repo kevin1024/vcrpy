@@ -8,4 +8,4 @@ setup(name='VCR.py',
       author='Kevin McCarthy',
       author_email='mc@kevinmccarthy.org',
       packages=['vcr'],
-     )
+      )

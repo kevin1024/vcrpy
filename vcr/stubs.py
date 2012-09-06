@@ -12,14 +12,27 @@ class VCRHTTPResponse(object):
         self.recorded_response = recorded_response
         self.reason = recorded_response['status']['message']
         self.status = recorded_response['status']['code']
+        self.version = None
         self._content = StringIO(self.recorded_response['body']['string'])
 
         self.msg = HTTPMessage(StringIO(''))
         for k, v in self.recorded_response['headers'].iteritems():
             self.msg.addheader(k, v)
 
+        self.length = self.msg.getheader('content-length') or None
+
     def read(self, chunked=False):
+        # Note: I'm pretty much ignoring any chunking stuff because
+        # I don't really understand what it is or how it works.
         return self._content.read()
+
+    def isclosed(self):
+        # Urllib3 seems to call this because it actually uses
+        # the weird chunking support in httplib
+        return True
+
+    def getheaders(self):
+        return self.recorded_response['headers'].iteritems()
 
 
 class VCRConnectionMixin:
