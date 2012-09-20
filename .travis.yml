@@ -1,12 +1,12 @@
 language: python
 env:
-  - WITH_REQUESTS: True
-  - WITH_REQUESTS: False
+  - WITH_REQUESTS="True"
+  - WITH_REQUESTS="False"
 python:
   - 2.6
   - 2.7
   - pypy
 install: 
-  - pip install -r test_requirements.txt --use-mirrors
+  - pip install -r requirements.txt --use-mirrors
   - if [ $WITH_REQUESTS = "True" ] ; then pip install requests; fi
 script:  python test.py
