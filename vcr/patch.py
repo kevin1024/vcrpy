@@ -12,17 +12,36 @@ try:
 except ImportError:
     pass
 
+try:
+    import urllib3
+    _VerifiedHTTPSConnection = urllib3.connectionpool.VerifiedHTTPSConnection 
+except ImportError:
+    pass
+
 
 def install(cassette_path):
     httplib.HTTPConnection = httplib.HTTP._connection_class = VCRHTTPConnection
     httplib.HTTPSConnection = httplib.HTTPS._connection_class = VCRHTTPSConnection
     httplib.HTTPConnection._vcr_cassette_path = cassette_path
     httplib.HTTPSConnection._vcr_cassette_path = cassette_path
+
+    #patch requests
     try:
         import requests.packages.urllib3.connectionpool
         from .requests_stubs import VCRVerifiedHTTPSConnection
         requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection = VCRVerifiedHTTPSConnection
         requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection._vcr_cassette_path = cassette_path
+    except ImportError:
+        pass
+
+    #patch urllib3
+    try:
+        import urllib3.connectionpool
+        from .urllib3_stubs import VCRVerifiedHTTPSConnection
+        urllib3.connectionpool.VerifiedHTTPSConnection = VCRVerifiedHTTPSConnection
+        urllib3.connectionpool.VerifiedHTTPSConnection._vcr_cassette_path = cassette_path
+        urllib3.connectionpool.HTTPConnection = VCRHTTPConnection
+        urllib3.connectionpool.HTTPConnection._vcr_cassette_path = cassette_path
     except ImportError:
         pass
 
@@ -34,6 +53,13 @@ def reset():
     try:
         import requests.packages.urllib3.connectionpool
         requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection
+    except ImportError:
+        pass
+
+    try:
+        import urllib3.connectionpool
+        urllib3.connectionpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection
+        urllib3.connectionpool.HTTPConnection = _HTTPConnection
     except ImportError:
         pass
 
