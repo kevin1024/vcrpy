@@ -1,4 +1,5 @@
 language: python
+before_install: openssl version
 env:
   - WITH_REQUESTS="True"
   - WITH_REQUESTS="False"
