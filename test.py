@@ -5,9 +5,9 @@ import vcr
 from vcr.cassette import Cassette
 import urllib2
 from urllib import urlencode
+import json
 
 TEST_CASSETTE_FILE = 'cassettes/test_req.yaml'
-
 
 class TestHttpRequest(unittest.TestCase):
 
@@ -16,6 +16,11 @@ class TestHttpRequest(unittest.TestCase):
             os.remove(TEST_CASSETTE_FILE)
         except OSError:
             pass
+
+    def strip_origin(self, body):
+        body = json.loads(body)
+        del body['origin']
+        return body
 
     def test_response_code(self):
         code = urllib2.urlopen('http://httpbin.org/').getcode()
@@ -37,11 +42,17 @@ class TestHttpRequest(unittest.TestCase):
     def test_multiple_requests(self):
         body1 = urllib2.urlopen('http://httpbin.org/').read()
         body2 = urllib2.urlopen('http://httpbin.org/get').read()
+        body2 = self.strip_origin(body2)
         with vcr.use_cassette(TEST_CASSETTE_FILE):
             self.assertEqual(body1, urllib2.urlopen('http://httpbin.org/').read())
-            self.assertEqual(body2, urllib2.urlopen('http://httpbin.org/get').read())
+            new_body2 = urllib2.urlopen('http://httpbin.org/get').read()
+            new_body2 = self.strip_origin(new_body2)
+            self.assertEqual(body2, new_body2)
+
             self.assertEqual(body1, urllib2.urlopen('http://httpbin.org/').read())
-            self.assertEqual(body2, urllib2.urlopen('http://httpbin.org/get').read())
+            new_body2 = urllib2.urlopen('http://httpbin.org/get').read()
+            new_body2 = self.strip_origin(new_body2)
+            self.assertEqual(body2, new_body2)
 
 
 class TestHttps(unittest.TestCase):
