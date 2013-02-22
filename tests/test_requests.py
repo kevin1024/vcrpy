@@ -2,18 +2,20 @@
 import os
 import unittest
 import vcr
-import requests
+import pytest
+from utils import assert_httpbin_responses_equal
+
+requests = pytest.importorskip("requests")
 
 TEST_CASSETTE_FILE = 'cassettes/test_req.yaml'
-
 
 class TestRequestsGet(unittest.TestCase):
 
     def setUp(self):
-        self.unmolested_response = requests.get('http://httpbin.org/')
+        self.unmolested_response = requests.get('http://httpbin.org/get')
         with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.initial_response = requests.get('http://httpbin.org/')
-            self.cached_response = requests.get('http://httpbin.org/')
+            self.initial_response = requests.get('http://httpbin.org/get')
+            self.cached_response = requests.get('http://httpbin.org/get')
 
     def tearDown(self):
         try:
@@ -34,10 +36,10 @@ class TestRequestsGet(unittest.TestCase):
         self.assertEqual(self.unmolested_response.headers['content-type'], self.cached_response.headers['content-type'])
 
     def test_initial_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.initial_response.text)
+        assert_httpbin_responses_equal(self.unmolested_response.text, self.initial_response.text)
 
     def test_cached_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.cached_response.text)
+        assert_httpbin_responses_equal(self.unmolested_response.text, self.cached_response.text)
 
 
 class TestRequestsAuth(unittest.TestCase):
@@ -64,7 +66,6 @@ class TestRequestsAuth(unittest.TestCase):
         auth_fail_cached = requests.get('https://httpbin.org/basic-auth/user/passwd', auth=('user', 'passwdzzz'))
         self.assertNotEqual(self.unmolested_response.status_code, auth_fail_cached.status_code)
 
-
 class TestRequestsPost(unittest.TestCase):
 
     def setUp(self):
@@ -81,10 +82,10 @@ class TestRequestsPost(unittest.TestCase):
             pass
 
     def test_initial_post_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.initial_response.text)
+        assert_httpbin_responses_equal(self.unmolested_response.text, self.initial_response.text)
 
     def test_cached_post_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.cached_response.text)
+        assert_httpbin_responses_equal(self.unmolested_response.text, self.cached_response.text)
 
 
 class TestRequestsHTTPS(unittest.TestCase):
@@ -103,7 +104,7 @@ class TestRequestsHTTPS(unittest.TestCase):
             pass
 
     def test_initial_https_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.initial_response.text)
+        assert_httpbin_responses_equal(self.unmolested_response.text, self.initial_response.text)
 
     def test_cached_https_response_text(self):
-        self.assertEqual(self.unmolested_response.text, self.cached_response.text)
+        assert_httpbin_responses_equal(self.unmolested_response.text, self.cached_response.text)
