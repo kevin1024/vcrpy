@@ -41,10 +41,8 @@ Ruby's VCR are not compatible with VCR.py.  The API is similar but VCR.py
 doesn't have nearly as many features.
 
 ##Known Issues
- * Probably only works with urllib2.
- * Loading a HTTPS url and then a HTTP url in the same cassette will cause the second load to use the data from the HTTPS version of the URL: Issue #3
- * Loading urls that do a 301/302 redirect don't work: Issue #4
- * I haven't tested PUT/DELETE requests
+This library is a work in progress, so the API might change on you.
+There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Similar libraries in Python
 Neither of these really implement the API I want, but I have cribbed some code
