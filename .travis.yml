@@ -8,6 +8,6 @@ python:
   - 2.7
   - pypy
 install: 
-  - pip install -r requirements.txt --use-mirrors
+  - pip install PyYAML pytest --use-mirrors
   - if [ $WITH_REQUESTS = "True" ] ; then pip install requests; fi
-script:  python test.py
+script:  py.test
