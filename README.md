@@ -54,5 +54,11 @@ from them.
  * https://github.com/bbangert/Dalton
  * https://github.com/storborg/replaylib
 
+These were created after I created VCR.py but do something similar:
+
+ * https://github.com/gabrielfalcao/HTTPretty
+ * https://github.com/kanzure/python-requestions
+ * https://github.com/uber/cassette
+
 #License
 This library uses the MIT license
