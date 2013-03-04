@@ -14,8 +14,7 @@ your tests and lets you work offline.
 ##Compatibility Notes
 This should work with Python 2.6 and 2.7.  It also seems to work with [pypy](http://pypy.org).
 
-Currently I've only tested this (a little bit) with urllib2.  It's known to *NOT
-WORK* with urllib.
+Currently I've only tested this with urllib2, urllib3, and requests.  It's known to *NOT WORK* with urllib.
 
 ##How to use it
 ```python
