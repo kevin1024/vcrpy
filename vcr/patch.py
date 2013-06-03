@@ -31,6 +31,8 @@ def install(cassette_path):
         from .requests_stubs import VCRVerifiedHTTPSConnection
         requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection = VCRVerifiedHTTPSConnection
         requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection._vcr_cassette_path = cassette_path
+        requests.packages.urllib3.connectionpool.HTTPConnection = VCRHTTPConnection
+        requests.packages.urllib3.connectionpool.HTTPConnection._vcr_cassette_path = cassette_path
     except ImportError:
         pass
 
