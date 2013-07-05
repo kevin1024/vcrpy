@@ -8,7 +8,8 @@ _HTTPSConnection = httplib.HTTPSConnection
 
 try:
     import requests.packages.urllib3.connectionpool
-    _VerifiedHTTPSConnection = requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection 
+    _VerifiedHTTPSConnection = requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection
+    _HTTPConnection = requests.packages.urllib3.connectionpool.HTTPConnection
 except ImportError:
     pass
 
@@ -55,6 +56,7 @@ def reset():
     try:
         import requests.packages.urllib3.connectionpool
         requests.packages.urllib3.connectionpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection
+        requests.packages.urllib3.connectionpool.HTTPConnection = _HTTPConnection
     except ImportError:
         pass
 
