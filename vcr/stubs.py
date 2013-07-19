@@ -21,10 +21,13 @@ class VCRHTTPResponse(object):
 
         self.length = self.msg.getheader('content-length') or None
 
-    def read(self, chunked=False):
+    def read(self, *args, **kwargs):
         # Note: I'm pretty much ignoring any chunking stuff because
         # I don't really understand what it is or how it works.
-        return self._content.read()
+        return self._content.read(*args, **kwargs)
+        
+    def close(self):
+        return True
 
     def isclosed(self):
         # Urllib3 seems to call this because it actually uses
