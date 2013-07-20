@@ -1,7 +1,6 @@
 #VCR.py
 
-This is a proof-of-concept start at a Python version of [Ruby's VCR
-library](https://github.com/myronmarston/vcr).
+This is a start at a Python version of [Ruby's VCR library](https://github.com/myronmarston/vcr).
 
 [![Build Status](https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master)](http://travis-ci.org/kevin1024/vcrpy)
 
@@ -22,7 +21,7 @@ import vcr
 import urllib2
 
 with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
-    response = urllib2.urlopen('http://www.iana.org/domains/example/').read()
+    response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
     assert 'Example Domains' in response
 ```
 
@@ -46,6 +45,11 @@ doesn't have nearly as many features.
 ##Known Issues
 This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
+
+##Changelog
+* 0.0.3: Add support for requests 1.2.3.  Support for older versions of requests dropped (thanks @vitormazzi and @bryanhelmig)
+* 0.0.2: Add support for requests / urllib3
+* 0.0.1: Initial Release
 
 ##Similar libraries in Python
 Neither of these really implement the API I want, but I have cribbed some code
