@@ -2,10 +2,16 @@ import os
 import yaml
 from .cassette import Cassette
 
+# Use the libYAML versions if possible
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
 
 def load_cassette(cassette_path):
     try:
-        pc = yaml.load(open(cassette_path))
+        pc = yaml.load(open(cassette_path), Loader=Loader)
         cassette = Cassette(pc)
         return cassette
     except IOError:
@@ -17,4 +23,4 @@ def save_cassette(cassette_path, cassette):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
     with open(cassette_path, 'a') as cassette_file:
-        cassette_file.write(yaml.dump(cassette.serialize()))
+        cassette_file.write(yaml.dump(cassette.serialize(), Dumper=Dumper))
