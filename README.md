@@ -47,6 +47,8 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.0.4: If you have libyaml installed, vcrpy will use the c bindings
+  instead.  Speed up your tests!  Thanks @dlecocq
 * 0.0.3: Add support for requests 1.2.3.  Support for older versions of requests dropped (thanks @vitormazzi and @bryanhelmig)
 * 0.0.2: Add support for requests / urllib3
 * 0.0.1: Initial Release
