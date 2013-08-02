@@ -1,107 +1,34 @@
+'''Basic tests about cassettes'''
 # coding=utf-8
-import os
-import unittest
+
+# Internal imports
 import vcr
-from vcr.cassette import Cassette
+from .common import TestVCR
+
+# External imports
+import os
 import urllib2
-from urllib import urlencode
-from utils import assert_httpbin_responses_equal
-
-TEST_CASSETTE_FILE = 'cassettes/test_req.yaml'
-
-class TestHttpRequest(unittest.TestCase):
-
-    def tearDown(self):
-        try:
-            os.remove(TEST_CASSETTE_FILE)
-        except OSError:
-            pass
-
-    def test_response_code(self):
-        code = urllib2.urlopen('http://httpbin.org/').getcode()
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.assertEqual(code, urllib2.urlopen('http://httpbin.org/').getcode())
-            self.assertEqual(code, urllib2.urlopen('http://httpbin.org/').getcode())
-
-    def test_response_body(self):
-        body = urllib2.urlopen('http://httpbin.org/').read()
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.assertEqual(body, urllib2.urlopen('http://httpbin.org/').read())
-            self.assertEqual(body, urllib2.urlopen('http://httpbin.org/').read())
-
-    def test_response_headers(self):
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            headers = urllib2.urlopen('http://httpbin.org/').info().items()
-            self.assertEqual(headers, urllib2.urlopen('http://httpbin.org/').info().items())
-
-    def test_multiple_requests(self):
-        body1 = urllib2.urlopen('http://httpbin.org/').read()
-        body2 = urllib2.urlopen('http://httpbin.org/get').read()
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.assertEqual(body1, urllib2.urlopen('http://httpbin.org/').read())
-            new_body2 = urllib2.urlopen('http://httpbin.org/get').read()
-            
-            assert_httpbin_responses_equal(body2, new_body2)
-
-            self.assertEqual(body1, urllib2.urlopen('http://httpbin.org/').read())
-            new_body2 = urllib2.urlopen('http://httpbin.org/get').read()
-
-            assert_httpbin_responses_equal(body2, new_body2)
-
-class TestHttps(unittest.TestCase):
-
-    def tearDown(self):
-        try:
-            os.remove(TEST_CASSETTE_FILE)
-        except OSError:
-            pass
-
-    def test_response_code(self):
-        code = urllib2.urlopen('https://httpbin.org/').getcode()
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.assertEqual(code, urllib2.urlopen('https://httpbin.org/').getcode())
-            self.assertEqual(code, urllib2.urlopen('https://httpbin.org/').getcode())
-
-    def test_response_body(self):
-        body = urllib2.urlopen('https://httpbin.org/').read()
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/').read())
-            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/').read())
-
-    def test_response_headers(self):
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            headers = urllib2.urlopen('https://httpbin.org/').info().items()
-            self.assertEqual(headers, urllib2.urlopen('https://httpbin.org/').info().items())
-
-    def test_get_data(self):
-        TEST_DATA = urlencode({'some': 1, 'data': 'here'})
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            body = urllib2.urlopen('https://httpbin.org/get?' + TEST_DATA).read()
-            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/get?' + TEST_DATA).read())
-
-    def test_post_data(self):
-        TEST_DATA = urlencode({'some': 1, 'data': 'here'})
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            body = urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read()
-            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read())
-
-    def test_post_unicode(self):
-        TEST_DATA = urlencode({'snowman': u'☃'.encode('utf-8')})
-        with vcr.use_cassette(TEST_CASSETTE_FILE):
-            body = urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read()
-            self.assertEqual(body, urllib2.urlopen('https://httpbin.org/post', TEST_DATA).read())
 
 
-class TestCassette(unittest.TestCase):
-    def test_serialize_cassette(self):
-        c1 = Cassette()
-        c1.requests = ['a', 'b', 'c']
-        c1.responses = ['d', 'e', 'f']
-        ser = c1.serialize()
-        c2 = Cassette(ser)
-        self.assertEqual(c1.requests, c2.requests)
-        self.assertEqual(c1.responses, c2.responses)
+class TestCassette(TestVCR):
+    '''We should be able to save a cassette'''
+    fixtures = os.path.join('tests', 'fixtures', 'basic')
 
+    def test_nonexistent_directory(self):
+        '''If we load a cassette in a nonexistent directory, it can save ok'''
+        self.assertFalse(os.path.exists(self.fixture('nonexistent')))
+        with vcr.use_cassette(self.fixture('nonexistent', 'cass.yaml')):
+            urllib2.urlopen('http://httpbin.org/').read()
+        # This should have made the file and the directory
+        self.assertTrue(
+            os.path.exists(self.fixture('nonexistent', 'cass.yaml')))
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_unpatch(self):
+        '''Ensure that our cassette gets unpatched when we're done'''
+        with vcr.use_cassette(self.fixture('unpatch.yaml')) as cass:
+            urllib2.urlopen('http://httpbin.org/').read()
+
+        # Make the same requests, and assert that we haven't served any more
+        # requests out of cache
+        urllib2.urlopen('http://httpbin.org/').read()
+        self.assertEqual(len(cass.cached()), 0)
