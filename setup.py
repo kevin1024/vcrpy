@@ -19,12 +19,17 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='vcrpy',
-      version='0.0.4',
+      version='0.0.5',
       description="A Python port of Ruby's VCR to make mocking HTTP easier",
       author='Kevin McCarthy',
       author_email='me@kevinmccarthy.org',
       url='https://github.com/kevin1024/vcrpy',
-      packages=['vcr'],
+      packages=[
+        'vcr',
+        'vcr.stubs'],
+      package_dir={
+        'vcr': 'vcr',
+        'vcr.stubs': 'vcr/stubs'},
       install_requires=['PyYAML'],
       license='MIT',
       tests_require=['pytest'],
