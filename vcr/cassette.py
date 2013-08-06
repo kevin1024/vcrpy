@@ -23,9 +23,9 @@ class Cassette(object):
 
     def __init__(self, path, data=None):
         self._path = path
-        self._cached = []
         self._requests = []
         self._responses = []
+        self.play_count = 0
         if data:
             self.deserialize(data)
 
@@ -45,18 +45,11 @@ class Cassette(object):
         self._requests, self._responses = (
             [r['request'] for r in source], [r['response'] for r in source])
 
-    def cached(self, request=None):
+    def mark_played(self, request=None):
         '''
-        Alert the cassette of a request that's been cached, or get the
-        requests that we've cached.  This is used mainly for 
-        debugging purposes.
+        Alert the cassette of a request that's been played
         '''
-        # TODO: maybe dependency injection for this method since
-        # it's only used in tests?
-        if request:
-            self._cached.append(request)
-        else:
-            return self._cached
+        self.play_count += 1
 
     def append(self, request, response):
         '''Add a pair of request, response pairs to this cassette'''

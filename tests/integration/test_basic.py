@@ -31,4 +31,4 @@ class TestCassette(TestVCR):
         # Make the same requests, and assert that we haven't served any more
         # requests out of cache
         urllib2.urlopen('http://httpbin.org/').read()
-        self.assertEqual(len(cass.cached()), 0)
+        self.assertEqual(cass.play_count, 0)

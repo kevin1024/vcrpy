@@ -26,13 +26,13 @@ class TestHTTPRequests(TestRequestsBase):
         with vcr.use_cassette(self.fixture('atts.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 requests.get(url).status_code,
                 requests.get(url).status_code)
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_headers(self):
         '''Ensure that we can read the headers back'''
@@ -40,13 +40,13 @@ class TestHTTPRequests(TestRequestsBase):
         with vcr.use_cassette(self.fixture('headers.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 requests.get(url).headers,
                 requests.get(url).headers)
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_body(self):
         '''Ensure the responses are all identical enough'''
@@ -54,13 +54,13 @@ class TestHTTPRequests(TestRequestsBase):
         with vcr.use_cassette(self.fixture('body.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 requests.get(url).content,
                 requests.get(url).content)
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_auth(self):
         '''Ensure that we can handle basic auth'''
@@ -69,14 +69,14 @@ class TestHTTPRequests(TestRequestsBase):
         with vcr.use_cassette(self.fixture('auth.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             one = requests.get(url, auth=auth)
             two = requests.get(url, auth=auth)
             self.assertEqual(one.content, two.content)
             self.assertEqual(one.status_code, two.status_code)
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_auth_failed(self):
         '''Ensure that we can save failed auth statuses'''
@@ -85,7 +85,7 @@ class TestHTTPRequests(TestRequestsBase):
         with vcr.use_cassette(self.fixture('auth-failed.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             one = requests.get(url, auth=auth)
             two = requests.get(url, auth=auth)
             self.assertEqual(one.content, two.content)
@@ -93,7 +93,7 @@ class TestHTTPRequests(TestRequestsBase):
             self.assertNotEqual(one.status_code, 200)
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_post(self):
         '''Ensure that we can post and cache the results'''
@@ -102,13 +102,13 @@ class TestHTTPRequests(TestRequestsBase):
         with vcr.use_cassette(self.fixture('redirect.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 requests.post(url, data).content,
                 requests.post(url, data).content)
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_redirects(self):
         '''Ensure that we can handle redirects'''
@@ -116,14 +116,14 @@ class TestHTTPRequests(TestRequestsBase):
         with vcr.use_cassette(self.fixture('redirect.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 requests.get(url).content,
                 requests.get(url).content)
             # Ensure that we've now cached /two/ responses. One for the redirect
             # and one for the final fetch
             self.assertEqual(len(cass), 2)
-            self.assertEqual(len(cass.cached()), 2)
+            self.assertEqual(cass.play_count, 2)
 
 
 class TestHTTPSRequests(TestHTTPRequests):
@@ -139,7 +139,7 @@ class TestHTTPSRequests(TestHTTPRequests):
             requests.get('https://httpbin.org/')
             requests.get('http://httpbin.org/')
             self.assertEqual(len(cass), 2)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
 
 
 class TestWild(TestRequestsBase):
@@ -160,4 +160,4 @@ class TestWild(TestRequestsBase):
             requests.get(url, headers={'User-Agent': 'vcrpy-test'})
             # Ensure that we've now served two responses. One for the original
             # redirect, and a second for the actual fetch
-            self.assertEqual(len(cass.cached()), 2)
+            self.assertEqual(cass.play_count, 2)

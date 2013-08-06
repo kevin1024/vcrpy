@@ -23,14 +23,14 @@ def test_cassette_deserialize():
     assert a._requests == ['foo']
     assert a._responses == ['bar']
 
-def test_cassette_not_cached():
+def test_cassette_not_played():
     a = Cassette('test')
-    assert not a.cached()
+    assert not a.play_count
 
-def test_cassette_cached():
+def test_cassette_played():
     a = Cassette('test')
-    a.cached('yup')
-    assert a.cached()
+    a.mark_played()
+    assert a.play_count == 1
 
 def test_cassette_append():
     a = Cassette('test')

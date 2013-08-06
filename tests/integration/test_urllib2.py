@@ -26,13 +26,13 @@ class TestUrllib2Http(TestUrllib2):
         with vcr.use_cassette(self.fixture('atts.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 urllib2.urlopen(url).getcode(),
                 urllib2.urlopen(url).getcode())
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_random_body(self):
         '''Ensure we can read the content, and that it's served from cache'''
@@ -40,13 +40,13 @@ class TestUrllib2Http(TestUrllib2):
         with vcr.use_cassette(self.fixture('body.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 urllib2.urlopen(url).read(),
                 urllib2.urlopen(url).read())
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_response_headers(self):
         '''Ensure we can get information from the response'''
@@ -54,7 +54,7 @@ class TestUrllib2Http(TestUrllib2):
         with vcr.use_cassette(self.fixture('headers.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 urllib2.urlopen(url).info().items(),
                 urllib2.urlopen(url).info().items())
@@ -72,12 +72,12 @@ class TestUrllib2Http(TestUrllib2):
             for index in range(len(urls)):
                 url = urls[index]
                 self.assertEqual(len(cass), index)
-                self.assertEqual(len(cass.cached()), index)
+                self.assertEqual(cass.play_count, index)
                 self.assertEqual(
                     urllib2.urlopen(url).read(),
                     urllib2.urlopen(url).read())
                 self.assertEqual(len(cass), index + 1)
-                self.assertEqual(len(cass.cached()), index + 1)
+                self.assertEqual(cass.play_count, index + 1)
 
     def test_get_data(self):
         '''Ensure that it works with query data'''
@@ -86,13 +86,13 @@ class TestUrllib2Http(TestUrllib2):
         with vcr.use_cassette(self.fixture('get_data.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 urllib2.urlopen(url).read(),
                 urllib2.urlopen(url).read())
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_post_data(self):
         '''Ensure that it works when posting data'''
@@ -101,13 +101,13 @@ class TestUrllib2Http(TestUrllib2):
         with vcr.use_cassette(self.fixture('post_data.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 urllib2.urlopen(url, data).read(),
                 urllib2.urlopen(url, data).read())
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
     def test_post_unicode_data(self):
         '''Ensure that it works when posting unicode data'''
@@ -116,13 +116,13 @@ class TestUrllib2Http(TestUrllib2):
         with vcr.use_cassette(self.fixture('post_data.yaml')) as cass:
             # Ensure that this is empty to begin with
             self.assertEqual(len(cass), 0)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)
             self.assertEqual(
                 urllib2.urlopen(url, data).read(),
                 urllib2.urlopen(url, data).read())
             # Ensure that we've now cached a single response
             self.assertEqual(len(cass), 1)
-            self.assertEqual(len(cass.cached()), 1)
+            self.assertEqual(cass.play_count, 1)
 
 
 class TestUrllib2Https(TestUrllib2Http):
@@ -138,4 +138,4 @@ class TestUrllib2Https(TestUrllib2Http):
             urllib2.urlopen('https://httpbin.org/')
             urllib2.urlopen('http://httpbin.org/')
             self.assertEqual(len(cass), 2)
-            self.assertEqual(len(cass.cached()), 0)
+            self.assertEqual(cass.play_count, 0)

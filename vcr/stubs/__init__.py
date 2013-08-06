@@ -67,9 +67,9 @@ class VCRConnectionMixin:
         # then return it
         response = self.cassette.response(self._request)
         if response:
-            # Alert the cassette to the fact that we've served another cached
+            # Alert the cassette to the fact that we've served another
             # response for the provided requests
-            self.cassette.cached(self._request)
+            self.cassette.mark_played()
             return VCRHTTPResponse(response)
 
         # Otherwise, we made an actual request, and should return the response
