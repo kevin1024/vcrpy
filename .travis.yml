@@ -10,4 +10,4 @@ python:
 install: 
   - pip install PyYAML pytest --use-mirrors
   - if [ $WITH_REQUESTS = "True" ] ; then pip install requests; fi
-script:  pwd; py.test --basetemp=.
+script:  PYTHONPATH=`pwd` py.test --basetemp=.
