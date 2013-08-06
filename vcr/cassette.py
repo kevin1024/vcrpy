@@ -1,27 +1,23 @@
 '''The container for recorded requests and responses'''
 
 import os
-import yaml
 import tempfile
-try:
-    # Use the libYAML versions if possible. They're much faster than the pure
-    # python implemenations
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:  # pragma: no cover
-    from yaml import Loader, Dumper
 
 # Internal imports
 from .patch import install, reset
+from .files import load_cassette, save_cassette
 
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
+    # TODO: clean up the constructor and
+    # classmethods
+
     @classmethod
     def load(cls, path):
         '''Load in the cassette stored at the provided path'''
         try:
-            with open(path) as fin:
-                return cls(path, yaml.load(fin, Loader=Loader))
+            return cls(path, load_cassette(path))
         except IOError:
             return cls(path)
 
@@ -35,15 +31,7 @@ class Cassette(object):
 
     def save(self, path):
         '''Save this cassette to a path'''
-        dirname, filename = os.path.split(path)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-        # We'll overwrite the old version securely by writing out a temporary
-        # version and then moving it to replace the old version
-        fd, name = tempfile.mkstemp(dir=dirname, prefix=filename)
-        with os.fdopen(fd, 'w') as fout:
-            fout.write(yaml.dump(self.serialize(), Dumper=Dumper))
-        os.rename(name, path)
+        save_cassette(path, self.serialize())
 
     def serialize(self):
         '''Return a serializable version of the cassette'''
@@ -58,8 +46,13 @@ class Cassette(object):
             [r['request'] for r in source], [r['response'] for r in source])
 
     def cached(self, request=None):
-        '''Alert the cassete of a request that's been cached, or get the
-        requests that we've cached'''
+        '''
+        Alert the cassette of a request that's been cached, or get the
+        requests that we've cached.  This is used mainly for 
+        debugging purposes.
+        '''
+        # TODO: maybe dependency injection for this method since
+        # it's only used in tests?
         if request:
             self._cached.append(request)
         else:
@@ -87,10 +80,12 @@ class Cassette(object):
         try:
             return self._responses[self._requests.index(request)]
         except ValueError:
+            #todo: keyerror if not in cassette
             return None
 
     def __enter__(self):
         '''Patch the fetching libraries we know about'''
+        #TODO: how is this context manager used?
         install(self)
         return self
 
