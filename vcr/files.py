@@ -15,5 +15,5 @@ def save_cassette(cassette_path, data):
     dirname, filename = os.path.split(cassette_path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    with open(cassette_path, 'a') as cassette_file:
+    with open(cassette_path, 'w') as cassette_file:
         cassette_file.write(yaml.dump(data, Dumper=Dumper))
