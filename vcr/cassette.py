@@ -10,9 +10,6 @@ from .files import load_cassette, save_cassette
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
-    # TODO: clean up the constructor and
-    # classmethods
-
     @classmethod
     def load(cls, path):
         '''Load in the cassette stored at the provided path'''
@@ -78,7 +75,6 @@ class Cassette(object):
 
     def __enter__(self):
         '''Patch the fetching libraries we know about'''
-        #TODO: how is this context manager used?
         install(self)
         return self
 
