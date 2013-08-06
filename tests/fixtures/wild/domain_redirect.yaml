@@ -1,0 +1,37 @@
+- request:
+    body: null
+    headers: !!python/object:requests.structures.CaseInsensitiveDict
+      _store:
+        accept: !!python/tuple [Accept, '*/*']
+        accept-encoding: !!python/tuple [Accept-Encoding, 'gzip, deflate, compress']
+        user-agent: !!python/tuple [User-Agent, vcrpy-test]
+    host: seomoz.org
+    method: GET
+    port: 80
+    url: /
+  response:
+    body: {string: "<html>\r\n<head><title>301 Moved Permanently</title></head>\r\n<body
+        bgcolor=\"white\">\r\n<center><h1>301 Moved Permanently</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"}
+    headers: {accept-ranges: bytes, age: '0', connection: keep-alive, content-length: '178',
+      content-type: text/html, date: 'Mon, 05 Aug 2013 22:05:23 GMT', location: 'http://moz.com/',
+      server: nginx, server-name: dalmozwww03.dal.moz.com, via: 1.1 varnish, x-varnish: '836826051'}
+    status: {code: 301, message: Moved Permanently}
+- request:
+    body: null
+    headers: !!python/object:requests.structures.CaseInsensitiveDict
+      _store:
+        accept: !!python/tuple [Accept, '*/*']
+        accept-encoding: !!python/tuple [Accept-Encoding, 'gzip, deflate, compress']
+        user-agent: !!python/tuple [User-Agent, vcrpy-test]
+    host: moz.com
+    method: GET
+    port: 80
+    url: /
+  response:
+    body: {string: ''}
+    headers: {accept-ranges: bytes, age: '2763', cache-control: 'no-cache, must-revalidate,
+        s-maxage=3600', connection: keep-alive, content-encoding: gzip, content-length: '0',
+      content-type: text/html, date: 'Mon, 05 Aug 2013 22:05:23 GMT', expires: 'Fri,
+        15 Oct 2004 12:00:00 GMT', server: nginx, server-name: dalmozwww02.dal.moz.com,
+      vary: Accept-Encoding, via: 1.1 varnish, x-varnish: 836826061 836743142}
+    status: {code: 200, message: OK}
