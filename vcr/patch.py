@@ -56,7 +56,7 @@ def install(cassette):
 
 
 def reset():
-    '''Unto all the patching'''
+    '''Undo all the patching'''
     httplib.HTTPConnection = httplib.HTTP._connection_class = _HTTPConnection
     httplib.HTTPSConnection = httplib.HTTPS._connection_class = \
             _HTTPSConnection
