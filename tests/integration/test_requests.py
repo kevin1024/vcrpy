@@ -132,7 +132,7 @@ class TestHTTPSRequests(TestHTTPRequests):
 
     def test_cross_scheme(self):
         '''Ensure that requests between schemes are treated separately'''
-        # First fetch a url under https, and then again under https and then
+        # First fetch a url under http, and then again under https and then
         # ensure that we haven't served anything out of cache, and we have two
         # requests / response pairs in the cassette
         with vcr.use_cassette(self.fixture('cross_scheme.yaml')) as cass:
