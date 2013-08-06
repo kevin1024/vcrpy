@@ -10,7 +10,7 @@ class TestVCR(unittest.TestCase):
     fixtures = os.path.join('does', 'not', 'exist')
 
     def tearDown(self):
-        # Remove th urllib2 fixtures if they exist
+        # Remove the urllib2 fixtures if they exist
         if os.path.exists(self.fixtures):
             shutil.rmtree(self.fixtures)
 
