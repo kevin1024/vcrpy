@@ -38,7 +38,7 @@ class Cassette(object):
         } for req, res in zip(self._requests, self._responses)])
 
     def deserialize(self, source):
-        '''Given a seritalized version, load the requests'''
+        '''Given a serialized version, load the requests'''
         self._requests, self._responses = (
             [r['request'] for r in source], [r['response'] for r in source])
 
@@ -49,7 +49,7 @@ class Cassette(object):
         self.play_count += 1
 
     def append(self, request, response):
-        '''Add a pair of request, response pairs to this cassette'''
+        '''Add a pair of request, response to this cassette'''
         self._requests.append(request)
         self._responses.append(response)
 
@@ -70,8 +70,7 @@ class Cassette(object):
         try:
             return self._responses[self._requests.index(request)]
         except ValueError:
-            #todo: keyerror if not in cassette
-            return None
+            raise KeyError
 
     def __enter__(self):
         '''Patch the fetching libraries we know about'''

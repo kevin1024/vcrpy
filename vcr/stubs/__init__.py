@@ -65,22 +65,22 @@ class VCRConnectionMixin:
         '''Retrieve a the response'''
         # Check to see if the cassette has a response for this request. If so,
         # then return it
-        response = self.cassette.response(self._request)
-        if response:
+        if self._request in self.cassette:
+            response = self.cassette.response(self._request)
             # Alert the cassette to the fact that we've served another
             # response for the provided requests
             self.cassette.mark_played()
             return VCRHTTPResponse(response)
-
-        # Otherwise, we made an actual request, and should return the response
-        # we got from the actual connection
-        response = HTTPConnection.getresponse(self)
-        response = {
-            'status': {'code': response.status, 'message': response.reason},
-            'headers': dict(response.getheaders()),
-            'body': {'string': response.read()},
-        }
-        self.cassette.append(self._request, response)
+        else:
+            # Otherwise, we made an actual request, and should return the response
+            # we got from the actual connection
+            response = HTTPConnection.getresponse(self)
+            response = {
+                'status': {'code': response.status, 'message': response.reason},
+                'headers': dict(response.getheaders()),
+                'body': {'string': response.read()},
+            }
+            self.cassette.append(self._request, response)
         return VCRHTTPResponse(response)
 
 

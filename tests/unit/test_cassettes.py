@@ -1,4 +1,4 @@
-import mock
+import pytest
 import yaml
 from vcr.cassette import Cassette
 
@@ -56,4 +56,5 @@ def test_cassette_response():
 
 def test_cassette_missing_response():
     a = Cassette('test')
-    assert not a.response('foo')
+    with pytest.raises(KeyError):
+        a.response('foo')
