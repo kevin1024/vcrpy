@@ -37,7 +37,6 @@ def test_cassette_play_counter():
     assert a.play_counts['foo'] == 1
     assert a.play_counts['bar'] == 1
 
-
 def test_cassette_append():
     a = Cassette('test')
     a.append('foo', 'bar')
