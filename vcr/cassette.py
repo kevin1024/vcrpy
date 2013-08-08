@@ -2,12 +2,12 @@
 
 import os
 import tempfile
+from collections import Counter
 
 # Internal imports
 from .patch import install, reset
 from .files import load_cassette, save_cassette
 from .request import Request
-
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
@@ -22,7 +22,7 @@ class Cassette(object):
     def __init__(self, path, data=None):
         self._path = path
         self.requests = {}
-        self.play_count = 0
+        self.play_counts = Counter()
         if data:
             self.deserialize(data)
 
@@ -42,15 +42,23 @@ class Cassette(object):
         for r in source:
             self.requests[r['request']] = r['response']
 
+    @property
+    def play_count(self):
+        return sum(self.play_counts.values())
+
     def mark_played(self, request=None):
         '''
         Alert the cassette of a request that's been played
         '''
-        self.play_count += 1
+        self.play_counts[request] += 1
 
     def append(self, request, response):
         '''Add a pair of request, response to this cassette'''
         self.requests[request] = response
+
+    def response(self, request):
+        '''Find the response corresponding to a request'''
+        return self.requests[request]
 
     def __len__(self):
         '''Return the number of request / response pairs stored in here'''
@@ -59,10 +67,6 @@ class Cassette(object):
     def __contains__(self, request):
         '''Return whether or not a request has been stored'''
         return request in self.requests
-
-    def response(self, request):
-        '''Find the response corresponding to a request'''
-        return self.requests[request]
 
     def __enter__(self):
         '''Patch the fetching libraries we know about'''
