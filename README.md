@@ -50,8 +50,8 @@ with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
     response = urllib2.urlopen('http://www.zombo.com/').read()
     # cass should have 1 request inside it
     assert len(cass) == 1 
-    # the request URL should be 'http://www.zombo.com/'
-    assert cass.requests.keys()[0].url == 'http://www.zombo.com/'
+    # the request host should be zombo.com
+    assert cass.requests.keys()[0].host == 'zombo.com'
 ```
 
 
