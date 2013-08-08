@@ -2,7 +2,10 @@
 
 import os
 import tempfile
-from collections import Counter
+try:
+    from collections import Counter
+except ImportError:
+    from .counter import Counter
 
 # Internal imports
 from .patch import install, reset
