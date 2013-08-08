@@ -33,6 +33,28 @@ pass, even if you are offline, or iana.org goes down for maintenance) and
 accurate (the response will contain the same headers and body you get from a
 real request).
 
+## Advanced Features
+
+If you want, VCR.py can return information about the cassette it is
+using to record your requests and responses.  This will let you record
+your requests and responses and make assertions on them, to make sure
+that your code under test is generating the expected requests and
+responses.  This feature is not present in Ruby's VCR, but I think it is
+a nice addition.  Here's an example:
+
+```python
+import vcr
+import urllib2
+
+with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
+    response = urllib2.urlopen('http://www.zombo.com/').read()
+    # cass should have 1 request inside it
+    assert len(cass) == 1 
+    # the request URL should be 'http://www.zombo.com/'
+    assert cass.requests.keys()[0].url == 'http://www.zombo.com/'
+```
+
+
 ##Installation
 
 I finally uploaded VCR.py to pypi!  So you can just `pip install vcrpy` (first you may need to `brew install libyaml` [[Homebrew](http://mxcl.github.com/homebrew/)])
@@ -47,6 +69,9 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.1.0: *backwards incompatible release - delete your old cassette
+  files*:  This release adds the ability to access the cassette to make
+assertions on it, as well as a major code refactor thanks to @dlecocq
 * 0.0.4: If you have libyaml installed, vcrpy will use the c bindings
   instead.  Speed up your tests!  Thanks @dlecocq
 * 0.0.3: Add support for requests 1.2.3.  Support for older versions of requests dropped (thanks @vitormazzi and @bryanhelmig)
