@@ -3,6 +3,8 @@
 from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
 from cStringIO import StringIO
 
+from vcr.request import Request
+
 
 class VCRHTTPResponse(object):
     """
@@ -44,14 +46,15 @@ class VCRConnectionMixin:
 
     def request(self, method, url, body=None, headers=None):
         '''Persist the request metadata in self._vcr'''
-        self._request = {
-            'host': self.host,
-            'port': self.port,
-            'method': method,
-            'url': url,
-            'body': body,
-            'headers': headers or {},
-        }
+        self._request = Request(
+            host = self.host,
+            port = self.port,
+            method = method,
+            url = url,
+            body = body,
+            headers = headers or {}
+        )
+
         # Check if we have a cassette set, and if we have a response saved.
         # If so, there's no need to keep processing and we can bail
         if self.cassette and self._request in self.cassette:

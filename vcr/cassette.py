@@ -6,6 +6,7 @@ import tempfile
 # Internal imports
 from .patch import install, reset
 from .files import load_cassette, save_cassette
+from .request import Request
 
 
 class Cassette(object):
@@ -20,8 +21,7 @@ class Cassette(object):
 
     def __init__(self, path, data=None):
         self._path = path
-        self._requests = []
-        self._responses = []
+        self.requests = {}
         self.play_count = 0
         if data:
             self.deserialize(data)
@@ -35,12 +35,12 @@ class Cassette(object):
         return ([{
             'request': req,
             'response': res,
-        } for req, res in zip(self._requests, self._responses)])
+        } for req, res in self.requests.iteritems()])
 
     def deserialize(self, source):
         '''Given a serialized version, load the requests'''
-        self._requests, self._responses = (
-            [r['request'] for r in source], [r['response'] for r in source])
+        for r in source:
+            self.requests[r['request']] = r['response']
 
     def mark_played(self, request=None):
         '''
@@ -50,27 +50,19 @@ class Cassette(object):
 
     def append(self, request, response):
         '''Add a pair of request, response to this cassette'''
-        self._requests.append(request)
-        self._responses.append(response)
+        self.requests[request] = response
 
     def __len__(self):
         '''Return the number of request / response pairs stored in here'''
-        return len(self._requests)
+        return len(self.requests)
 
     def __contains__(self, request):
         '''Return whether or not a request has been stored'''
-        try:
-            self._requests.index(request)
-            return True
-        except ValueError:
-            return False
+        return request in self.requests
 
     def response(self, request):
         '''Find the response corresponding to a request'''
-        try:
-            return self._responses[self._requests.index(request)]
-        except ValueError:
-            raise KeyError
+        return self.requests[request]
 
     def __enter__(self):
         '''Patch the fetching libraries we know about'''
