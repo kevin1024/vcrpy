@@ -62,6 +62,9 @@ class Cassette(object):
         '''Find the response corresponding to a request'''
         return self.requests[request]
 
+    def __str__(self):
+        return "<Cassette containing {0} recorded response(s)>".format(len(self))
+
     def __len__(self):
         '''Return the number of request / response pairs stored in here'''
         return len(self.requests)
