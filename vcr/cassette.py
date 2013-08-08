@@ -48,7 +48,7 @@ class Cassette(object):
     def play_count(self):
         return sum(self.play_counts.values())
 
-    def mark_played(self, request=None):
+    def mark_played(self, request):
         '''
         Alert the cassette of a request that's been played
         '''
