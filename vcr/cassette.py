@@ -10,7 +10,6 @@ except ImportError:
 # Internal imports
 from .patch import install, reset
 from .files import load_cassette, save_cassette
-from .request import Request
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
