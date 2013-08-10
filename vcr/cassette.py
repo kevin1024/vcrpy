@@ -52,7 +52,7 @@ class Cassette(object):
         '''Add a pair of request, response to this cassette'''
         self.data[request] = response
 
-    def response(self, request):
+    def response_of(self, request):
         '''Find the response corresponding to a request'''
         return self.data[request]
 

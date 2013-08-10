@@ -69,7 +69,7 @@ class VCRConnectionMixin:
         # Check to see if the cassette has a response for this request. If so,
         # then return it
         if self._request in self.cassette:
-            response = self.cassette.response(self._request)
+            response = self.cassette.response_of(self._request)
             # Alert the cassette to the fact that we've served another
             # response for the provided requests
             self.cassette.mark_played(self._request)

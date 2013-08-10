@@ -44,12 +44,12 @@ def test_cassette_contains():
     a.append('foo','bar')
     assert 'foo' in a
 
-def test_cassette_response():
+def test_cassette_response_of():
     a = Cassette('test')
     a.append('foo','bar')
-    assert a.response('foo') == 'bar'
+    assert a.response_of('foo') == 'bar'
 
-def test_cassette_missing_response():
+def test_cassette_get_missing_response():
     a = Cassette('test')
     with pytest.raises(KeyError):
-        a.response('foo')
+        a.response_of('foo')
