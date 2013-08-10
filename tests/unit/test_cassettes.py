@@ -10,16 +10,6 @@ def test_cassette_load(tmpdir):
     a_cassette = Cassette.load(str(a_file))
     assert len(a_cassette) == 1
 
-def test_cassette_serialize():
-    a = Cassette('test')
-    a.append('foo','bar')
-    assert a.serialize() == [{'request': 'foo', 'response': 'bar'}]
-
-def test_cassette_deserialize():
-    a = Cassette('test')
-    a.deserialize([{'request': 'foo', 'response': 'bar'}])
-    assert a.requests == {'foo':'bar'}
-
 def test_cassette_not_played():
     a = Cassette('test')
     assert not a.play_count
@@ -40,7 +30,8 @@ def test_cassette_play_counter():
 def test_cassette_append():
     a = Cassette('test')
     a.append('foo', 'bar')
-    assert a.requests == {'foo':'bar'}
+    assert a.requests == ['foo']
+    assert a.responses == ['bar']
 
 def test_cassette_len():
     a = Cassette('test')

@@ -8,6 +8,18 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+def _serialize_cassette(requests, responses):
+    '''Return a serializable version of the cassette'''
+    return ([{
+        'request': request,
+        'response': response,
+    } for request, response in zip(requests, responses)])
+
+def _deserialize_cassette(data):
+    requests = [r['request'] for r in data]
+    responses = [r['response'] for r in data]
+    return requests, responses
+
 def _secure_write(path, contents):
     """
     We'll overwrite the old version securely by writing out a temporary
@@ -20,10 +32,13 @@ def _secure_write(path, contents):
         os.rename(name, path)
 
 def load_cassette(cassette_path):
-    return yaml.load(open(cassette_path), Loader=Loader)
+    data =  yaml.load(open(cassette_path), Loader=Loader)
+    return _deserialize_cassette(data)
 
-def save_cassette(cassette_path, data):
+def save_cassette(cassette_path, requests, responses):
     dirname, filename = os.path.split(cassette_path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    _secure_write(cassette_path, yaml.dump(data, Dumper=Dumper))
+    data = _serialize_cassette(requests, responses)
+    data = yaml.dump(data, Dumper=Dumper)
+    _secure_write(cassette_path, data)

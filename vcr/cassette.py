@@ -9,44 +9,38 @@ except ImportError:
 
 # Internal imports
 from .patch import install, reset
-from .files import load_cassette, save_cassette
+from .persist import load_cassette, save_cassette
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
     @classmethod
     def load(cls, path):
         '''Load in the cassette stored at the provided path'''
+        new_cassette = cls(path)
         try:
-            return cls(path, load_cassette(path))
+            requests, responses = load_cassette(path)
+            for request, response in zip(requests, responses):
+                new_cassette.append(request, response)
         except IOError:
-            return cls(path)
+            pass
+        return new_cassette
 
-    def __init__(self, path, data=None):
+    def __init__(self, path):
         self._path = path
-        self.requests = {}
+        self.data = {}
         self.play_counts = Counter()
-        if data:
-            self.deserialize(data)
-
-    def save(self, path):
-        '''Save this cassette to a path'''
-        save_cassette(path, self.serialize())
-
-    def serialize(self):
-        '''Return a serializable version of the cassette'''
-        return ([{
-            'request': req,
-            'response': res,
-        } for req, res in self.requests.iteritems()])
-
-    def deserialize(self, source):
-        '''Given a serialized version, load the requests'''
-        for r in source:
-            self.requests[r['request']] = r['response']
 
     @property
     def play_count(self):
         return sum(self.play_counts.values())
+
+    @property
+    def requests(self):
+        return self.data.keys()
+
+    @property
+    def responses(self):
+        return self.data.values()
 
     def mark_played(self, request):
         '''
@@ -56,22 +50,25 @@ class Cassette(object):
 
     def append(self, request, response):
         '''Add a pair of request, response to this cassette'''
-        self.requests[request] = response
+        self.data[request] = response
 
     def response(self, request):
         '''Find the response corresponding to a request'''
-        return self.requests[request]
+        return self.data[request]
+
+    def _save(self):
+        save_cassette(self._path, self.requests, self.responses)
 
     def __str__(self):
         return "<Cassette containing {0} recorded response(s)>".format(len(self))
 
     def __len__(self):
         '''Return the number of request / response pairs stored in here'''
-        return len(self.requests)
+        return len(self.data)
 
     def __contains__(self, request):
         '''Return whether or not a request has been stored'''
-        return request in self.requests
+        return request in self.data
 
     def __enter__(self):
         '''Patch the fetching libraries we know about'''
@@ -79,5 +76,5 @@ class Cassette(object):
         return self
 
     def __exit__(self, typ, value, traceback):
-        self.save(self._path)
+        self._save()
         reset()
