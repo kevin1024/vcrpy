@@ -47,6 +47,7 @@ class VCRConnectionMixin:
     def request(self, method, url, body=None, headers=None):
         '''Persist the request metadata in self._vcr'''
         self._request = Request(
+            protocol = self._protocol,
             host = self.host,
             port = self.port,
             method = method,
@@ -91,6 +92,7 @@ class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
     '''A Mocked class for HTTP requests'''
     # Can't use super since this is an old-style class
     _baseclass = HTTPConnection
+    _protocol = 'http'
 
     def __init__(self, *args, **kwargs):
         HTTPConnection.__init__(self, *args, **kwargs)
@@ -99,6 +101,7 @@ class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
 class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
     '''A Mocked class for HTTPS requests'''
     _baseclass = HTTPSConnection
+    _protocol = 'https'
 
     def __init__(self, *args, **kwargs):
         '''I overrode the init and copied a lot of the code from the parent
