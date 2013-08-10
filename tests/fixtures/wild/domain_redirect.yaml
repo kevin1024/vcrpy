@@ -8,6 +8,7 @@
     method: GET
     path: /
     port: 80
+    protocol: http
   response:
     body:
       string: !!binary |
@@ -104,11 +105,11 @@
         lh+1BgT4zWxAwHbpFns3Q+ARYKB2oNlA0iK/fblLKj9F2+3VYrD2AM1AaURhhwUgxV1b4KHf7lfi
         eG2v2lMJ4ArqfyC94cehOJSFuRNAWtVxe/sWkKH1Btyi2YyLKPqAaINPpT25O0Jb8Hw0oAk6jsMg
         jLxt6FMxFvrb9dY/+qN+3H70558CvtuPRM8Gv//4Bw4TxmFviN/KEXfDxX9qsfV/BBAejOZCAAA=
-    headers: {accept-ranges: bytes, age: '2019', cache-control: 'no-cache, must-revalidate,
+    headers: {accept-ranges: bytes, age: '3593', cache-control: 'no-cache, must-revalidate,
         s-maxage=3600', connection: keep-alive, content-encoding: gzip, content-length: '5300',
-      content-type: text/html, date: 'Sat, 10 Aug 2013 23:07:21 GMT', expires: 'Fri,
+      content-type: text/html, date: 'Sat, 10 Aug 2013 23:33:35 GMT', expires: 'Fri,
         15 Oct 2004 12:00:00 GMT', server: nginx, server-name: dalmozwww02.dal.moz.com,
-      vary: Accept-Encoding, via: 1.1 varnish, x-varnish: 2027532407 2027508286}
+      vary: Accept-Encoding, via: 1.1 varnish, x-varnish: 2027569899 2027508286}
     status: {code: 200, message: OK}
 - request: !!python/object:vcr.request.Request
     body: null
@@ -120,10 +121,11 @@
     method: GET
     path: /
     port: 80
+    protocol: http
   response:
     body: {string: "<html>\r\n<head><title>301 Moved Permanently</title></head>\r\n<body
         bgcolor=\"white\">\r\n<center><h1>301 Moved Permanently</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"}
     headers: {accept-ranges: bytes, age: '0', connection: keep-alive, content-length: '178',
-      content-type: text/html, date: 'Sat, 10 Aug 2013 23:07:20 GMT', location: 'http://moz.com/',
-      server: nginx, server-name: dalmozwww03.dal.moz.com, via: 1.1 varnish, x-varnish: '2027532404'}
+      content-type: text/html, date: 'Sat, 10 Aug 2013 23:33:35 GMT', location: 'http://moz.com/',
+      server: nginx, server-name: dalmozwww01.dal.moz.com, via: 1.1 varnish, x-varnish: '2027569892'}
     status: {code: 301, message: Moved Permanently}
