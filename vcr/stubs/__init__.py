@@ -50,7 +50,7 @@ class VCRConnectionMixin:
             host = self.host,
             port = self.port,
             method = method,
-            url = url,
+            path = url,
             body = body,
             headers = headers or {}
         )

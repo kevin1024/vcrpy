@@ -49,7 +49,7 @@ class Cassette(object):
         self.play_counts[request] += 1
 
     def append(self, request, response):
-        '''Add a pair of request, response to this cassette'''
+        '''Add a request, response pair to this cassette'''
         self.data[request] = response
 
     def response_of(self, request):
@@ -63,7 +63,7 @@ class Cassette(object):
         return "<Cassette containing {0} recorded response(s)>".format(len(self))
 
     def __len__(self):
-        '''Return the number of request / response pairs stored in here'''
+        '''Return the number of request,response pairs stored in here'''
         return len(self.data)
 
     def __contains__(self, request):
