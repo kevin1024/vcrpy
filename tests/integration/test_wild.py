@@ -9,7 +9,7 @@ def test_domain_redirect():
     # requests are considered identical, then we'll be stuck in a redirect
     # loop.
     url = 'http://seomoz.org/'
-    with vcr.use_cassette('domain_redirect.yaml') as cass:
+    with vcr.use_cassette('tests/fixtures/wild/domain_redirect.yaml') as cass:
         requests.get(url, headers={'User-Agent': 'vcrpy-test'})
         # Ensure that we've now served two responses. One for the original
         # redirect, and a second for the actual fetch
