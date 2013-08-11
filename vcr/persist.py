@@ -37,7 +37,7 @@ def load_cassette(cassette_path):
 
 def save_cassette(cassette_path, requests, responses):
     dirname, filename = os.path.split(cassette_path)
-    if not os.path.exists(dirname):
+    if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
     data = _serialize_cassette(requests, responses)
     data = yaml.dump(data, Dumper=Dumper)
