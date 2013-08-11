@@ -6,9 +6,10 @@
 
 import os
 import pytest
-requests = pytest.importorskip("requests")
 
 import vcr
+
+requests = pytest.importorskip("requests")
 
 @pytest.fixture(params=["https","http"])
 def scheme(request):
