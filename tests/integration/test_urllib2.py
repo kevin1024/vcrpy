@@ -1,137 +1,126 @@
 '''Integration tests with urllib2'''
 # coding=utf-8
 
-# Internal imports
-import vcr
-from .common import TestVCR
-
-# Testing urllib2 fetching
+# External imports
 import os
 import urllib2
 from urllib import urlencode
+import pytest
+
+# Internal imports
+import vcr
 
 
-class TestUrllib2(TestVCR):
-    '''Base class for tests for urllib2'''
-    fixtures = os.path.join('tests', 'fixtures', 'urllib2')
+@pytest.fixture(params=["https","http"])
+def scheme(request):
+    """
+    Fixture that returns both http and https
+    """
+    return request.param
 
+def test_response_code(scheme, tmpdir):
+    '''Ensure we can read a response code from a fetch'''
+    url = scheme + '://httpbin.org/'
+    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))) as cass:
+        # Ensure that this is empty to begin with
+        assert len(cass) == 0
+        assert cass.play_count == 0
+        assert urllib2.urlopen(url).getcode() == urllib2.urlopen(url).getcode()
+        # Ensure that we've now cached a single response
+        assert len(cass) == 1
+        assert cass.play_count == 1
 
-class TestUrllib2Http(TestUrllib2):
-    '''Tests for integration with urllib2'''
-    scheme = 'http'
+def test_random_body(scheme, tmpdir):
+    '''Ensure we can read the content, and that it's served from cache'''
+    url = scheme + '://httpbin.org/bytes/1024'
+    with vcr.use_cassette(str(tmpdir.join('body.yaml'))) as cass:
+        # Ensure that this is empty to begin with
+        assert len(cass) == 0
+        assert cass.play_count == 0
+        assert urllib2.urlopen(url).read() == urllib2.urlopen(url).read()
+        # Ensure that we've now cached a single response
+        assert len(cass) == 1
+        assert cass.play_count == 1
 
-    def test_response_code(self):
-        '''Ensure we can read a response code from a fetch'''
-        url = self.scheme + '://httpbin.org/'
-        with vcr.use_cassette(self.fixture('atts.yaml')) as cass:
-            # Ensure that this is empty to begin with
-            assert len(cass) == 0
-            assert cass.play_count == 0
-            assert urllib2.urlopen(url).getcode() == urllib2.urlopen(url).getcode()
-            # Ensure that we've now cached a single response
-            assert len(cass) == 1
-            assert cass.play_count == 1
+def test_response_headers(scheme, tmpdir):
+    '''Ensure we can get information from the response'''
+    url = scheme + '://httpbin.org/'
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+        # Ensure that this is empty to begin with
+        assert len(cass) == 0
+        assert cass.play_count == 0
+        assert urllib2.urlopen(url).info().items() == urllib2.urlopen(url).info().items()
+        # Ensure that we've now cached a single response
+        assert len(cass) == 1
 
-    def test_random_body(self):
-        '''Ensure we can read the content, and that it's served from cache'''
-        url = self.scheme + '://httpbin.org/bytes/1024'
-        with vcr.use_cassette(self.fixture('body.yaml')) as cass:
-            # Ensure that this is empty to begin with
-            self.assertEqual(len(cass), 0)
-            self.assertEqual(cass.play_count, 0)
+def test_multiple_requests(scheme, tmpdir):
+    '''Ensure that we can cache multiple requests'''
+    urls = [
+        scheme + '://httpbin.org/',
+        scheme + '://httpbin.org/get',
+        scheme + '://httpbin.org/bytes/1024'
+    ]
+    with vcr.use_cassette(str(tmpdir.join('multiple.yaml'))) as cass:
+        for index in range(len(urls)):
+            url = urls[index]
+            assert len(cass) == index
+            assert cass.play_count == index
             assert urllib2.urlopen(url).read() == urllib2.urlopen(url).read()
-            # Ensure that we've now cached a single response
-            self.assertEqual(len(cass), 1)
-            self.assertEqual(cass.play_count, 1)
+            assert len(cass) == index + 1
+            assert cass.play_count == index + 1
 
-    def test_response_headers(self):
-        '''Ensure we can get information from the response'''
-        url = self.scheme + '://httpbin.org/'
-        with vcr.use_cassette(self.fixture('headers.yaml')) as cass:
-            # Ensure that this is empty to begin with
-            self.assertEqual(len(cass), 0)
-            self.assertEqual(cass.play_count, 0)
-            self.assertEqual(
-                urllib2.urlopen(url).info().items(),
-                urllib2.urlopen(url).info().items())
-            # Ensure that we've now cached a single response
-            self.assertEqual(len(cass), 1)
+def test_get_data(scheme, tmpdir):
+    '''Ensure that it works with query data'''
+    data = urlencode({'some': 1, 'data': 'here'})
+    url = scheme + '://httpbin.org/get?' + data
+    with vcr.use_cassette(str(tmpdir.join('get_data.yaml'))) as cass:
+    # Ensure that this is empty to begin with
+        assert len(cass) == 0
+        assert cass.play_count == 0
+        res1 = urllib2.urlopen(url).read() 
+        res2 = urllib2.urlopen(url).read()
+        assert res1 == res2
+        # Ensure that we've now cached a single response
+        assert len(cass) == 1
+        assert cass.play_count == 1
 
-    def test_multiple_requests(self):
-        '''Ensure that we can cache multiple requests'''
-        urls = [
-            self.scheme + '://httpbin.org/',
-            self.scheme + '://httpbin.org/get',
-            self.scheme + '://httpbin.org/bytes/1024'
-        ]
-        with vcr.use_cassette(self.fixture('multiple.yaml')) as cass:
-            for index in range(len(urls)):
-                url = urls[index]
-                self.assertEqual(len(cass), index)
-                self.assertEqual(cass.play_count, index)
-                self.assertEqual(
-                    urllib2.urlopen(url).read(),
-                    urllib2.urlopen(url).read())
-                self.assertEqual(len(cass), index + 1)
-                self.assertEqual(cass.play_count, index + 1)
+def test_post_data(scheme, tmpdir):
+    '''Ensure that it works when posting data'''
+    data = urlencode({'some': 1, 'data': 'here'})
+    url = scheme + '://httpbin.org/post'
+    with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
+        # Ensure that this is empty to begin with
+        assert len(cass) == 0
+        assert cass.play_count == 0
+        res1 = urllib2.urlopen(url, data).read() 
+        res2 = urllib2.urlopen(url, data).read()
+        assert res1 == res2
+        # Ensure that we've now cached a single response
+        assert len(cass) == 1
+        assert cass.play_count == 1
 
-    def test_get_data(self):
-        '''Ensure that it works with query data'''
-        data = urlencode({'some': 1, 'data': 'here'})
-        url = self.scheme + '://httpbin.org/get?' + data
-        with vcr.use_cassette(self.fixture('get_data.yaml')) as cass:
-            # Ensure that this is empty to begin with
-            assert len(cass) == 0
-            assert cass.play_count == 0
-            res1 = urllib2.urlopen(url).read() 
-            res2 = urllib2.urlopen(url).read()
-            assert res1 == res2
-            # Ensure that we've now cached a single response
-            assert len(cass) == 1
-            assert cass.play_count == 1
+def test_post_unicode_data(scheme, tmpdir):
+    '''Ensure that it works when posting unicode data'''
+    data = urlencode({'snowman': u'☃'.encode('utf-8')})
+    url = scheme + '://httpbin.org/post'
+    with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
+        # Ensure that this is empty to begin with
+        assert len(cass) == 0
+        assert cass.play_count == 0
+        res1 = urllib2.urlopen(url, data).read() 
+        res2 = urllib2.urlopen(url, data).read()
+        assert res1 == res2
+        # Ensure that we've now cached a single response
+        assert len(cass) == 1
+        assert cass.play_count == 1
 
-    def test_post_data(self):
-        '''Ensure that it works when posting data'''
-        data = urlencode({'some': 1, 'data': 'here'})
-        url = self.scheme + '://httpbin.org/post'
-        with vcr.use_cassette(self.fixture('post_data.yaml')) as cass:
-            # Ensure that this is empty to begin with
-            self.assertEqual(len(cass), 0)
-            self.assertEqual(cass.play_count, 0)
-            self.assertEqual(
-                urllib2.urlopen(url, data).read(),
-                urllib2.urlopen(url, data).read())
-            # Ensure that we've now cached a single response
-            self.assertEqual(len(cass), 1)
-            self.assertEqual(cass.play_count, 1)
-
-    def test_post_unicode_data(self):
-        '''Ensure that it works when posting unicode data'''
-        data = urlencode({'snowman': u'☃'.encode('utf-8')})
-        url = self.scheme + '://httpbin.org/post'
-        with vcr.use_cassette(self.fixture('post_data.yaml')) as cass:
-            # Ensure that this is empty to begin with
-            self.assertEqual(len(cass), 0)
-            self.assertEqual(cass.play_count, 0)
-            self.assertEqual(
-                urllib2.urlopen(url, data).read(),
-                urllib2.urlopen(url, data).read())
-            # Ensure that we've now cached a single response
-            self.assertEqual(len(cass), 1)
-            self.assertEqual(cass.play_count, 1)
-
-
-class TestUrllib2Https(TestUrllib2Http):
-    '''Similar tests but for http status codes'''
-    scheme = 'https'
-
-    def test_cross_scheme(self):
-        '''Ensure that requests between schemes are treated separately'''
-        # First fetch a url under https, and then again under https and then
-        # ensure that we haven't served anything out of cache, and we have two
-        # requests / response pairs in the cassette
-        with vcr.use_cassette(self.fixture('cross_scheme.yaml')) as cass:
-            urllib2.urlopen('https://httpbin.org/')
-            urllib2.urlopen('http://httpbin.org/')
-            self.assertEqual(len(cass), 2)
-            self.assertEqual(cass.play_count, 0)
+def test_cross_scheme(tmpdir):
+    '''Ensure that requests between schemes are treated separately'''
+    # First fetch a url under https, and then again under https and then
+    # ensure that we haven't served anything out of cache, and we have two
+    # requests / response pairs in the cassette
+    with vcr.use_cassette(str(tmpdir.join('cross_scheme.yaml'))) as cass:
+        urllib2.urlopen('https://httpbin.org/')
+        urllib2.urlopen('http://httpbin.org/')
+        assert len(cass) == 2
+        assert cass.play_count == 0
