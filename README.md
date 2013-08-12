@@ -62,15 +62,15 @@ with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
 The Cassette object exposes the following properties which I consider
 part of the API.  The fields are as follows:
 
-* requests: A list of vcr.Request objects containing the requests made
+* `requests`: A list of vcr.Request objects containing the requests made
   while this cassette was being used, ordered by the order that the
   request was made.
-* responses: A list of the responses made.
-* play_count: The number of times this cassette has had a response
+* `responses`: A list of the responses made.
+* `play_count`: The number of times this cassette has had a response
   played back
-* play_counts: A collections.Counter showing the number of times each
+* `play_counts`: A collections.Counter showing the number of times each
   response has been played back, indexed by the request
-* response_of(request): Access the response for a given request.
+* `response_of(request)`: Access the response for a given request.
 
 
 
@@ -91,7 +91,7 @@ There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=
 * 0.1.0: *backwards incompatible release - delete your old cassette files*:  
   This release adds the ability to access the cassette to make assertions 
   on it, as well as a major code refactor thanks to @dlecocq.  It also
-  fixes a couple longstanding bugs with redirects and HTTPS.
+  fixes a couple longstanding bugs with redirects and HTTPS. [#3 and #4]
 * 0.0.4: If you have libyaml installed, vcrpy will use the c bindings
   instead.  Speed up your tests!  Thanks @dlecocq
 * 0.0.3: Add support for requests 1.2.3.  Support for older versions of requests dropped (thanks @vitormazzi and @bryanhelmig)
