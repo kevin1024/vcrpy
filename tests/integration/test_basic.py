@@ -30,3 +30,10 @@ def test_unpatch(tmpdir):
     urllib2.urlopen('http://httpbin.org/').read()
     assert cass.play_count == 0
 
+def test_basic_use(tmpdir):
+    '''
+    Copied from the docs 
+    '''
+    with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
+        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert 'Example domains' in response

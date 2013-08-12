@@ -22,7 +22,7 @@ import urllib2
 
 with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
     response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
-    assert 'Example Domains' in response
+    assert 'Example domains' in response
 ```
 
 Run this test once, and VCR.py will record the http request to
