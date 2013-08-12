@@ -55,8 +55,8 @@ with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
     response = urllib2.urlopen('http://www.zombo.com/').read()
     # cass should have 1 request inside it
     assert len(cass) == 1 
-    # the request host should be zombo.com
-    assert cass.requests.keys()[0].host == 'zombo.com'
+    # the request url should have been http://www.zombo.com/
+    assert cass.requests[0].url == 'http://www.zombo.com/'
 ```
 
 The Cassette object exposes the following properties which I consider
@@ -71,6 +71,16 @@ part of the API.  The fields are as follows:
 * `play_counts`: A collections.Counter showing the number of times each
   response has been played back, indexed by the request
 * `response_of(request)`: Access the response for a given request.
+
+The Request object has the following properties
+
+  * `URL`: The full url of the request, including the protocol.  Example: "http://www.google.com/"
+  * `path`: The path of the request.  For example "/" or "/home.html"
+  * `host`: The host of the request, for example "www.google.com"
+  * `port`: The port the request was made on
+  * `method` : The method used to make the request, for example "GET" or "POST"
+  * `protocol`: The protocol used to make the request (http or https)
+  * `body`: The body of the request, usually empty except for POST / PUT / etc
 
 
 
