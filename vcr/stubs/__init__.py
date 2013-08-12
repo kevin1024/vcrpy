@@ -29,8 +29,6 @@ class VCRHTTPResponse(object):
             # I have to add it to both.
             self.msg.headers.append("{0}:{1}".format(key, val))
 
-        #self.msg.headers = ["{0}:{1}".format(k,v) for k, v in self.recorded_response['headers'].iteritems()]
-
         self.length = self.msg.getheader('content-length') or None
 
     def read(self, *args, **kwargs):
@@ -55,8 +53,8 @@ class VCRConnectionMixin:
     cassette = None
 
     def request(self, method, url, body=None, headers=None):
-        '''Persist the request metadata in self._vcr'''
-        self._request = Request(
+        '''Persist the request metadata in self._vcr_request'''
+        self._vcr_request = Request(
             protocol = self._protocol,
             host = self.host,
             port = self.port,
@@ -68,7 +66,7 @@ class VCRConnectionMixin:
 
         # Check if we have a cassette set, and if we have a response saved.
         # If so, there's no need to keep processing and we can bail
-        if self.cassette and self._request in self.cassette:
+        if self.cassette and self._vcr_request in self.cassette:
             return
 
         # Otherwise, we should submit the request
@@ -79,11 +77,11 @@ class VCRConnectionMixin:
         '''Retrieve a the response'''
         # Check to see if the cassette has a response for this request. If so,
         # then return it
-        if self._request in self.cassette:
-            response = self.cassette.response_of(self._request)
+        if self._vcr_request in self.cassette:
+            response = self.cassette.response_of(self._vcr_request)
             # Alert the cassette to the fact that we've served another
             # response for the provided requests
-            self.cassette.mark_played(self._request)
+            self.cassette.mark_played(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
             # Otherwise, we made an actual request, and should return the response
@@ -94,7 +92,7 @@ class VCRConnectionMixin:
                 'headers': dict(response.getheaders()),
                 'body': {'string': response.read()},
             }
-            self.cassette.append(self._request, response)
+            self.cassette.append(self._vcr_request, response)
         return VCRHTTPResponse(response)
 
 
