@@ -12,7 +12,6 @@ class Request(object):
 
     @property
     def url(self):
-        print self.protocol, self.host, self.path
         return "{0}://{1}{2}".format(self.protocol, self.host, self.path)
 
     def __key(self):
@@ -26,3 +25,6 @@ class Request(object):
 
     def __str__(self):
         return "<Request ({0}) {1}>".format(self.method, self.url)
+
+    def __repr__(self):
+        return self.__str__()
