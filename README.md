@@ -1,17 +1,22 @@
 #VCR.py
 
-This is a start at a Python version of [Ruby's VCR library](https://github.com/myronmarston/vcr).
+This is a Python version of [Ruby's VCR library](https://github.com/myronmarston/vcr).
 
 [![Build Status](https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master)](http://travis-ci.org/kevin1024/vcrpy)
 
-##What it is supposed to do
+##What it does
 Simplify testing by recording all HTTP interactions and saving them to
-"cassette" files, which are just yaml files.  Then when you run your tests
-again, they all just hit the text files instead of the internet.  This speeds up
+"cassette" files, which are yaml files containing the contents of your
+requests and responses.  Then when you run your tests again, they all 
+just hit the text files instead of the internet.  This speeds up
 your tests and lets you work offline.
 
+If the server you are testing against ever changes its API, all you need
+to do is delete your existing cassette files, and run your tests again.
+All of the mocked responses will be updated with the new API.
+
 ##Compatibility Notes
-This should work with Python 2.6 and 2.7.  It also seems to work with [pypy](http://pypy.org).
+This should work with Python 2.6 and 2.7, and [pypy](http://pypy.org).
 
 Currently I've only tested this with urllib2, urllib3, and requests.  It's known to *NOT WORK* with urllib.
 
