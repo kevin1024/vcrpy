@@ -3,9 +3,10 @@
 import os
 import tempfile
 try:
-    from collections import Counter
+    from collections import Counter, OrderedDict
 except ImportError:
-    from .counter import Counter
+    from .compat.counter import Counter
+    from .compat.ordereddict import OrderedDict
 
 # Internal imports
 from .patch import install, reset
@@ -27,7 +28,7 @@ class Cassette(object):
 
     def __init__(self, path):
         self._path = path
-        self.data = {}
+        self.data = OrderedDict()
         self.play_counts = Counter()
 
     @property
