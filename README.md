@@ -5,7 +5,7 @@ This is a Python version of [Ruby's VCR library](https://github.com/myronmarston
 [![Build Status](https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master)](http://travis-ci.org/kevin1024/vcrpy)
 
 ##What it does
-Simplify testing by recording all HTTP interactions and saving them to
+Simplify and speed up testing HTTP by recording all HTTP interactions and saving them to
 "cassette" files, which are yaml files containing the contents of your
 requests and responses.  Then when you run your tests again, they all 
 just hit the text files instead of the internet.  This speeds up
