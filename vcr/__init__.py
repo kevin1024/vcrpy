@@ -2,5 +2,5 @@
 from .cassette import Cassette
 
 # Also, make a 'load' function available
-def use_cassette(path):
-    return Cassette.load(path)
+def use_cassette(path, **kwargs):
+    return Cassette.load(path, **kwargs)

@@ -37,3 +37,9 @@ def test_basic_use(tmpdir):
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
         response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
         assert 'Example domains' in response
+
+def test_basic_json_use(tmpdir):
+    '''Ensure you can load a json serialized cassette'''
+    with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.json', serializer='json'):
+        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert 'Example domains' in response
