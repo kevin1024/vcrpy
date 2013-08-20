@@ -59,9 +59,11 @@ with my_vcr.use_cassette('test.json'):
 Otherwise, you can override options each time you use a cassette.  
 
 ```python
-with my_vcr.use_cassette('test.yml', serializer='json'):
+with vcr.use_cassette('test.yml', serializer='json'):
     # your http code here
 ```
+
+Note: Per-cassette overrides take precedence over the global config.
 
 ## Advanced Features
 
