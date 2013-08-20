@@ -38,6 +38,31 @@ pass, even if you are offline, or iana.org goes down for maintenance) and
 accurate (the response will contain the same headers and body you get from a
 real request).
 
+## Configuration
+
+If you don't like VCR's defaults, you can set options by instantiating a
+VCR class and setting the options on it.
+
+```python
+
+import vcr
+
+my_vcr = vcr.VCR(
+    serializer = 'json',
+    cassette_library_dir = 'fixtures/cassettes',
+)
+
+with my_vcr.use_cassette('test.json'):
+    # your http code here
+```
+
+Otherwise, you can override options each time you use a cassette.  
+
+```python
+with my_vcr.use_cassette('test.yml', serializer='json'):
+    # your http code here
+```
+
 ## Advanced Features
 
 If you want, VCR.py can return information about the cassette it is
@@ -82,7 +107,20 @@ The Request object has the following properties
   * `protocol`: The protocol used to make the request (http or https)
   * `body`: The body of the request, usually empty except for POST / PUT / etc
 
+## Register your own serializer
 
+```
+import vcr
+
+MySerializer(object):
+    """
+    Must implement serialize() and deserialize() functions
+    """
+    pass
+
+my_vcr = VCR()
+my_vcr.register_serializer(MySerializer)
+```
 
 ##Installation
 
