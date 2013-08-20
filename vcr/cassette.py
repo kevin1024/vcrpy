@@ -21,7 +21,7 @@ class Cassette(object):
         new_cassette._load()
         return new_cassette
 
-    def __init__(self, path, serializer="yaml"):
+    def __init__(self, path, serializer):
         self._path = path
         self._serializer = serializer
         self.data = OrderedDict()

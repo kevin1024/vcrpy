@@ -116,12 +116,12 @@ import vcr
 
 MySerializer(object):
     """
-    Must implement serialize() and deserialize() functions
+    Must implement serialize() and deserialize() classmethods
     """
     pass
 
 my_vcr = VCR()
-my_vcr.register_serializer(MySerializer)
+my_vcr.register_serializer('my', MySerializer)
 ```
 
 ##Installation
