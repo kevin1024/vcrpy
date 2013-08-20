@@ -1,3 +1,4 @@
+import os
 from .cassette import Cassette
 from .serializers.yamlserializer import YamlSerializer
 from .serializers.jsonserializer import JSONSerializer
