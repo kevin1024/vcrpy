@@ -11,6 +11,7 @@ except ImportError:
 # Internal imports
 from .patch import install, reset
 from .persist import load_cassette, save_cassette
+from .serializers.yamlserializer import YamlSerializer
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
@@ -21,7 +22,7 @@ class Cassette(object):
         new_cassette._load()
         return new_cassette
 
-    def __init__(self, path, serializer):
+    def __init__(self, path, serializer=YamlSerializer):
         self._path = path
         self._serializer = serializer
         self.data = OrderedDict()
