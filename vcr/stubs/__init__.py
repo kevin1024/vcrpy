@@ -1,7 +1,7 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
 from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
-from StringIO import StringIO
+from cStringIO import StringIO
 
 from vcr.request import Request
 
