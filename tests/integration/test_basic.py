@@ -37,3 +37,45 @@ def test_basic_use(tmpdir):
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
         response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
         assert 'Example domains' in response
+
+def test_basic_json_use(tmpdir):
+    '''Ensure you can load a json serialized cassette'''
+    with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.json', serializer='json'):
+        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert 'Example domains' in response
+
+def test_patched_content(tmpdir):
+    '''Ensure that what you pull from a cassette is what came from the request'''
+    with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
+        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert cass.play_count == 0
+
+    with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
+        response2 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert cass.play_count == 1
+        cass._save(force=True)
+
+    with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
+        response3 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert cass.play_count == 1
+
+    assert response == response2
+    assert response2 == response3
+
+def test_patched_content_json(tmpdir):
+    '''Ensure that what you pull from a json cassette is what came from the request'''
+    with vcr.use_cassette(str(tmpdir.join('synopsis.json')), serializer='json') as cass:
+        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert cass.play_count == 0
+
+    with vcr.use_cassette(str(tmpdir.join('synopsis.json')), serializer='json') as cass:
+        response2 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert cass.play_count == 1
+        cass._save(force=True)
+
+    with vcr.use_cassette(str(tmpdir.join('synopsis.json')), serializer='json') as cass:
+        response3 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        assert cass.play_count == 1
+
+    assert response == response2
+    assert response2 == response3

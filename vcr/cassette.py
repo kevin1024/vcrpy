@@ -15,21 +15,18 @@ from .persist import load_cassette, save_cassette
 class Cassette(object):
     '''A container for recorded requests and responses'''
     @classmethod
-    def load(cls, path):
+    def load(cls, path, **kwargs):
         '''Load in the cassette stored at the provided path'''
-        new_cassette = cls(path)
-        try:
-            requests, responses = load_cassette(path)
-            for request, response in zip(requests, responses):
-                new_cassette.append(request, response)
-        except IOError:
-            pass
+        new_cassette = cls(path, **kwargs)
+        new_cassette._load()
         return new_cassette
 
-    def __init__(self, path):
+    def __init__(self, path, serializer="yaml"):
         self._path = path
+        self._serializer = serializer
         self.data = OrderedDict()
         self.play_counts = Counter()
+        self.dirty = False
 
     @property
     def play_count(self):
@@ -52,13 +49,25 @@ class Cassette(object):
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
         self.data[request] = response
+        self.dirty = True
 
     def response_of(self, request):
         '''Find the response corresponding to a request'''
         return self.data[request]
 
-    def _save(self):
-        save_cassette(self._path, self.requests, self.responses)
+    def _save(self, force=False):
+        if force or self.dirty:
+            save_cassette(self._path, self.requests, self.responses, serializer=self._serializer)
+            self.dirty = False
+
+    def _load(self):
+        try:
+            requests, responses = load_cassette(self._path, serializer=self._serializer)
+            for request, response in zip(requests, responses):
+                self.append(request, response)
+            self.dirty = False
+        except IOError:
+            pass
 
     def __str__(self):
         return "<Cassette containing {0} recorded response(s)>".format(len(self))
