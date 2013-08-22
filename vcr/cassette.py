@@ -25,6 +25,7 @@ class Cassette(object):
         self._serializer = serializer
         self.data = OrderedDict()
         self.play_counts = Counter()
+        self.dirty = False
 
     @property
     def play_count(self):
@@ -47,22 +48,26 @@ class Cassette(object):
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
         self.data[request] = response
+        self.dirty = True
 
     def response_of(self, request):
         '''Find the response corresponding to a request'''
         return self.data[request]
 
-    def _save(self):
-        save_cassette(self._path, self._as_dict(), serializer=self._serializer)
-
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}
+
+    def _save(self, force=False):
+        if force or self.dirty:
+            save_cassette(self._path, self._as_dict(), serializer=self._serializer)
+            self.dirty = False
 
     def _load(self):
         try:
             requests, responses = load_cassette(self._path, serializer=self._serializer)
             for request, response in zip(requests, responses):
                 self.append(request, response)
+            self.dirty = False
         except IOError:
             pass
 
