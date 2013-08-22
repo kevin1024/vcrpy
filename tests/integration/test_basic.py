@@ -51,11 +51,12 @@ def test_patched_content(tmpdir):
         assert cass.play_count == 0
 
     with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
-        response2= urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        response2 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
         assert cass.play_count == 1
+        cass._save(force=True)
 
     with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
-        response3= urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        response3 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
         assert cass.play_count == 1
 
     assert response == response2
@@ -68,11 +69,12 @@ def test_patched_content_json(tmpdir):
         assert cass.play_count == 0
 
     with vcr.use_cassette(str(tmpdir.join('synopsis.json')), serializer='json') as cass:
-        response2= urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        response2 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
         assert cass.play_count == 1
+        cass._save(force=True)
 
     with vcr.use_cassette(str(tmpdir.join('synopsis.json')), serializer='json') as cass:
-        response3= urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        response3 = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
         assert cass.play_count == 1
 
     assert response == response2
