@@ -53,7 +53,10 @@ class Cassette(object):
         return self.data[request]
 
     def _save(self):
-        save_cassette(self._path, self.requests, self.responses, serializer=self._serializer)
+        save_cassette(self._path, self._as_dict(), serializer=self._serializer)
+
+    def _as_dict(self):
+        return {"requests": self.requests, "responses": self.responses}
 
     def _load(self):
         try:

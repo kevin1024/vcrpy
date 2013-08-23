@@ -114,8 +114,8 @@ The Request object has the following properties
 Don't like JSON or YAML?  That's OK, VCR.py can serialize to any format
 you would like.  Create your own module or class instance with 2 methods:
 
- * `def load(cassette_path)`
- * `def dumps(requests, responses)`
+ * `def deserialize(cassette_string)`
+ * `def serialize(cassette_dict)`
 
 Finally, register your class with VCR to use your
 new serializer.
@@ -125,11 +125,11 @@ import vcr
 
 BogoSerializer(object):
     """
-    Must implement load() and dumps() methods
+    Must implement serialize() and deserialize() methods
     """
     pass
 
-my_vcr = VCR()
+my_vcr = vcr.VCR()
 my_vcr.register_serializer('bogo', BogoSerializer())
 
 with my_vcr.use_cassette('test.bogo', serializer='bogo'):
