@@ -112,10 +112,10 @@ The Request object has the following properties
 ## Register your own serializer
 
 Don't like JSON or YAML?  That's OK, VCR.py can serialize to any format
-you would like.  Create your own class that has 2 classmethods:
+you would like.  Create your own module or class instance with 2 methods:
 
- * `def load(cls, cassette_path)`
- * `def dumps(cls, requests, responses)`
+ * `def load(cassette_path)`
+ * `def dumps(requests, responses)`
 
 Finally, register your class with VCR to use your
 new serializer.
@@ -125,12 +125,12 @@ import vcr
 
 BogoSerializer(object):
     """
-    Must implement load() and dumps() classmethods
+    Must implement load() and dumps() methods
     """
     pass
 
 my_vcr = VCR()
-my_vcr.register_serializer('bogo', BogoSerializer)
+my_vcr.register_serializer('bogo', BogoSerializer())
 
 with my_vcr.use_cassette('test.bogo', serializer='bogo'):
     # your http here

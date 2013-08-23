@@ -1,15 +1,14 @@
 import os
 from .cassette import Cassette
-from .serializers.yamlserializer import YamlSerializer
-from .serializers.jsonserializer import JSONSerializer
+from .serializers import yamlserializer, jsonserializer
 
 class VCR(object):
     def __init__(self, serializer='yaml', cassette_library_dir=None):
         self.serializer = serializer
         self.cassette_library_dir = cassette_library_dir
         self.serializers = {
-            'yaml': YamlSerializer,
-            'json': JSONSerializer,
+            'yaml': yamlserializer,
+            'json': jsonserializer,
         }
 
     def _get_serializer(self, serializer_name):

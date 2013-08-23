@@ -1,7 +1,5 @@
 '''The container for recorded requests and responses'''
 
-import os
-import tempfile
 try:
     from collections import Counter, OrderedDict
 except ImportError:
@@ -11,7 +9,7 @@ except ImportError:
 # Internal imports
 from .patch import install, reset
 from .persist import load_cassette, save_cassette
-from .serializers.yamlserializer import YamlSerializer
+from .serializers import yamlserializer
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
@@ -22,7 +20,7 @@ class Cassette(object):
         new_cassette._load()
         return new_cassette
 
-    def __init__(self, path, serializer=YamlSerializer):
+    def __init__(self, path, serializer=yamlserializer):
         self._path = path
         self._serializer = serializer
         self.data = OrderedDict()
