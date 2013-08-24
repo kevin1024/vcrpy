@@ -2,6 +2,7 @@ import os
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
 
+
 class VCR(object):
     def __init__(self, serializer='yaml', cassette_library_dir=None):
         self.serializer = serializer
@@ -15,13 +16,18 @@ class VCR(object):
         try:
             serializer = self.serializers[serializer_name]
         except KeyError:
-            print "Serializer {0} doesn't exist or isn't registered".format(serializer_name)
+            print "Serializer {0} doesn't exist or isn't registered".format(
+                serializer_name
+            )
             raise KeyError
         return serializer
 
     def use_cassette(self, path, **kwargs):
         serializer_name = kwargs.get('serializer', self.serializer)
-        cassette_library_dir = kwargs.get('cassette_library_dir', self.cassette_library_dir)
+        cassette_library_dir = kwargs.get(
+            'cassette_library_dir',
+            self.cassette_library_dir
+        )
 
         if cassette_library_dir:
             path = os.path.join(cassette_library_dir, path)
@@ -34,4 +40,3 @@ class VCR(object):
 
     def register_serializer(self, name, serializer):
         self.serializers[name] = serializer
-

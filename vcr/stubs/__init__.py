@@ -18,7 +18,7 @@ class VCRHTTPResponse(object):
         self._content = StringIO(self.recorded_response['body']['string'])
 
         # We are skipping the header parsing (they have already been parsed
-        # at this point) and directly  adding the headers to the header 
+        # at this point) and directly  adding the headers to the header
         # container, so just pass an empty StringIO.
         self.msg = HTTPMessage(StringIO(''))
 
@@ -55,13 +55,13 @@ class VCRConnectionMixin:
     def request(self, method, url, body=None, headers=None):
         '''Persist the request metadata in self._vcr_request'''
         self._vcr_request = Request(
-            protocol = self._protocol,
-            host = self.host,
-            port = self.port,
-            method = method,
-            path = url,
-            body = body,
-            headers = headers or {}
+            protocol=self._protocol,
+            host=self.host,
+            port=self.port,
+            method=method,
+            path=url,
+            body=body,
+            headers=headers or {}
         )
 
         # Check if we have a cassette set, and if we have a response saved.
@@ -84,11 +84,14 @@ class VCRConnectionMixin:
             self.cassette.mark_played(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
-            # Otherwise, we made an actual request, and should return the response
-            # we got from the actual connection
+            # Otherwise, we made an actual request, and should return the
+            # response we got from the actual connection
             response = HTTPConnection.getresponse(self)
             response = {
-                'status': {'code': response.status, 'message': response.reason},
+                'status': {
+                    'code': response.status,
+                    'message': response.reason
+                },
                 'headers': dict(response.getheaders()),
                 'body': {'string': response.read()},
             }

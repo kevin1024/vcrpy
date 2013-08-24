@@ -12,12 +12,14 @@ import vcr
 
 from assertions import assert_cassette_empty, assert_cassette_has_one_response
 
-@pytest.fixture(params=["https","http"])
+
+@pytest.fixture(params=["https", "http"])
 def scheme(request):
     """
     Fixture that returns both http and https
     """
     return request.param
+
 
 def test_response_code(scheme, tmpdir):
     '''Ensure we can read a response code from a fetch'''
@@ -29,6 +31,7 @@ def test_response_code(scheme, tmpdir):
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
 
+
 def test_random_body(scheme, tmpdir):
     '''Ensure we can read the content, and that it's served from cache'''
     url = scheme + '://httpbin.org/bytes/1024'
@@ -39,15 +42,19 @@ def test_random_body(scheme, tmpdir):
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
 
+
 def test_response_headers(scheme, tmpdir):
     '''Ensure we can get information from the response'''
     url = scheme + '://httpbin.org/'
     with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
-        assert urllib2.urlopen(url).info().items() == urllib2.urlopen(url).info().items()
+        open1 = urllib2.urlopen(url).info().items()
+        open2 = urllib2.urlopen(url).info().items()
+        assert open1 == open2
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
+
 
 def test_multiple_requests(scheme, tmpdir):
     '''Ensure that we can cache multiple requests'''
@@ -65,6 +72,7 @@ def test_multiple_requests(scheme, tmpdir):
             assert len(cass) == index + 1
             assert cass.play_count == index + 1
 
+
 def test_get_data(scheme, tmpdir):
     '''Ensure that it works with query data'''
     data = urlencode({'some': 1, 'data': 'here'})
@@ -72,12 +80,13 @@ def test_get_data(scheme, tmpdir):
     with vcr.use_cassette(str(tmpdir.join('get_data.yaml'))) as cass:
     # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
-        res1 = urllib2.urlopen(url).read() 
+        res1 = urllib2.urlopen(url).read()
         res2 = urllib2.urlopen(url).read()
         assert res1 == res2
         # Ensure that we've now cached a single response
         assert len(cass) == 1
         assert cass.play_count == 1
+
 
 def test_post_data(scheme, tmpdir):
     '''Ensure that it works when posting data'''
@@ -86,11 +95,12 @@ def test_post_data(scheme, tmpdir):
     with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
-        res1 = urllib2.urlopen(url, data).read() 
+        res1 = urllib2.urlopen(url, data).read()
         res2 = urllib2.urlopen(url, data).read()
         assert res1 == res2
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
+
 
 def test_post_unicode_data(scheme, tmpdir):
     '''Ensure that it works when posting unicode data'''
@@ -99,11 +109,12 @@ def test_post_unicode_data(scheme, tmpdir):
     with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
-        res1 = urllib2.urlopen(url, data).read() 
+        res1 = urllib2.urlopen(url, data).read()
         res2 = urllib2.urlopen(url, data).read()
         assert res1 == res2
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
+
 
 def test_cross_scheme(tmpdir):
     '''Ensure that requests between schemes are treated separately'''

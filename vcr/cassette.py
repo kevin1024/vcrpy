@@ -11,6 +11,7 @@ from .patch import install, reset
 from .persist import load_cassette, save_cassette
 from .serializers import yamlserializer
 
+
 class Cassette(object):
     '''A container for recorded requests and responses'''
     @classmethod
@@ -59,12 +60,19 @@ class Cassette(object):
 
     def _save(self, force=False):
         if force or self.dirty:
-            save_cassette(self._path, self._as_dict(), serializer=self._serializer)
+            save_cassette(
+                self._path,
+                self._as_dict(),
+                serializer=self._serializer
+            )
             self.dirty = False
 
     def _load(self):
         try:
-            requests, responses = load_cassette(self._path, serializer=self._serializer)
+            requests, responses = load_cassette(
+                self._path,
+                serializer=self._serializer
+            )
             for request, response in zip(requests, responses):
                 self.append(request, response)
             self.dirty = False
@@ -72,7 +80,9 @@ class Cassette(object):
             pass
 
     def __str__(self):
-        return "<Cassette containing {0} recorded response(s)>".format(len(self))
+        return "<Cassette containing {0} recorded response(s)>".format(
+            len(self)
+        )
 
     def __len__(self):
         '''Return the number of request,response pairs stored in here'''

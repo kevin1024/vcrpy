@@ -1,6 +1,7 @@
 import tempfile
 import os
 
+
 class FilesystemPersister(object):
     @classmethod
     def _secure_write(cls, path, contents):

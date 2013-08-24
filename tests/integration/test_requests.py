@@ -2,18 +2,14 @@
 
 # coding=utf-8
 
-# Internal imports
-
 import os
 import pytest
-
 import vcr
-
 from assertions import assert_cassette_empty, assert_cassette_has_one_response
-
 requests = pytest.importorskip("requests")
 
-@pytest.fixture(params=["https","http"])
+
+@pytest.fixture(params=["https", "http"])
 def scheme(request):
     """
     Fixture that returns both http and https
@@ -31,6 +27,7 @@ def test_status_code(scheme, tmpdir):
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
 
+
 def test_headers(scheme, tmpdir):
     '''Ensure that we can read the headers back'''
     url = scheme + '://httpbin.org/'
@@ -41,6 +38,7 @@ def test_headers(scheme, tmpdir):
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
 
+
 def test_body(tmpdir, scheme):
     '''Ensure the responses are all identical enough'''
     url = scheme + '://httpbin.org/bytes/1024'
@@ -50,6 +48,7 @@ def test_body(tmpdir, scheme):
         assert requests.get(url).content == requests.get(url).content
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
+
 
 def test_auth(tmpdir, scheme):
     '''Ensure that we can handle basic auth'''
@@ -65,6 +64,7 @@ def test_auth(tmpdir, scheme):
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
 
+
 def test_auth_failed(tmpdir, scheme):
     '''Ensure that we can save failed auth statuses'''
     auth = ('user', 'wrongwrongwrong')
@@ -79,6 +79,7 @@ def test_auth_failed(tmpdir, scheme):
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
 
+
 def test_post(tmpdir, scheme):
     '''Ensure that we can post and cache the results'''
     data = {'key1': 'value1', 'key2': 'value2'}
@@ -86,9 +87,12 @@ def test_post(tmpdir, scheme):
     with vcr.use_cassette(str(tmpdir.join('redirect.yaml'))) as cass:
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
-        assert requests.post(url, data).content == requests.post(url, data).content
+        req1 = requests.post(url, data).content
+        req2 = requests.post(url, data).content
+        assert req1 == req2
         # Ensure that we've now cached a single response
         assert_cassette_has_one_response(cass)
+
 
 def test_redirects(tmpdir, scheme):
     '''Ensure that we can handle redirects'''
@@ -102,6 +106,7 @@ def test_redirects(tmpdir, scheme):
         assert len(cass) == 2
         assert cass.play_count == 2
 
+
 def test_cross_scheme(tmpdir, scheme):
     '''Ensure that requests between schemes are treated separately'''
     # First fetch a url under http, and then again under https and then
@@ -112,4 +117,3 @@ def test_cross_scheme(tmpdir, scheme):
         requests.get('http://httpbin.org/')
         assert cass.play_count == 0
         assert len(cass) == 2
-

@@ -59,7 +59,7 @@ def reset():
     '''Undo all the patching'''
     httplib.HTTPConnection = httplib.HTTP._connection_class = _HTTPConnection
     httplib.HTTPSConnection = httplib.HTTPS._connection_class = \
-            _HTTPSConnection
+        _HTTPSConnection
     try:
         import requests.packages.urllib3.connectionpool as cpool
         cpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection

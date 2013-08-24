@@ -18,5 +18,8 @@ def serialize(cassette_dict):
     data = ([{
         'request': request,
         'response': response,
-    } for request, response in zip(cassette_dict['requests'], cassette_dict['responses'])])
+    } for request, response in zip(
+        cassette_dict['requests'],
+        cassette_dict['responses']
+    )])
     return yaml.dump(data, Dumper=Dumper)

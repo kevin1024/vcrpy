@@ -15,7 +15,14 @@ class Request(object):
         return "{0}://{1}{2}".format(self.protocol, self.host, self.path)
 
     def __key(self):
-        return (self.host, self.port, self.method, self.path, self.body, self.headers)
+        return (
+            self.host,
+            self.port,
+            self.method,
+            self.path,
+            self.body,
+            self.headers
+        )
 
     def __hash__(self):
         return hash(self.__key())

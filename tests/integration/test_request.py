@@ -1,6 +1,7 @@
 import urllib2
 import vcr
 
+
 def test_recorded_request_url_with_redirected_request(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('test.yml'))) as cass:
         assert len(cass) == 0
