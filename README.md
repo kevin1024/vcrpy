@@ -1,6 +1,6 @@
 #VCR.py
 
-![vcr.py](https://raw.github.com/kevin1024/vcrpy/config/vcr.png)
+![vcr.py](https://raw.github.com/kevin1024/vcrpy/master/vcr.png)
 
 This is a Python version of [Ruby's VCR library](https://github.com/myronmarston/vcr).
 
