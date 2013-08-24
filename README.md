@@ -162,7 +162,7 @@ There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=
 * 0.2.0: Added configuration API, which lets you configure some settings
   on VCR (see the README). Also, VCR no longer saves cassettes if they
   haven't changed at all and supports JSON as well as YAML 
-  (thanks @sirpengi)
+  (thanks @sirpengi).  Added amazing new skeumorphic logo, thanks @hairarrow.
 * 0.1.0: *backwards incompatible release - delete your old cassette files*:  
   This release adds the ability to access the cassette to make assertions 
   on it, as well as a major code refactor thanks to @dlecocq.  It also
