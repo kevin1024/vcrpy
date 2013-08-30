@@ -159,6 +159,7 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.2.1: Fixed missing modules in setup.py
 * 0.2.0: Added configuration API, which lets you configure some settings
   on VCR (see the README). Also, VCR no longer saves cassettes if they
   haven't changed at all and supports JSON as well as YAML 
