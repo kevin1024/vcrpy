@@ -25,7 +25,11 @@ except ImportError:  # pragma: no cover
 
 
 def install(cassette):
-    '''Install a cassette in lieu of actuall fetching'''
+    """
+    Patch all the HTTPConnections references we can find!
+    This replaces the actual HTTPConnection with a VCRHTTPConnection
+    object which knows how to save to / read from cassettes
+    """
     httplib.HTTPConnection = httplib.HTTP._connection_class = VCRHTTPConnection
     httplib.HTTPSConnection = httplib.HTTPS._connection_class = (
         VCRHTTPSConnection)

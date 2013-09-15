@@ -64,14 +64,79 @@ class VCRConnectionMixin:
             headers=headers or {}
         )
 
-        # Check if we have a cassette set, and if we have a response saved.
-        # If so, there's no need to keep processing and we can bail
-        if self.cassette and self._vcr_request in self.cassette:
-            return
+        # Note: The request may not actually be finished at this point, so
+        # I'm not sending the actual request until getresponse().  This
+        # allows me to compare the entire length of the response to see if it
+        # exists in the cassette.
 
-        # Otherwise, we should submit the request
-        self._baseclass.request(
-            self, method, url, body=body, headers=headers or {})
+    def send(self, data):
+        '''
+        This method is called after request(), to add additional data to the
+        body of the request.  So if that happens, let's just append the data
+        onto the most recent request in the cassette.
+        '''
+        self._vcr_request.body = (self._vcr_request.body or '') + data
+
+    def _send_request(self, method, url, body, headers):
+        """
+        Coppy+pasted from python stdlib 2.6 source because it
+        has a call to self.send() which I have overridden
+        #stdlibproblems #fml
+        """
+        header_names = dict.fromkeys([k.lower() for k in headers])
+        skips = {}
+        if 'host' in header_names:
+            skips['skip_host'] = 1
+        if 'accept-encoding' in header_names:
+            skips['skip_accept_encoding'] = 1
+
+        self.putrequest(method, url, **skips)
+
+        if body and ('content-length' not in header_names):
+            thelen = None
+            try:
+                thelen = str(len(body))
+            except TypeError, te:
+                # If this is a file-like object, try to
+                # fstat its file descriptor
+                import os
+                try:
+                    thelen = str(os.fstat(body.fileno()).st_size)
+                except (AttributeError, OSError):
+                    # Don't send a length if this failed
+                    if self.debuglevel > 0:
+                        print "Cannot stat!!"
+
+            if thelen is not None:
+                self.putheader('Content-Length', thelen)
+        for hdr, value in headers.iteritems():
+            self.putheader(hdr, value)
+        self.endheaders()
+
+        if body:
+            self._baseclass.send(self, body)
+
+    def _send_output(self, message_body=None):
+        """
+        Copy-and-pasted from httplib, just so I can modify the self.send()
+        calls to call the superclass's send(), since I had to override the
+        send() behavior, since send() is both an external and internal
+        httplib API.
+        """
+        self._buffer.extend(("", ""))
+        msg = "\r\n".join(self._buffer)
+        del self._buffer[:]
+        # If msg and message_body are sent in a single send() call,
+        # it will avoid performance problems caused by the interaction
+        # between delayed ack and the Nagle algorithm.
+        if isinstance(message_body, str):
+            msg += message_body
+            message_body = None
+        self._baseclass.send(self, msg)
+        if message_body is not None:
+            #message_body was not a string (i.e. it is a file) and
+            #we must run the risk of Nagle
+            self._baseclass.send(self, message_body)
 
     def getresponse(self, _=False):
         '''Retrieve a the response'''
@@ -84,9 +149,22 @@ class VCRConnectionMixin:
             self.cassette.mark_played(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
-            # Otherwise, we made an actual request, and should return the
-            # response we got from the actual connection
-            response = HTTPConnection.getresponse(self)
+            # Otherwise, we should send the request, then get the response
+            # and return it.
+
+            # make the request
+            self._baseclass.request(
+                self,
+                method=self._vcr_request.method,
+                url=self._vcr_request.url,
+                body=self._vcr_request.body,
+                headers=dict(self._vcr_request.headers or {})
+            )
+
+            # get the response
+            response = self._baseclass.getresponse(self)
+
+            # put the response into the cassette
             response = {
                 'status': {
                     'code': response.status,

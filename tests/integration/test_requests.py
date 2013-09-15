@@ -84,7 +84,7 @@ def test_post(tmpdir, scheme):
     '''Ensure that we can post and cache the results'''
     data = {'key1': 'value1', 'key2': 'value2'}
     url = scheme + '://httpbin.org/post'
-    with vcr.use_cassette(str(tmpdir.join('redirect.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))) as cass:
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
         req1 = requests.post(url, data).content
@@ -97,7 +97,7 @@ def test_post(tmpdir, scheme):
 def test_redirects(tmpdir, scheme):
     '''Ensure that we can handle redirects'''
     url = scheme + '://httpbin.org/redirect-to?url=bytes/1024'
-    with vcr.use_cassette(str(tmpdir.join('redirect.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))) as cass:
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
         assert requests.get(url).content == requests.get(url).content
