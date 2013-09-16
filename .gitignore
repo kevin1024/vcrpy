@@ -6,3 +6,4 @@ dist/
 .coverage
 *.egg-info/
 pytestdebug.log
+.idea/
