@@ -1,12 +1,12 @@
 import re
 
 pattern = r"multipart/[^;]*;\s*boundary=(.*)"
-constant_boundary_string = "ffeac16b6e044eec98d4176a95e68663-vcr-constant-multipart-boundary"
+constant_boundary_string = "ffeac16b6e044eec98d4176a95e68663-"
 
 
 def replace_multipart_boundaries_with_constant(header, body):
     """
-    TODO Does not account for boundaries defined with quote marks or has newlines
+    TODO Does not account for boundaries that span multiple lines
     """
     def replace_all(text, dic):
         for i, j in dic.iteritems():
@@ -23,12 +23,13 @@ def replace_multipart_boundaries_with_constant(header, body):
     if ct:
         header_boundary_possibly_with_quotes = re.search(pattern, header[ct]).group(1)
         if header_boundary_possibly_with_quotes:
-            header_boundary = strip_quotes(header_boundary_possibly_with_quotes)
-            header[ct] = header[ct].replace(header_boundary, constant_boundary_string)
-            boundaries = [header_boundary]
+            boundaries = [strip_quotes(header_boundary_possibly_with_quotes)]
             body_boundaries = [strip_quotes(x) for x in re.findall(pattern, body)]
             boundaries.extend(body_boundaries)
-            body = replace_all(body, {b: constant_boundary_string for b in boundaries})
+            replacements = {b: constant_boundary_string + str(idx) for (b, idx) in
+                            zip(boundaries, range(0, len(boundaries)))}
+            header[ct] = replace_all(header[ct], replacements)
+            body = replace_all(body, replacements)
     return header, body
 
 
@@ -42,7 +43,7 @@ class Request(object):
         self.method = method
         self.path = path
         # make headers a frozenset so it will be hashable
-        self.headers = frozenset(headers)
+        self.headers = frozenset(headers.items())
 
     @property
     def url(self):
