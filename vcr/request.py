@@ -1,14 +1,48 @@
-class Request(object):
+import re
 
+pattern = r"multipart/[^;]*;\s*boundary=(.*)"
+constant_boundary_string = "ffeac16b6e044eec98d4176a95e68663-vcr-constant-multipart-boundary"
+
+
+def replace_multipart_boundaries_with_constant(header, body):
+    """
+    TODO Does not account for boundaries defined with quote marks or has newlines
+    """
+    def replace_all(text, dic):
+        for i, j in dic.iteritems():
+            text = text.replace(i, j)
+        return text
+
+    def strip_quotes(string):
+        if string.startswith('"') and string.endswith('"'):
+            string = string[1:-1]
+        return string
+
+    # Find the exact capitalisation of 'Content-Type' in the header dictionary and access that
+    ct = next((x for x in header if x.lower() == 'content-type'), None)
+    if ct:
+        header_boundary_possibly_with_quotes = re.search(pattern, header[ct]).group(1)
+        if header_boundary_possibly_with_quotes:
+            header_boundary = strip_quotes(header_boundary_possibly_with_quotes)
+            header[ct] = header[ct].replace(header_boundary, constant_boundary_string)
+            boundaries = [header_boundary]
+            body_boundaries = [strip_quotes(x) for x in re.findall(pattern, body)]
+            boundaries.extend(body_boundaries)
+            body = replace_all(body, {b: constant_boundary_string for b in boundaries})
+    return header, body
+
+
+class Request(object):
     def __init__(self, protocol, host, port, method, path, body, headers):
+        # Compute a multipart-boundary agnostic body and headers; use these instead.
+        header, self.body = replace_multipart_boundaries_with_constant(headers, body)
         self.protocol = protocol
         self.host = host
         self.port = port
         self.method = method
         self.path = path
-        self.body = body
         # make headers a frozenset so it will be hashable
-        self.headers = frozenset(headers.items())
+        self.headers = frozenset(headers)
 
     @property
     def url(self):

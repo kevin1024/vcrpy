@@ -4,7 +4,7 @@ from vcr.request import Request
 # Generates a body with places where the multipart boundaries are removed.
 # Snippet taken from http://www.w3.org/TR/html401/interact/forms.html#h-17.13.4
 def fake_multipart_message(boundary1, boundary2):
-    return ({"Content-Type": "multipart/form-data; boundary=AaB03x".format(boundary1)}, """
+    return ({"Content-Type": "multipart/form-data; boundary=\"{0}\"".format(boundary1)}, """
     --{0}
     Content-Disposition: form-data; name="submit-name"
 
@@ -39,11 +39,17 @@ def test_str():
     str(req) == '<Request (GET) http://www.google.com>'
 
 
-def test_hash():
-    # Create two POST requests that submit
+def test_hash_is_multipart_boundary_agnostic():
+    header1, body1 = fake_multipart_message('foo', 'bar')
+    header2, body2 = fake_multipart_message('baz', 'quux')
+    req1 = Request('http', 'www.google.com', 80, 'POST', '/', body1, header1)
+    req2 = Request('http', 'www.google.com', 80, 'POST', '/', body2, header2)
+    assert hash(req1) == hash(req2)
+
+
+def test_eq():
     header1, body1 = fake_multipart_message('foo', 'bar')
     header2, body2 = fake_multipart_message('baz', 'quux')
     req1 = Request('http', 'www.google.com', 80, 'POST', '/', body1, header1)
     req2 = Request('http', 'www.google.com', 80, 'POST', '/', body2, header2)
     assert req1 == req2
-    assert hash(req1) == hash(req2)
