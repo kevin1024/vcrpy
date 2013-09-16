@@ -14,6 +14,7 @@ from .serializers import yamlserializer
 
 class Cassette(object):
     '''A container for recorded requests and responses'''
+
     @classmethod
     def load(cls, path, **kwargs):
         '''Load in the cassette stored at the provided path'''
@@ -21,12 +22,13 @@ class Cassette(object):
         new_cassette._load()
         return new_cassette
 
-    def __init__(self, path, serializer=yamlserializer):
+    def __init__(self, path, serializer=yamlserializer, record_mode='once'):
         self._path = path
         self._serializer = serializer
         self.data = OrderedDict()
         self.play_counts = Counter()
         self.dirty = False
+        self.record_mode = record_mode
 
     @property
     def play_count(self):
@@ -39,6 +41,20 @@ class Cassette(object):
     @property
     def responses(self):
         return self.data.values()
+
+    @property
+    def rewound(self):
+        """
+        If the cassette has already been recorded in another session, and has
+        been loaded again fresh from disk, it has been "rewound".  This means
+        that it should be write-only, depending on the record mode specified
+        """
+        return not self.dirty and self.play_count
+
+    @property
+    def write_protected(self):
+        return self.rewound and self.record_mode == 'once' or \
+            self.record_mode == 'none'
 
     def mark_played(self, request):
         '''

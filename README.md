@@ -52,6 +52,7 @@ import vcr
 my_vcr = vcr.VCR(
     serializer = 'json',
     cassette_library_dir = 'fixtures/cassettes',
+    record_mode = 'once',
 )
 
 with my_vcr.use_cassette('test.json'):
@@ -61,11 +62,52 @@ with my_vcr.use_cassette('test.json'):
 Otherwise, you can override options each time you use a cassette.  
 
 ```python
-with vcr.use_cassette('test.yml', serializer='json'):
+with vcr.use_cassette('test.yml', serializer='json', record_mode='once'):
     # your http code here
 ```
 
 Note: Per-cassette overrides take precedence over the global config.
+
+## Record Modes
+VCR supports 4 record modes (with the same behavior as Ruby's VCR):
+
+### once
+
+ * Replay previously recorded interactions.
+ * Record new interactions if there is no cassette file.
+ * Cause an error to be raised for new requests if there is a cassette file.
+ 
+It is similar to the :new_episodes record mode, but will prevent new,
+unexpected requests from being made (i.e. because the request URI
+changed).
+
+once is the default record mode, used when you do not set one.
+
+### new_episodes
+
+* Record new interactions.
+* Replay previously recorded interactions.
+It is similar to the once record mode, but will always record new
+interactions, even if you have an existing recorded one that is similar,
+but not identical.
+
+This was the default behavior in versions < 0.3.0
+
+### none
+
+* Replay previously recorded interactions.
+* Cause an error to be raised for any new requests.
+This is useful when your code makes potentially dangerous
+HTTP requests. The none record mode guarantees that no
+new HTTP requests will be made.
+
+### all
+
+* Record new interactions.
+* Never replay previously recorded interactions.
+This can be temporarily used to force VCR to re-record
+a cassette (i.e. to ensure the responses are not out of date)
+or can be used when you simply want to log all HTTP requests.
 
 ## Advanced Features
 
@@ -159,6 +201,16 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.3.0: *Backwards incompatible release* - Added support for record
+  modes, and changed the default recording behavior to the "once" record
+  mode.  Please see the documentation on record modes for more.  Also,
+  improved the httplib mocking to add support for the `HTTPConnection.send()`
+  method.  This means that requests won't actually be sent until the
+  response is read, since I need to record the entire request in order
+  to match up the appropriate response.  I don't think this should cause
+  any issues unless you are sending requests without ever loading the
+  response (which none of the standard httplib wrappers do, as far as I
+  know.
 * 0.2.1: Fixed missing modules in setup.py
 * 0.2.0: Added configuration API, which lets you configure some settings
   on VCR (see the README). Also, VCR no longer saves cassettes if they

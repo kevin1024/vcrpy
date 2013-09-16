@@ -4,13 +4,17 @@ from .serializers import yamlserializer, jsonserializer
 
 
 class VCR(object):
-    def __init__(self, serializer='yaml', cassette_library_dir=None):
+    def __init__(self,
+                 serializer='yaml',
+                 cassette_library_dir=None,
+                 record_mode="once"):
         self.serializer = serializer
         self.cassette_library_dir = cassette_library_dir
         self.serializers = {
             'yaml': yamlserializer,
             'json': jsonserializer,
         }
+        self.record_mode = record_mode
 
     def _get_serializer(self, serializer_name):
         try:
@@ -34,6 +38,7 @@ class VCR(object):
 
         merged_config = {
             "serializer": self._get_serializer(serializer_name),
+            "record_mode": kwargs.get('record_mode', self.record_mode),
         }
 
         return Cassette.load(path, **merged_config)

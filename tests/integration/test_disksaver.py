@@ -45,7 +45,7 @@ def test_disk_saver_write(tmpdir):
     # the mtime doesn't change
     time.sleep(1)
 
-    with vcr.use_cassette(fname) as cass:
+    with vcr.use_cassette(fname, record_mode='any') as cass:
         urllib2.urlopen('http://www.iana.org/domains/reserved').read()
         urllib2.urlopen('http://httpbin.org/').read()
         assert cass.play_count == 1
