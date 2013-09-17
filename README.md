@@ -270,7 +270,8 @@ There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=
   to match up the appropriate response.  I don't think this should cause
   any issues unless you are sending requests without ever loading the
   response (which none of the standard httplib wrappers do, as far as I
-  know.
+  know.  Thanks to @fatuhoku for some of the ideas and the motivation 
+  behind this release.
 * 0.2.1: Fixed missing modules in setup.py
 * 0.2.0: Added configuration API, which lets you configure some settings
   on VCR (see the README). Also, VCR no longer saves cassettes if they
