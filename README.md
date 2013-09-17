@@ -53,6 +53,7 @@ my_vcr = vcr.VCR(
     serializer = 'json',
     cassette_library_dir = 'fixtures/cassettes',
     record_mode = 'once',
+    match_on = ['url', 'method'],
 )
 
 with my_vcr.use_cassette('test.json'):
@@ -67,6 +68,28 @@ with vcr.use_cassette('test.yml', serializer='json', record_mode='once'):
 ```
 
 Note: Per-cassette overrides take precedence over the global config.
+
+## Request matching
+
+Request matching is configurable and allows you to change which requests
+VCR considers identical.  The default behavior is `['url', method']`
+which means that requests with both the same URL and method (ie POST or
+GET) are considered identical.
+
+This can be configured by changing the `match_on` setting.
+
+The following options are available :
+
+ * method (for example, POST or GET)
+ * url (the full URL, including the protocol)
+ * host (the hostname of the server receiving the request)
+ * path (excluding the hostname)
+ * body (the entire request body)
+ * headers (the headers of the request)
+
+If these options don't work for you, you can also register your own
+request matcher.  This is described in the Advanced section of this
+README.
 
 ## Record Modes
 VCR supports 4 record modes (with the same behavior as Ruby's VCR):
@@ -188,6 +211,41 @@ with my_vcr.use_cassette('test.bogo'):
 
 ```
 
+## Register your own request matcher
+
+Create your own method with the following signature
+
+```python
+def my_matcher(r1, r2):
+```    
+
+Your method receives the two requests and must return True if they
+match, False if they don't.
+
+Finally, register your method with VCR to use your
+new request matcher.
+
+```
+import vcr
+
+def jurassic_matcher(r1, r2):
+    return r1.url == r2.url and 'JURASSIC PARK' in r1.body
+
+my_vcr = vcr.VCR()
+my_vcr.register_matcher('jurassic', jurassic_matcher)
+
+with my_vcr.use_cassette('test.yml', match_on=['jurassic']):
+    # your http here
+
+# After you register, you can set the default match_on to use your new matcher
+
+my_vcr.match_on = ['jurassic']
+
+with my_vcr.use_cassette('test.yml'):
+    # your http here
+
+```
+
 ##Installation
 
 VCR.py is a package on PyPI, so you can `pip install vcrpy` (first you may need to `brew install libyaml` [[Homebrew](http://mxcl.github.com/homebrew/)])
@@ -203,7 +261,9 @@ There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=
 ##Changelog
 * 0.3.0: *Backwards incompatible release* - Added support for record
   modes, and changed the default recording behavior to the "once" record
-  mode.  Please see the documentation on record modes for more.  Also,
+  mode.  Please see the documentation on record modes for more.  Added
+  support for custom request matching, and changed the default request
+  matching behavior to match only on the URL and method. Also,
   improved the httplib mocking to add support for the `HTTPConnection.send()`
   method.  This means that requests won't actually be sent until the
   response is read, since I need to record the entire request in order

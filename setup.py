@@ -39,7 +39,7 @@ setup(name='vcrpy',
       },
       install_requires=['PyYAML'],
       license='MIT',
-      tests_require=['pytest'],
+      tests_require=['pytest','mock'],
       cmdclass={'test': PyTest},
       classifiers=[
           'Development Status :: 3 - Alpha',

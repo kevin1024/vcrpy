@@ -1,6 +1,7 @@
 import os
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
+from .matchers import method, url, host, path, headers, body
 
 
 class VCR(object):
@@ -9,10 +10,19 @@ class VCR(object):
                  cassette_library_dir=None,
                  record_mode="once"):
         self.serializer = serializer
+        self.match_on = ['url', 'method']
         self.cassette_library_dir = cassette_library_dir
         self.serializers = {
             'yaml': yamlserializer,
             'json': jsonserializer,
+        }
+        self.matchers = {
+            'method': method,
+            'url': url,
+            'host': host,
+            'path': path,
+            'headers': headers,
+            'body': body,
         }
         self.record_mode = record_mode
 
@@ -26,8 +36,19 @@ class VCR(object):
             raise KeyError
         return serializer
 
+    def _get_matchers(self, matcher_names):
+        try:
+            matchers = [self.matchers[m] for m in matcher_names]
+        except KeyError:
+            print "Matcher {0} doesn't exist or isn't registered".format(
+                matcher_name
+            )
+            raise KeyError
+        return matchers
+
     def use_cassette(self, path, **kwargs):
         serializer_name = kwargs.get('serializer', self.serializer)
+        matcher_names = kwargs.get('match_on', self.match_on)
         cassette_library_dir = kwargs.get(
             'cassette_library_dir',
             self.cassette_library_dir
@@ -38,6 +59,7 @@ class VCR(object):
 
         merged_config = {
             "serializer": self._get_serializer(serializer_name),
+            "match_on": self._get_matchers(matcher_names),
             "record_mode": kwargs.get('record_mode', self.record_mode),
         }
 
@@ -45,3 +67,6 @@ class VCR(object):
 
     def register_serializer(self, name, serializer):
         self.serializers[name] = serializer
+
+    def register_matcher(self, name, matcher):
+        self.matchers[name] = matcher

@@ -1,5 +1,6 @@
 import pytest
 import yaml
+import mock
 from vcr.cassette import Cassette
 
 
@@ -46,18 +47,24 @@ def test_cassette_len():
     assert len(a) == 2
 
 
+def _mock_requests_match(request1, request2, matchers):
+    return request1 == request2
+
+@mock.patch('vcr.cassette.requests_match', _mock_requests_match)
 def test_cassette_contains():
     a = Cassette('test')
     a.append('foo', 'bar')
     assert 'foo' in a
 
 
+@mock.patch('vcr.cassette.requests_match', _mock_requests_match)
 def test_cassette_response_of():
     a = Cassette('test')
     a.append('foo', 'bar')
     assert a.response_of('foo') == 'bar'
 
 
+@mock.patch('vcr.cassette.requests_match', _mock_requests_match)
 def test_cassette_get_missing_response():
     a = Cassette('test')
     with pytest.raises(KeyError):

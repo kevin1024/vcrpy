@@ -10,6 +10,7 @@ except ImportError:
 from .patch import install, reset
 from .persist import load_cassette, save_cassette
 from .serializers import yamlserializer
+from .matchers import requests_match, url, method
 
 
 class Cassette(object):
@@ -22,10 +23,17 @@ class Cassette(object):
         new_cassette._load()
         return new_cassette
 
-    def __init__(self, path, serializer=yamlserializer, record_mode='once'):
+    def __init__(self,
+                 path,
+                 serializer=yamlserializer,
+                 record_mode='once',
+                 match_on=[url, method]):
         self._path = path
         self._serializer = serializer
-        self.data = OrderedDict()
+        self._match_on = match_on
+
+        # self.data is the list of (req, resp) tuples
+        self.data = []
         self.play_counts = Counter()
         self.dirty = False
         self.record_mode = record_mode
@@ -36,11 +44,11 @@ class Cassette(object):
 
     @property
     def requests(self):
-        return self.data.keys()
+        return [request for (request, response) in self.data]
 
     @property
     def responses(self):
-        return self.data.values()
+        return [response for (request, response) in self.data]
 
     @property
     def rewound(self):
@@ -64,12 +72,25 @@ class Cassette(object):
 
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
-        self.data[request] = response
+        self.data.append((request, response))
         self.dirty = True
 
     def response_of(self, request):
-        '''Find the response corresponding to a request'''
-        return self.data[request]
+        '''
+        Find the response corresponding to a request
+
+        '''
+        responses = []
+        for stored_request, response in self.data:
+            if requests_match(request, stored_request, self._match_on):
+                responses.append(response)
+        index = self.play_counts[request]
+        try:
+            return responses[index]
+        except IndexError:
+            # I decided that a KeyError is the best exception to raise
+            # if the cassette doesn't contain the request asked for.
+            raise KeyError
 
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}
@@ -106,7 +127,10 @@ class Cassette(object):
 
     def __contains__(self, request):
         '''Return whether or not a request has been stored'''
-        return request in self.data
+        for stored_request, response in self.data:
+            if requests_match(stored_request, request, self._match_on):
+                return True
+        return False
 
     def __enter__(self):
         '''Patch the fetching libraries we know about'''
