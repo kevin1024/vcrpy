@@ -45,3 +45,9 @@ def test_flickr_multipart_upload():
         assert len(cass) == 1
         _pretend_to_be_flickr_library()
         assert cass.play_count == 1
+
+def test_flickr_should_respond_with_200(tmpdir):
+    testfile = str(tmpdir.join('flickr.yml'))
+    with vcr.use_cassette(testfile):
+        r = requests.post("http://api.flickr.com/services/upload")
+        assert r.status_code == 200

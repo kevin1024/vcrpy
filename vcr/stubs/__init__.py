@@ -79,7 +79,7 @@ class VCRConnectionMixin:
 
     def _send_request(self, method, url, body, headers):
         """
-        Coppy+pasted from python stdlib 2.6 source because it
+        Copy+pasted from python stdlib 2.6 source because it
         has a call to self.send() which I have overridden
         #stdlibproblems #fml
         """
@@ -160,7 +160,7 @@ class VCRConnectionMixin:
             self._baseclass.request(
                 self,
                 method=self._vcr_request.method,
-                url=self._vcr_request.url,
+                url=self._vcr_request.path,
                 body=self._vcr_request.body,
                 headers=dict(self._vcr_request.headers or {})
             )

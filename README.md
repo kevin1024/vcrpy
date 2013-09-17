@@ -259,6 +259,8 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.3.1: Fix issue causing full paths to be sent on the HTTP request
+  line.
 * 0.3.0: *Backwards incompatible release* - Added support for record
   modes, and changed the default recording behavior to the "once" record
   mode.  Please see the documentation on record modes for more.  Added
