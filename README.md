@@ -187,7 +187,7 @@ you would like.  Create your own module or class instance with 2 methods:
 Finally, register your class with VCR to use your
 new serializer.
 
-```
+```python
 import vcr
 
 BogoSerializer(object):
@@ -225,7 +225,7 @@ match, False if they don't.
 Finally, register your method with VCR to use your
 new request matcher.
 
-```
+```python
 import vcr
 
 def jurassic_matcher(r1, r2):
