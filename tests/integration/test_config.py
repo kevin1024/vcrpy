@@ -34,3 +34,14 @@ def test_override_set_cassette_library_dir(tmpdir):
 
     assert os.path.exists(str(tmpdir.join('subdir2').join('test.json')))
     assert not os.path.exists(str(tmpdir.join('subdir').join('test.json')))
+
+
+def test_override_match_on(tmpdir):
+    my_vcr = vcr.VCR(match_on=['method'])
+
+    with my_vcr.use_cassette(str(tmpdir.join('test.json'))) as cass:
+        urllib2.urlopen('http://httpbin.org/')
+        urllib2.urlopen('http://httpbin.org/get')
+
+    assert len(cass) == 1
+    assert cass.play_count == 1
