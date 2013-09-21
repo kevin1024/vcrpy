@@ -8,9 +8,11 @@ class VCR(object):
     def __init__(self,
                  serializer='yaml',
                  cassette_library_dir=None,
-                 record_mode="once"):
+                 record_mode="once",
+                 match_on=None,
+                 ):
         self.serializer = serializer
-        self.match_on = ['url', 'method']
+        self.match_on = match_on if match_on != None else ['url', 'method']
         self.cassette_library_dir = cassette_library_dir
         self.serializers = {
             'yaml': yamlserializer,
