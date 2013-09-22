@@ -19,7 +19,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='vcrpy',
-      version='0.3.1',
+      version='0.3.2',
       description="A Python port of Ruby's VCR to make mocking HTTP easier",
       author='Kevin McCarthy',
       author_email='me@kevinmccarthy.org',
