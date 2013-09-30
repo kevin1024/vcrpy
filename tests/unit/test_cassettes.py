@@ -50,6 +50,7 @@ def test_cassette_len():
 def _mock_requests_match(request1, request2, matchers):
     return request1 == request2
 
+
 @mock.patch('vcr.cassette.requests_match', _mock_requests_match)
 def test_cassette_contains():
     a = Cassette('test')

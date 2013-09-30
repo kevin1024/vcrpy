@@ -9,7 +9,7 @@ class VCR(object):
                  serializer='yaml',
                  cassette_library_dir=None,
                  record_mode="once",
-                 match_on=['url','method'],
+                 match_on=['url', 'method'],
                  ):
         self.serializer = serializer
         self.match_on = match_on
@@ -42,10 +42,9 @@ class VCR(object):
         try:
             matchers = [self.matchers[m] for m in matcher_names]
         except KeyError:
-            print "Matcher {0} doesn't exist or isn't registered".format(
-                matcher_name
+            raise KeyError(
+                "Matcher {0} doesn't exist or isn't registered".format(m)
             )
-            raise KeyError
         return matchers
 
     def use_cassette(self, path, **kwargs):

@@ -259,6 +259,8 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.3.3: Bugfix for error message when an unreigstered custom matcher
+  was used
 * 0.3.2: Fix issue with new config syntax and the `match_on` parameter.
   Thanks, @chromy!
 * 0.3.1: Fix issue causing full paths to be sent on the HTTP request

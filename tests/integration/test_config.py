@@ -1,6 +1,7 @@
 import os
 import json
 import urllib2
+import pytest
 import vcr
 
 
@@ -45,3 +46,11 @@ def test_override_match_on(tmpdir):
 
     assert len(cass) == 1
     assert cass.play_count == 1
+
+
+def test_missing_matcher():
+    my_vcr = vcr.VCR()
+    my_vcr.register_matcher("awesome", object)
+    with pytest.raises(KeyError):
+        with my_vcr.use_cassette("test.yaml", match_on=['notawesome']):
+            pass

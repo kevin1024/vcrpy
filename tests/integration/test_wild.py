@@ -46,6 +46,7 @@ def test_flickr_multipart_upload():
         _pretend_to_be_flickr_library()
         assert cass.play_count == 1
 
+
 def test_flickr_should_respond_with_200(tmpdir):
     testfile = str(tmpdir.join('flickr.yml'))
     with vcr.use_cassette(testfile):
