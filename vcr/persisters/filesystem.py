@@ -13,7 +13,7 @@ class FilesystemPersister(object):
         fd, name = tempfile.mkstemp(dir=dirname, prefix=filename)
         with os.fdopen(fd, 'w') as fout:
             fout.write(contents)
-            os.rename(name, path)
+        os.rename(name, path)
 
     @classmethod
     def write(cls, cassette_path, data):
