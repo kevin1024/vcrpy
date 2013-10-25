@@ -259,6 +259,7 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.3.4: Bugfix: close file before renaming it.  This fixes an issue on Windows.  Thanks @smallcode for the fix.
 * 0.3.3: Bugfix for error message when an unreigstered custom matcher
   was used
 * 0.3.2: Fix issue with new config syntax and the `match_on` parameter.
