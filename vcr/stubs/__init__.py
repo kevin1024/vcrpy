@@ -77,6 +77,22 @@ class VCRConnectionMixin:
         '''
         self._vcr_request.body = (self._vcr_request.body or '') + data
 
+    def close(self):
+        self._restore_socket()
+	self._baseclass.close(self)
+
+    def _restore_socket(self):
+        """
+	Since some libraries (REQUESTS!!) decide to set options on
+	connection.socket, I need to delete the socket attribute
+	(which makes requests think this is a AppEngine connection)
+	and then restore it when I want to make the actual request.
+	This function restores it to its standard initial value
+	(which is None)
+        """
+	if not hasattr(self, 'sock'):
+            self.sock = None
+
     def _send_request(self, method, url, body, headers):
         """
         Copy+pasted from python stdlib 2.6 source because it
@@ -132,6 +148,7 @@ class VCRConnectionMixin:
         if isinstance(message_body, str):
             msg += message_body
             message_body = None
+	self._restore_socket()
         self._baseclass.send(self, msg)
         if message_body is not None:
             #message_body was not a string (i.e. it is a file) and
@@ -156,7 +173,10 @@ class VCRConnectionMixin:
             # Otherwise, we should send the request, then get the response
             # and return it.
 
-            # make the request
+	    # restore sock's value to None, since we need a real socket
+	    self._restore_socket()
+
+	    #make the actual request
             self._baseclass.request(
                 self,
                 method=self._vcr_request.method,
@@ -189,6 +209,8 @@ class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
 
     def __init__(self, *args, **kwargs):
         HTTPConnection.__init__(self, *args, **kwargs)
+	# see VCRConnectionMixin._restore_socket for the motivation here
+	del self.sock
 
 
 class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
@@ -203,3 +225,5 @@ class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
         HTTPConnection.__init__(self, *args, **kwargs)
         self.key_file = kwargs.pop('key_file', None)
         self.cert_file = kwargs.pop('cert_file', None)
+	# see VCRConnectionMixin._restore_socket for the motivation here
+	del self.sock
