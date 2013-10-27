@@ -36,7 +36,7 @@ def install(cassette):
     httplib.HTTPConnection.cassette = cassette
     httplib.HTTPSConnection.cassette = cassette
 
-    # patch requests
+    # patch requests v1.x
     try:
         import requests.packages.urllib3.connectionpool as cpool
         from .stubs.requests_stubs import VCRVerifiedHTTPSConnection
@@ -44,6 +44,11 @@ def install(cassette):
         cpool.VerifiedHTTPSConnection.cassette = cassette
         cpool.HTTPConnection = VCRHTTPConnection
         cpool.HTTPConnection.cassette = cassette
+    # patch requests v2.x
+        cpool.HTTPConnectionPool.ConnectionCls = VCRHTTPConnection
+        cpool.HTTPConnectionPool.cassette = cassette
+        cpool.HTTPSConnectionPool.ConnectionCls = VCRHTTPSConnection
+        cpool.HTTPSConnectionPool.cassette = cassette
     except ImportError:  # pragma: no cover
         pass
 
@@ -68,6 +73,8 @@ def reset():
         import requests.packages.urllib3.connectionpool as cpool
         cpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection
         cpool.HTTPConnection = _HTTPConnection
+        cpool.HTTPConnectionPool.ConnectionCls = _HTTPConnection
+        cpool.HTTPSConnectionPool.ConnectionCls = _HTTPSConnection
     except ImportError:  # pragma: no cover
         pass
 
@@ -75,5 +82,7 @@ def reset():
         import urllib3.connectionpool as cpool
         cpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection
         cpool.HTTPConnection = _HTTPConnection
+        cpool.HTTPConnectionPool.ConnectionCls = _HTTPConnection
+        cpool.HTTPSConnectionPool.ConnectionCls = _HTTPSConnection
     except ImportError:  # pragma: no cover
         pass
