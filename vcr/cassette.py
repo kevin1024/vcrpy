@@ -80,17 +80,12 @@ class Cassette(object):
         Find the response corresponding to a request
 
         '''
-        responses = []
         for stored_request, response in self.data:
             if requests_match(request, stored_request, self._match_on):
-                responses.append(response)
-        index = self.play_counts[request]
-        try:
-            return responses[index]
-        except IndexError:
-            # I decided that a KeyError is the best exception to raise
-            # if the cassette doesn't contain the request asked for.
-            raise KeyError
+                return response
+        # I decided that a KeyError is the best exception to raise
+        # if the cassette doesn't contain the request asked for.
+        raise KeyError
 
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}
