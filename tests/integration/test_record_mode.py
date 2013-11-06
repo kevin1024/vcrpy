@@ -32,6 +32,14 @@ def test_once_record_mode_two_times(tmpdir):
         response = urllib2.urlopen('http://httpbin.org/').read()
         response = urllib2.urlopen('http://httpbin.org/').read()
 
+def test_once_mode_three_times(tmpdir):
+    testfile = str(tmpdir.join('recordmode.yml'))
+    with vcr.use_cassette(testfile, record_mode="once"):
+	# get three same files
+        response1 = urllib2.urlopen('http://httpbin.org/').read()
+        response2 = urllib2.urlopen('http://httpbin.org/').read()
+        response2 = urllib2.urlopen('http://httpbin.org/').read()
+
 def test_new_episodes_record_mode(tmpdir):
     testfile = str(tmpdir.join('recordmode.yml'))
 
