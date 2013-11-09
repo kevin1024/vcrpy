@@ -195,6 +195,9 @@ class VCRConnectionMixin:
 
             # but first see if we should decode it
             if headers.get('content-encoding', None) == 'gzip':
+                # requests 1.x decodes after Response is built
+                # so remove the gzip header so it doesn't try twice
+                _ = headers.pop('content-encoding')
                 body = gzip.GzipFile(fileobj=StringIO(body)).read()
 
             response = {
