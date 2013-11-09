@@ -36,6 +36,7 @@ class Cassette(object):
         self.data = []
         self.play_counts = Counter()
         self.dirty = False
+        self.rewound = False
         self.record_mode = record_mode
 
     @property
@@ -51,24 +52,9 @@ class Cassette(object):
         return [response for (request, response) in self.data]
 
     @property
-    def rewound(self):
-        """
-        If the cassette has already been recorded in another session, and has
-        been loaded again fresh from disk, it has been "rewound".  This means
-        that it should be write-only, depending on the record mode specified
-        """
-        return not self.dirty and self.play_count
-
-    @property
     def write_protected(self):
         return self.rewound and self.record_mode == 'once' or \
             self.record_mode == 'none'
-
-    def mark_played(self, request):
-        '''
-        Alert the cassette of a request that's been played
-        '''
-        self.play_counts[request] += 1
 
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
@@ -80,17 +66,14 @@ class Cassette(object):
         Find the response corresponding to a request
 
         '''
-        responses = []
-        for stored_request, response in self.data:
+        for index, (stored_request, response) in enumerate(self.data):
             if requests_match(request, stored_request, self._match_on):
-                responses.append(response)
-        index = self.play_counts[request]
-        try:
-            return responses[index]
-        except IndexError:
-            # I decided that a KeyError is the best exception to raise
-            # if the cassette doesn't contain the request asked for.
-            raise KeyError
+                if self.play_counts[index] == 0:
+                    self.play_counts[index] += 1
+                    return response
+        # I decided that a KeyError is the best exception to raise
+        # if the cassette doesn't contain the request asked for.
+        raise KeyError
 
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}
@@ -113,6 +96,7 @@ class Cassette(object):
             for request, response in zip(requests, responses):
                 self.append(request, response)
             self.dirty = False
+            self.rewound = True
         except IOError:
             pass
 

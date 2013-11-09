@@ -24,7 +24,6 @@ def test_registered_serializer(tmpdir):
     my_vcr.register_serializer('mock', ms)
     tmpdir.join('test.mock').write('test_data')
     with my_vcr.use_cassette(str(tmpdir.join('test.mock')), serializer='mock'):
-        urllib2.urlopen('http://httpbin.org/')
         # Serializer deserialized once
         assert ms.serialize_count == 1
         # and serialized the test data string

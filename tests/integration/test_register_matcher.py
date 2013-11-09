@@ -18,7 +18,11 @@ def test_registered_serializer_true_matcher(tmpdir):
         # These 2 different urls are stored as the same request
         urllib2.urlopen('http://httpbin.org/')
         urllib2.urlopen('https://httpbin.org/get')
-        assert len(cass) == 1
+
+    with my_vcr.use_cassette(testfile, match_on=['true']) as cass:
+        # I can get the response twice even though I only asked for it once
+        urllib2.urlopen('http://httpbin.org/get')
+        urllib2.urlopen('https://httpbin.org/get')
 
 
 def test_registered_serializer_false_matcher(tmpdir):

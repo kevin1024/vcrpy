@@ -40,8 +40,10 @@ def test_override_set_cassette_library_dir(tmpdir):
 def test_override_match_on(tmpdir):
     my_vcr = vcr.VCR(match_on=['method'])
 
-    with my_vcr.use_cassette(str(tmpdir.join('test.json'))) as cass:
+    with my_vcr.use_cassette(str(tmpdir.join('test.json'))):
         urllib2.urlopen('http://httpbin.org/')
+
+    with my_vcr.use_cassette(str(tmpdir.join('test.json'))) as cass:
         urllib2.urlopen('http://httpbin.org/get')
 
     assert len(cass) == 1

@@ -100,7 +100,7 @@ VCR supports 4 record modes (with the same behavior as Ruby's VCR):
  * Record new interactions if there is no cassette file.
  * Cause an error to be raised for new requests if there is a cassette file.
  
-It is similar to the :new_episodes record mode, but will prevent new,
+It is similar to the new_episodes record mode, but will prevent new,
 unexpected requests from being made (i.e. because the request URI
 changed).
 
@@ -162,8 +162,6 @@ part of the API.  The fields are as follows:
 * `responses`: A list of the responses made.
 * `play_count`: The number of times this cassette has had a response
   played back
-* `play_counts`: A collections.Counter showing the number of times each
-  response has been played back, indexed by the request
 * `response_of(request)`: Access the response for a given request.
 
 The Request object has the following properties
@@ -259,6 +257,7 @@ This library is a work in progress, so the API might change on you.
 There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
 
 ##Changelog
+* 0.4.0: Change default request recording behavior for multiple requests.  If you make the same request multiple times to the same URL, the response might be different each time (maybe the response has a timestamp in it or something), so this will make the same request multiple times and save them all.  Then, when you are replaying the cassette, the responses will be played back in the same order in which they were received.  If you were making multiple requests to the same URL in a cassette before version 0.4.0, you might need to regenerate your cassette files.  Also, removes support for the cassette.play_count counter API, since individual requests aren't unique anymore.  A cassette might contain the same request several times.
 * 0.3.5: Fix compatibility with requests 2.x
 * 0.3.4: Bugfix: close file before renaming it.  This fixes an issue on Windows.  Thanks @smallcode for the fix.
 * 0.3.3: Bugfix for error message when an unreigstered custom matcher
