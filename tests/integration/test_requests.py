@@ -117,3 +117,18 @@ def test_cross_scheme(tmpdir, scheme):
         requests.get('http://httpbin.org/')
         assert cass.play_count == 0
         assert len(cass) == 2
+
+
+def test_gzip(tmpdir, scheme):
+    '''Ensure the responses are all identical enough'''
+    url = scheme + '://httpbin.org/gzip'
+    with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))) as cass:
+        # Ensure that this is empty to begin with
+        assert_cassette_empty(cass)
+        # assert the content comes back as json
+        response = requests.get(url)
+        assert response.content.strip()[0] == '{'
+        assert response.content.strip()[-1] == '}'
+        assert response.content == requests.get(url).content
+        # Ensure that we've now cached a single response
+        assert_cassette_has_one_response(cass)
