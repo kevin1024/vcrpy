@@ -19,8 +19,8 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='vcrpy',
-      version='0.3.5',
-      description="A Python port of Ruby's VCR to make mocking HTTP easier",
+      version='0.4.0',
+      description="Automatically mock your HTTP interactions to simplify and speed up testing",
       author='Kevin McCarthy',
       author_email='me@kevinmccarthy.org',
       url='https://github.com/kevin1024/vcrpy',
