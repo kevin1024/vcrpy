@@ -5,7 +5,11 @@
 import os
 import pytest
 import vcr
-from assertions import assert_cassette_empty, assert_cassette_has_one_response
+from assertions import (
+    assert_cassette_empty,
+    assert_cassette_has_one_response,
+    assert_is_json
+)
 requests = pytest.importorskip("requests")
 
 
@@ -117,3 +121,19 @@ def test_cross_scheme(tmpdir, scheme):
         requests.get('http://httpbin.org/')
         assert cass.play_count == 0
         assert len(cass) == 2
+
+
+def test_gzip(tmpdir, scheme):
+    '''
+    Ensure that requests (actually urllib3) is able to automatically decompress
+    the response body
+    '''
+    url = scheme + '://httpbin.org/gzip'
+    response = requests.get(url)
+
+    with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))) as cass:
+        response = requests.get(url)
+        assert_is_json(response.content)
+
+    with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))) as cass:
+        assert_is_json(response.content)

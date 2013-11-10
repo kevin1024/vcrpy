@@ -16,6 +16,7 @@ class VCRHTTPResponse(object):
         self.status = recorded_response['status']['code']
         self.version = None
         self._content = StringIO(self.recorded_response['body']['string'])
+	self.closed = False
 
         # We are skipping the header parsing (they have already been parsed
         # at this point) and directly  adding the headers to the header
@@ -37,12 +38,13 @@ class VCRHTTPResponse(object):
         return self._content.read(*args, **kwargs)
 
     def close(self):
+        self.closed = True
         return True
 
     def isclosed(self):
         # Urllib3 seems to call this because it actually uses
         # the weird chunking support in httplib
-        return True
+        return self.closed
 
     def getheaders(self):
         return self.recorded_response['headers'].iteritems()
