@@ -130,3 +130,18 @@ def test_gzip(tmpdir, scheme):
 
     with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))) as cass:
         assert_is_json(response.content)
+
+
+def test_session_and_connection_close(tmpdir, scheme):
+    '''
+    This tests the issue in https://github.com/kevin1024/vcrpy/issues/48
+
+    If you use a requests.session and the connection is closed, then an
+    exception is raised in the urllib3 module vendored into requests:
+    `AttributeError: 'NoneType' object has no attribute 'settimeout'`
+    '''
+    with vcr.use_cassette(str(tmpdir.join('session_connection_closed.yaml'))):
+        session = requests.session()
+
+        resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
+        resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
