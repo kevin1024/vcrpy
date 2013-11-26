@@ -56,6 +56,10 @@ class VCRConnectionMixin:
 
     def request(self, method, url, body=None, headers=None):
         '''Persist the request metadata in self._vcr_request'''
+        # see VCRConnectionMixin._restore_socket for the motivation here
+        if hasattr(self, 'sock'):
+            del self.sock
+
         self._vcr_request = Request(
             protocol=self._protocol,
             host=self.host,
@@ -205,11 +209,6 @@ class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
     _baseclass = HTTPConnection
     _protocol = 'http'
 
-    def __init__(self, *args, **kwargs):
-        HTTPConnection.__init__(self, *args, **kwargs)
-        # see VCRConnectionMixin._restore_socket for the motivation here
-        del self.sock
-
 
 class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
     '''A Mocked class for HTTPS requests'''
@@ -223,5 +222,3 @@ class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
         HTTPConnection.__init__(self, *args, **kwargs)
         self.key_file = kwargs.pop('key_file', None)
         self.cert_file = kwargs.pop('cert_file', None)
-        # see VCRConnectionMixin._restore_socket for the motivation here
-        del self.sock
