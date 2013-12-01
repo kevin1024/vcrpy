@@ -170,7 +170,7 @@ class VCRConnectionMixin:
             return VCRHTTPResponse(response)
         else:
             if self.cassette.write_protected:
-                raise Exception("cassette is write protected")
+                raise Exception("Can't overwrite existing cassette in your current record mode.")
 
             # Otherwise, we should send the request, then get the response
             # and return it.
