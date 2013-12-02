@@ -78,10 +78,13 @@ class Cassette(object):
     def responses_of(self, request):
         '''
         Find the responses corresponding to a request.
-	This function isn't actually used by VCR internally, but is
-	provided as an external API.
+        This function isn't actually used by VCR internally, but is
+        provided as an external API.
         '''
-        responses = [resp for req, resp in self.data if requests_match(req, request, self._match_on)]
+        responses = \
+            [resp for req, resp in self.data if
+                requests_match(req, request, self._match_on)]
+
         if responses:
             return responses
         # I decided that a KeyError is the best exception to raise

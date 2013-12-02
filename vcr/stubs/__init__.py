@@ -165,12 +165,17 @@ class VCRConnectionMixin:
         '''Retrieve a the response'''
         # Check to see if the cassette has a response for this request. If so,
         # then return it
-        if self._vcr_request in self.cassette and  self.cassette.record_mode != "all" and self.cassette.rewound:
+        if self._vcr_request in self.cassette and \
+                self.cassette.record_mode != "all" and \
+                self.cassette.rewound:
             response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
             if self.cassette.write_protected:
-                raise Exception("Can't overwrite existing cassette in your current record mode.")
+                raise Exception(
+                    "Can't overwrite existing cassette in \
+                     your current record mode."
+                )
 
             # Otherwise, we should send the request, then get the response
             # and return it.

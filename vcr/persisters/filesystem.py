@@ -8,5 +8,5 @@ class FilesystemPersister(object):
         dirname, filename = os.path.split(cassette_path)
         if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
-	with open(cassette_path, 'w') as f:
-	    f.write(data)
+        with open(cassette_path, 'w') as f:
+            f.write(data)
