@@ -162,7 +162,7 @@ part of the API.  The fields are as follows:
 * `responses`: A list of the responses made.
 * `play_count`: The number of times this cassette has had a response
   played back
-* `response_of(request)`: Access the response for a given request.
+* `responses_of(request)`: Access the responses that match a given request
 
 The Request object has the following properties
 

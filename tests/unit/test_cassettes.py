@@ -44,14 +44,22 @@ def test_cassette_contains():
 
 
 @mock.patch('vcr.cassette.requests_match', _mock_requests_match)
-def test_cassette_response_of():
+def test_cassette_responses_of():
     a = Cassette('test')
     a.append('foo', 'bar')
-    assert a.response_of('foo') == 'bar'
+    assert a.responses_of('foo') == ['bar']
 
 
 @mock.patch('vcr.cassette.requests_match', _mock_requests_match)
 def test_cassette_get_missing_response():
     a = Cassette('test')
     with pytest.raises(KeyError):
-        a.response_of('foo')
+        a.responses_of('foo')
+
+@mock.patch('vcr.cassette.requests_match', _mock_requests_match)
+def test_cassette_cant_read_same_request_twice():
+    a = Cassette('test')
+    a.append('foo','bar')
+    a.play_response('foo')
+    with pytest.raises(KeyError):
+        a.play_response('foo')

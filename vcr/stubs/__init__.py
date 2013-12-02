@@ -166,7 +166,7 @@ class VCRConnectionMixin:
         # Check to see if the cassette has a response for this request. If so,
         # then return it
         if self._vcr_request in self.cassette and  self.cassette.record_mode != "all" and self.cassette.rewound:
-            response = self.cassette.response_of(self._vcr_request)
+            response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
             if self.cassette.write_protected:

@@ -61,16 +61,29 @@ class Cassette(object):
         self.data.append((request, response))
         self.dirty = True
 
-    def response_of(self, request):
+    def play_response(self, request):
         '''
-        Find the response corresponding to a request
-
+        Get the response corresponding to a request, but only if it
+        hasn't been played back before, and mark it as playe.d
         '''
         for index, (stored_request, response) in enumerate(self.data):
             if requests_match(request, stored_request, self._match_on):
                 if self.play_counts[index] == 0:
                     self.play_counts[index] += 1
                     return response
+        # I decided that a KeyError is the best exception to raise
+        # if the cassette doesn't contain the request asked for.
+        raise KeyError
+
+    def responses_of(self, request):
+        '''
+        Find the responses corresponding to a request.
+	This function isn't actually used by VCR internally, but is
+	provided as an external API.
+        '''
+        responses = [resp for req, resp in self.data if requests_match(req, request, self._match_on)]
+        if responses:
+            return responses
         # I decided that a KeyError is the best exception to raise
         # if the cassette doesn't contain the request asked for.
         raise KeyError
