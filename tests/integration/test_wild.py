@@ -52,3 +52,20 @@ def test_flickr_should_respond_with_200(tmpdir):
     with vcr.use_cassette(testfile):
         r = requests.post("http://api.flickr.com/services/upload")
         assert r.status_code == 200
+
+def x_test_zip_file(tmpdir):
+    # TODO: How do I make this pass?
+    zipfile = "http://www.colorado.edu/conflict/peace/download/peace_example.ZIP"
+    testfile = str(tmpdir.join('test.json'))
+    with vcr.use_cassette(testfile, serializer='json'):
+        r = requests.post(zipfile)
+
+def test_cookies(tmpdir):
+    testfile = str(tmpdir.join('cookies.yml'))
+    with vcr.use_cassette(testfile):
+        s = requests.Session()
+        r1 = s.get("http://httpbin.org/cookies/set?k1=v1&k2=v2")
+        r2 = s.get("http://httpbin.org/cookies")
+        assert len(r2.json()['cookies']) == 2
+
+

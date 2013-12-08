@@ -6,6 +6,14 @@ from cStringIO import StringIO
 from vcr.request import Request
 
 
+def parse_headers(header_list):
+    headers = "".join(header_list) + "\r\n"
+    msg = HTTPMessage(StringIO(headers))
+    msg.fp.seek(0)
+    msg.readheaders()
+    return msg
+
+
 class VCRHTTPResponse(object):
     """
     Stub reponse class that gets returned instead of a HTTPResponse
@@ -18,17 +26,8 @@ class VCRHTTPResponse(object):
         self._content = StringIO(self.recorded_response['body']['string'])
         self.closed = False
 
-        # We are skipping the header parsing (they have already been parsed
-        # at this point) and directly  adding the headers to the header
-        # container, so just pass an empty StringIO.
-        self.msg = HTTPMessage(StringIO(''))
-
-        for key, val in self.recorded_response['headers'].iteritems():
-            self.msg.addheader(key, val)
-            # msg.addheaders adds the headers to msg.dict, but not to
-            # the msg.headers list representation of headers, so
-            # I have to add it to both.
-            self.msg.headers.append("{0}:{1}".format(key, val))
+        headers = self.recorded_response['headers']
+        self.msg = parse_headers(headers)
 
         self.length = self.msg.getheader('content-length') or None
 
@@ -47,7 +46,8 @@ class VCRHTTPResponse(object):
         return self.closed
 
     def getheaders(self):
-        return self.recorded_response['headers'].iteritems()
+        headers = parse_headers(self.recorded_response['headers'])
+        return headers.dict.iteritems()
 
 
 class VCRConnectionMixin:
@@ -201,7 +201,7 @@ class VCRConnectionMixin:
                     'code': response.status,
                     'message': response.reason
                 },
-                'headers': dict(response.getheaders()),
+                'headers': response.msg.headers,
                 'body': {'string': response.read()},
             }
             self.cassette.append(self._vcr_request, response)
