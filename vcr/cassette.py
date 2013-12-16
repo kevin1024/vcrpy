@@ -6,6 +6,8 @@ except ImportError:
     from .compat.counter import Counter
     from .compat.ordereddict import OrderedDict
 
+from contextdecorator import ContextDecorator
+
 # Internal imports
 from .patch import install, reset
 from .persist import load_cassette, save_cassette
@@ -13,7 +15,7 @@ from .serializers import yamlserializer
 from .matchers import requests_match, url, method
 
 
-class Cassette(object):
+class Cassette(ContextDecorator):
     '''A container for recorded requests and responses'''
 
     @classmethod

@@ -114,3 +114,17 @@ def test_cross_scheme(tmpdir):
         urllib2.urlopen('http://httpbin.org/')
         assert len(cass) == 2
         assert cass.play_count == 0
+
+def test_decorator(scheme, tmpdir):
+    '''Test the decorator version of VCR.py'''
+    url = scheme + '://httpbin.org/'
+
+    @vcr.use_cassette(str(tmpdir.join('atts.yaml')))
+    def inner1():
+        return urllib2.urlopen(url).getcode()
+
+    @vcr.use_cassette(str(tmpdir.join('atts.yaml')))
+    def inner2():
+        return urllib2.urlopen(url).getcode()
+
+    assert inner1() == inner2()

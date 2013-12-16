@@ -22,7 +22,7 @@ This should work with Python 2.6 and 2.7, and [pypy](http://pypy.org).
 
 Currently I've only tested this with urllib2, urllib3, and requests.  It's known to *NOT WORK* with urllib.
 
-##How to use it
+##Usage
 ```python
 import vcr
 import urllib2
@@ -39,6 +39,17 @@ real HTTP requests are made anymore), deterministic (the test will continue to
 pass, even if you are offline, or iana.org goes down for maintenance) and
 accurate (the response will contain the same headers and body you get from a
 real request).
+
+You can also use VCR.py as a decorator.  The same request above would look like this:
+
+```
+@vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
+def test_iana():
+    response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+    assert 'Example domains' in response
+```
+
+All of the parameters and configuration works the same for the decorator version.
 
 ## Configuration
 
