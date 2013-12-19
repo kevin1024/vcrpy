@@ -15,6 +15,10 @@ from .serializers import yamlserializer
 from .matchers import requests_match, url, method
 
 
+class UnhandledHTTPRequestError(Exception):
+    pass
+
+
 class Cassette(ContextDecorator):
     '''A container for recorded requests and responses'''
 
@@ -73,9 +77,10 @@ class Cassette(ContextDecorator):
                 if self.play_counts[index] == 0:
                     self.play_counts[index] += 1
                     return response
-        # I decided that a KeyError is the best exception to raise
-        # if the cassette doesn't contain the request asked for.
-        raise KeyError
+        # The cassette doesn't contain the request asked for.
+        raise UnhandledHTTPRequestError(
+            "The cassette (%r) doesn't contain the request (%r) asked for"
+                % (self._path,request))
 
     def responses_of(self, request):
         '''
@@ -89,9 +94,10 @@ class Cassette(ContextDecorator):
 
         if responses:
             return responses
-        # I decided that a KeyError is the best exception to raise
-        # if the cassette doesn't contain the request asked for.
-        raise KeyError
+        # The cassette doesn't contain the request asked for.
+        raise UnhandledHTTPRequestError(
+            "The cassette (%r) doesn't contain the request (%r) asked for"
+                % (self._path,request))
 
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}

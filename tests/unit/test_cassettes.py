@@ -1,7 +1,7 @@
 import pytest
 import yaml
 import mock
-from vcr.cassette import Cassette
+from vcr.cassette import Cassette, UnhandledHTTPRequestError
 
 
 def test_cassette_load(tmpdir):
@@ -53,7 +53,7 @@ def test_cassette_responses_of():
 @mock.patch('vcr.cassette.requests_match', _mock_requests_match)
 def test_cassette_get_missing_response():
     a = Cassette('test')
-    with pytest.raises(KeyError):
+    with pytest.raises(UnhandledHTTPRequestError):
         a.responses_of('foo')
 
 @mock.patch('vcr.cassette.requests_match', _mock_requests_match)
@@ -61,5 +61,5 @@ def test_cassette_cant_read_same_request_twice():
     a = Cassette('test')
     a.append('foo','bar')
     a.play_response('foo')
-    with pytest.raises(KeyError):
+    with pytest.raises(UnhandledHTTPRequestError):
         a.play_response('foo')
