@@ -6,6 +6,10 @@ from cStringIO import StringIO
 from vcr.request import Request
 
 
+class CannotOverwriteExistingCassetteException(Exception):
+    pass
+
+
 def parse_headers(header_list):
     headers = "".join(header_list) + "\r\n"
     msg = HTTPMessage(StringIO(headers))
@@ -172,9 +176,10 @@ class VCRConnectionMixin:
             return VCRHTTPResponse(response)
         else:
             if self.cassette.write_protected:
-                raise Exception(
-                    "Can't overwrite existing cassette in \
-                     your current record mode."
+                raise CannotOverwriteExistingCassetteException(
+                    "Can't overwrite existing cassette (%r) in "
+                    "your current record mode (%r)."
+                        % (self.cassette._path, self.cassette.record_mode)
                 )
 
             # Otherwise, we should send the request, then get the response
