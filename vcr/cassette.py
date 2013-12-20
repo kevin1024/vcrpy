@@ -13,10 +13,7 @@ from .patch import install, reset
 from .persist import load_cassette, save_cassette
 from .serializers import yamlserializer
 from .matchers import requests_match, url, method
-
-
-class UnhandledHTTPRequestError(Exception):
-    pass
+from .errors import UnhandledHTTPRequestError
 
 
 class Cassette(ContextDecorator):

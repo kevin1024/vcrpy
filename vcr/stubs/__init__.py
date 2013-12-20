@@ -4,10 +4,7 @@ from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
 from cStringIO import StringIO
 
 from vcr.request import Request
-
-
-class CannotOverwriteExistingCassetteException(Exception):
-    pass
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 
 def parse_headers(header_list):

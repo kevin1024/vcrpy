@@ -1,7 +1,8 @@
 import pytest
 import yaml
 import mock
-from vcr.cassette import Cassette, UnhandledHTTPRequestError
+from vcr.cassette import Cassette
+from vcr.errors import UnhandledHTTPRequestError
 
 
 def test_cassette_load(tmpdir):
