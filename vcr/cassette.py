@@ -77,7 +77,8 @@ class Cassette(ContextDecorator):
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
             "The cassette (%r) doesn't contain the request (%r) asked for"
-                % (self._path,request))
+            % (self._path, request)
+        )
 
     def responses_of(self, request):
         '''
@@ -94,7 +95,8 @@ class Cassette(ContextDecorator):
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
             "The cassette (%r) doesn't contain the request (%r) asked for"
-                % (self._path,request))
+            % (self._path, request)
+        )
 
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}

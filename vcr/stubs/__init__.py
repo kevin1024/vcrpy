@@ -176,7 +176,7 @@ class VCRConnectionMixin:
                 raise CannotOverwriteExistingCassetteException(
                     "Can't overwrite existing cassette (%r) in "
                     "your current record mode (%r)."
-                        % (self.cassette._path, self.cassette.record_mode)
+                    % (self.cassette._path, self.cassette.record_mode)
                 )
 
             # Otherwise, we should send the request, then get the response
