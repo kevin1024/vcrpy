@@ -7,7 +7,23 @@ from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
 
 
+def parse_headers_backwards_compat(header_dict):
+    """
+    In vcr 0.6.0, I changed the cassettes to store
+    headers as a list instead of a dict.  This method
+    parses the old dictionary-style headers for
+    backwards-compatability reasons.
+    """
+    msg = HTTPMessage(StringIO(""))
+    for key, val in header_dict.iteritems():
+        msg.addheader(key, val)
+        msg.headers.append("{0}:{1}".format(key, val))
+    return msg
+
+
 def parse_headers(header_list):
+    if isinstance(header_list, dict):
+        return parse_headers_backwards_compat(header_list)
     headers = "".join(header_list) + "\r\n"
     msg = HTTPMessage(StringIO(headers))
     msg.fp.seek(0)
