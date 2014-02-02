@@ -40,7 +40,7 @@ class VCRHTTPResponse(object):
         self.reason = recorded_response['status']['message']
         self.status = recorded_response['status']['code']
         self.version = None
-        self._content = StringIO(self.recorded_response['body']['string'])
+        self._content = BytesIO(self.recorded_response['body']['string'])
         self.closed = False
 
         headers = self.recorded_response['headers']
@@ -162,8 +162,8 @@ class VCRConnectionMixin:
         send() behavior, since send() is both an external and internal
         httplib API.
         """
-        self._buffer.extend(("", ""))
-        msg = "\r\n".join(self._buffer)
+        self._buffer.extend((b"", b""))
+        msg = b"\r\n".join(self._buffer)
         del self._buffer[:]
         # If msg and message_body are sent in a single send() call,
         # it will avoid performance problems caused by the interaction

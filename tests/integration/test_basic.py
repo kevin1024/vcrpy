@@ -44,7 +44,7 @@ def test_basic_use(tmpdir):
         response = urlopen(
             'http://www.iana.org/domains/reserved'
         ).read()
-        assert 'Example domains' in response
+        assert b'Example domains' in response
 
 
 def test_basic_json_use(tmpdir):
@@ -54,7 +54,7 @@ def test_basic_json_use(tmpdir):
     test_fixture = 'fixtures/vcr_cassettes/synopsis.json'
     with vcr.use_cassette(test_fixture, serializer='json'):
         response = urlopen('http://httpbin.org/').read()
-        assert 'difficult sometimes' in response
+        assert b'difficult sometimes' in response
 
 
 def test_patched_content(tmpdir):

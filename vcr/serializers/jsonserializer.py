@@ -16,6 +16,11 @@ def _fix_response_unicode(d):
     return d
 
 
+def _fix_response_bytes(d):
+    d['body']['string'] = d['body']['string'].decode('utf-8')
+    return d
+
+
 def deserialize(cassette_string):
     data = json.loads(cassette_string)
     requests = [Request._from_dict(r['request']) for r in data]
@@ -26,7 +31,7 @@ def deserialize(cassette_string):
 def serialize(cassette_dict):
     data = ([{
         'request': request._to_dict(),
-        'response': response,
+        'response': _fix_response_bytes(response),
     } for request, response in zip(
         cassette_dict['requests'],
         cassette_dict['responses']

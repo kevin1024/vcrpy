@@ -85,7 +85,7 @@ def test_get_data(scheme, tmpdir):
 
 def test_post_data(scheme, tmpdir):
     '''Ensure that it works when posting data'''
-    data = urlencode({'some': 1, 'data': 'here'})
+    data = urlencode({'some': 1, 'data': 'here'}).encode('utf-8')
     url = scheme + '://httpbin.org/post'
     with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
         res1 = urlopen(url, data).read()
@@ -99,7 +99,7 @@ def test_post_data(scheme, tmpdir):
 
 def test_post_unicode_data(scheme, tmpdir):
     '''Ensure that it works when posting unicode data'''
-    data = urlencode({'snowman': u'☃'.encode('utf-8')})
+    data = urlencode({'snowman': u'☃'.encode('utf-8')}).encode('utf-8')
     url = scheme + '://httpbin.org/post'
     with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
         res1 = urlopen(url, data).read()

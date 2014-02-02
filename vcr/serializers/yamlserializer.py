@@ -7,10 +7,17 @@ except ImportError:
     from yaml import Loader, Dumper
 
 
+def _fix_response_unicode(d):
+    if isinstance(d, dict) and isinstance(d.get('body', {}).get('string'),
+                                          type(u'')):
+        d['body']['string'] = d['body']['string'].encode('utf-8')
+    return d
+
+
 def deserialize(cassette_string):
     data = yaml.load(cassette_string, Loader=Loader)
     requests = [r['request'] for r in data]
-    responses = [r['response'] for r in data]
+    responses = [_fix_response_unicode(r['response']) for r in data]
     return requests, responses
 
 
