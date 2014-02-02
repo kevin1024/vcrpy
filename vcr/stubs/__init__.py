@@ -15,7 +15,7 @@ def parse_headers_backwards_compat(header_dict):
     backwards-compatability reasons.
     """
     msg = HTTPMessage(StringIO(""))
-    for key, val in header_dict.iteritems():
+    for key, val in header_dict.items():
         msg.addheader(key, val)
         msg.headers.append("{0}:{1}".format(key, val))
     return msg
@@ -148,7 +148,7 @@ class VCRConnectionMixin:
 
             if thelen is not None:
                 self.putheader('Content-Length', thelen)
-        for hdr, value in headers.iteritems():
+        for hdr, value in headers.items():
             self.putheader(hdr, value)
         self.endheaders()
 
