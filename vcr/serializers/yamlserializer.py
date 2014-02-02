@@ -1,3 +1,4 @@
+import sys
 import yaml
 
 # Use the libYAML versions if possible
@@ -15,6 +16,14 @@ def _fix_response_unicode(d):
 
 
 def deserialize(cassette_string):
+    # Make serialized YAML from py2 compatible with py3
+    try:
+        import __builtin__
+    except ImportError:
+        if '__builtin__' not in sys.modules:
+            import builtins
+            sys.modules['__builtin__'] = builtins
+
     data = yaml.load(cassette_string, Loader=Loader)
     requests = [r['request'] for r in data]
     responses = [_fix_response_unicode(r['response']) for r in data]
