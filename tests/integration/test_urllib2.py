@@ -66,7 +66,7 @@ def test_multiple_requests(scheme, tmpdir):
         scheme + '://httpbin.org/bytes/1024'
     ]
     with vcr.use_cassette(str(tmpdir.join('multiple.yaml'))) as cass:
-        map(urllib2.urlopen, urls)
+        [urlopen(url) for url in urls]
     assert len(cass) == len(urls)
 
 
