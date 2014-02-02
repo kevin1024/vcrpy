@@ -135,7 +135,7 @@ class VCRConnectionMixin:
             thelen = None
             try:
                 thelen = str(len(body))
-            except TypeError, te:
+            except TypeError:
                 # If this is a file-like object, try to
                 # fstat its file descriptor
                 import os
