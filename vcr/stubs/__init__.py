@@ -1,7 +1,15 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
-from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
-from cStringIO import StringIO
+HAS_PY3 = False
+try:
+    from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
+    from cStringIO import StringIO
+except ImportError:
+    import http.client
+    from http.client import HTTPConnection, HTTPSConnection, HTTPMessage
+    from io import StringIO
+    HAS_PY3 = True
+from io import BytesIO
 
 from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
@@ -22,6 +30,19 @@ def parse_headers_backwards_compat(header_dict):
 
 
 def parse_headers(header_list):
+    if HAS_PY3:
+        try:
+            return http.client.parse_headers(
+                BytesIO(
+                    b'\n'.join(
+                        [b': '.join((k.encode('utf-8'), v.encode('utf-8')))
+                         for k, v in header_list])
+                    + b'\r\n'))
+        except ValueError:
+            return http.client.parse_headers(
+                BytesIO(b'\n'.join([header.encode('utf-8')
+                                    for header in header_list])))
+
     if isinstance(header_list, dict):
         return parse_headers_backwards_compat(header_list)
     headers = "".join(header_list) + "\r\n"
@@ -31,6 +52,27 @@ def parse_headers(header_list):
     return msg
 
 
+def get_header(message, name):
+    if HAS_PY3:
+        return message.getallmatchingheaders(name)
+    else:
+        return message.getheader(name)
+
+
+def get_header_items(message):
+    if HAS_PY3:
+        return dict(message._headers).items()
+    else:
+        return message.dict.items()
+
+
+def get_headers(response):
+    if HAS_PY3:
+        return response.msg._headers
+    else:
+        return response.msg.headers
+
+
 class VCRHTTPResponse(object):
     """
     Stub reponse class that gets returned instead of a HTTPResponse
@@ -38,7 +80,7 @@ class VCRHTTPResponse(object):
     def __init__(self, recorded_response):
         self.recorded_response = recorded_response
         self.reason = recorded_response['status']['message']
-        self.status = recorded_response['status']['code']
+        self.status = self.code = recorded_response['status']['code']
         self.version = None
         self._content = BytesIO(self.recorded_response['body']['string'])
         self.closed = False
@@ -46,25 +88,34 @@ class VCRHTTPResponse(object):
         headers = self.recorded_response['headers']
         self.msg = parse_headers(headers)
 
-        self.length = self.msg.getheader('content-length') or None
+        self.length = get_header(self.msg, 'content-length') or None
 
     def read(self, *args, **kwargs):
         # Note: I'm pretty much ignoring any chunking stuff because
         # I don't really understand what it is or how it works.
         return self._content.read(*args, **kwargs)
 
+    def readline(self, *args, **kwargs):
+        return self._content.readline(*args, **kwargs)
+
     def close(self):
         self.closed = True
         return True
+
+    def getcode(self):
+        return self.status
 
     def isclosed(self):
         # Urllib3 seems to call this because it actually uses
         # the weird chunking support in httplib
         return self.closed
 
+    def info(self):
+        return parse_headers(self.recorded_response['headers'])
+
     def getheaders(self):
-        headers = parse_headers(self.recorded_response['headers'])
-        return headers.dict.iteritems()
+        message = parse_headers(self.recorded_response['headers'])
+        return get_header_items(message)
 
 
 class VCRConnectionMixin:
@@ -219,7 +270,7 @@ class VCRConnectionMixin:
                     'code': response.status,
                     'message': response.reason
                 },
-                'headers': response.msg.headers,
+                'headers': get_headers(response),
                 'body': {'string': response.read()},
             }
             self.cassette.append(self._vcr_request, response)
@@ -233,6 +284,34 @@ class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
     _protocol = 'http'
 
 
+if HAS_PY3:
+    class _InitOverride(object):
+        """
+         A sentinel to avoid circular super()
+        """
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def init(self, host, port=None, key_file=None,
+                 cert_file=None,
+                 strict=http.client._strict_sentinel,
+                 timeout=http.client.socket._GLOBAL_DEFAULT_TIMEOUT,
+                 source_address=None, context=None,
+                 check_hostname=None):
+            HTTPSConnection.__init__(
+                self, host, port=None, key_file=None, cert_file=None,
+                strict=http.client._strict_sentinel,
+                timeout=http.client.socket._GLOBAL_DEFAULT_TIMEOUT,
+                source_address=None, context=None,
+                check_hostname=None)
+            HTTPConnection.__init__(
+                self, host, port, strict, timeout, source_address)
+
+    def dynamic_extend(obj, cls):
+        if cls not in obj.__class__.__bases__:
+            obj.__class__.__bases__ = (cls,) + obj.__class__.__bases__
+
+
 class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
     '''A Mocked class for HTTPS requests'''
     _baseclass = HTTPSConnection
@@ -242,6 +321,14 @@ class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
         '''I overrode the init and copied a lot of the code from the parent
         class because HTTPConnection when this happens has been replaced by
         VCRHTTPConnection,  but doing it here lets us use the original one.'''
-        HTTPConnection.__init__(self, *args, **kwargs)
+        if HAS_PY3:
+            # Due to HTTPSConnection calling super(HTTPSConnection,
+            # self).__init__, where we have replaced HTTPSConnection
+            # with this class, we get a cyclic recursion unless we
+            # break the cycle.
+            dynamic_extend(self, _InitOverride)
+            super().init(*args, **kwargs)
+        else:
+            HTTPConnection.__init__(self, *args, **kwargs)
         self.key_file = kwargs.pop('key_file', None)
         self.cert_file = kwargs.pop('cert_file', None)
