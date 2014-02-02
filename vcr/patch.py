@@ -1,7 +1,7 @@
 '''Utilities for patching in cassettes'''
 
-import httplib
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
+from vcr._compat import httplib
 
 
 # Save some of the original types for the purposes of unpatching
@@ -40,9 +40,8 @@ def install(cassette):
     This replaces the actual HTTPConnection with a VCRHTTPConnection
     object which knows how to save to / read from cassettes
     """
-    httplib.HTTPConnection = httplib.HTTP._connection_class = VCRHTTPConnection
-    httplib.HTTPSConnection = httplib.HTTPS._connection_class = (
-        VCRHTTPSConnection)
+    httplib.HTTPConnection = VCRHTTPConnection
+    httplib.HTTPSConnection = VCRHTTPSConnection
     httplib.HTTPConnection.cassette = cassette
     httplib.HTTPSConnection.cassette = cassette
 
@@ -90,9 +89,8 @@ def install(cassette):
 
 def reset():
     '''Undo all the patching'''
-    httplib.HTTPConnection = httplib.HTTP._connection_class = _HTTPConnection
-    httplib.HTTPSConnection = httplib.HTTPS._connection_class = \
-        _HTTPSConnection
+    httplib.HTTPConnection = _HTTPConnection
+    httplib.HTTPSConnection = _HTTPSConnection
     try:
         import requests.packages.urllib3.connectionpool as cpool
         # unpatch requests v1.x

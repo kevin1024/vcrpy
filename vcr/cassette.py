@@ -67,7 +67,7 @@ class Cassette(ContextDecorator):
     def play_response(self, request):
         '''
         Get the response corresponding to a request, but only if it
-        hasn't been played back before, and mark it as playe.d
+        hasn't been played back before, and mark it as played
         '''
         for index, (stored_request, response) in enumerate(self.data):
             if requests_match(request, stored_request, self._match_on):

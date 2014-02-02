@@ -18,7 +18,7 @@ to do is delete your existing cassette files, and run your tests again.
 All of the mocked responses will be updated with the new API.
 
 ## Compatibility Notes
-This should work with Python 2.6 and 2.7, and [pypy](http://pypy.org).
+VCR.py officially supports Python 2.6 and 2.7, 3.3, and [pypy](http://pypy.org).
 
 Currently I've only tested this with urllib2, urllib3, and requests.  It's known to *NOT WORK* with urllib.
 

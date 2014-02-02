@@ -1,10 +1,15 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
-from httplib import HTTPConnection, HTTPSConnection, HTTPMessage, HTTPResponse
-from cStringIO import StringIO
-
+try:
+    import http.client
+except ImportError:
+    pass
+import six
+from six.moves.http_client import HTTPConnection, HTTPSConnection, HTTPMessage, HTTPResponse
+from six import BytesIO
 from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
+from . import compat
 
 
 def parse_headers_backwards_compat(header_dict):
@@ -14,8 +19,8 @@ def parse_headers_backwards_compat(header_dict):
     parses the old dictionary-style headers for
     backwards-compatability reasons.
     """
-    msg = HTTPMessage(StringIO(""))
-    for key, val in header_dict.iteritems():
+    msg = HTTPMessage(BytesIO(""))
+    for key, val in header_dict.items():
         msg.addheader(key, val)
         msg.headers.append("{0}:{1}".format(key, val))
     return msg
@@ -24,12 +29,8 @@ def parse_headers_backwards_compat(header_dict):
 def parse_headers(header_list):
     if isinstance(header_list, dict):
         return parse_headers_backwards_compat(header_list)
-    headers = "".join(header_list) + "\r\n"
-    msg = HTTPMessage(StringIO(headers))
-    msg.fp.seek(0)
-    msg.readheaders()
-    return msg
-
+    headers = b"".join(header_list) + b"\r\n"
+    return compat.get_httpmessage(headers)
 
 class VCRHTTPResponse(HTTPResponse):
     """
@@ -38,29 +39,38 @@ class VCRHTTPResponse(HTTPResponse):
     def __init__(self, recorded_response):
         self.recorded_response = recorded_response
         self.reason = recorded_response['status']['message']
-        self.status = recorded_response['status']['code']
+        self.status = self.code = recorded_response['status']['code']
         self.version = None
-        self._content = StringIO(self.recorded_response['body']['string'])
+        self._content = BytesIO(self.recorded_response['body']['string'])
         self.closed = False
 
         headers = self.recorded_response['headers']
         self.msg = parse_headers(headers)
 
-        self.length = self.msg.getheader('content-length') or None
+        self.length = compat.get_header(self.msg, 'content-length') or None
 
     def read(self, *args, **kwargs):
         return self._content.read(*args, **kwargs)
+
+    def readline(self, *args, **kwargs):
+        return self._content.readline(*args, **kwargs)
 
     def close(self):
         self.closed = True
         return True
 
+    def getcode(self):
+        return self.status
+
     def isclosed(self):
         return self.closed
 
+    def info(self):
+        return parse_headers(self.recorded_response['headers'])
+
     def getheaders(self):
-        headers = parse_headers(self.recorded_response['headers'])
-        return headers.dict.iteritems()
+        message = parse_headers(self.recorded_response['headers'])
+        return compat.get_header_items(message)
 
     def getheader(self, header, default=None):
         headers = dict(((k, v) for k, v in self.getheaders()))
@@ -166,7 +176,7 @@ class VCRConnection:
                     'code': response.status,
                     'message': response.reason
                 },
-                'headers': response.msg.headers,
+                'headers': compat.get_headers(response),
                 'body': {'string': response.read()},
             }
             self.cassette.append(self._vcr_request, response)
