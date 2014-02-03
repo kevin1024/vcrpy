@@ -3,13 +3,10 @@
 
 # External imports
 import os
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 # Internal imports
 import vcr
+from vcr._compat import urlopen
 
 
 def test_nonexistent_directory(tmpdir):

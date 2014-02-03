@@ -1,9 +1,6 @@
 import pytest
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 import vcr
+from vcr._compat import urlopen
 
 
 def test_making_extra_request_raises_exception(tmpdir):

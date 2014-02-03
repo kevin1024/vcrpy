@@ -3,14 +3,11 @@
 
 # External imports
 import os
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 import time
 
 # Internal imports
 import vcr
+from vcr._compat import urlopen
 
 
 def test_disk_saver_nowrite(tmpdir):

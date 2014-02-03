@@ -1,8 +1,5 @@
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 import vcr
+from vcr._compat import urlopen
 
 
 def test_recorded_request_url_with_redirected_request(tmpdir):

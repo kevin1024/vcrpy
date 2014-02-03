@@ -3,17 +3,12 @@
 
 # External imports
 import os
-try:
-    from urllib2 import urlopen
-    from urllib import urlencode
-except ImportError:
-    from urllib.request import urlopen
-    from urllib.parse import urlencode
 
 import pytest
 
 # Internal imports
 import vcr
+from vcr._compat import urlopen, urlencode
 
 from assertions import assert_cassette_empty, assert_cassette_has_one_response
 

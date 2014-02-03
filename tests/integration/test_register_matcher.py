@@ -1,8 +1,5 @@
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 import vcr
+from vcr._compat import urlopen
 
 
 def true_matcher(r1, r2):

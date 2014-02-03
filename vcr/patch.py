@@ -1,10 +1,7 @@
 '''Utilities for patching in cassettes'''
 
-try:
-    import httplib
-except ImportError:
-    import http.client as httplib
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
+from vcr._compat import httplib
 
 
 # Save some of the original types for the purposes of unpatching

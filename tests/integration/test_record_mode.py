@@ -1,10 +1,7 @@
 import os
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 import pytest
 import vcr
+from vcr._compat import urlopen
 
 
 def test_once_record_mode(tmpdir):
