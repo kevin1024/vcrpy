@@ -1,6 +1,6 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
-from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
+from httplib import HTTPConnection, HTTPSConnection, HTTPMessage, HTTPResponse
 from cStringIO import StringIO
 
 from vcr.request import Request
@@ -31,7 +31,7 @@ def parse_headers(header_list):
     return msg
 
 
-class VCRHTTPResponse(object):
+class VCRHTTPResponse(HTTPResponse):
     """
     Stub reponse class that gets returned instead of a HTTPResponse
     """
@@ -174,6 +174,28 @@ class VCRConnection:
 
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
+
+    def connect(self):
+        """
+        httplib2 uses this.  Connects to the server I'm assuming.
+
+        Only pass to the baseclass if we don't have a recorded response
+        and are not write-protected.
+        """
+
+        if hasattr(self, '_vcr_request') and \
+                self._vcr_request in self.cassette and \
+                self.cassette.record_mode != "all" and \
+                self.cassette.rewound:
+            # We already have a response we are going to play, don't
+            # actually connect
+            return 
+        
+        if self.cassette.write_protected:
+            # Cassette is write-protected, don't actually connect
+            return
+
+        return self.real_connection.connect(self)
 
     def __init__(self, *args, **kwargs):
         # need to temporarily reset here because the real connection
