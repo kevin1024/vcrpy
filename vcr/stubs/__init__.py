@@ -249,7 +249,7 @@ class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
         HTTPConnection.__init__.'''
 
         # Delete the keyword arguments that HTTPSConnection would not recognize
-        safe_keys = {'host', 'port', 'strict', 'timeout', 'source_address'}
+        safe_keys = set(('host', 'port', 'strict', 'timeout', 'source_address'))
         unknown_keys = set(kwargs.keys()) - safe_keys
         safe_kwargs = kwargs.copy()
         for kw in unknown_keys:
@@ -270,8 +270,8 @@ class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
         VCRHTTPConnection,  but doing it here lets us use the original one.'''
 
         # Delete the keyword arguments that HTTPSConnection would not recognize
-        safe_keys = {'host', 'port', 'key_file', 'cert_file', 'strict',
-                     'timeout', 'source_address'}
+        safe_keys = set(('host', 'port', 'key_file', 'cert_file', 'strict',
+                     'timeout', 'source_address'))
         unknown_keys = set(kwargs.keys()) - safe_keys
         safe_kwargs = kwargs.copy()
         for kw in unknown_keys:
