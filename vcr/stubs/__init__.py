@@ -1,6 +1,6 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
-from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
+from httplib import HTTPConnection, HTTPSConnection, HTTPMessage, HTTPResponse
 from cStringIO import StringIO
 
 from vcr.request import Request
@@ -31,7 +31,7 @@ def parse_headers(header_list):
     return msg
 
 
-class VCRHTTPResponse(object):
+class VCRHTTPResponse(HTTPResponse):
     """
     Stub reponse class that gets returned instead of a HTTPResponse
     """

@@ -24,6 +24,14 @@ try:
 except ImportError:  # pragma: no cover
     pass
 
+try:
+    # Try to save the original types for httplib2
+    import httplib2
+    _HTTPConnectionWithTimeout = httplib2.HTTPConnectionWithTimeout
+    _HTTPSConnectionWithTimeout = httplib2.HTTPSConnectionWithTimeout
+except ImportError:  # pragma: no cover
+    pass
+
 
 def install(cassette):
     """
@@ -64,6 +72,20 @@ def install(cassette):
     except ImportError:  # pragma: no cover
         pass
 
+    # patch httplib2
+    try:
+        import httplib2 as cpool
+        from .stubs.httplib2_stubs import VCRHTTPConnectionWithTimeout
+        from .stubs.httplib2_stubs import VCRHTTPSConnectionWithTimeout
+        cpool.HTTPConnectionWithTimeout = VCRHTTPConnectionWithTimeout
+        cpool.HTTPSConnectionWithTimeout = VCRHTTPSConnectionWithTimeout
+        cpool.SCHEME_TO_CONNECTION = {
+            'http': VCRHTTPConnectionWithTimeout,
+            'https': VCRHTTPSConnectionWithTimeout
+        }
+    except ImportError:  # pragma: no cover
+        pass
+
 
 def reset():
     '''Undo all the patching'''
@@ -85,5 +107,12 @@ def reset():
         cpool.HTTPConnection = _HTTPConnection
         cpool.HTTPConnectionPool.ConnectionCls = _HTTPConnection
         cpool.HTTPSConnectionPool.ConnectionCls = _HTTPSConnection
+    except ImportError:  # pragma: no cover
+        pass
+
+    try:
+        import httplib2 as cpool
+        cpool.HTTPConnectionWithTimeout = _HTTPConnectionWithTimeout
+        cpool.HTTPSConnectionWithTimeout = _HTTPSConnectionWithTimeout
     except ImportError:  # pragma: no cover
         pass
