@@ -28,6 +28,7 @@ try:
     import httplib2
     _HTTPConnectionWithTimeout = httplib2.HTTPConnectionWithTimeout
     _HTTPSConnectionWithTimeout = httplib2.HTTPSConnectionWithTimeout
+    _SCHEME_TO_CONNECTION = httplib2.SCHEME_TO_CONNECTION
 except ImportError:  # pragma: no cover
     pass
 
@@ -113,5 +114,6 @@ def reset():
         import httplib2 as cpool
         cpool.HTTPConnectionWithTimeout = _HTTPConnectionWithTimeout
         cpool.HTTPSConnectionWithTimeout = _HTTPSConnectionWithTimeout
+        cpool.SCHEME_TO_CONNECTION = _SCHEME_TO_CONNECTION
     except ImportError:  # pragma: no cover
         pass
