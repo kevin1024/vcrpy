@@ -2,7 +2,6 @@
 # coding=utf-8
 
 # External imports
-import httplib2
 from urllib import urlencode
 import pytest
 
@@ -10,6 +9,8 @@ import pytest
 import vcr
 
 from assertions import assert_cassette_has_one_response
+
+httplib2 = pytest.importorskip("httplib2")
 
 
 @pytest.fixture(params=["https", "http"])
