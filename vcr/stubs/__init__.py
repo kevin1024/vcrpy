@@ -225,12 +225,38 @@ class VCRConnectionMixin:
             self.cassette.append(self._vcr_request, response)
         return VCRHTTPResponse(response)
 
+    def connect(self):
+        """
+        Connect to the real server only when is neccesary.
+
+        I need to override this method because httplib2 calls to conn.connect
+        on the first request.
+
+        """
+
+        if not self.cassette.write_protected:
+            return self._baseclass.connect(self)
+
 
 class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
     '''A Mocked class for HTTP requests'''
     # Can't use super since this is an old-style class
     _baseclass = HTTPConnection
     _protocol = 'http'
+
+    def __init__(self, *args, **kwargs):
+        '''I overrode the init because I need to clean kwargs before calling
+        HTTPConnection.__init__.'''
+
+        # Delete the keyword arguments that HTTPSConnection would not recognize
+        safe_keys = {'host', 'port', 'strict', 'timeout', 'source_address'}
+        unknown_keys = set(kwargs.keys()) - safe_keys
+        safe_kwargs = kwargs.copy()
+        for kw in unknown_keys:
+            del safe_kwargs[kw]
+
+        self.proxy_info = kwargs.pop('proxy_info', None)
+        HTTPConnection.__init__(self, *args, **safe_kwargs)
 
 
 class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
@@ -242,6 +268,27 @@ class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
         '''I overrode the init and copied a lot of the code from the parent
         class because HTTPConnection when this happens has been replaced by
         VCRHTTPConnection,  but doing it here lets us use the original one.'''
-        HTTPConnection.__init__(self, *args, **kwargs)
+
+        # Delete the keyword arguments that HTTPSConnection would not recognize
+        safe_keys = {'host', 'port', 'key_file', 'cert_file', 'strict',
+                     'timeout', 'source_address'}
+        unknown_keys = set(kwargs.keys()) - safe_keys
+        safe_kwargs = kwargs.copy()
+        for kw in unknown_keys:
+            del safe_kwargs[kw]
+
+        self.proxy_info = kwargs.pop('proxy_info', None)
+        if not 'ca_certs' in kwargs or kwargs['ca_certs'] is None:
+            try:
+                import httplib2
+                self.ca_certs = httplib2.CA_CERTS
+            except ImportError:
+                self.ca_certs = None
+        else:
+            self.ca_certs = kwargs['ca_certs']
+
+        self.disable_ssl_certificate_validation = kwargs.pop(
+            'disable_ssl_certificate_validation', None)
+        HTTPConnection.__init__(self, *args, **safe_kwargs)
         self.key_file = kwargs.pop('key_file', None)
         self.cert_file = kwargs.pop('cert_file', None)
