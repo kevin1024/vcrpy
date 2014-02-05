@@ -13,6 +13,7 @@ try:
     import requests.packages.urllib3.connectionpool as cpool
     _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
     _HTTPConnection = cpool.HTTPConnection
+    _HTTPSConnection = cpool.HTTPSConnection
 except ImportError:  # pragma: no cover
     pass
 
