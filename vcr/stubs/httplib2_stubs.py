@@ -1,4 +1,4 @@
-'''Stubs for urllib3'''
+'''Stubs for httplib2'''
 
 from httplib2 import HTTPConnectionWithTimeout, HTTPSConnectionWithTimeout
 from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
