@@ -3,7 +3,10 @@ requests = pytest.importorskip("requests")
 
 import vcr
 
-import httplib
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
 
 
 def test_domain_redirect():

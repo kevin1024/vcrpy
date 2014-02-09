@@ -1,4 +1,4 @@
-from config import VCR
+from .config import VCR
 
 default_vcr = VCR()
 
