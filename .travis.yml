@@ -1,18 +1,17 @@
 language: python
 before_install: openssl version
 env:
-  - WITH_REQUESTS="2.x"
-  - WITH_REQUESTS="1.x"
-  - WITH_REQUESTS="False"
-  - WITH_HTTPLIB2="True"
-  - WITH_HTTPLIB2="False"
+  - WITH_LIB="requests2.x"
+  - WITH_LIB="requests1.x"
+  - WITH_LIB="httplib2"
+  - WITH_LIB="None"
 python:
   - 2.6
   - 2.7
   - pypy
 install: 
   - pip install PyYAML pytest --use-mirrors
-  - if [ $WITH_REQUESTS = "1.x" ] ; then pip install requests==1.2.3; fi
-  - if [ $WITH_REQUESTS = "2.x" ] ; then pip install requests; fi
-  - if [ $WITH_HTTPLIB2 = "True" ] ; then pip install httplib2; fi
+  - if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
+  - if [ $WITH_LIB = "requests2.x" ] ; then pip install requests; fi
+  - if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
 script:  python setup.py test
