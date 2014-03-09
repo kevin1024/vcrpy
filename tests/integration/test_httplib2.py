@@ -2,7 +2,7 @@
 # coding=utf-8
 
 # External imports
-from urllib import urlencode
+from six.moves.urllib_parse import urlencode
 import pytest
 
 # Internal imports
