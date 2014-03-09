@@ -32,7 +32,7 @@ def parse_headers(header_list):
     headers = b"".join(header_list) + b"\r\n"
     return compat.get_httpmessage(headers)
 
-class VCRHTTPResponse(HTTPResponse):
+class VCRHTTPResponse(object):
     """
     Stub reponse class that gets returned instead of a HTTPResponse
     """
