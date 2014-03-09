@@ -12,6 +12,7 @@ The python3 http.client api moved some stuff around, so this is an abstraction
 layer that tries to cope with this move.
 """
 
+
 def get_header(message, name):
     if six.PY3:
         return message.getallmatchingheaders(name)
@@ -33,6 +34,7 @@ def get_headers(response):
                  for k, v in header_list]
     else:
         return response.msg.headers
+
 
 def get_httpmessage(headers):
     if six.PY3:

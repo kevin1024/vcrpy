@@ -20,9 +20,10 @@ Serializing: bytestring -> string (yaml persists to utf-8)
 Deserializing: string (yaml converts from utf-8) -> bytestring
 """
 
+
 def _restore_frozenset():
     """
-    Restore __builtin__.frozenset for cassettes serialized in python2 but 
+    Restore __builtin__.frozenset for cassettes serialized in python2 but
     deserialized in python3 and builtins.frozenset for cassettes serialized
     in python3 and deserialized in python2
     """
@@ -33,6 +34,7 @@ def _restore_frozenset():
 
     if 'builtins' not in sys.modules:
         sys.modules['builtins'] = sys.modules['__builtin__']
+
 
 def deserialize(cassette_string):
     _restore_frozenset()

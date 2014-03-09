@@ -5,7 +5,12 @@ try:
 except ImportError:
     pass
 import six
-from six.moves.http_client import HTTPConnection, HTTPSConnection, HTTPMessage, HTTPResponse
+from six.moves.http_client import (
+    HTTPConnection,
+    HTTPSConnection,
+    HTTPMessage,
+    HTTPResponse,
+)
 from six import BytesIO
 from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
@@ -32,6 +37,7 @@ def parse_headers(header_list):
     headers = b"".join(header_list) + b"\r\n"
     return compat.get_httpmessage(headers)
 
+
 class VCRHTTPResponse(HTTPResponse):
     """
     Stub reponse class that gets returned instead of a HTTPResponse
@@ -51,9 +57,9 @@ class VCRHTTPResponse(HTTPResponse):
 
     @property
     def closed(self):
-        # in python3, I can't change the value of self.closed.  So I'm twiddling
-        # self._closed and using this property to shadow the real self.closed
-        # from the superclass
+        # in python3, I can't change the value of self.closed.  So I'
+        # twiddling self._closed and using this property to shadow the real
+        # self.closed from the superclas
         return self._closed
 
     def read(self, *args, **kwargs):
@@ -206,8 +212,8 @@ class VCRConnection:
                 self.cassette.rewound:
             # We already have a response we are going to play, don't
             # actually connect
-            return 
-        
+            return
+
         if self.cassette.write_protected:
             # Cassette is write-protected, don't actually connect
             return
