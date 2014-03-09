@@ -192,7 +192,7 @@ class VCRConnection:
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
 
-    def connect(self):
+    def connect(self, *args, **kwargs):
         """
         httplib2 uses this.  Connects to the server I'm assuming.
 
@@ -212,7 +212,7 @@ class VCRConnection:
             # Cassette is write-protected, don't actually connect
             return
 
-        return self.real_connection.connect(self)
+        return self.real_connection.connect(*args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         # need to temporarily reset here because the real connection
@@ -222,6 +222,7 @@ class VCRConnection:
         reset()
         self.real_connection = self._baseclass(*args, **kwargs)
         install(self.cassette)
+        self.sock = self.real_connection.sock
 
 
 class VCRHTTPConnection(VCRConnection):
