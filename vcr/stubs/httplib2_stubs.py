@@ -21,6 +21,7 @@ class VCRHTTPConnectionWithTimeout(VCRHTTPConnection,
 
         self.proxy_info = kwargs.pop('proxy_info', None)
         VCRHTTPConnection.__init__(self, *args, **safe_kwargs)
+        self.sock = self.real_connection.sock
 
 
 class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection,
@@ -49,3 +50,4 @@ class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection,
         self.disable_ssl_certificate_validation = kwargs.pop(
             'disable_ssl_certificate_validation', None)
         VCRHTTPSConnection.__init__(self, *args, **safe_kwargs)
+        self.sock = self.real_connection.sock
