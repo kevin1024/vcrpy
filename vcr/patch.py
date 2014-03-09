@@ -1,7 +1,7 @@
 '''Utilities for patching in cassettes'''
 
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
-from vcr._compat import httplib
+from six.moves import http_client as httplib
 
 
 # Save some of the original types for the purposes of unpatching

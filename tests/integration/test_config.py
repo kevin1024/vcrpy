@@ -2,7 +2,7 @@ import os
 import json
 import pytest
 import vcr
-from vcr._compat import urlopen
+from six.moves.urllib.request import urlopen
 
 
 def test_set_serializer_default_config(tmpdir):

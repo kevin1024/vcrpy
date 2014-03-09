@@ -1,7 +1,7 @@
 import os
 import pytest
 import vcr
-from vcr._compat import urlopen
+from six.moves.urllib.request import urlopen
 
 
 def test_once_record_mode(tmpdir):

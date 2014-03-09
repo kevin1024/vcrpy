@@ -1,5 +1,5 @@
 import vcr
-from vcr._compat import urlopen
+from six.moves.urllib.request import urlopen
 
 
 def true_matcher(r1, r2):

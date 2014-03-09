@@ -3,10 +3,10 @@
 
 # External imports
 import os
+from six.moves.urllib.request import urlopen
 
 # Internal imports
 import vcr
-from vcr._compat import urlopen
 
 
 def test_nonexistent_directory(tmpdir):

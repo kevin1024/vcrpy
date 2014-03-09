@@ -5,10 +5,11 @@
 import os
 
 import pytest
+from six.moves.urllib.request import urlopen
+from six.moves.urllib_parse import urlencode
 
 # Internal imports
 import vcr
-from vcr._compat import urlopen, urlencode
 
 from assertions import assert_cassette_empty, assert_cassette_has_one_response
 

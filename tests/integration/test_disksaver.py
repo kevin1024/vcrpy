@@ -4,10 +4,10 @@
 # External imports
 import os
 import time
+from six.moves.urllib.request import urlopen
 
 # Internal imports
 import vcr
-from vcr._compat import urlopen
 
 
 def test_disk_saver_nowrite(tmpdir):
