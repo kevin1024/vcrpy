@@ -32,7 +32,7 @@ def parse_headers(header_list):
     headers = b"".join(header_list) + b"\r\n"
     return compat.get_httpmessage(headers)
 
-class VCRHTTPResponse(object):
+class VCRHTTPResponse(HTTPResponse):
     """
     Stub reponse class that gets returned instead of a HTTPResponse
     """
@@ -42,12 +42,19 @@ class VCRHTTPResponse(object):
         self.status = self.code = recorded_response['status']['code']
         self.version = None
         self._content = BytesIO(self.recorded_response['body']['string'])
-        self.closed = False
+        self._closed = False
 
         headers = self.recorded_response['headers']
         self.msg = parse_headers(headers)
 
         self.length = compat.get_header(self.msg, 'content-length') or None
+
+    @property
+    def closed(self):
+        # in python3, I can't change the value of self.closed.  So I'm twiddling
+        # self._closed and using this property to shadow the real self.closed
+        # from the superclass
+        return self._closed
 
     def read(self, *args, **kwargs):
         return self._content.read(*args, **kwargs)
@@ -56,7 +63,7 @@ class VCRHTTPResponse(object):
         return self._content.readline(*args, **kwargs)
 
     def close(self):
-        self.closed = True
+        self._closed = True
         return True
 
     def getcode(self):
