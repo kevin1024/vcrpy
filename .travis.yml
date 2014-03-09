@@ -4,7 +4,7 @@ env:
   - WITH_LIB="requests2.x"
   - WITH_LIB="requests1.x"
   - WITH_LIB="httplib2"
-  - WITH_LIB="None"
+  - WITH_LIB="boto"
 python:
   - 2.6
   - 2.7
@@ -15,4 +15,5 @@ install:
   - if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
   - if [ $WITH_LIB = "requests2.x" ] ; then pip install requests; fi
   - if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
+  - if [ $WITH_LIB = "boto" ] ; then pip install boto; fi
 script:  python setup.py test
