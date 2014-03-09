@@ -12,8 +12,8 @@ try:
     # Try to save the original types for requests
     import requests.packages.urllib3.connectionpool as cpool
     _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _HTTPConnection = cpool.HTTPConnection
-    _HTTPSConnection = cpool.HTTPSConnection
+    _cpoolHTTPConnection = cpool.HTTPConnection
+    _cpoolHTTPSConnection = cpool.HTTPSConnection
 except ImportError:  # pragma: no cover
     pass
 
@@ -72,10 +72,13 @@ def reset():
         _HTTPSConnection
     try:
         import requests.packages.urllib3.connectionpool as cpool
+        # unpatch requests v1.x
         cpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection
-        cpool.HTTPConnection = _HTTPConnection
-        cpool.HTTPConnectionPool.ConnectionCls = _HTTPConnection
-        cpool.HTTPSConnectionPool.ConnectionCls = _HTTPSConnection
+        cpool.HTTPConnection = _cpoolHTTPConnection
+        # unpatch requests v2.x
+        cpool.HTTPConnectionPool.ConnectionCls = _cpoolHTTPConnection
+        cpool.HTTPSConnection = _cpoolHTTPSConnection
+        cpool.HTTPSConnectionPool.ConnectionCls = _cpoolHTTPSConnection
     except ImportError:  # pragma: no cover
         pass
 
@@ -83,6 +86,7 @@ def reset():
         import urllib3.connectionpool as cpool
         cpool.VerifiedHTTPSConnection = _VerifiedHTTPSConnection
         cpool.HTTPConnection = _HTTPConnection
+        cpool.HTTPSConnection = _HTTPSConnection
         cpool.HTTPConnectionPool.ConnectionCls = _HTTPConnection
         cpool.HTTPSConnectionPool.ConnectionCls = _HTTPSConnection
     except ImportError:  # pragma: no cover

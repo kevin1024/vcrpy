@@ -10,6 +10,11 @@ class Request(object):
         # make headers a frozenset so it will be hashable
         self.headers = frozenset(headers.items())
 
+    def add_header(self, key, value):
+        tmp = dict(self.headers)
+        tmp[key] = value
+        self.headers = frozenset(tmp.iteritems())
+
     @property
     def url(self):
         return "{0}://{1}{2}".format(self.protocol, self.host, self.path)
