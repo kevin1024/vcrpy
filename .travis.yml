@@ -1,19 +1,29 @@
 language: python
 before_install: openssl version
 env:
-  - WITH_LIB="requests2.x"
-  - WITH_LIB="requests1.x"
-  - WITH_LIB="httplib2"
-  - WITH_LIB="boto"
+  global:
+    - secure: AifoKzwhjV94cmcQZrdQmqRu/9rkZZvWpwBv1daeAQpLOKFPGsOm3D+x2cSw9+iCfkgDZDfqQVv1kCaFVxTll8v8jTq5SJdqEY0NmGWbj/UkNtShh609oRDsuzLxAEwtVKYjf/h8K2BRea+bl1tGkwZ2vtmYS6dxNlAijjWOfds=
+    - secure: LBSEg/gMj4u4Hrpo3zs6Y/1mTpd2RtcN49mZIFgTdbJ9IhpiNPqcEt647Lz94F9Eses2x2WbNuKqZKZZReY7QLbEzU1m0nN5jlaKrjcG5NR5clNABfFFyhgc0jBikyS4abAG8jc2efeaTrFuQwdoF4sE8YiVrkiVj2X5Xoi6sBk=
+  matrix:
+    - WITH_LIB="requests2.x"
+    - WITH_LIB="requests1.x"
+    - WITH_LIB="httplib2"
+    - WITH_LIB="boto"
+matrix:
+  allow_failures:
+    - env: WITH_LIB="boto"
+  exclude:
+    - env: WITH_LIB="boto"
+      python: 3.3
 python:
-  - 2.6
-  - 2.7
-  - 3.3
-  - pypy
-install: 
-  - pip install PyYAML pytest --use-mirrors
-  - if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
-  - if [ $WITH_LIB = "requests2.x" ] ; then pip install requests; fi
-  - if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
-  - if [ $WITH_LIB = "boto" ] ; then pip install boto; fi
-script:  python setup.py test
+- 2.6
+- 2.7
+- 3.3
+- pypy
+install:
+- pip install PyYAML pytest --use-mirrors
+- if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
+- if [ $WITH_LIB = "requests2.x" ] ; then pip install requests; fi
+- if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
+- if [ $WITH_LIB = "boto" ] ; then pip install boto; fi
+script: python setup.py test
