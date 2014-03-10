@@ -19,7 +19,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='vcrpy',
-      version='0.6.0',
+      version='0.7.0',
       description="Automatically mock your HTTP interactions to simplify and speed up testing",
       author='Kevin McCarthy',
       author_email='me@kevinmccarthy.org',
