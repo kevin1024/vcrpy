@@ -18,9 +18,15 @@ to do is delete your existing cassette files, and run your tests again.
 All of the mocked responses will be updated with the new API.
 
 ## Compatibility Notes
-VCR.py officially supports Python 2.6 and 2.7, 3.3, and [pypy](http://pypy.org).
+VCR.py supports Python 2.6 and 2.7, 3.3, and [pypy](http://pypy.org).
 
-Currently I've only tested this with urllib2, urllib3, and requests.  It's known to *NOT WORK* with urllib.
+The following http libraries are supported:
+
+  * urllib2
+  * http.client (python3)
+  * requests (both 1.x and 2.x versions)
+  * httplib2
+  * boto
 
 ## Usage
 ```python
@@ -271,11 +277,11 @@ The tests are all run automatically on [Travis CI](https://travis-ci.org/kevin10
 
 This will run only tests that look like `test_status_code` or `test_gzip` in the test suite, and only in the python 2.7 environment that has `requests` installed.
 
-## Known Issues
-This library is a work in progress, so the API might change on you.
-There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=bug&page=1&state=open) floating around too.
+Also, in order for the boto tests to run, you will need an AWS key.  Refer to the [boto documentation](http://boto.readthedocs.org/en/latest/getting_started.html) for how to set this up.  I have marked the boto tests as optional in Travis so you don't have to worry about them failing if you submit a pull request.
+
 
 ## Changelog
+* 0.7.0: VCR.py now supports Python 3! (thanks @asundg)  Also I refactored the stub connections quite a bit to add support for the putrequest and putheader calls.  This version also adds support for httplib2 (thanks @nilp0inter).  I have added a couple tests for bobo since it is an http client in its own right.  Finally, this version includes a fix for a bug where requests wasn't being patched properly (thanks @msabramo).
 * 0.6.0: Store response headers as a list since a HTTP response can have the same header twice (happens with set-cookie sometimes).  This has the added benefit of preserving the order of headers. Thanks @smallcode for the bug report leading to this change.  I have made an effort to ensure backwards compatibility with the old cassettes' header storage mechanism, but if you want to upgrade to the new header storage, you should delete your cassettes and re-record them.  Also this release adds better error messages (thanks @msabramo) and adds support for using VCR as a decorator (thanks @smallcode for the motivation)
 * 0.5.0: Change the `response_of` method to `responses_of` since cassettes can now contain more than one response for a request.  Since this changes the API, I'm bumping the version.  Also includes 2 bugfixes: a better error message when attempting to overwrite a cassette file, and a fix for a bug with requests sessions (thanks @msabramo)
 * 0.4.0: Change default request recording behavior for multiple requests.  If you make the same request multiple times to the same URL, the response might be different each time (maybe the response has a timestamp in it or something), so this will make the same request multiple times and save them all.  Then, when you are replaying the cassette, the responses will be played back in the same order in which they were received.  If you were making multiple requests to the same URL in a cassette before version 0.4.0, you might need to regenerate your cassette files.  Also, removes support for the cassette.play_count counter API, since individual requests aren't unique anymore.  A cassette might contain the same request several times.  Also removes secure overwrite feature since that was breaking overwriting files in Windows, and fixes a bug preventing request's automatic body decompression from working.
@@ -314,18 +320,5 @@ There are probably some [bugs](https://github.com/kevin1024/vcrpy/issues?labels=
 * 0.0.3: Add support for requests 1.2.3.  Support for older versions of requests dropped (thanks @vitormazzi and @bryanhelmig)
 * 0.0.2: Add support for requests / urllib3
 * 0.0.1: Initial Release
-
-## Similar libraries in Python
-Neither of these really implement the API I want, but I have cribbed some code
-from them.
- * https://github.com/bbangert/Dalton
- * https://github.com/storborg/replaylib
-
-These were created after I created VCR.py but do something similar:
-
- * https://github.com/gabrielfalcao/HTTPretty
- * https://github.com/kanzure/python-requestions
- * https://github.com/uber/cassette
-
 # License
 This library uses the MIT license.  See [LICENSE.txt](LICENSE.txt) for more details
