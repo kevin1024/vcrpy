@@ -116,10 +116,6 @@ VCR supports 4 record modes (with the same behavior as Ruby's VCR):
  * Replay previously recorded interactions.
  * Record new interactions if there is no cassette file.
  * Cause an error to be raised for new requests if there is a cassette file.
- 
-It is similar to the new_episodes record mode, but will prevent new,
-unexpected requests from being made (i.e. because the request URI
-changed).
 
 once is the default record mode, used when you do not set one.
 
