@@ -43,25 +43,6 @@ def test_once_mode_three_times(tmpdir):
         response2 = urlopen('http://httpbin.org/').read()
 
 
-def test_new_episodes_record_mode(tmpdir):
-    testfile = str(tmpdir.join('recordmode.yml'))
-
-    with vcr.use_cassette(testfile, record_mode="new_episodes"):
-        # cassette file doesn't exist, so create.
-        response = urlopen('http://httpbin.org/').read()
-
-    with vcr.use_cassette(testfile, record_mode="new_episodes") as cass:
-        # make the same request again
-        response = urlopen('http://httpbin.org/').read()
-
-        # in the "new_episodes" record mode, we can add more requests to
-        # a cassette without repurcussions.
-        response = urlopen('http://httpbin.org/get').read()
-
-        # the first interaction was not re-recorded, but the second was added
-        assert cass.play_count == 1
-
-
 def test_all_record_mode(tmpdir):
     testfile = str(tmpdir.join('recordmode.yml'))
 
