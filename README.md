@@ -123,6 +123,15 @@ changed).
 
 once is the default record mode, used when you do not set one.
 
+### new_episodes
+
+* Record new interactions.
+* Replay previously recorded interactions.
+It is similar to the once record mode, but will always record new
+interactions, even if you have an existing recorded one that is similar,
+but not identical.
+
+This was the default behavior in versions < 0.3.0
 
 ### none
 
