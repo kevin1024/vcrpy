@@ -58,8 +58,12 @@ def test_new_episodes_record_mode(tmpdir):
         # a cassette without repurcussions.
         response = urlopen('http://httpbin.org/get').read()
 
-        # the first interaction was not re-recorded, but the second was added
+        # one of the responses has been played
         assert cass.play_count == 1
+
+    with vcr.use_cassette(testfile, record_mode="new_episodes") as cass:
+        # the cassette should now have 2 responses
+        assert len(cass.responses) == 2
 
 
 def test_all_record_mode(tmpdir):
