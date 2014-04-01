@@ -40,3 +40,24 @@ def test_url_matcher(cassette):
     with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
         with vcr.use_cassette(cassette, match_on=['url']) as cass:
             urlopen('http://httpbin.org/get?p2=q2&p1=q1')
+
+
+def test_semantic_url_matcher(cassette):
+    # prepare cassete
+    with vcr.use_cassette(cassette, match_on=['semantic_url']) as cass:
+        urlopen('http://httpbin.org/get?p1=q1&p2=q2')
+        assert len(cass) == 1
+
+    # play cassette with matching on semantic url
+    with vcr.use_cassette(cassette, match_on=['semantic_url']) as cass:
+        urlopen('http://httpbin.org/get?p1=q1&p2=q2')
+        assert cass.play_count == 1
+
+    with vcr.use_cassette(cassette, match_on=['semantic_url']) as cass:
+        urlopen('http://httpbin.org/get?p2=q2&p1=q1')
+        assert cass.play_count == 1
+
+    # should fail if url does not match on semantic url
+    with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
+        with vcr.use_cassette(cassette, match_on=['semantic_url']) as cass:
+            urlopen('http://httpbin.org/get?p1=q1&p2=q2&p1=q1')
