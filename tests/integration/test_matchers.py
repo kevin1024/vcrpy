@@ -22,7 +22,7 @@ def test_method_matcher(cassette):
     # should fail if method does not match
     with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
         with vcr.use_cassette(cassette, match_on=['method']) as cass:
-            urlopen('http://httpbin.org/post', data='')  # is a POST request
+            urlopen('http://httpbin.org/post', data=b'')  # is a POST request
 
 
 def test_url_matcher(cassette):
