@@ -1,4 +1,4 @@
-import urlparse
+from six.moves.urllib.parse import urlparse, parse_qsl
 
 
 def method(r1, r2):
@@ -16,12 +16,12 @@ def semantic_url(r1, r2):
     then urls are considered semantically the same.
     """
     query_index = 4
-    r1_url = list(urlparse.urlparse(r1.url))
-    r2_url = list(urlparse.urlparse(r2.url))
+    r1_url = list(urlparse(r1.url))
+    r2_url = list(urlparse(r2.url))
     r1_qs = r1_url[query_index]
     r2_qs = r2_url[query_index]
-    r1_url[query_index] = sorted(urlparse.parse_qsl(r1_qs))
-    r2_url[query_index] = sorted(urlparse.parse_qsl(r2_qs))
+    r1_url[query_index] = sorted(parse_qsl(r1_qs))
+    r2_url[query_index] = sorted(parse_qsl(r2_qs))
     return r1_url == r2_url
 
 
