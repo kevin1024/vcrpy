@@ -28,3 +28,22 @@ def test_url():
     req_query_string1 = request.Request(
         'http', 'google.com?p2=t2&p1=t1', 80, 'GET', '/', '', {})
     assert False == matchers.url(req_query_string, req_query_string1)
+
+
+def test_semantic_url():
+    req0 = request.Request(
+        'http', 'httpbin.org', 80, 'GET', '/a', '', {})
+    assert True == matchers.url(req0, req0)
+
+    req1 = request.Request(
+        'http', 'httpbin.org', 80, 'GET', '/a?p1=v1&p2=v2', '', {})
+    assert True == matchers.url(req1, req1)
+
+    req2 = request.Request(
+        'http', 'httpbin.org', 80, 'GET', '/a?p2=v2&p1=v1', '', {})
+    assert True == matchers.url(req1, req2)
+
+    req3 = request.Request(
+        'http', 'httpbin.org', 80, 'GET', '/a?p1=v1&p2=v2&p1=v1', '', {})
+    assert False == matchers.url(req1, req3)
+    assert False == matchers.url(req2, req3)
