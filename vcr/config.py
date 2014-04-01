@@ -2,6 +2,7 @@ import os
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
 from .matchers import method, url, host, path, headers, body
+from .matchers import semantic_url
 
 
 class VCR(object):
@@ -21,6 +22,7 @@ class VCR(object):
         self.matchers = {
             'method': method,
             'url': url,
+            'semantic_url': semantic_url,
             'host': host,
             'path': path,
             'headers': headers,
