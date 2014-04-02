@@ -1,3 +1,10 @@
+"""
+This file contains tests for matchers.
+
+Matcher should return `True` or `False` because of this here used assertions
+like 'assert True == matcher()' and not 'assert matcher()'
+"""
+
 from vcr import matchers
 from vcr import request
 
