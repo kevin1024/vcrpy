@@ -33,6 +33,13 @@ try:
 except ImportError:  # pragma: no cover
     pass
 
+try:
+    # Try to save the original types for boto
+    import boto.https_connection
+    _CertValidatingHTTPSConnection = boto.https_connection.CertValidatingHTTPSConnection
+except ImportError:  # pragma: no cover
+    pass
+
 
 def install(cassette):
     """
@@ -86,6 +93,15 @@ def install(cassette):
     except ImportError:  # pragma: no cover
         pass
 
+    # patch boto
+    try:
+        import boto.https_connection as cpool
+        from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
+        cpool.CertValidatingHTTPSConnection = VCRCertValidatingHTTPSConnection
+        cpool.CertValidatingHTTPSConnection.cassette = cassette
+    except ImportError:  # pragma: no cover
+        pass
+
 
 def reset():
     '''Undo all the patching'''
@@ -118,5 +134,11 @@ def reset():
         cpool.HTTPConnectionWithTimeout = _HTTPConnectionWithTimeout
         cpool.HTTPSConnectionWithTimeout = _HTTPSConnectionWithTimeout
         cpool.SCHEME_TO_CONNECTION = _SCHEME_TO_CONNECTION
+    except ImportError:  # pragma: no cover
+        pass
+
+    try:
+        import boto.https_connection as cpool
+        cpool.CertValidatingHTTPSConnection = _CertValidatingHTTPSConnection
     except ImportError:  # pragma: no cover
         pass
