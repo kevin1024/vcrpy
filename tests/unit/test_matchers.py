@@ -8,7 +8,7 @@ from vcr import request
 REQUESTS = {
     'base': request.Request('GET', 'http://host.com:80/p?a=b', '', {}),
     'method': request.Request('POST', 'http://host.com:80/p?a=b', '', {}),
-    'protocol': request.Request('GET', 'https://host.com:80/p?a=b', '', {}),
+    'scheme': request.Request('GET', 'https://host.com:80/p?a=b', '', {}),
     'host': request.Request('GET', 'http://another-host.com:80/p?a=b', '', {}),
     'port': request.Request('GET', 'http://host.com:90/p?a=b', '', {}),
     'path': request.Request('GET', 'http://host.com:80/x?a=b', '', {}),
@@ -49,6 +49,7 @@ def test_query_matcher():
 
 def test_metchers():
     assert_matcher('method')
+    assert_matcher('scheme')
     assert_matcher('host')
     assert_matcher('port')
     assert_matcher('path')

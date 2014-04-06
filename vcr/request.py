@@ -16,6 +16,10 @@ class Request(object):
         self.headers = frozenset(tmp.iteritems())
 
     @property
+    def scheme(self):
+        return urlparse(self.uri).scheme
+
+    @property
     def host(self):
         return urlparse(self.uri).hostname
 
