@@ -6,13 +6,13 @@ from vcr import request
 # the dict contains requests with corresponding to its key difference
 # with 'base' request.
 REQUESTS = {
-    'base': request.Request('GET', 'http://host.com:80/', '', {}),
-    'method': request.Request('POST', 'http://host.com:80/', '', {}),
-    'protocol': request.Request('GET', 'https://host.com:80/', '', {}),
-    'host': request.Request('GET', 'http://another-host.com:80/', '', {}),
-    'port': request.Request('GET', 'http://host.com:90/', '', {}),
-    'path': request.Request('GET', 'http://host.com:80/a', '', {}),
-    'query': request.Request('GET', 'http://host.com:80/?a=b', '', {}),
+    'base': request.Request('GET', 'http://host.com:80/p?a=b', '', {}),
+    'method': request.Request('POST', 'http://host.com:80/p?a=b', '', {}),
+    'protocol': request.Request('GET', 'https://host.com:80/p?a=b', '', {}),
+    'host': request.Request('GET', 'http://another-host.com:80/p?a=b', '', {}),
+    'port': request.Request('GET', 'http://host.com:90/p?a=b', '', {}),
+    'path': request.Request('GET', 'http://host.com:80/x?a=b', '', {}),
+    'query': request.Request('GET', 'http://host.com:80/p?c=d', '', {}),
 }
 
 
