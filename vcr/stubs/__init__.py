@@ -119,14 +119,29 @@ class VCRConnection:
     # A reference to the cassette that's currently being patched in
     cassette = None
 
+    def _uri(self, url):
+        """Returns request absolute URI"""
+        return "{0}://{1}:{2}{3}".format(
+            self._protocol,
+            self.real_connection.host,
+            self.real_connection.port,
+            url,
+        )
+
+    def _url(self, uri):
+        """Returns request selector url from absolute URI"""
+        prefix = "{0}://{1}:{2}".format(
+            self._protocol,
+            self.real_connection.host,
+            self.real_connection.port,
+        )
+        return uri.replace(prefix, '', 1)
+
     def request(self, method, url, body=None, headers=None):
         '''Persist the request metadata in self._vcr_request'''
         self._vcr_request = Request(
-            protocol=self._protocol,
-            host=self.real_connection.host,
-            port=self.real_connection.port,
             method=method,
-            path=url,
+            uri=self._uri(url),
             body=body,
             headers=headers or {}
         )
@@ -144,11 +159,8 @@ class VCRConnection:
         of putheader() calls.
         """
         self._vcr_request = Request(
-            protocol=self._protocol,
-            host=self.real_connection.host,
-            port=self.real_connection.port,
             method=method,
-            path=url,
+            uri=self._uri(url),
             body="",
             headers={}
         )
@@ -211,7 +223,7 @@ class VCRConnection:
             )
             self.real_connection.request(
                 method=self._vcr_request.method,
-                url=self._vcr_request.path,
+                url=self._url(self._vcr_request.uri),
                 body=self._vcr_request.body,
                 headers=dict(self._vcr_request.headers or {})
             )

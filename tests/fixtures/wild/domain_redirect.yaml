@@ -4,11 +4,8 @@
     - - !!python/tuple [Accept-Encoding, 'gzip, deflate, compress']
       - !!python/tuple [User-Agent, vcrpy-test]
       - !!python/tuple [Accept, '*/*']
-    host: seomoz.org
     method: GET
-    path: /
-    port: 80
-    protocol: http
+    uri: http://seomoz.org:80/
   response:
     body: {string: ''}
     headers: ["Location: http://moz.com/\r\n", "Server: BigIP\r\n", "Connection: Keep-Alive\r\n",
@@ -20,11 +17,8 @@
     - - !!python/tuple [Accept-Encoding, 'gzip, deflate, compress']
       - !!python/tuple [User-Agent, vcrpy-test]
       - !!python/tuple [Accept, '*/*']
-    host: moz.com
     method: GET
-    path: /
-    port: 80
-    protocol: http
+    uri: http://moz.com:80/
   response:
     body:
       string: !!binary |

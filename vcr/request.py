@@ -1,11 +1,8 @@
 class Request(object):
 
-    def __init__(self, protocol, host, port, method, path, body, headers):
-        self.protocol = protocol
-        self.host = host
-        self.port = port
+    def __init__(self, method, uri, body, headers):
         self.method = method
-        self.path = path
+        self.uri = uri
         self.body = body
         # make headers a frozenset so it will be hashable
         self.headers = frozenset(headers.items())
@@ -17,14 +14,12 @@ class Request(object):
 
     @property
     def url(self):
-        return "{0}://{1}{2}".format(self.protocol, self.host, self.path)
+        return self.uri
 
     def __key(self):
         return (
-            self.host,
-            self.port,
             self.method,
-            self.path,
+            self.uri,
             self.body,
             self.headers
         )
@@ -36,18 +31,15 @@ class Request(object):
         return hash(self) == hash(other)
 
     def __str__(self):
-        return "<Request ({0}) {1}>".format(self.method, self.url)
+        return "<Request ({0}) {1}>".format(self.method, self.uri)
 
     def __repr__(self):
         return self.__str__()
 
     def _to_dict(self):
         return {
-            'protocol': self.protocol,
-            'host': self.host,
-            'port': self.port,
             'method': self.method,
-            'path': self.path,
+            'uri': self.uri,
             'body': self.body,
             'headers': self.headers,
         }
