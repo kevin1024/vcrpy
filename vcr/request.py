@@ -1,3 +1,6 @@
+from six.moves.urllib.parse import urlparse, parse_qsl
+
+
 class Request(object):
 
     def __init__(self, method, uri, body, headers):
@@ -11,6 +14,10 @@ class Request(object):
         tmp = dict(self.headers)
         tmp[key] = value
         self.headers = frozenset(tmp.iteritems())
+
+    @property
+    def host(self):
+        return urlparse(self.uri).hostname
 
     @property
     def url(self):

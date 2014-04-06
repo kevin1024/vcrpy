@@ -37,5 +37,6 @@ def test_url_matcher():
 
 def test_metchers():
     assert_matcher('method')
+    assert_matcher('host')
     #assert_matcher('method')
     #assert_matcher('method')
