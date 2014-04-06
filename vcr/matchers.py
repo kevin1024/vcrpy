@@ -21,6 +21,10 @@ def path(r1, r2):
     return r1.path == r2.path
 
 
+def query(r1, r2):
+    return r1.query == r2.query
+
+
 def body(r1, r2):
     return r1.body == r2.body
 

@@ -35,8 +35,21 @@ def test_url_matcher():
             assert matched
 
 
+def test_query_matcher():
+    req1 = request.Request('GET', 'http://host.com:80/?a=b&c=d', '', {})
+    req2 = request.Request('GET', 'http://host.com:80/?c=d&a=b', '', {})
+    assert matchers.query(req1, req2)
+
+    req1 = request.Request('GET', 'http://host.com:80/?a=b&a=b&c=d', '', {})
+    req2 = request.Request('GET', 'http://host.com:80/?a=b&c=d&a=b', '', {})
+    req3 = request.Request('GET', 'http://host.com:80/?c=d&a=b&a=b', '', {})
+    assert matchers.query(req1, req2)
+    assert matchers.query(req1, req3)
+
+
 def test_metchers():
     assert_matcher('method')
     assert_matcher('host')
     assert_matcher('port')
     assert_matcher('path')
+    assert_matcher('query')

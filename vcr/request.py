@@ -28,6 +28,11 @@ class Request(object):
         return urlparse(self.uri).path
 
     @property
+    def query(self):
+        q = urlparse(self.uri).query
+        return sorted(parse_qsl(q))
+
+    @property
     def url(self):
         return self.uri
 
