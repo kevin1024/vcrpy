@@ -24,6 +24,10 @@ class Request(object):
         return urlparse(self.uri).port
 
     @property
+    def path(self):
+        return urlparse(self.uri).path
+
+    @property
     def url(self):
         return self.uri
 

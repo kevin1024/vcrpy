@@ -39,4 +39,4 @@ def test_metchers():
     assert_matcher('method')
     assert_matcher('host')
     assert_matcher('port')
-    #assert_matcher('method')
+    assert_matcher('path')
