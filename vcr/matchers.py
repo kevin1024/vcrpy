@@ -13,6 +13,10 @@ def host(r1, r2):
     return r1.host == r2.host
 
 
+def port(r1, r2):
+    return r1.port == r2.port
+
+
 def path(r1, r2):
     return r1.path == r2.path
 

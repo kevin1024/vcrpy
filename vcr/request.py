@@ -20,6 +20,10 @@ class Request(object):
         return urlparse(self.uri).hostname
 
     @property
+    def port(self):
+        return urlparse(self.uri).port
+
+    @property
     def url(self):
         return self.uri
 
