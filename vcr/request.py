@@ -36,9 +36,15 @@ class Request(object):
         q = urlparse(self.uri).query
         return sorted(parse_qsl(q))
 
+    # alias for backwards compatibility
     @property
     def url(self):
         return self.uri
+
+    # alias for backwards compatibility
+    @property
+    def protocol(self):
+        return self.scheme
 
     def __key(self):
         return (
