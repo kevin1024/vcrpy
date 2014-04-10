@@ -25,18 +25,18 @@ def test_method_matcher(cassette):
             urlopen('http://httpbin.org/post', data=b'')  # is a POST request
 
 
-def test_url_matcher(cassette):
+def test_uri_matcher(cassette):
     # prepare cassete
-    with vcr.use_cassette(cassette, match_on=['url']) as cass:
+    with vcr.use_cassette(cassette, match_on=['uri']) as cass:
         urlopen('http://httpbin.org/get?p1=q1&p2=q2')
         assert len(cass) == 1
 
-    # play cassette with matching on url
-    with vcr.use_cassette(cassette, match_on=['url']) as cass:
+    # play cassette with matching on uri
+    with vcr.use_cassette(cassette, match_on=['uri']) as cass:
         urlopen('http://httpbin.org/get?p1=q1&p2=q2')
         assert cass.play_count == 1
 
-    # should fail if url does not match
+    # should fail if uri does not match
     with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
-        with vcr.use_cassette(cassette, match_on=['url']) as cass:
+        with vcr.use_cassette(cassette, match_on=['uri']) as cass:
             urlopen('http://httpbin.org/get?p2=q2&p1=q1')

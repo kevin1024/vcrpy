@@ -5,8 +5,8 @@ def method(r1, r2):
     return r1.method == r2.method
 
 
-def url(r1, r2):
-    return r1.url == r2.url
+def uri(r1, r2):
+    return r1.uri == r2.uri
 
 
 def host(r1, r2):

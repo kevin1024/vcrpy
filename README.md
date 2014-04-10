@@ -73,7 +73,7 @@ my_vcr = vcr.VCR(
     serializer = 'json',
     cassette_library_dir = 'fixtures/cassettes',
     record_mode = 'once',
-    match_on = ['url', 'method'],
+    match_on = ['uri', 'method'],
 )
 
 with my_vcr.use_cassette('test.json'):

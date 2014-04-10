@@ -30,7 +30,8 @@ class VCR(object):
         }
         self.matchers = {
             'method': matchers.method,
-            'url': matchers.url,
+            'uri': matchers.uri,
+            'url': matchers.uri,  # matcher for backwards compatibility
             'scheme': matchers.scheme,
             'host': matchers.host,
             'port': matchers.method,

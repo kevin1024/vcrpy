@@ -26,9 +26,9 @@ def assert_matcher(matcher_name):
             assert matched
 
 
-def test_url_matcher():
+def test_uri_matcher():
     for k1, k2 in itertools.permutations(REQUESTS, 2):
-        matched = matchers.url(REQUESTS[k1], REQUESTS[k2])
+        matched = matchers.uri(REQUESTS[k1], REQUESTS[k2])
         if set((k1, k2)) != set(('base', 'method')):
             assert not matched
         else:
