@@ -34,9 +34,9 @@ class VCR(object):
             'url': matchers.uri,  # matcher for backwards compatibility
             'scheme': matchers.scheme,
             'host': matchers.host,
-            'port': matchers.method,
+            'port': matchers.port,
             'path': matchers.path,
-            'query': matchers.path,
+            'query': matchers.query,
             'headers': matchers.headers,
             'body': matchers.body,
         }
