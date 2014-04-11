@@ -183,7 +183,7 @@ part of the API.  The fields are as follows:
 
 The `Request` object has the following properties
 
-  * `URL`: The full url of the request, including the protocol.  Example: "http://www.google.com/"
+  * `url`: The full url of the request, including the protocol.  Example: "http://www.google.com/"
   * `path`: The path of the request.  For example "/" or "/home.html"
   * `host`: The host of the request, for example "www.google.com"
   * `port`: The port the request was made on
