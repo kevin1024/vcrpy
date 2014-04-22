@@ -37,7 +37,7 @@ def migrate_json(in_fp, out_fp):
     data = json.load(in_fp)
     for item in data:
         req = item['request']
-        uri = {k: req.pop(k) for k in PARTS}
+        uri = dict((k, req.pop(k)) for k in PARTS)
         req['uri'] = build_uri(**uri)
     json.dump(data, out_fp, indent=4)
 
@@ -47,7 +47,7 @@ def migrate_yml(in_fp, out_fp):
     uri = dict.fromkeys(PARTS, None)
     for line in in_fp:
         for part in uri:
-            match = re.match('\s+{}:\s(.*)'.format(part), line)
+            match = re.match('\s+{0}:\s(.*)'.format(part), line)
             if match:
                 uri[part] = match.group(1)
                 break
@@ -55,7 +55,7 @@ def migrate_yml(in_fp, out_fp):
             out_fp.write(line)
 
         if None not in uri.values():  # if all uri parts are collected
-            out_fp.write("    uri: {}\n".format(build_uri(**uri)))
+            out_fp.write("    uri: {0}\n".format(build_uri(**uri)))
             uri = dict.fromkeys(PARTS, None)  # reset dict
             migrated = True
     if not migrated:
@@ -100,7 +100,7 @@ def main():
     for file_path in files:
             migrated = try_migrate(file_path)
             status = 'OK' if migrated else 'FAIL'
-            sys.stderr.write("[{}] {}\n".format(status, file_path))
+            sys.stderr.write("[{0}] {1}\n".format(status, file_path))
     sys.stderr.write("Done.\n")
 
 if __name__ == '__main__':
