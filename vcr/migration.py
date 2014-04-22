@@ -92,9 +92,12 @@ def main():
     path = sys.argv[1]
     if not os.path.isabs(path):
         path = os.path.abspath(path)
-    for root, dirs, files in os.walk(path):
-        for file_name in files:
-            file_path = os.path.join(root, file_name)
+    files = [path]
+    if os.path.isdir(path):
+        files = (os.path.join(root, name)
+                 for (root, dirs, files) in os.walk(path)
+                 for name in files)
+    for file_path in files:
             migrated = try_migrate(file_path)
             status = 'OK' if migrated else 'FAIL'
             sys.stderr.write("[{}] {}\n".format(status, file_path))
