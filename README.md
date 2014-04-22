@@ -376,6 +376,25 @@ If you set the loglevel to DEBUG, you will also get information about which
 matchers didn't match. This can help you with debugging custom matchers.
 
 
+## Upgrade
+
+### New Cassette Format
+The cassette format has changed in _VCR.py 1.x_, the _VCR.py 0.x_ cassettes cannot be
+used with _VCR.py 1.x_.
+The easiest way to upgrade is to simply delete your cassettes and re-record all of them
+VCR.py also provides migration script that attempts to upgrade your 0.x cassettes to the
+new 1.x format. To use it, run the following command:
+
+```
+python -m vcr.migration PATH
+```
+
+The PATH can be path to the directory with cassettes or cassette itself.
+
+*Note*: Backup your cassettes files before migration.
+The migration runs successfully and upgrades the file content only for the old formatted
+cassettes.
+
 ## Changelog
   * 1.0.0 (in development) - Add support for filtering sensitive data from
     requests, bump supported Python3 version to 3.4, fix some bugs with Boto
