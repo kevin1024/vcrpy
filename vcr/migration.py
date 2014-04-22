@@ -65,7 +65,7 @@ def migrate_yml(in_fp, out_fp):
 def migrate(file_path, migration_fn):
     # because we assume that original files can be reverted
     # we will try to copy the content. (os.rename not needed)
-    with closing(tempfile.TemporaryFile()) as out_fp:
+    with closing(tempfile.TemporaryFile(mode='w+')) as out_fp:
         with open(file_path, 'r') as in_fp:
             migration_fn(in_fp, out_fp)
         with open(file_path, 'w') as in_fp:
