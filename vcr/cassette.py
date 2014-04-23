@@ -11,6 +11,7 @@ from contextdecorator import ContextDecorator
 # Internal imports
 from .patch import install, reset
 from .persist import load_cassette, save_cassette
+from .filters import filter_request
 from .serializers import yamlserializer
 from .matchers import requests_match, url, method
 from .errors import UnhandledHTTPRequestError
@@ -30,10 +31,17 @@ class Cassette(ContextDecorator):
                  path,
                  serializer=yamlserializer,
                  record_mode='once',
-                 match_on=[url, method]):
+                 match_on=[url, method],
+                 filter_headers=[],
+                 filter_query_parameters=[],
+                 before_record=None,
+                 ):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
+        self._filter_headers = filter_headers
+        self._filter_query_parameters = filter_query_parameters
+        self._before_record = before_record
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -61,19 +69,43 @@ class Cassette(ContextDecorator):
 
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
+        request = filter_request(
+            request = request,
+            filter_headers = self._filter_headers,
+            filter_query_parameters = self._filter_query_parameters,
+            before_record = self._before_record
+        )
+        if not request:
+            return
         self.data.append((request, response))
         self.dirty = True
+
+    def _responses(self, request):
+        """
+        internal API, returns an iterator with all responses matching
+        the request.
+        """
+        request = filter_request(
+            request = request,
+            filter_headers = self._filter_headers,
+            filter_query_parameters = self._filter_query_parameters,
+            before_record = self._before_record
+        )
+        if not request:
+            return
+        for index, (stored_request, response) in enumerate(self.data):
+            if requests_match(request, stored_request, self._match_on):
+                yield index, response
 
     def play_response(self, request):
         '''
         Get the response corresponding to a request, but only if it
         hasn't been played back before, and mark it as played
         '''
-        for index, (stored_request, response) in enumerate(self.data):
-            if requests_match(request, stored_request, self._match_on):
-                if self.play_counts[index] == 0:
-                    self.play_counts[index] += 1
-                    return response
+        for index, response in self._responses(request):
+            if self.play_counts[index] == 0:
+                self.play_counts[index] += 1
+                return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
             "The cassette (%r) doesn't contain the request (%r) asked for"
@@ -86,9 +118,7 @@ class Cassette(ContextDecorator):
         This function isn't actually used by VCR internally, but is
         provided as an external API.
         '''
-        responses = \
-            [resp for req, resp in self.data if
-                requests_match(req, request, self._match_on)]
+        responses = [response for index, response in self._responses(request)]
 
         if responses:
             return responses
@@ -134,9 +164,8 @@ class Cassette(ContextDecorator):
 
     def __contains__(self, request):
         '''Return whether or not a request has been stored'''
-        for stored_request, response in self.data:
-            if requests_match(stored_request, request, self._match_on):
-                return True
+        for response in self._responses(request):
+            return True
         return False
 
     def __enter__(self):

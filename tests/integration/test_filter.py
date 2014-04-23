@@ -1,0 +1,68 @@
+import base64
+import pytest
+from six.moves.urllib.request import urlopen, Request
+from six.moves.urllib.error import HTTPError
+import vcr
+
+
+def _request_with_auth(url, username, password):
+    request = Request(url)
+    base64string = base64.b64encode(
+        username.encode('ascii') + b':' + password.encode('ascii')
+    )
+    request.add_header(b"Authorization", b"Basic " + base64string)
+    return urlopen(request)
+
+
+def _find_header(cassette, header):
+    for request in cassette.requests:
+        for k, v in request.headers:
+            if header.lower() == k.lower():
+                return True
+    return False
+
+
+def test_filter_basic_auth(tmpdir):
+    url = 'http://httpbin.org/basic-auth/user/passwd'
+    cass_file = str(tmpdir.join('basic_auth_filter.yaml'))
+    my_vcr = vcr.VCR(match_on = ['url', 'method', 'headers'])
+    # 2 requests, one with auth failure and one with auth success
+    with my_vcr.use_cassette(cass_file, filter_headers=['authorization']):
+        with pytest.raises(HTTPError):
+            resp = _request_with_auth(url, 'user', 'wrongpasswd')
+            assert resp.getcode() == 401
+        resp = _request_with_auth(url, 'user', 'passwd')
+        assert resp.getcode() == 200
+    # make same 2 requests, this time both served from cassette.
+    with my_vcr.use_cassette(cass_file, filter_headers=['authorization']) as cass:
+        with pytest.raises(HTTPError):
+            resp = _request_with_auth(url, 'user', 'wrongpasswd')
+            assert resp.getcode() == 401
+        resp = _request_with_auth(url, 'user', 'passwd')
+        assert resp.getcode() == 200
+        # authorization header should not have been recorded
+        assert not _find_header(cass, 'authorization')
+        assert len(cass) == 2
+
+
+def test_filter_querystring(tmpdir):
+    url = 'http://httpbin.org/?foo=bar'
+    cass_file = str(tmpdir.join('filter_qs.yaml'))
+    with vcr.use_cassette(cass_file, filter_query_parameters=['foo']):
+        urlopen(url)
+    with vcr.use_cassette(cass_file, filter_query_parameters=['foo']) as cass:
+        urlopen(url)
+        assert 'foo' not in cass.requests[0].url
+
+def test_filter_callback(tmpdir):
+    url = 'http://httpbin.org/get'
+    cass_file = str(tmpdir.join('basic_auth_filter.yaml'))
+    def before_record_cb(request):
+        if request.path != '/get':
+            return request
+    my_vcr = vcr.VCR(
+        before_record = before_record_cb,
+    )
+    with my_vcr.use_cassette(cass_file, filter_headers=['authorization']) as cass:
+        urlopen(url)
+        assert len(cass) == 0

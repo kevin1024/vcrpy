@@ -255,6 +255,49 @@ with my_vcr.use_cassette('test.yml'):
 
 ```
 
+## Filter sensitive data from the request
+
+If you are checking your cassettes into source control, and are using some form
+of authentication in your tests, you can filter out that information so it won't
+appear in your cassette files.  There are a few ways to do this:
+
+### Filter information from HTTP Headers
+Use the `filter_headers` configuration option with a list of headers to filter.
+
+```python
+with my_vcr.use_cassette('test.yml', filter_headers=['authorization']):
+    # sensitive HTTP request goes here
+```
+
+### Filter information from HTTP querystring
+Use the `filter_query_parameters` configuration option with a list of query
+parameters to filter.
+
+```python
+with my_vcr.use_cassette('test.yml', filter_query_parameters=['api_key']):
+    requests.get('http://api.com/getdata?api_key=secretstring')
+```
+
+### Custom request filtering
+
+If neither of these covers your use case, you can register a callback that will
+manipulate the HTTP request before adding it to the cassette. Use the
+`before_record` configuration option to so this.  Here is an
+example that will never record requests to the /login endpoint.
+
+```python
+def before_record_cb(request):
+    if request.path != '/login':
+        return request
+
+my_vcr = vcr.VCR(
+    before_record = before_record_cb,
+)
+with my_vcr.use_cassette('test.yml'):
+    # your http code here
+```
+
+
 ## Installation
 
 VCR.py is a package on PyPI, so you can `pip install vcrpy` (first you may need
@@ -321,10 +364,11 @@ matchers didn't match. This can help you with debugging custom matchers.
 
 
 ## Changelog
-  * 1.0.0 (in development) - Bump supported Python3 version to 3.4, fix some
-    bugs with Boto support (thanks @marusich), fix error with URL field
-    capitalization in README (thanks @simon-weber), added some log messages
-    to help with debugging.
+  * 1.0.0 (in development) - Add support for filtering sensitive data from
+    requests, bump supported Python3 version to 3.4, fix some bugs with Boto
+    support (thanks @marusich), fix error with URL field capitalization in
+    README (thanks @simon-weber), added some log messages to help with
+    debugging.
   * 0.7.0: VCR.py now supports Python 3! (thanks @asundg)  Also I refactored
     the stub connections quite a bit to add support for the putrequest and
     putheader calls.  This version also adds support for httplib2 (thanks
