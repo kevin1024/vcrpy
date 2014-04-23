@@ -12,7 +12,6 @@ Usage::
 The PATH can be path to the directory with cassettes or cassette itself
 """
 
-from contextlib import closing
 import json
 import os
 import re
@@ -65,7 +64,7 @@ def migrate_yml(in_fp, out_fp):
 def migrate(file_path, migration_fn):
     # because we assume that original files can be reverted
     # we will try to copy the content. (os.rename not needed)
-    with closing(tempfile.TemporaryFile(mode='w+')) as out_fp:
+    with tempfile.TemporaryFile(mode='w+') as out_fp:
         with open(file_path, 'r') as in_fp:
             migration_fn(in_fp, out_fp)
         with open(file_path, 'w') as in_fp:
@@ -76,10 +75,10 @@ def migrate(file_path, migration_fn):
 def try_migrate(path):
     try:  # try to migrate as json
         migrate(path, migrate_json)
-    except:  # probably the file is not a json
+    except Exception:  # probably the file is not a json
         try:  # let's try to migrate as yaml
             migrate(path, migrate_yml)
-        except:  # oops probably the file is not a cassette
+        except Exception:  # oops probably the file is not a cassette
             return False
     return True
 
