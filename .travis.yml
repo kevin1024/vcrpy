@@ -14,11 +14,11 @@ matrix:
     - env: WITH_LIB="boto"
   exclude:
     - env: WITH_LIB="boto"
-      python: 3.4
+      python: 3.3
 python:
 - 2.6
 - 2.7
-- 3.4
+- 3.3
 - pypy
 install:
 - pip install PyYAML pytest --use-mirrors

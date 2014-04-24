@@ -16,6 +16,27 @@ from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
 from . import compat
 
+class VCRFakeSocket(object):
+    """
+    A socket that doesn't do anything!
+    Used when playing back casssettes, when there
+    is no actual open socket.
+    """
+
+    def close(self):
+        pass
+
+    def settimeout(self, *args, **kwargs):
+        pass
+
+    def fileno(self):
+        """
+        This is kinda crappy.  requests will watch
+        this descriptor and make sure it's not closed.
+        Return file descriptor 0 since that's stdin.
+        """
+        return 0 # wonder how bad this is....
+
 
 def parse_headers_backwards_compat(header_dict):
     """
@@ -220,6 +241,17 @@ class VCRConnection:
 
         return self.real_connection.connect(*args, **kwargs)
 
+    @property
+    def sock(self):
+        if self.real_connection.sock:
+            return self.real_connection.sock
+        return VCRFakeSocket()
+
+    @sock.setter
+    def sock(self, value):
+        if self.real_connection.sock:
+            self.real_connection.sock = value
+
     def __init__(self, *args, **kwargs):
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out
@@ -228,7 +260,6 @@ class VCRConnection:
         reset()
         self.real_connection = self._baseclass(*args, **kwargs)
         install(self.cassette)
-        self.sock = self.real_connection.sock
 
 
 class VCRHTTPConnection(VCRConnection):

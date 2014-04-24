@@ -18,7 +18,7 @@ to do is delete your existing cassette files, and run your tests again.
 All of the mocked responses will be updated with the new API.
 
 ## Compatibility Notes
-VCR.py supports Python 2.6 and 2.7, 3.3, and [pypy](http://pypy.org).
+VCR.py supports Python 2.6 and 2.7, 3.4, and [pypy](http://pypy.org).
 
 The following http libraries are supported:
 
@@ -281,6 +281,7 @@ Also, in order for the boto tests to run, you will need an AWS key.  Refer to th
 
 
 ## Changelog
+* 1.0.0 (in development) - Bump supported Python3 version to 3.4, fix some bugs with Boto support (thanks @marusich), fix error with URL field capitalization in README (thanks @simon-weber)
 * 0.7.0: VCR.py now supports Python 3! (thanks @asundg)  Also I refactored the stub connections quite a bit to add support for the putrequest and putheader calls.  This version also adds support for httplib2 (thanks @nilp0inter).  I have added a couple tests for bobo since it is an http client in its own right.  Finally, this version includes a fix for a bug where requests wasn't being patched properly (thanks @msabramo).
 * 0.6.0: Store response headers as a list since a HTTP response can have the same header twice (happens with set-cookie sometimes).  This has the added benefit of preserving the order of headers. Thanks @smallcode for the bug report leading to this change.  I have made an effort to ensure backwards compatibility with the old cassettes' header storage mechanism, but if you want to upgrade to the new header storage, you should delete your cassettes and re-record them.  Also this release adds better error messages (thanks @msabramo) and adds support for using VCR as a decorator (thanks @smallcode for the motivation)
 * 0.5.0: Change the `response_of` method to `responses_of` since cassettes can now contain more than one response for a request.  Since this changes the API, I'm bumping the version.  Also includes 2 bugfixes: a better error message when attempting to overwrite a cassette file, and a fix for a bug with requests sessions (thanks @msabramo)
