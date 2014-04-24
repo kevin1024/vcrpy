@@ -228,6 +228,7 @@ class VCRConnection:
         reset()
         self.real_connection = self._baseclass(*args, **kwargs)
         install(self.cassette)
+        self.sock = self.real_connection.sock
 
 
 class VCRHTTPConnection(VCRConnection):
