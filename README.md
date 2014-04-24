@@ -18,7 +18,7 @@ to do is delete your existing cassette files, and run your tests again.
 All of the mocked responses will be updated with the new API.
 
 ## Compatibility Notes
-VCR.py supports Python 2.6 and 2.7, 3.4, and [pypy](http://pypy.org).
+VCR.py supports Python 2.6 and 2.7, 3.3, 3.4, and [pypy](http://pypy.org).
 
 The following http libraries are supported:
 
