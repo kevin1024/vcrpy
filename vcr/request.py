@@ -71,7 +71,7 @@ class Request(object):
             'method': self.method,
             'uri': self.uri,
             'body': self.body,
-            'headers': self.headers,
+            'headers': dict(self.headers),
         }
 
     @classmethod

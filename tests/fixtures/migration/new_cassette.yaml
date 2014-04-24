@@ -1,9 +1,7 @@
-- request: !!python/object:vcr.request.Request
+- request:
     body: null
-    headers: !!python/object/apply:__builtin__.frozenset
-    - - !!python/tuple [Accept-Encoding, 'gzip, deflate, compress']
-      - !!python/tuple [User-Agent, python-requests/2.2.1 CPython/2.6.1 Darwin/10.8.0]
-      - !!python/tuple [Accept, '*/*']
+    headers: {Accept: '*/*', Accept-Encoding: 'gzip, deflate, compress', User-Agent: python-requests/2.2.1
+        CPython/2.6.1 Darwin/10.8.0}
     method: GET
     uri: http://httpbin.org:80/ip
   response:

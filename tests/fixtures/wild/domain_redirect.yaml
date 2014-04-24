@@ -1,9 +1,6 @@
-- request: !!python/object:vcr.request.Request
+- request:
     body: null
-    headers: !!python/object/apply:__builtin__.frozenset
-    - - !!python/tuple [Accept-Encoding, 'gzip, deflate, compress']
-      - !!python/tuple [User-Agent, vcrpy-test]
-      - !!python/tuple [Accept, '*/*']
+    headers: {Accept: '*/*', Accept-Encoding: 'gzip, deflate, compress', User-Agent: vcrpy-test}
     method: GET
     uri: http://seomoz.org:80/
   response:
@@ -11,12 +8,9 @@
     headers: ["Location: http://moz.com/\r\n", "Server: BigIP\r\n", "Connection: Keep-Alive\r\n",
       "Content-Length: 0\r\n"]
     status: {code: 301, message: Moved Permanently}
-- request: !!python/object:vcr.request.Request
+- request:
     body: null
-    headers: !!python/object/apply:__builtin__.frozenset
-    - - !!python/tuple [Accept-Encoding, 'gzip, deflate, compress']
-      - !!python/tuple [User-Agent, vcrpy-test]
-      - !!python/tuple [Accept, '*/*']
+    headers: {Accept: '*/*', Accept-Encoding: 'gzip, deflate, compress', User-Agent: vcrpy-test}
     method: GET
     uri: http://moz.com:80/
   response:
