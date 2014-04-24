@@ -31,7 +31,7 @@ def get_headers(response):
     if six.PY3:
         header_list = response.msg._headers
         return [b': '.join((k.encode('utf-8'), v.encode('utf-8'))) + b'\r\n'
-                 for k, v in header_list]
+                for k, v in header_list]
     else:
         return response.msg.headers
 

@@ -16,6 +16,7 @@ from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
 from . import compat
 
+
 class VCRFakeSocket(object):
     """
     A socket that doesn't do anything!
@@ -35,7 +36,7 @@ class VCRFakeSocket(object):
         this descriptor and make sure it's not closed.
         Return file descriptor 0 since that's stdin.
         """
-        return 0 # wonder how bad this is....
+        return 0  # wonder how bad this is....
 
 
 def parse_headers_backwards_compat(header_dict):

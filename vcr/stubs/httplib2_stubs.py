@@ -47,7 +47,7 @@ class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection,
         for kw in unknown_keys:
             del safe_kwargs[kw]
         self.proxy_info = kwargs.pop('proxy_info', None)
-        if not 'ca_certs' in kwargs or kwargs['ca_certs'] is None:
+        if 'ca_certs' not in kwargs or kwargs['ca_certs'] is None:
             try:
                 import httplib2
                 self.ca_certs = httplib2.CA_CERTS
