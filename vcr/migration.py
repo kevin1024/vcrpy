@@ -14,10 +14,19 @@ The PATH can be path to the directory with cassettes or cassette itself
 
 import json
 import os
-import re
 import shutil
 import sys
 import tempfile
+import yaml
+
+from .serializers import compat, yamlserializer
+from . import request
+
+# Use the libYAML versions if possible
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 
 PARTS = [
@@ -41,24 +50,48 @@ def migrate_json(in_fp, out_fp):
     json.dump(data, out_fp, indent=4)
 
 
-def migrate_yml(in_fp, out_fp):
-    migrated = False
-    uri = dict.fromkeys(PARTS, None)
-    for line in in_fp:
-        for part in uri:
-            match = re.match('\s+{0}:\s(.*)'.format(part), line)
-            if match:
-                uri[part] = match.group(1)
-                break
-        else:
-            out_fp.write(line)
+def _restore_frozenset():
+    """
+    Restore __builtin__.frozenset for cassettes serialized in python2 but
+    deserialized in python3 and builtins.frozenset for cassettes serialized
+    in python3 and deserialized in python2
+    """
 
-        if None not in uri.values():  # if all uri parts are collected
-            out_fp.write("    uri: {0}\n".format(build_uri(**uri)))
-            uri = dict.fromkeys(PARTS, None)  # reset dict
-            migrated = True
-    if not migrated:
-        raise RuntimeError("migration failed")
+    if '__builtin__' not in sys.modules:
+        import builtins
+        sys.modules['__builtin__'] = builtins
+
+    if 'builtins' not in sys.modules:
+        sys.modules['builtins'] = sys.modules['__builtin__']
+
+
+def _old_deserialize(cassette_string):
+    _restore_frozenset()
+    data = yaml.load(cassette_string, Loader=Loader)
+    requests = [r['request'] for r in data]
+    responses = [r['response'] for r in data]
+    responses = [compat.convert_to_bytes(r['response']) for r in data]
+    return requests, responses
+
+
+def migrate_yml(in_fp, out_fp):
+    (requests, responses) = _old_deserialize(in_fp.read())
+    for req in requests:
+        if not isinstance(req, request.Request):
+            raise Exception("already migrated")
+        else:
+            req.uri = "{0}://{1}:{2}{3}".format(
+                req.__dict__['protocol'],
+                req.__dict__['host'],
+                req.__dict__['port'],
+                req.__dict__['path'],
+            )
+
+    data = yamlserializer.serialize({
+        "requests": requests,
+        "responses": responses,
+    })
+    out_fp.write(data)
 
 
 def migrate(file_path, migration_fn):
