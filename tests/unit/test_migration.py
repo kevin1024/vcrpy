@@ -1,6 +1,7 @@
 import filecmp
 import json
 import shutil
+import yaml
 
 import vcr.migration
 
@@ -20,7 +21,11 @@ def test_try_migrate_with_yaml(tmpdir):
     cassette = tmpdir.join('cassette').strpath
     shutil.copy('tests/fixtures/migration/old_cassette.yaml', cassette)
     assert vcr.migration.try_migrate(cassette)
-    assert filecmp.cmp(cassette, 'tests/fixtures/migration/new_cassette.yaml')
+    with open('tests/fixtures/migration/new_cassette.yaml', 'r') as f:
+        expected_yaml = yaml.load(f)
+    with open(cassette, 'r') as f:
+        actual_yaml = yaml.load(f)
+    assert actual_yaml == expected_yaml
 
 
 def test_try_migrate_with_invalid_or_new_cassettes(tmpdir):
