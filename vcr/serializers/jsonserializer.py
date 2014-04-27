@@ -27,4 +27,12 @@ def serialize(cassette_dict):
         cassette_dict['requests'],
         cassette_dict['responses']
     )])
-    return json.dumps(data, indent=4, default=_json_default)
+    try:
+        return json.dumps(data, indent=4, default=_json_default)
+    except UnicodeDecodeError as e:
+        raise UnicodeDecodeError(
+            "Error serializing cassette to JSON. ",
+            "Does this HTTP interaction contain binary data? ",
+            "If so, use a different serializer (like the yaml serializer) for",
+            "this request"
+        )
