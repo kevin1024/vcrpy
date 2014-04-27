@@ -36,7 +36,8 @@ except ImportError:  # pragma: no cover
 try:
     # Try to save the original types for boto
     import boto.https_connection
-    _CertValidatingHTTPSConnection = boto.https_connection.CertValidatingHTTPSConnection
+    _CertValidatingHTTPSConnection = \
+        boto.https_connection.CertValidatingHTTPSConnection
 except ImportError:  # pragma: no cover
     pass
 
