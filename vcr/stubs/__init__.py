@@ -4,6 +4,7 @@ try:
     import http.client
 except ImportError:
     pass
+import logging
 import six
 from six.moves.http_client import (
     HTTPConnection,
@@ -15,6 +16,8 @@ from six import BytesIO
 from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
 from . import compat
+
+log = logging.getLogger(__name__)
 
 
 class VCRFakeSocket(object):
@@ -118,7 +121,6 @@ class VCRConnection:
 
     def request(self, method, url, body=None, headers=None):
         '''Persist the request metadata in self._vcr_request'''
-
         self._vcr_request = Request(
             protocol=self._protocol,
             host=self.real_connection.host,
@@ -128,6 +130,7 @@ class VCRConnection:
             body=body,
             headers=headers or {}
         )
+        log.debug('Got {0}'.format(self._vcr_request))
 
         # Note: The request may not actually be finished at this point, so
         # I'm not sending the actual request until getresponse().  This
@@ -149,6 +152,7 @@ class VCRConnection:
             body="",
             headers={}
         )
+        log.debug('Got {0}'.format(self._vcr_request))
 
     def putheader(self, header, *values):
         for value in values:
@@ -182,6 +186,11 @@ class VCRConnection:
         if self._vcr_request in self.cassette and \
                 self.cassette.record_mode != "all" and \
                 self.cassette.rewound:
+            log.info(
+                "Playing response for {0} from cassette".format(
+                    self._vcr_request
+                )
+            )
             response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
@@ -195,6 +204,11 @@ class VCRConnection:
             # Otherwise, we should send the request, then get the response
             # and return it.
 
+            log.info(
+                "{0} not in cassette, sending to real server".format(
+                    self._vcr_request
+                )
+            )
             self.real_connection.request(
                 method=self._vcr_request.method,
                 url=self._vcr_request.path,
