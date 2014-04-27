@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=Ready)](https://waffle.io/kevin1024/vcrpy)
 # VCR.py
 
 ![vcr.py](https://raw.github.com/kevin1024/vcrpy/master/vcr.png)
