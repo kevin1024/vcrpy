@@ -1,6 +1,9 @@
 - request:
     body: null
-    headers: {Accept: '*/*', Accept-Encoding: 'gzip, deflate, compress', User-Agent: vcrpy-test}
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate, compress']
+      User-Agent: ['vcrpy-test']
     method: GET
     uri: http://seomoz.org:80/
   response:
@@ -10,7 +13,10 @@
     status: {code: 301, message: Moved Permanently}
 - request:
     body: null
-    headers: {Accept: '*/*', Accept-Encoding: 'gzip, deflate, compress', User-Agent: vcrpy-test}
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate, compress']
+      User-Agent: ['vcrpy-test']
     method: GET
     uri: http://moz.com:80/
   response:
