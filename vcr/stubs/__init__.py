@@ -225,7 +225,7 @@ class VCRConnection:
                 method=self._vcr_request.method,
                 url=self._url(self._vcr_request.uri),
                 body=self._vcr_request.body,
-                headers=dict(self._vcr_request.headers or {})
+                headers=self._vcr_request.flat_headers_dict(),
             )
 
             # get the response

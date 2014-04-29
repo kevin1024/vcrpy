@@ -7,10 +7,16 @@ class Request(object):
         self.method = method
         self.uri = uri
         self.body = body
-        self.headers = headers
+        self.headers = {}
+        for key in headers:
+            self.add_header(key, headers[key])
 
     def add_header(self, key, value):
-        self.headers[key] = value
+        value = list(value) if isinstance(value, (tuple, list)) else [value]
+        self.headers.setdefault(key, []).extend(value)
+
+    def flat_headers_dict(self):
+        return {key: self.headers[key][0] for key in self.headers}
 
     @property
     def scheme(self):
@@ -54,7 +60,7 @@ class Request(object):
             'method': self.method,
             'uri': self.uri,
             'body': self.body,
-            'headers': dict(self.headers),
+            'headers': self.headers,
         }
 
     @classmethod
