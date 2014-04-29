@@ -46,20 +46,6 @@ class Request(object):
     def protocol(self):
         return self.scheme
 
-    def __key(self):
-        return (
-            self.method,
-            self.uri,
-            self.body,
-            self.headers
-        )
-
-    def __hash__(self):
-        return hash(self.__key())
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
     def __str__(self):
         return "<Request ({0}) {1}>".format(self.method, self.uri)
 
