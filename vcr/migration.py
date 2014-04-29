@@ -47,6 +47,10 @@ def migrate_json(in_fp, out_fp):
         req = item['request']
         uri = dict((k, req.pop(k)) for k in PARTS)
         req['uri'] = build_uri(**uri)
+        # convert headers to dict of lists
+        headers = req['headers']
+        for k in headers:
+            headers[k] = [headers[k]]
     json.dump(data, out_fp, indent=4)
 
 
@@ -86,6 +90,12 @@ def migrate_yml(in_fp, out_fp):
                 req.__dict__['port'],
                 req.__dict__['path'],
             )
+
+            # convert headers to dict of lists
+            headers = req.headers
+            req.headers = {}
+            for key, value in headers:
+                req.add_header(key, value)
 
     data = yamlserializer.serialize({
         "requests": requests,
