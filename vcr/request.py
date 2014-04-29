@@ -7,13 +7,10 @@ class Request(object):
         self.method = method
         self.uri = uri
         self.body = body
-        # make headers a frozenset so it will be hashable
-        self.headers = frozenset(headers.items())
+        self.headers = headers
 
     def add_header(self, key, value):
-        tmp = dict(self.headers)
-        tmp[key] = value
-        self.headers = frozenset(tmp.iteritems())
+        self.headers[key] = value
 
     @property
     def scheme(self):
