@@ -21,7 +21,6 @@ def _remove_query_parameters(request, query_parameters_to_remove):
         uri_parts = list(urlparse(request.uri))
         uri_parts[4] = urlencode(new_query)
         request.uri = urlunparse(uri_parts)
-        print urlunparse(uri_parts)
     return request
 
 
