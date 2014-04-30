@@ -6,7 +6,7 @@ from vcr.request import Request
 def test_serialize_binary():
     request = Request(
         method='GET',
-        uri='htt://localhost:80/',
+        uri='http://localhost:80/',
         body='',
         headers={},
     )
