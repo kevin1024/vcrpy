@@ -3,11 +3,10 @@ import copy
 
 
 def _remove_headers(request, headers_to_remove):
-    out = []
-    for k, v in request.headers:
-        if k.lower() not in [h.lower() for h in headers_to_remove]:
-            out.append((k, v))
-    request.headers = frozenset(out)
+    headers_to_remove = [h.lower() for h in headers_to_remove]
+    keys = [k for k in request.headers if k.lower() in headers_to_remove]
+    for k in keys:
+        request.headers.pop(k)
     return request
 
 
