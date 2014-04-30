@@ -1,4 +1,4 @@
-from six.moves.urllib.parse import urlparse, parse_qsl, urlunparse, urlencode
+from six.moves.urllib.parse import urlparse, parse_qsl, urlencode
 import copy
 
 
@@ -11,7 +11,7 @@ def _remove_headers(request, headers_to_remove):
 
 
 def _remove_query_parameters(request, query_parameters_to_remove):
-    if not hasattr(request, 'path' or not query_parameters_to_remote):
+    if not hasattr(request, 'path' or not query_parameters_to_remove):
         return request
     url = urlparse(request.url)
     q = parse_qsl(url.query)
