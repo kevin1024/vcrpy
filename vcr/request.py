@@ -16,7 +16,7 @@ class Request(object):
         self.headers.setdefault(key, []).extend(value)
 
     def flat_headers_dict(self):
-        return {key: self.headers[key][0] for key in self.headers}
+        return dict((key, self.headers[key][0]) for key in self.headers)
 
     @property
     def scheme(self):
