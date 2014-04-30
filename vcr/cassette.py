@@ -1,10 +1,9 @@
 '''The container for recorded requests and responses'''
 
 try:
-    from collections import Counter, OrderedDict
+    from collections import Counter
 except ImportError:
     from .compat.counter import Counter
-    from .compat.ordereddict import OrderedDict
 
 from contextdecorator import ContextDecorator
 
@@ -31,7 +30,7 @@ class Cassette(ContextDecorator):
                  path,
                  serializer=yamlserializer,
                  record_mode='once',
-                 match_on=[uri, method]):
+                 match_on=[uri, method],
                  filter_headers=[],
                  filter_query_parameters=[],
                  before_record=None,
@@ -70,10 +69,10 @@ class Cassette(ContextDecorator):
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
         request = filter_request(
-            request = request,
-            filter_headers = self._filter_headers,
-            filter_query_parameters = self._filter_query_parameters,
-            before_record = self._before_record
+            request=request,
+            filter_headers=self._filter_headers,
+            filter_query_parameters=self._filter_query_parameters,
+            before_record=self._before_record
         )
         if not request:
             return
@@ -86,10 +85,10 @@ class Cassette(ContextDecorator):
         the request.
         """
         request = filter_request(
-            request = request,
-            filter_headers = self._filter_headers,
-            filter_query_parameters = self._filter_query_parameters,
-            before_record = self._before_record
+            request=request,
+            filter_headers=self._filter_headers,
+            filter_query_parameters=self._filter_query_parameters,
+            before_record=self._before_record
         )
         if not request:
             return
