@@ -8,7 +8,7 @@
                 "User-Agent": ["python-requests/2.2.1 CPython/2.6.1 Darwin/10.8.0"]
             },
             "method": "GET",
-            "uri": "http://httpbin.org:80/ip"
+            "uri": "http://httpbin.org/ip"
         },
         "response": {
             "status": {

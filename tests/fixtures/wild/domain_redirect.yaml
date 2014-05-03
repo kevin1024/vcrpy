@@ -5,7 +5,7 @@
       Accept-Encoding: ['gzip, deflate, compress']
       User-Agent: ['vcrpy-test']
     method: GET
-    uri: http://seomoz.org:80/
+    uri: http://seomoz.org/
   response:
     body: {string: ''}
     headers: ["Location: http://moz.com/\r\n", "Server: BigIP\r\n", "Connection: Keep-Alive\r\n",
@@ -18,7 +18,7 @@
       Accept-Encoding: ['gzip, deflate, compress']
       User-Agent: ['vcrpy-test']
     method: GET
-    uri: http://moz.com:80/
+    uri: http://moz.com/
   response:
     body:
       string: !!binary |

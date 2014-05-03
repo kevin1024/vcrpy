@@ -5,7 +5,7 @@
       Accept-Encoding: ['gzip, deflate, compress']
       User-Agent: ['python-requests/2.2.1 CPython/2.6.1 Darwin/10.8.0']
     method: GET
-    uri: http://httpbin.org:80/ip
+    uri: http://httpbin.org/ip
   response:
     body: {string: !!python/unicode "{\n  \"origin\": \"217.122.164.194\"\n}"}
     headers: [!!python/unicode "Access-Control-Allow-Origin: *\r\n", !!python/unicode "Content-Type:

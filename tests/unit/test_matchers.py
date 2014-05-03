@@ -6,13 +6,13 @@ from vcr import request
 # the dict contains requests with corresponding to its key difference
 # with 'base' request.
 REQUESTS = {
-    'base': request.Request('GET', 'http://host.com:80/p?a=b', '', {}),
-    'method': request.Request('POST', 'http://host.com:80/p?a=b', '', {}),
+    'base': request.Request('GET', 'http://host.com/p?a=b', '', {}),
+    'method': request.Request('POST', 'http://host.com/p?a=b', '', {}),
     'scheme': request.Request('GET', 'https://host.com:80/p?a=b', '', {}),
-    'host': request.Request('GET', 'http://another-host.com:80/p?a=b', '', {}),
+    'host': request.Request('GET', 'http://another-host.com/p?a=b', '', {}),
     'port': request.Request('GET', 'http://host.com:90/p?a=b', '', {}),
-    'path': request.Request('GET', 'http://host.com:80/x?a=b', '', {}),
-    'query': request.Request('GET', 'http://host.com:80/p?c=d', '', {}),
+    'path': request.Request('GET', 'http://host.com/x?a=b', '', {}),
+    'query': request.Request('GET', 'http://host.com/p?c=d', '', {}),
 }
 
 
@@ -36,13 +36,13 @@ def test_uri_matcher():
 
 
 def test_query_matcher():
-    req1 = request.Request('GET', 'http://host.com:80/?a=b&c=d', '', {})
-    req2 = request.Request('GET', 'http://host.com:80/?c=d&a=b', '', {})
+    req1 = request.Request('GET', 'http://host.com/?a=b&c=d', '', {})
+    req2 = request.Request('GET', 'http://host.com/?c=d&a=b', '', {})
     assert matchers.query(req1, req2)
 
-    req1 = request.Request('GET', 'http://host.com:80/?a=b&a=b&c=d', '', {})
-    req2 = request.Request('GET', 'http://host.com:80/?a=b&c=d&a=b', '', {})
-    req3 = request.Request('GET', 'http://host.com:80/?c=d&a=b&a=b', '', {})
+    req1 = request.Request('GET', 'http://host.com/?a=b&a=b&c=d', '', {})
+    req2 = request.Request('GET', 'http://host.com/?a=b&c=d&a=b', '', {})
+    req3 = request.Request('GET', 'http://host.com/?c=d&a=b&a=b', '', {})
     assert matchers.query(req1, req2)
     assert matchers.query(req1, req3)
 
