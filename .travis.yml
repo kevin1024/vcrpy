@@ -21,7 +21,7 @@ python:
 - 3.3
 - pypy
 install:
-- pip install PyYAML pytest --use-mirrors
+- pip install PyYAML pytest pytest-localserver --use-mirrors
 - if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
 - if [ $WITH_LIB = "requests2.x" ] ; then pip install requests; fi
 - if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
