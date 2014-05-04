@@ -73,7 +73,7 @@ my_vcr = vcr.VCR(
     serializer = 'json',
     cassette_library_dir = 'fixtures/cassettes',
     record_mode = 'once',
-    match_on = ['url', 'method'],
+    match_on = ['uri', 'method'],
 )
 
 with my_vcr.use_cassette('test.json'):
@@ -92,20 +92,26 @@ Note: Per-cassette overrides take precedence over the global config.
 ## Request matching
 
 Request matching is configurable and allows you to change which requests VCR
-considers identical.  The default behavior is `['url', method']` which means
-that requests with both the same URL and method (ie POST or GET) are considered
+considers identical.  The default behavior is 
+`['method', 'scheme', 'host', 'port', 'path', 'query']` which means that
+requests with both the same URL and method (ie POST or GET) are considered
 identical.
 
 This can be configured by changing the `match_on` setting.
 
 The following options are available :
 
-  * method (for example, POST or GET)
-  * url (the full URL, including the protocol)
-  * host (the hostname of the server receiving the request)
-  * path (excluding the hostname)
-  * body (the entire request body)
-  * headers (the headers of the request)
+   * method (for example, POST or GET)
+   * uri (the full URI.)
+   * host (the hostname of the server receiving the request)
+   * port (the port of the server receiving the request)
+   * path (the path of the request)
+   * query (the query string of the request)
+   * body (the entire request body)
+   * headers (the headers of the request)
+   
+    Backwards compatible matchers:
+   * url (the `uri` alias)
 
 If these options don't work for you, you can also register your own request
 matcher.  This is described in the Advanced section of this README.
@@ -163,8 +169,8 @@ with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
     response = urllib2.urlopen('http://www.zombo.com/').read()
     # cass should have 1 request inside it
     assert len(cass) == 1 
-    # the request url should have been http://www.zombo.com/
-    assert cass.requests[0].url == 'http://www.zombo.com/'
+    # the request uri should have been http://www.zombo.com/
+    assert cass.requests[0].uri == 'http://www.zombo.com/'
 ```
 
 The `Cassette` object exposes the following properties which I consider part of
@@ -177,16 +183,22 @@ the API.  The fields are as follows:
     back
   * `responses_of(request)`: Access the responses that match a given request
 
-The `Request` object has the following properties
+The `Request` object has the following properties:
 
-  * `url`: The full url of the request, including the protocol.  Example:
-    "http://www.google.com/"
-  * `path`: The path of the request.  For example "/" or "/home.html"
+  * `uri`: The full uri of the request.  Example: "https://google.com/?q=vcrpy"
+  * `scheme`: The scheme used to make the request (http or https)
   * `host`: The host of the request, for example "www.google.com"
   * `port`: The port the request was made on
+  * `path`: The path of the request.  For example "/" or "/home.html"
+  * `query`: The parsed query string of the request. Sorted list of name, value pairs.
   * `method` : The method used to make the request, for example "GET" or "POST"
-  * `protocol`: The protocol used to make the request (http or https)
   * `body`: The body of the request, usually empty except for POST / PUT / etc
+
+  Backwards compatible properties:
+
+  * `url`: The `uri` alias
+  * `protocol`: The `scheme` alias
+
 
 ## Register your own serializer
 
@@ -239,7 +251,7 @@ Finally, register your method with VCR to use your new request matcher.
 import vcr
 
 def jurassic_matcher(r1, r2):
-    return r1.url == r2.url and 'JURASSIC PARK' in r1.body
+    return r1.uri == r2.uri and 'JURASSIC PARK' in r1.body
 
 my_vcr = vcr.VCR()
 my_vcr.register_matcher('jurassic', jurassic_matcher)
@@ -363,6 +375,25 @@ INFO:vcr.stubs:Playing response for <Request (GET) http://httpbin.org/headers> f
 If you set the loglevel to DEBUG, you will also get information about which
 matchers didn't match. This can help you with debugging custom matchers.
 
+
+## Upgrade
+
+### New Cassette Format
+The cassette format has changed in _VCR.py 1.x_, the _VCR.py 0.x_ cassettes cannot be
+used with _VCR.py 1.x_.
+The easiest way to upgrade is to simply delete your cassettes and re-record all of them
+VCR.py also provides migration script that attempts to upgrade your 0.x cassettes to the
+new 1.x format. To use it, run the following command:
+
+```
+python -m vcr.migration PATH
+```
+
+The PATH can be path to the directory with cassettes or cassette itself.
+
+*Note*: Backup your cassettes files before migration.
+The migration runs successfully and upgrades the file content only for the old formatted
+cassettes.
 
 ## Changelog
   * 1.0.0 (in development) - Add support for filtering sensitive data from

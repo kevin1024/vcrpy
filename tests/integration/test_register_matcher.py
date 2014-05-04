@@ -10,7 +10,7 @@ def false_matcher(r1, r2):
     return False
 
 
-def test_registered_serializer_true_matcher(tmpdir):
+def test_registered_true_matcher(tmpdir):
     my_vcr = vcr.VCR()
     my_vcr.register_matcher('true', true_matcher)
     testfile = str(tmpdir.join('test.yml'))
@@ -25,7 +25,7 @@ def test_registered_serializer_true_matcher(tmpdir):
         urlopen('https://httpbin.org/get')
 
 
-def test_registered_serializer_false_matcher(tmpdir):
+def test_registered_false_matcher(tmpdir):
     my_vcr = vcr.VCR()
     my_vcr.register_matcher('false', false_matcher)
     testfile = str(tmpdir.join('test.yml'))

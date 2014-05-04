@@ -4,8 +4,13 @@ from vcr.request import Request
 
 
 def test_serialize_binary():
-    request = Request('http','localhost',80,'GET','/',{},{})
-    cassette = {'requests': [request], 'responses': [{'body':b'\x8c'}]}
+    request = Request(
+        method='GET',
+        uri='http://localhost/',
+        body='',
+        headers={},
+    )
+    cassette = {'requests': [request], 'responses': [{'body': b'\x8c'}]}
 
     with pytest.raises(Exception) as e:
         serialize(cassette)

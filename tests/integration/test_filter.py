@@ -16,7 +16,7 @@ def _request_with_auth(url, username, password):
 
 def _find_header(cassette, header):
     for request in cassette.requests:
-        for k, v in request.headers:
+        for k in request.headers:
             if header.lower() == k.lower():
                 return True
     return False
@@ -25,7 +25,7 @@ def _find_header(cassette, header):
 def test_filter_basic_auth(tmpdir):
     url = 'http://httpbin.org/basic-auth/user/passwd'
     cass_file = str(tmpdir.join('basic_auth_filter.yaml'))
-    my_vcr = vcr.VCR(match_on = ['url', 'method', 'headers'])
+    my_vcr = vcr.VCR(match_on=['uri', 'method', 'headers'])
     # 2 requests, one with auth failure and one with auth success
     with my_vcr.use_cassette(cass_file, filter_headers=['authorization']):
         with pytest.raises(HTTPError):

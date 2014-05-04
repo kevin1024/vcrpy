@@ -6,12 +6,6 @@ except ImportError:
     import json
 
 
-def _json_default(obj):
-    if isinstance(obj, frozenset):
-        return dict(obj)
-    return obj
-
-
 def deserialize(cassette_string):
     data = json.loads(cassette_string)
     requests = [Request._from_dict(r['request']) for r in data]
@@ -28,8 +22,8 @@ def serialize(cassette_dict):
         cassette_dict['responses']
     )])
     try:
-        return json.dumps(data, indent=4, default=_json_default)
-    except UnicodeDecodeError as e:
+        return json.dumps(data, indent=4)
+    except UnicodeDecodeError:
         raise UnicodeDecodeError(
             "Error serializing cassette to JSON. ",
             "Does this HTTP interaction contain binary data? ",
