@@ -379,28 +379,29 @@ matchers didn't match. This can help you with debugging custom matchers.
 ## Upgrade
 
 ### New Cassette Format
-The cassette format has changed in _VCR.py 1.x_, the _VCR.py 0.x_ cassettes cannot be
-used with _VCR.py 1.x_.
-The easiest way to upgrade is to simply delete your cassettes and re-record all of them
-VCR.py also provides migration script that attempts to upgrade your 0.x cassettes to the
-new 1.x format. To use it, run the following command:
+The cassette format has changed in _VCR.py 1.x_, the _VCR.py 0.x_ cassettes
+cannot be used with _VCR.py 1.x_.  The easiest way to upgrade is to simply
+delete your cassettes and re-record all of them.  VCR.py also provides a
+migration script that attempts to upgrade your 0.x cassettes to the new 1.x
+format. To use it, run the following command:
 
 ```
 python -m vcr.migration PATH
 ```
 
-The PATH can be path to the directory with cassettes or cassette itself.
+The PATH can be either a path to the directory with cassettes or the path to a
+single cassette.
 
-*Note*: Backup your cassettes files before migration.
-The migration runs successfully and upgrades the file content only for the old formatted
-cassettes.
+*Note*: Back up your cassettes files before migration.
+The migration *should* only modify cassettes using the old 0.x format.
 
 ## Changelog
-  * 1.0.0 (in development) - Add support for filtering sensitive data from
-    requests, bump supported Python3 version to 3.4, fix some bugs with Boto
-    support (thanks @marusich), fix error with URL field capitalization in
-    README (thanks @simon-weber), added some log messages to help with
-    debugging.
+  * 1.0.0 (in development) - _BACKWARDS INCOMPATIBLE_: Please see the 'upgrade'
+    section in the README.  Add support for filtering sensitive data from
+    requests (thanks to @mshytikov), bump supported Python3 version to 3.4, fix
+    some bugs with Boto support (thanks @marusich), fix error with URL field
+    capitalization in README (thanks @simon-weber), added some log messages to
+    help with debugging.
   * 0.7.0: VCR.py now supports Python 3! (thanks @asundg)  Also I refactored
     the stub connections quite a bit to add support for the putrequest and
     putheader calls.  This version also adds support for httplib2 (thanks
