@@ -48,15 +48,16 @@ def parse_headers(header_list):
     HTTPMessage
     """
     header_string = b""
-    for k, v in header_list.items():
-        for v in v:
-            header_string += k.encode('utf-8') + b":" + v.encode('utf-8') + b"\r\n"
+    for key, values in header_list.items():
+        for v in values:
+            header_string += key.encode('utf-8') + b":" + v.encode('utf-8') + b"\r\n"
     return compat.get_httpmessage(header_string)
 
 def serialize_headers(response):
     out = {}
-    for k, v in response.getheaders():
-        out.setdefault(k, []).append(v)
+    for key in response.msg.keys():
+        out.setdefault(key, [])
+        out[key].extend(response.msg.getheaders(key))
     return out
 
 

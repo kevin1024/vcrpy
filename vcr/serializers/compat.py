@@ -2,13 +2,13 @@ import six
 
 
 def convert_to_bytes(resp):
-    resp = convert_headers_to_bytes(resp)
+    #resp = convert_headers_to_bytes(resp)
     resp = convert_body_to_bytes(resp)
     return resp
 
 
 def convert_to_unicode(resp):
-    resp = convert_headers_to_unicode(resp)
+    #resp = convert_headers_to_unicode(resp)
     resp = convert_body_to_unicode(resp)
     return resp
 
