@@ -6,11 +6,11 @@ def test_remove_headers():
     headers = {'hello': ['goodbye'], 'secret': ['header']}
     request = Request('GET', 'http://google.com', '', headers)
     _remove_headers(request, ['secret'])
-    assert request.headers == {'hello': ['goodbye']}
+    assert request.headers == {'hello': 'goodbye'}
 
 
 def test_remove_headers_empty():
-    headers = {'hello': ['goodbye'], 'secret': ['header']}
+    headers = {'hello': 'goodbye', 'secret': 'header'}
     request = Request('GET', 'http://google.com', '', headers)
     _remove_headers(request, [])
     assert request.headers == headers
