@@ -1,3 +1,5 @@
+import pytest
+
 from vcr.request import Request
 
 
@@ -21,12 +23,17 @@ def test_flat_headers_dict():
     assert req.flat_headers_dict() == {'X-Header1': 'h1', 'X-Header2': 'h2'}
 
 
-def test_port():
-    req = Request('GET', 'http://go.com/', '', {})
-    assert req.port == 80
-
-    req = Request('GET', 'http://go.com:3000/', '', {})
-    assert req.port == 3000
+@pytest.mark.parametrize("uri, expected_port", [
+    ('http://go.com/', 80),
+    ('http://go.com:80/', 80),
+    ('http://go.com:3000/', 3000),
+    ('https://go.com/', 433),
+    ('https://go.com:433/', 433),
+    ('https://go.com:3000/', 3000),
+    ])
+def test_port(uri, expected_port):
+    req = Request('GET', uri,  '', {})
+    assert req.port == expected_port
 
 
 def test_uri():
