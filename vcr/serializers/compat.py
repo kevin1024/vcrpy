@@ -2,30 +2,12 @@ import six
 
 
 def convert_to_bytes(resp):
-    #resp = convert_headers_to_bytes(resp)
     resp = convert_body_to_bytes(resp)
     return resp
 
 
 def convert_to_unicode(resp):
-    #resp = convert_headers_to_unicode(resp)
     resp = convert_body_to_unicode(resp)
-    return resp
-
-
-def convert_headers_to_bytes(resp):
-    try:
-        resp['headers'] = dict([(k.encode('utf-8'), [v.encode('utf-8') for v in values]) for k, values in resp['headers'].items()])
-    except (KeyError, TypeError):
-        pass
-    return resp
-
-
-def convert_headers_to_unicode(resp):
-    try:
-        resp['headers'] = dict([(k.decode('utf-8'), [v.decode('utf-8') for v in values]) for k, values in resp['headers'].items()])
-    except (KeyError, TypeError):
-        pass
     return resp
 
 
