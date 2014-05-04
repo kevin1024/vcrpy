@@ -42,25 +42,22 @@ class VCRFakeSocket(object):
         return 0  # wonder how bad this is....
 
 
-def parse_headers_backwards_compat(header_dict):
-    """
-    In vcr 0.6.0, I changed the cassettes to store
-    headers as a list instead of a dict.  This method
-    parses the old dictionary-style headers for
-    backwards-compatability reasons.
-    """
-    msg = HTTPMessage(BytesIO(""))
-    for key, val in header_dict.items():
-        msg.addheader(key, val)
-        msg.headers.append("{0}:{1}".format(key, val))
-    return msg
-
-
 def parse_headers(header_list):
-    if isinstance(header_list, dict):
-        return parse_headers_backwards_compat(header_list)
-    headers = b"".join(header_list) + b"\r\n"
-    return compat.get_httpmessage(headers)
+    """
+    Convert headers from our serialized dict with lists for keys to a
+    HTTPMessage
+    """
+    header_string = b""
+    for k, v in header_list.items():
+        for v in v:
+            header_string += k.encode('utf-8') + b":" + v.encode('utf-8') + b"\r\n"
+    return compat.get_httpmessage(header_string)
+
+def serialize_headers(response):
+    out = {}
+    for k, v in response.getheaders():
+        out.setdefault(k, []).append(v)
+    return out
 
 
 class VCRHTTPResponse(HTTPResponse):
@@ -246,7 +243,7 @@ class VCRConnection:
                     'code': response.status,
                     'message': response.reason
                 },
-                'headers': compat.get_headers(response),
+                'headers': serialize_headers(response),
                 'body': {'string': response.read()},
             }
             self.cassette.append(self._vcr_request, response)

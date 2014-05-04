@@ -15,7 +15,7 @@ def convert_to_unicode(resp):
 
 def convert_headers_to_bytes(resp):
     try:
-        resp['headers'] = [h.encode('utf-8') for h in resp['headers']]
+        resp['headers'] = dict([(k.encode('utf-8'), [v.encode('utf-8') for v in values]) for k, values in resp['headers'].items()])
     except (KeyError, TypeError):
         pass
     return resp
@@ -23,7 +23,7 @@ def convert_headers_to_bytes(resp):
 
 def convert_headers_to_unicode(resp):
     try:
-        resp['headers'] = [h.decode('utf-8') for h in resp['headers']]
+        resp['headers'] = dict([(k.decode('utf-8'), [v.decode('utf-8') for v in values]) for k, values in resp['headers'].items()])
     except (KeyError, TypeError):
         pass
     return resp
