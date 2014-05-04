@@ -1,6 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
+
 def method(r1, r2):
     return r1.method == r2.method
 
@@ -40,7 +41,11 @@ def headers(r1, r2):
 def _log_matches(matches):
     differences = [m for m in matches if not m[0]]
     if differences:
-        log.debug('Requests differ according to the following matchers: {0}'.format(differences))
+        log.debug(
+            'Requests differ according to the following matchers: ' +
+            str(differences)
+        )
+
 
 def requests_match(r1, r2, matchers):
     matches = [(m(r1, r2), m) for m in matchers]
