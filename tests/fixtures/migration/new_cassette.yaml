@@ -8,8 +8,11 @@
     uri: http://httpbin.org/ip
   response:
     body: {string: !!python/unicode "{\n  \"origin\": \"217.122.164.194\"\n}"}
-    headers: [!!python/unicode "Access-Control-Allow-Origin: *\r\n", !!python/unicode "Content-Type:
-        application/json\r\n", !!python/unicode "Date: Mon, 21 Apr 2014 23:06:09 GMT\r\n",
-      !!python/unicode "Server: gunicorn/0.17.4\r\n", !!python/unicode "Content-Length:
-        32\r\n", !!python/unicode "Connection: keep-alive\r\n"]
+    headers:
+      Access-Control-Allow-Origin: ['*']
+      Content-Type: [application/json]
+      Date: ['Mon, 21 Apr 2014 23:06:09 GMT']
+      Server: [gunicorn/0.17.4]
+      Content-Length: ['32']
+      Connection: [keep-alive]
     status: {code: 200, message: OK}
