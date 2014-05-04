@@ -8,8 +8,11 @@
     uri: http://seomoz.org/
   response:
     body: {string: ''}
-    headers: ["Location: http://moz.com/\r\n", "Server: BigIP\r\n", "Connection: Keep-Alive\r\n",
-      "Content-Length: 0\r\n"]
+    headers: 
+      Location: ['http://moz.com/']
+      Server: ['BigIP']
+      Connection: ['Keep-Alive']
+      Content-Length: ['0']
     status: {code: 301, message: Moved Permanently}
 - request:
     body: null
@@ -122,10 +125,20 @@
         HoEMNO6zUAUt4mPnHVJ7KSq318gAt4pmoLKhsMJcIPnZZJjDltyvkuO1tZJBccHl1P9Euv0Pfb4L
         D7AzkLS64/b2J4QMjTfILZrNZBbH71Ha4KmyJ/eXUEk8H6k0Q79xGEaxvw196olFwXaz9I/+bG63
         H/31Fxff7Ue851J+//Y3HMaNw24fv2LiZ+n5fxrT+T8T/YhcRkYAAA==
-    headers: ["Server: nginx\r\n", "Content-Type: text/html\r\n", "Vary: Accept-Encoding\r\n",
-      "Cache-Control: no-cache, must-revalidate, s-maxage=3600\r\n", "Expires: Fri,
-        15 Oct 2004 12:00:00 GMT\r\n", "Server-Name: dalmozwww01.dal.moz.com\r\n",
-      "Content-Encoding: gzip\r\n", "Content-Length: 5683\r\n", "Accept-Ranges: bytes\r\n",
-      "Date: Sat, 11 Jan 2014 18:45:11 GMT\r\n", "X-Varnish: 918768771 918700396\r\n",
-      "Age: 3479\r\n", "Via: 1.1 varnish\r\n", "Connection: keep-alive\r\n"]
+    headers:
+      Server: [nginx]
+      Content-Type: [text/html]
+      Vary: [Accept-Encoding]
+      Cache-Control: [no-cache]
+      must-revalidate: ['s-maxage=3600']
+      Expires: ['Fri 15 Oct 2004 12:00:00 GMT']
+      Server-Name: ['dalmozwww01.dal.moz.com']
+      Content-Encoding: [gzip]
+      Content-Length: ['5683']
+      Accept-Ranges: [bytes]
+      Date: ['Sat, 11 Jan 2014 18:45:11 GMT']
+      X-Varnish: [918768771 918700396]
+      Age: ['3479']
+      Via: ['1.1 varnish']
+      Connection: [keep-alive]
     status: {code: 200, message: OK}
