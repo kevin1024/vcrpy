@@ -28,11 +28,14 @@ def filter_request(
         request,
         filter_headers,
         filter_query_parameters,
-        before_record
+        before_record,
+        ignore_hosts
         ):
     request = copy.copy(request)  # don't mutate request object
     if hasattr(request, 'headers') and filter_headers:
         request = _remove_headers(request, filter_headers)
+    if hasattr(request, 'host') and request.host in ignore_hosts:
+        return None
     if filter_query_parameters:
         request = _remove_query_parameters(request, filter_query_parameters)
     if before_record:

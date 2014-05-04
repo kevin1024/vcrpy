@@ -43,7 +43,7 @@ setup(
         },
     install_requires=['PyYAML', 'contextdecorator', 'six'],
     license='MIT',
-    tests_require=['pytest', 'mock'],
+    tests_require=['pytest', 'mock', 'pytest-localserver'],
     cmdclass={'test': PyTest},
     classifiers=[
         'Development Status :: 4 - Beta',

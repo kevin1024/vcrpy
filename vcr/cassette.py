@@ -34,6 +34,8 @@ class Cassette(ContextDecorator):
                  filter_headers=[],
                  filter_query_parameters=[],
                  before_record=None,
+                 ignore_hosts=[],
+                 ignore_localhost=[],
                  ):
         self._path = path
         self._serializer = serializer
@@ -41,6 +43,11 @@ class Cassette(ContextDecorator):
         self._filter_headers = filter_headers
         self._filter_query_parameters = filter_query_parameters
         self._before_record = before_record
+        self._ignore_hosts = ignore_hosts
+        if ignore_localhost:
+            self._ignore_hosts = list(set(
+                self._ignore_hosts + ['localhost', '0.0.0.0', '127.0.0.1']
+            ))
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -72,7 +79,8 @@ class Cassette(ContextDecorator):
             request=request,
             filter_headers=self._filter_headers,
             filter_query_parameters=self._filter_query_parameters,
-            before_record=self._before_record
+            before_record=self._before_record,
+            ignore_hosts=self._ignore_hosts
         )
         if not request:
             return
@@ -88,7 +96,8 @@ class Cassette(ContextDecorator):
             request=request,
             filter_headers=self._filter_headers,
             filter_query_parameters=self._filter_query_parameters,
-            before_record=self._before_record
+            before_record=self._before_record,
+            ignore_hosts=self._ignore_hosts
         )
         if not request:
             return
