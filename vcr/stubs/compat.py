@@ -28,12 +28,11 @@ def get_header_items(message):
 
 
 def get_headers(response):
-    if six.PY3:
-        header_list = response.msg._headers
-        return [b': '.join((k.encode('utf-8'), v.encode('utf-8'))) + b'\r\n'
-                for k, v in header_list]
-    else:
-        return response.msg.headers
+    for key in response.msg.keys():
+        if six.PY3:
+            yield key, response.msg.get_all(key)
+        else:
+            yield key, response.msg.getheaders(key)
 
 
 def get_httpmessage(headers):
