@@ -28,7 +28,11 @@ class Request(object):
 
     @property
     def port(self):
-        return urlparse(self.uri).port
+        parse_uri = urlparse(self.uri)
+        port = parse_uri.port
+        if port is None:
+            port = {'https': 433, 'http': 80}[parse_uri.scheme]
+        return port
 
     @property
     def path(self):
