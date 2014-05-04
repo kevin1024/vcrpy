@@ -38,7 +38,11 @@ PARTS = [
 
 
 def build_uri(**parts):
-    return "{protocol}://{host}:{port}{path}".format(**parts)
+    port = parts['port']
+    scheme = parts['protocol']
+    default_port = {'https': 433, 'http': 80}[scheme]
+    parts['port'] = ':{0}'.format(port) if port != default_port else ''
+    return "{protocol}://{host}{port}{path}".format(**parts)
 
 
 def migrate_json(in_fp, out_fp):
@@ -84,11 +88,11 @@ def migrate_yml(in_fp, out_fp):
         if not isinstance(req, request.Request):
             raise Exception("already migrated")
         else:
-            req.uri = "{0}://{1}:{2}{3}".format(
-                req.__dict__['protocol'],
-                req.__dict__['host'],
-                req.__dict__['port'],
-                req.__dict__['path'],
+            req.uri = build_uri(
+                protocol=req.__dict__['protocol'],
+                host=req.__dict__['host'],
+                port=req.__dict__['port'],
+                path=req.__dict__['path'],
             )
 
             # convert headers to dict of lists
