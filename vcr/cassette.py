@@ -61,6 +61,13 @@ class Cassette(ContextDecorator):
         return sum(self.play_counts.values())
 
     @property
+    def all_played(self):
+        """
+        Returns True if all responses have been played, False otherwise.
+        """
+        return self.play_count == len(self)
+
+    @property
     def requests(self):
         return [request for (request, response) in self.data]
 
