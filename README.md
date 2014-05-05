@@ -181,6 +181,8 @@ the API.  The fields are as follows:
   * `responses`: A list of the responses made.
   * `play_count`: The number of times this cassette has had a response played
     back
+  * `all_played`: A boolean indicates whether all the responses have been
+    played back
   * `responses_of(request)`: Access the responses that match a given request
 
 The `Request` object has the following properties:
