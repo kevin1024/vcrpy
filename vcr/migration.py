@@ -21,7 +21,7 @@ import yaml
 
 from .serializers import compat, yamlserializer
 from . import request
-from stubs.compat import get_httpmessage
+from .stubs.compat import get_httpmessage
 
 # Use the libYAML versions if possible
 try:
