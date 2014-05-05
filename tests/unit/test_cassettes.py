@@ -58,10 +58,11 @@ def test_cassette_get_missing_response():
     with pytest.raises(UnhandledHTTPRequestError):
         a.responses_of('foo')
 
+
 @mock.patch('vcr.cassette.requests_match', _mock_requests_match)
 def test_cassette_cant_read_same_request_twice():
     a = Cassette('test')
-    a.append('foo','bar')
+    a.append('foo', 'bar')
     a.play_response('foo')
     with pytest.raises(UnhandledHTTPRequestError):
         a.play_response('foo')
