@@ -21,6 +21,7 @@ import yaml
 
 from .serializers import compat, yamlserializer
 from . import request
+from stubs.compat import get_httpmessage
 
 # Use the libYAML versions if possible
 try:
@@ -49,12 +50,20 @@ def migrate_json(in_fp, out_fp):
     data = json.load(in_fp)
     for item in data:
         req = item['request']
+        res = item['response']
         uri = dict((k, req.pop(k)) for k in PARTS)
         req['uri'] = build_uri(**uri)
         # convert headers to dict of lists
         headers = req['headers']
         for k in headers:
             headers[k] = [headers[k]]
+        response_headers = {}
+        for k, v in get_httpmessage(b"".join(res['headers'])).items():
+            response_headers.setdefault(k, [])
+            response_headers[k].append(v)
+        res['headers'] = response_headers
+
+
     json.dump(data, out_fp, indent=4)
 
 
@@ -84,7 +93,7 @@ def _old_deserialize(cassette_string):
 
 def migrate_yml(in_fp, out_fp):
     (requests, responses) = _old_deserialize(in_fp.read())
-    for req in requests:
+    for req, res in zip(requests, responses):
         if not isinstance(req, request.Request):
             raise Exception("already migrated")
         else:
@@ -100,6 +109,11 @@ def migrate_yml(in_fp, out_fp):
             req.headers = {}
             for key, value in headers:
                 req.add_header(key, value)
+            response_headers = {}
+            for k, v in get_httpmessage(b"".join(res['headers'])).items():
+                response_headers.setdefault(k, [])
+                response_headers[k].append(v)
+            res['headers'] = response_headers
 
     data = yamlserializer.serialize({
         "requests": requests,
@@ -122,7 +136,7 @@ def migrate(file_path, migration_fn):
 def try_migrate(path):
     try:  # try to migrate as json
         migrate(path, migrate_json)
-    except Exception:  # probably the file is not a json
+    except Exception as e:  # probably the file is not a json
         try:  # let's try to migrate as yaml
             migrate(path, migrate_yml)
         except Exception:  # oops probably the file is not a cassette
