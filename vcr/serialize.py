@@ -1,4 +1,4 @@
-from serializers import compat
+from vcr.serializers import compat
 from vcr.request import Request
 
 """
