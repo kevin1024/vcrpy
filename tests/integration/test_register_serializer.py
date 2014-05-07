@@ -10,7 +10,7 @@ class MockSerializer(object):
     def deserialize(self, cassette_string):
         self.serialize_count += 1
         self.cassette_string = cassette_string
-        return ([], [])
+        return []
 
     def serialize(self, cassette_dict):
         self.deserialize_count += 1

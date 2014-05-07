@@ -2,6 +2,7 @@ import tempfile
 
 from .persisters.filesystem import FilesystemPersister
 from . import migration
+from . import serialize
 
 
 def _check_for_old_cassette(cassette_content):
@@ -21,7 +22,7 @@ def load_cassette(cassette_path, serializer):
     with open(cassette_path) as f:
         cassette_content = f.read()
         try:
-            cassette = serializer.deserialize(cassette_content)
+            cassette = serialize.deserialize(cassette_content, serializer)
         except TypeError:
             _check_for_old_cassette(cassette_content)
             raise
@@ -29,5 +30,5 @@ def load_cassette(cassette_path, serializer):
 
 
 def save_cassette(cassette_path, cassette_dict, serializer):
-    data = serializer.serialize(cassette_dict)
+    data = serialize.serialize(cassette_dict, serializer)
     FilesystemPersister.write(cassette_path, data)
