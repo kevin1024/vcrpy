@@ -7,7 +7,7 @@ import vcr.migration
 
 
 def test_try_migrate_with_json(tmpdir):
-    cassette = tmpdir.join('cassette').strpath
+    cassette = tmpdir.join('cassette.json').strpath
     shutil.copy('tests/fixtures/migration/old_cassette.json', cassette)
     assert vcr.migration.try_migrate(cassette)
     with open('tests/fixtures/migration/new_cassette.json', 'r') as f:
@@ -18,7 +18,7 @@ def test_try_migrate_with_json(tmpdir):
 
 
 def test_try_migrate_with_yaml(tmpdir):
-    cassette = tmpdir.join('cassette').strpath
+    cassette = tmpdir.join('cassette.yaml').strpath
     shutil.copy('tests/fixtures/migration/old_cassette.yaml', cassette)
     assert vcr.migration.try_migrate(cassette)
     with open('tests/fixtures/migration/new_cassette.yaml', 'r') as f:

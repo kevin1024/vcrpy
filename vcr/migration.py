@@ -48,6 +48,7 @@ def build_uri(**parts):
 
 def migrate_json(in_fp, out_fp):
     data = json.load(in_fp)
+    interactions = []
     for item in data:
         req = item['request']
         res = item['response']
@@ -62,9 +63,10 @@ def migrate_json(in_fp, out_fp):
             response_headers.setdefault(k, [])
             response_headers[k].append(v)
         res['headers'] = response_headers
+        interactions.append({'request':req, 'response': res})
 
 
-    json.dump(data, out_fp, indent=4)
+    json.dump({'interactions':interactions, 'version':1}, out_fp, indent=4)
 
 
 def _restore_frozenset():
@@ -93,6 +95,7 @@ def _old_deserialize(cassette_string):
 
 def migrate_yml(in_fp, out_fp):
     (requests, responses) = _old_deserialize(in_fp.read())
+    interactions = []
     for req, res in zip(requests, responses):
         if not isinstance(req, request.Request):
             raise Exception("already migrated")
@@ -114,10 +117,11 @@ def migrate_yml(in_fp, out_fp):
                 response_headers.setdefault(k, [])
                 response_headers[k].append(v)
             res['headers'] = response_headers
+        interactions.append({'request': req._to_dict(), 'response': res})
 
     data = yamlserializer.serialize({
-        "requests": requests,
-        "responses": responses,
+        "interactions": interactions,
+        "version": 1
     })
     out_fp.write(data)
 
@@ -134,14 +138,13 @@ def migrate(file_path, migration_fn):
 
 
 def try_migrate(path):
-    try:  # try to migrate as json
+    if path.endswith('.json'):
         migrate(path, migrate_json)
-    except Exception as e:  # probably the file is not a json
-        try:  # let's try to migrate as yaml
-            migrate(path, migrate_yml)
-        except Exception:  # oops probably the file is not a cassette
-            return False
-    return True
+        return True
+    elif path.endswith('.yaml') or path.endswith('.yml'):
+        migrate(path, migrate_yml)
+        return True
+    return False
 
 
 def main():

@@ -7,10 +7,10 @@ from vcr.errors import UnhandledHTTPRequestError
 
 def test_cassette_load(tmpdir):
     a_file = tmpdir.join('test_cassette.yml')
-    a_file.write(yaml.dump([
+    a_file.write(yaml.dump({'interactions': [
         {'request': {'body': '', 'uri': 'foo', 'method': 'GET', 'headers': {}},
          'response': 'bar'}
-    ]))
+    ]}))
     a_cassette = Cassette.load(str(a_file))
     assert len(a_cassette) == 1
 
