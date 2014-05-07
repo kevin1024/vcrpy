@@ -59,7 +59,7 @@ def migrate_json(in_fp, out_fp):
         for k in headers:
             headers[k] = [headers[k]]
         response_headers = {}
-        for k, v in get_httpmessage(b"".join(res['headers'])).items():
+        for k, v in get_httpmessage(b"".join(h.encode('utf-8') for h in res['headers'])).items():
             response_headers.setdefault(k, [])
             response_headers[k].append(v)
         res['headers'] = response_headers
@@ -113,7 +113,7 @@ def migrate_yml(in_fp, out_fp):
             for key, value in headers:
                 req.add_header(key, value)
             response_headers = {}
-            for k, v in get_httpmessage(b"".join(res['headers'])).items():
+            for k, v in get_httpmessage(b"".join(h.encode('utf-8') for h in res['headers'])).items():
                 response_headers.setdefault(k, [])
                 response_headers[k].append(v)
             res['headers'] = response_headers
