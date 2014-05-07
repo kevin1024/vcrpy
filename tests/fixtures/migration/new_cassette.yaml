@@ -3,9 +3,9 @@ interactions:
 - request:
     body: null
     headers: 
-      Accept: ['*/*']
-      Accept-Encoding: ['gzip, deflate, compress']
-      User-Agent: ['python-requests/2.2.1 CPython/2.6.1 Darwin/10.8.0']
+      accept: ['*/*']
+      accept-encoding: ['gzip, deflate, compress']
+      user-agent: ['python-requests/2.2.1 CPython/2.6.1 Darwin/10.8.0']
     method: GET
     uri: http://httpbin.org/ip
   response:
