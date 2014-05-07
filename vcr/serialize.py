@@ -19,6 +19,13 @@ Deserializing: string (yaml converts from utf-8) -> bytestring
 
 def deserialize(cassette_string, serializer):
     data = serializer.deserialize(cassette_string)
+    if not isinstance(data, dict):
+        raise ValueError(
+            "Your cassette files were generated in an older version "
+            "of VCR. Delete your cassettes or run the migration script."
+            "See http://git.io/mHhLBg for more details."
+        )
+
     requests = [Request._from_dict(r['request']) for r in data['interactions']]
     responses = [compat.convert_to_bytes(r['response']) for r in data['interactions']]
     return requests, responses
