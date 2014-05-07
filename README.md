@@ -410,6 +410,16 @@ single cassette.
 *Note*: Back up your cassettes files before migration.
 The migration *should* only modify cassettes using the old 0.x format.
 
+## New serializer / deserializer API
+
+If you made a custom serializer, you will need to update it to match the new
+API in version 1.0.x
+
+ * Serializers now take dicts and return strings.
+ * Deserializers take strings and return dicts (instead of requests, responses
+   pair)
+
+
 ## Changelog
   * 1.0.0 (in development) - _BACKWARDS INCOMPATIBLE_: Please see the 'upgrade'
     section in the README.  Add support for filtering sensitive data from

@@ -1,6 +1,9 @@
 from vcr.serializers import compat
 from vcr.request import Request
 
+#version 1 cassettes started with VCR 1.0.x.  Before 1.0.x, there was no versioning.
+CASSETTE_FORMAT_VERSION = 1 
+
 """
 Just a general note on the serialization philosophy here:
 I prefer cassettes to be human-readable if possible.  Yaml serializes
@@ -16,18 +19,21 @@ Deserializing: string (yaml converts from utf-8) -> bytestring
 
 def deserialize(cassette_string, serializer):
     data = serializer.deserialize(cassette_string)
-    requests = [Request._from_dict(r['request']) for r in data]
-    responses = [r['response'] for r in data]
-    responses = [compat.convert_to_bytes(r['response']) for r in data]
+    requests = [Request._from_dict(r['request']) for r in data['interactions']]
+    responses = [compat.convert_to_bytes(r['response']) for r in data['interactions']]
     return requests, responses
 
 
 def serialize(cassette_dict, serializer):
-    data = ([{
+    interactions = ([{
         'request': request._to_dict(),
         'response': compat.convert_to_unicode(response),
     } for request, response in zip(
         cassette_dict['requests'],
         cassette_dict['responses'],
     )])
+    data = {
+        'version': CASSETTE_FORMAT_VERSION,
+        'interactions': interactions,
+    }
     return serializer.serialize(data)

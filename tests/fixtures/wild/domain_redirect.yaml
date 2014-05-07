@@ -1,3 +1,5 @@
+version: 1
+interactions:
 - request:
     body: null
     headers:
