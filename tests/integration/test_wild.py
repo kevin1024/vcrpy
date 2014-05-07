@@ -40,11 +40,11 @@ def test_flickr_multipart_upload():
         data = r.read()
         h.close()
 
-    with vcr.use_cassette('fixtures/vcr_cassettes/flickr.json') as cass:
+    with vcr.use_cassette('fixtures/vcr_cassettes/flickr.yaml') as cass:
         _pretend_to_be_flickr_library()
         assert len(cass) == 1
 
-    with vcr.use_cassette('fixtures/vcr_cassettes/flickr.json') as cass:
+    with vcr.use_cassette('fixtures/vcr_cassettes/flickr.yaml') as cass:
         assert len(cass) == 1
         _pretend_to_be_flickr_library()
         assert cass.play_count == 1
