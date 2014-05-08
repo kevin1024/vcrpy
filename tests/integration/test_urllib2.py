@@ -50,7 +50,7 @@ def test_response_headers(scheme, tmpdir):
 
     with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
         open2 = urlopen(url).info().items()
-        assert open1 == open2
+        assert sorted(open1) == sorted(open2)
 
 
 def test_multiple_requests(scheme, tmpdir):
