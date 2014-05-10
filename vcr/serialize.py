@@ -20,7 +20,7 @@ Deserializing: string (yaml converts from utf-8) -> bytestring
 def _looks_like_an_old_cassette(data):
     return isinstance(data, list) and len(data) and 'request' in data[0]
 
-def _warn_about_old_cassette_format(data):
+def _warn_about_old_cassette_format():
     raise ValueError(
         "Your cassette files were generated in an older version "
         "of VCR. Delete your cassettes or run the migration script."
@@ -33,9 +33,9 @@ def deserialize(cassette_string, serializer):
     # Old cassettes used to use yaml object thingy so I have to
     # check for some fairly stupid exceptions here
     except (ImportError, yaml.constructor.ConstructorError):
-        _warn_about_old_cassette_format(data)
+        _warn_about_old_cassette_format()
     if _looks_like_an_old_cassette(data):
-        _warn_about_old_cassette_format(data)
+        _warn_about_old_cassette_format()
 
     requests = [Request._from_dict(r['request']) for r in data['interactions']]
     responses = [compat.convert_to_bytes(r['response']) for r in data['interactions']]

@@ -19,7 +19,7 @@ import sys
 import tempfile
 import yaml
 
-from .serializers import compat, yamlserializer
+from .serializers import compat, yamlserializer, jsonserializer
 from .serialize import serialize
 from . import request
 from .stubs.compat import get_httpmessage
@@ -30,6 +30,8 @@ try:
 except ImportError:
     from yaml import Loader
 
+def preprocess_yaml(cassette):
+    return cassette.replace(' !!python/object:vcr.request.Request', '')
 
 PARTS = [
     'protocol',
@@ -47,8 +49,7 @@ def build_uri(**parts):
     return "{protocol}://{host}{port}{path}".format(**parts)
 
 
-def migrate_json(in_fp, out_fp):
-    data = json.load(in_fp)
+def _migrate(data):
     interactions = []
     for item in data:
         req = item['request']
@@ -65,9 +66,15 @@ def migrate_json(in_fp, out_fp):
             response_headers[k].append(v)
         res['headers'] = response_headers
         interactions.append({'request':req, 'response': res})
+    return {
+        'requests': [request.Request._from_dict(i['request']) for i in interactions], 
+        'responses': [i['response'] for i in interactions], 
+    }
 
-
-    json.dump({'interactions':interactions, 'version':1}, out_fp, indent=4)
+def migrate_json(in_fp, out_fp):
+    data = json.load(in_fp)
+    interactions = _migrate(data)
+    out_fp.write(serialize(interactions, jsonserializer))
 
 
 def _restore_frozenset():
@@ -84,46 +91,17 @@ def _restore_frozenset():
     if 'builtins' not in sys.modules:
         sys.modules['builtins'] = sys.modules['__builtin__']
 
-
-def _old_deserialize(cassette_string):
-    _restore_frozenset()
-    data = yaml.load(cassette_string, Loader=Loader)
-    requests = [r['request'] for r in data]
-    responses = [r['response'] for r in data]
-    responses = [compat.convert_to_bytes(r['response']) for r in data]
-    return requests, responses
+def _frozenset_to_dict(fs):
+    return dict((k, v) for k, v in fs)
 
 
 def migrate_yml(in_fp, out_fp):
-    (requests, responses) = _old_deserialize(in_fp.read())
-    cassette = {'requests':[], 'responses':[]}
-    for req, res in zip(requests, responses):
-        if not isinstance(req, request.Request):
-            raise Exception("already migrated")
-        else:
-            req.uri = build_uri(
-                protocol=req.__dict__['protocol'],
-                host=req.__dict__['host'],
-                port=req.__dict__['port'],
-                path=req.__dict__['path'],
-            )
-
-            # convert headers to dict of lists
-            headers = req.headers
-            req.headers = {}
-            for key, value in headers:
-                req.add_header(key, value)
-            response_headers = {}
-            for k, v in get_httpmessage(b"".join(h.encode('utf-8') for h in res['headers'])).items():
-                response_headers.setdefault(k, [])
-                response_headers[k].append(v)
-            res['headers'] = response_headers
-        cassette['requests'].append(req)
-        cassette['responses'].append(res)
-
-
-    data = serialize(cassette, yamlserializer)
-    out_fp.write(data)
+    _restore_frozenset()
+    data = yaml.load(preprocess_yaml(in_fp.read()), Loader=Loader)
+    for i in range(len(data)):
+        data[i]['request']['headers'] = _frozenset_to_dict(data[i]['request']['headers'])
+    interactions = _migrate(data)
+    out_fp.write(serialize(interactions, yamlserializer))
 
 
 def migrate(file_path, migration_fn):
