@@ -98,7 +98,6 @@ def migrate_yml(in_fp, out_fp):
     (requests, responses) = _old_deserialize(in_fp.read())
     cassette = {'requests':[], 'responses':[]}
     for req, res in zip(requests, responses):
-        import pdb;pdb.set_trace()
         if not isinstance(req, request.Request):
             raise Exception("already migrated")
         else:
