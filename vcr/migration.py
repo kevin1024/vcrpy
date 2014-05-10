@@ -74,20 +74,33 @@ def _migrate(data):
 
 def migrate_json(in_fp, out_fp):
     data = json.load(in_fp)
+    if _already_migrated(data):
+        return False
     interactions = _migrate(data)
     out_fp.write(serialize(interactions, jsonserializer))
+    return True
 
 
 def _list_of_tuples_to_dict(fs):
     return dict((k, v) for k, v in fs[0])
 
+def _already_migrated(data):
+    try:
+        if data.get('version'):
+            return True
+    except AttributeError:
+        return False
+
 
 def migrate_yml(in_fp, out_fp):
     data = yaml.load(preprocess_yaml(in_fp.read()), Loader=Loader)
+    if _already_migrated(data):
+        return False
     for i in range(len(data)):
         data[i]['request']['headers'] = _list_of_tuples_to_dict(data[i]['request']['headers'])
     interactions = _migrate(data)
     out_fp.write(serialize(interactions, yamlserializer))
+    return True
 
 
 def migrate(file_path, migration_fn):
@@ -95,19 +108,19 @@ def migrate(file_path, migration_fn):
     # we will try to copy the content. (os.rename not needed)
     with tempfile.TemporaryFile(mode='w+') as out_fp:
         with open(file_path, 'r') as in_fp:
-            migration_fn(in_fp, out_fp)
+            if not migration_fn(in_fp, out_fp):
+                return False
         with open(file_path, 'w') as in_fp:
             out_fp.seek(0)
             shutil.copyfileobj(out_fp, in_fp)
+        return True
 
 
 def try_migrate(path):
     if path.endswith('.json'):
-        migrate(path, migrate_json)
-        return True
+        return migrate(path, migrate_json)
     elif path.endswith('.yaml') or path.endswith('.yml'):
-        migrate(path, migrate_yml)
-        return True
+        return migrate(path, migrate_yml)
     return False
 
 
