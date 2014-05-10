@@ -20,6 +20,7 @@ import tempfile
 import yaml
 
 from .serializers import compat, yamlserializer
+from .serialize import serialize
 from . import request
 from .stubs.compat import get_httpmessage
 
@@ -95,8 +96,9 @@ def _old_deserialize(cassette_string):
 
 def migrate_yml(in_fp, out_fp):
     (requests, responses) = _old_deserialize(in_fp.read())
-    interactions = []
+    cassette = {'requests':[], 'responses':[]}
     for req, res in zip(requests, responses):
+        import pdb;pdb.set_trace()
         if not isinstance(req, request.Request):
             raise Exception("already migrated")
         else:
@@ -117,12 +119,11 @@ def migrate_yml(in_fp, out_fp):
                 response_headers.setdefault(k, [])
                 response_headers[k].append(v)
             res['headers'] = response_headers
-        interactions.append({'request': req._to_dict(), 'response': res})
+        cassette['requests'].append(req)
+        cassette['responses'].append(res)
 
-    data = yamlserializer.serialize({
-        "interactions": interactions,
-        "version": 1
-    })
+
+    data = serialize(cassette, yamlserializer)
     out_fp.write(data)
 
 
