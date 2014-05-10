@@ -54,12 +54,18 @@ def test_new_episodes_record_mode(tmpdir):
         # make the same request again
         response = urlopen('http://httpbin.org/').read()
 
+        # all responses have been played
+        assert cass.all_played
+
         # in the "new_episodes" record mode, we can add more requests to
         # a cassette without repurcussions.
         response = urlopen('http://httpbin.org/get').read()
 
         # one of the responses has been played
         assert cass.play_count == 1
+
+        # not all responses have been played
+        assert not cass.all_played
 
     with vcr.use_cassette(testfile, record_mode="new_episodes") as cass:
         # the cassette should now have 2 responses
