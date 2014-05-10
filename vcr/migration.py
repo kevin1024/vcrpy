@@ -31,7 +31,8 @@ except ImportError:
     from yaml import Loader
 
 def preprocess_yaml(cassette):
-    return cassette.replace(' !!python/object:vcr.request.Request', '')
+    return cassette.replace(' !!python/object:vcr.request.Request', '').replace('!!python/object/apply:__builtin__.frozenset', '')
+
 
 PARTS = [
     'protocol',
@@ -77,29 +78,14 @@ def migrate_json(in_fp, out_fp):
     out_fp.write(serialize(interactions, jsonserializer))
 
 
-def _restore_frozenset():
-    """
-    Restore __builtin__.frozenset for cassettes serialized in python2 but
-    deserialized in python3 and builtins.frozenset for cassettes serialized
-    in python3 and deserialized in python2
-    """
-
-    if '__builtin__' not in sys.modules:
-        import builtins
-        sys.modules['__builtin__'] = builtins
-
-    if 'builtins' not in sys.modules:
-        sys.modules['builtins'] = sys.modules['__builtin__']
-
-def _frozenset_to_dict(fs):
-    return dict((k, v) for k, v in fs)
+def _list_of_tuples_to_dict(fs):
+    return dict((k, v) for k, v in fs[0])
 
 
 def migrate_yml(in_fp, out_fp):
-    _restore_frozenset()
     data = yaml.load(preprocess_yaml(in_fp.read()), Loader=Loader)
     for i in range(len(data)):
-        data[i]['request']['headers'] = _frozenset_to_dict(data[i]['request']['headers'])
+        data[i]['request']['headers'] = _list_of_tuples_to_dict(data[i]['request']['headers'])
     interactions = _migrate(data)
     out_fp.write(serialize(interactions, yamlserializer))
 
