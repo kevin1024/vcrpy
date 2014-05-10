@@ -31,7 +31,7 @@ except ImportError:
     from yaml import Loader
 
 def preprocess_yaml(cassette):
-    return cassette.replace(' !!python/object:vcr.request.Request', '').replace('!!python/object/apply:__builtin__.frozenset', '')
+    return cassette.replace(' !!python/object:vcr.request.Request', '').replace('!!python/object/apply:__builtin__.frozenset', '').replace('!!python/object/apply:builtins.frozenset', '')
 
 
 PARTS = [
