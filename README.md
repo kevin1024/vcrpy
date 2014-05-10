@@ -423,13 +423,14 @@ API in version 1.0.x
 
 
 ## Changelog
-  * 1.0.0 (in development) - _BACKWARDS INCOMPATIBLE_: Please see the 'upgrade'
-    section in the README.  Add support for filtering sensitive data from
-    requests, matching query strings after the order changes and improving the
-    built-in matchers, (thanks to @mshytikov), support for ignoring requests to 
-    certain hosts, bump supported Python3 version to 3.4, fix some bugs with 
-    Boto support (thanks @marusich), fix error with URL field capitalization in 
-    README (thanks @simon-weber), added some log messages to help with debugging.
+  * 1.0.0: _BACKWARDS INCOMPATIBLE_: Please see the 'upgrade' section in the
+    README.  Add support for filtering sensitive data from requests, matching
+    query strings after the order changes and improving the built-in matchers,
+    (thanks to @mshytikov), support for ignoring requests to certain hosts, 
+    bump supported Python3 version to 3.4, fix some bugs with Boto support
+    (thanks @marusich), fix error with URL field capitalization in README
+    (thanks @simon-weber), added some log messages to help with debugging,
+    added `all_played` property on cassette (thanks @mshytikov)
   * 0.7.0: VCR.py now supports Python 3! (thanks @asundg)  Also I refactored
     the stub connections quite a bit to add support for the putrequest and
     putheader calls.  This version also adds support for httplib2 (thanks
