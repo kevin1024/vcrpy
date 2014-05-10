@@ -15,6 +15,6 @@ def serialize(cassette_dict):
         raise UnicodeDecodeError(
             "Error serializing cassette to JSON. ",
             "Does this HTTP interaction contain binary data? ",
-            "If so, use a different serializer (like the yaml serializer) for ",
-            "this request"
+            "If so, use a different serializer (like the yaml serializer) ",
+            "for this request"
         )

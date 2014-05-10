@@ -30,6 +30,7 @@ try:
 except ImportError:
     from yaml import Loader
 
+
 def preprocess_yaml(cassette):
     # this is the hack that makes the whole thing work.  The old version used
     # to deserialize to Request objects automatically using pyYaml's !!python
@@ -74,15 +75,20 @@ def _migrate(data):
         for k in headers:
             headers[k] = [headers[k]]
         response_headers = {}
-        for k, v in get_httpmessage(b"".join(h.encode('utf-8') for h in res['headers'])).items():
+        for k, v in get_httpmessage(
+            b"".join(h.encode('utf-8') for h in res['headers'])
+        ).items():
             response_headers.setdefault(k, [])
             response_headers[k].append(v)
         res['headers'] = response_headers
-        interactions.append({'request':req, 'response': res})
+        interactions.append({'request': req, 'response': res})
     return {
-        'requests': [request.Request._from_dict(i['request']) for i in interactions], 
-        'responses': [i['response'] for i in interactions], 
+        'requests': [
+            request.Request._from_dict(i['request']) for i in interactions
+        ],
+        'responses': [i['response'] for i in interactions],
     }
+
 
 def migrate_json(in_fp, out_fp):
     data = json.load(in_fp)
@@ -96,9 +102,10 @@ def migrate_json(in_fp, out_fp):
 def _list_of_tuples_to_dict(fs):
     return dict((k, v) for k, v in fs[0])
 
+
 def _already_migrated(data):
     try:
-        if data.get('version')==1:
+        if data.get('version') == 1:
             return True
     except AttributeError:
         return False
@@ -109,7 +116,9 @@ def migrate_yml(in_fp, out_fp):
     if _already_migrated(data):
         return False
     for i in range(len(data)):
-        data[i]['request']['headers'] = _list_of_tuples_to_dict(data[i]['request']['headers'])
+        data[i]['request']['headers'] = _list_of_tuples_to_dict(
+            data[i]['request']['headers']
+        )
     interactions = _migrate(data)
     out_fp.write(serialize(interactions, yamlserializer))
     return True

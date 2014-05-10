@@ -50,8 +50,10 @@ def parse_headers(header_list):
     header_string = b""
     for key, values in header_list.items():
         for v in values:
-            header_string += key.encode('utf-8') + b":" + v.encode('utf-8') + b"\r\n"
+            header_string += \
+                key.encode('utf-8') + b":" + v.encode('utf-8') + b"\r\n"
     return compat.get_httpmessage(header_string)
+
 
 def serialize_headers(response):
     out = {}

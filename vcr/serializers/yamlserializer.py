@@ -6,6 +6,7 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+
 def deserialize(cassette_string):
     return yaml.load(cassette_string, Loader=Loader)
 
