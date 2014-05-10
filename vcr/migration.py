@@ -31,7 +31,19 @@ except ImportError:
     from yaml import Loader
 
 def preprocess_yaml(cassette):
-    return cassette.replace(' !!python/object:vcr.request.Request', '').replace('!!python/object/apply:__builtin__.frozenset', '').replace('!!python/object/apply:builtins.frozenset', '')
+    # this is the hack that makes the whole thing work.  The old version used
+    # to deserialize to Request objects automatically using pyYaml's !!python
+    # tag system.  This made it difficult to deserialize old cassettes on new
+    # versions.  So this just strips the tags before deserializing.
+
+    STRINGS_TO_NUKE = [
+        '!!python/object:vcr.request.Request',
+        '!!python/object/apply:__builtin__.frozenset',
+        '!!python/object/apply:builtins.frozenset',
+    ]
+    for s in STRINGS_TO_NUKE:
+        cassette = cassette.replace(s, '')
+    return cassette
 
 
 PARTS = [
