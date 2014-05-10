@@ -98,7 +98,7 @@ def _list_of_tuples_to_dict(fs):
 
 def _already_migrated(data):
     try:
-        if data.get('version'):
+        if data.get('version')==1:
             return True
     except AttributeError:
         return False
