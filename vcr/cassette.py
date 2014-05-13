@@ -80,15 +80,18 @@ class Cassette(ContextDecorator):
         return self.rewound and self.record_mode == 'once' or \
             self.record_mode == 'none'
 
-    def append(self, request, response):
-        '''Add a request, response pair to this cassette'''
-        request = filter_request(
+    def _filter_request(self, request):
+        return filter_request(
             request=request,
             filter_headers=self._filter_headers,
             filter_query_parameters=self._filter_query_parameters,
             before_record=self._before_record,
             ignore_hosts=self._ignore_hosts
         )
+
+    def append(self, request, response):
+        '''Add a request, response pair to this cassette'''
+        request = self._filter_request(request)
         if not request:
             return
         self.data.append((request, response))
@@ -99,18 +102,18 @@ class Cassette(ContextDecorator):
         internal API, returns an iterator with all responses matching
         the request.
         """
-        request = filter_request(
-            request=request,
-            filter_headers=self._filter_headers,
-            filter_query_parameters=self._filter_query_parameters,
-            before_record=self._before_record,
-            ignore_hosts=self._ignore_hosts
-        )
+        request = self._filter_request(request)
         if not request:
             return
         for index, (stored_request, response) in enumerate(self.data):
             if requests_match(request, stored_request, self._match_on):
                 yield index, response
+
+    def can_play_response_for(self, request):
+        request = self._filter_request(request)
+        return request and request in self and \
+            self.record_mode != 'all' and \
+            self.rewound
 
     def play_response(self, request):
         '''

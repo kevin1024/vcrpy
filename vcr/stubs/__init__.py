@@ -204,9 +204,7 @@ class VCRConnection:
         '''Retrieve a the response'''
         # Check to see if the cassette has a response for this request. If so,
         # then return it
-        if self._vcr_request in self.cassette and \
-                self.cassette.record_mode != "all" and \
-                self.cassette.rewound:
+        if self.cassette.can_play_response_for(self._vcr_request):
             log.info(
                 "Playing response for {0} from cassette".format(
                     self._vcr_request
@@ -215,7 +213,7 @@ class VCRConnection:
             response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
-            if self.cassette.write_protected:
+            if self.cassette.write_protected and self.cassette._filter_request(self._vcr_request):
                 raise CannotOverwriteExistingCassetteException(
                     "Can't overwrite existing cassette (%r) in "
                     "your current record mode (%r)."
@@ -264,9 +262,7 @@ class VCRConnection:
         """
 
         if hasattr(self, '_vcr_request') and \
-                self._vcr_request in self.cassette and \
-                self.cassette.record_mode != "all" and \
-                self.cassette.rewound:
+                self.cassette.can_play_response_for(self._vcr_request):
             # We already have a response we are going to play, don't
             # actually connect
             return
