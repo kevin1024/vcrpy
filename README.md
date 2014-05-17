@@ -423,6 +423,7 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.0.2: Fix an issue with requests 2.3
   * 1.0.1: Fix a bug with the new ignore requests feature and the once
     record mode
   * 1.0.0: _BACKWARDS INCOMPATIBLE_: Please see the 'upgrade' section in the

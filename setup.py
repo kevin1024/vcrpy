@@ -20,7 +20,7 @@ class PyTest(TestCommand):
 
 setup(
     name='vcrpy',
-    version='1.0.1',
+    version='1.0.2',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
