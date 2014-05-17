@@ -423,6 +423,8 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.0.1: Fix a bug with the new ignore requests feature and the once
+    record mode
   * 1.0.0: _BACKWARDS INCOMPATIBLE_: Please see the 'upgrade' section in the
     README.  Take a look at the matcher section as well, you might want to
     update your `match_on` settings.  Add support for filtering sensitive
