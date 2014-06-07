@@ -54,6 +54,15 @@ def test_basic_json_use(tmpdir):
         assert b'difficult sometimes' in response
 
 
+def test_basic_har_use(tmpdir):
+    test_fixture = 'tests/fixtures/wild/synopsis.har'
+    with vcr.use_cassette(test_fixture, serializer='har'):
+        response = urlopen(
+            'http://www.iana.org/domains/reserved'
+        ).read()
+        assert b'Example domains' in response
+
+
 def test_patched_content(tmpdir):
     '''
     Ensure that what you pull from a cassette is what came from the
