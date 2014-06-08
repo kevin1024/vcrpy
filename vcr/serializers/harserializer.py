@@ -5,7 +5,11 @@ except ImportError:
 
 def _copy_har_headers(target, source):
     for item in source['headers']:
-        target['headers'][item['name']] = item['value']
+        key = item['name']
+        value = item['value']
+        if key not in target['headers']:
+            target['headers'][key] = []
+        target['headers'][key].append(value)
 
 def deserialize(cassette_string):
     ret = {
