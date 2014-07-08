@@ -51,7 +51,7 @@ You can also use VCR.py as a decorator.  The same request above would look like
 this:
 
 ```python
-@vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
+@vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml')
 def test_iana():
     response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
     assert 'Example domains' in response
