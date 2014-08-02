@@ -64,3 +64,15 @@ def test_cookies(tmpdir):
         r1 = s.get("http://httpbin.org/cookies/set?k1=v1&k2=v2")
         r2 = s.get("http://httpbin.org/cookies")
         assert len(r2.json()['cookies']) == 2
+
+def test_case_insensitivity(tmpdir):
+    testfile = str(tmpdir.join('case_insensitivity.yml'))
+    with vcr.use_cassette(testfile):
+        conn = httplib.HTTPConnection('httpbin.org')
+        conn.request('GET', "/cookies/set?k1=v1&k2=v2")
+        r1 = conn.getresponse()
+        cookie_data1 = r1.getheader('set-cookie')
+        conn.request('GET', "/cookies/set?k1=v1&k2=v2")
+        r2 = conn.getresponse()
+        cookie_data2 = r2.getheader('Set-Cookie')
+        assert cookie_data1 == cookie_data2
