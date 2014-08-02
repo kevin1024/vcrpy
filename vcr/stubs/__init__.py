@@ -111,8 +111,8 @@ class VCRHTTPResponse(HTTPResponse):
         return compat.get_header_items(message)
 
     def getheader(self, header, default=None):
-        headers = dict(((k, v) for k, v in self.getheaders()))
-        return headers.get(header, default)
+        headers = dict(((k.lower(), v) for k, v in self.getheaders()))
+        return headers.get(header.lower(), default)
 
 
 class VCRConnection:

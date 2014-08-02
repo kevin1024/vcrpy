@@ -145,3 +145,7 @@ def test_session_and_connection_close(tmpdir, scheme):
 
         resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
         resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
+
+def test_https_with_cert_validation_disabled(tmpdir):
+    with vcr.use_cassette(str(tmpdir.join('cert_validation_disabled.yaml'))):
+        requests.get('https://httpbin.org', verify=False)
