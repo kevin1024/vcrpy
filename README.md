@@ -423,6 +423,8 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.0.3: Fix an issue with requests 2.4 and make sure case sensitivity is
+    consistent across python versions
   * 1.0.2: Fix an issue with requests 2.3
   * 1.0.1: Fix a bug with the new ignore requests feature and the once
     record mode
