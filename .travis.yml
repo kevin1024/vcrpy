@@ -7,6 +7,7 @@ env:
   matrix:
     - WITH_LIB="requests2.2"
     - WITH_LIB="requests2.3"
+    - WITH_LIB="requests2.4"
     - WITH_LIB="requests1.x"
     - WITH_LIB="httplib2"
     - WITH_LIB="boto"
@@ -31,6 +32,7 @@ install:
 - if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
 - if [ $WITH_LIB = "requests2.2" ] ; then pip install requests==2.2.1; fi
 - if [ $WITH_LIB = "requests2.3" ] ; then pip install requests==2.3.0; fi
+- if [ $WITH_LIB = "requests2.4" ] ; then pip install requests==2.4.0; fi
 - if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
 - if [ $WITH_LIB = "boto" ] ; then pip install boto; fi
 script: python setup.py test

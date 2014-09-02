@@ -56,15 +56,16 @@ def install(cassette):
     # patch requests v1.x
     try:
         import requests.packages.urllib3.connectionpool as cpool
-        from .stubs.requests_stubs import VCRVerifiedHTTPSConnection
-        cpool.VerifiedHTTPSConnection = VCRVerifiedHTTPSConnection
+        from .stubs.requests_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
+        cpool.VerifiedHTTPSConnection = VCRRequestsHTTPSConnection
+        cpool.HTTPConnection = VCRRequestsHTTPConnection
         cpool.VerifiedHTTPSConnection.cassette = cassette
         cpool.HTTPConnection = VCRHTTPConnection
         cpool.HTTPConnection.cassette = cassette
     # patch requests v2.x
-        cpool.HTTPConnectionPool.ConnectionCls = VCRHTTPConnection
+        cpool.HTTPConnectionPool.ConnectionCls = VCRRequestsHTTPConnection
         cpool.HTTPConnectionPool.cassette = cassette
-        cpool.HTTPSConnectionPool.ConnectionCls = VCRHTTPSConnection
+        cpool.HTTPSConnectionPool.ConnectionCls = VCRRequestsHTTPSConnection
         cpool.HTTPSConnectionPool.cassette = cassette
     except ImportError:  # pragma: no cover
         pass

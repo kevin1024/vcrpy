@@ -1,8 +1,13 @@
 '''Stubs for requests'''
 
-from requests.packages.urllib3.connectionpool import VerifiedHTTPSConnection
-from ..stubs import VCRHTTPSConnection
+from requests.packages.urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
+from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
 
+# urllib3 defines its own HTTPConnection classes, which requests goes ahead and assumes
+# you're using.  It includes some polyfills for newer features missing in older pythons.
 
-class VCRVerifiedHTTPSConnection(VCRHTTPSConnection, VerifiedHTTPSConnection):
+class VCRRequestsHTTPConnection(VCRHTTPConnection, HTTPConnection):
+    _baseclass = HTTPConnection
+
+class VCRRequestsHTTPSConnection(VCRHTTPSConnection, VerifiedHTTPSConnection):
     _baseclass = VerifiedHTTPSConnection
