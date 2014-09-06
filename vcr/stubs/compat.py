@@ -28,7 +28,7 @@ def get_header_items(message):
 
 
 def get_headers(response):
-    for key in response.msg.keys():
+    for key in set(response.msg.keys()):
         if six.PY3:
             yield key, response.msg.get_all(key)
         else:
