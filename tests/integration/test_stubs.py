@@ -24,3 +24,19 @@ def test_case_insensitivity(tmpdir):
 
     # behavior should be the same both inside and outside
     assert outside == inside == inside2
+
+def _multiple_header_value(httpserver):
+    conn = httplib.HTTPConnection('%s:%s' % httpserver.server_address)
+    conn.request('GET', "/")
+    r = conn.getresponse()
+    return r.getheader('foo')
+
+def test_multiple_headers(tmpdir, httpserver):
+    testfile = str(tmpdir.join('multiple_headers.yaml'))
+    httpserver.serve_content('Hello!', headers=[('foo', 'bar'), ('foo', 'baz')])
+    outside = _multiple_header_value(httpserver)
+
+    with vcr.use_cassette(testfile):
+        inside = _multiple_header_value(httpserver)
+
+    assert outside == inside
