@@ -21,18 +21,17 @@ def get_header(message, name):
 
 
 def get_header_items(message):
-    if six.PY3:
-        return dict(message._headers).items()
-    else:
-        return message.dict.items()
+    for (key, values) in get_headers(message):
+        for value in values:
+            yield key, value
 
 
-def get_headers(response):
-    for key in response.msg.keys():
+def get_headers(message):
+    for key in set(message.keys()):
         if six.PY3:
-            yield key, response.msg.get_all(key)
+            yield key, message.get_all(key)
         else:
-            yield key, response.msg.getheaders(key)
+            yield key, message.getheaders(key)
 
 
 def get_httpmessage(headers):

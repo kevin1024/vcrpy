@@ -57,7 +57,7 @@ def parse_headers(header_list):
 
 def serialize_headers(response):
     out = {}
-    for key, values in compat.get_headers(response):
+    for key, values in compat.get_headers(response.msg):
         out.setdefault(key, [])
         out[key].extend(values)
     return out
@@ -108,11 +108,15 @@ class VCRHTTPResponse(HTTPResponse):
 
     def getheaders(self):
         message = parse_headers(self.recorded_response['headers'])
-        return compat.get_header_items(message)
+        return list(compat.get_header_items(message))
 
     def getheader(self, header, default=None):
-        headers = dict(((k.lower(), v) for k, v in self.getheaders()))
-        return headers.get(header.lower(), default)
+        values = [v for (k, v) in self.getheaders() if k.lower() == header.lower()]
+
+        if values:
+            return ', '.join(values)
+        else:
+            return default
 
 
 class VCRConnection:
