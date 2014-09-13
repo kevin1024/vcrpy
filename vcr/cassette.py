@@ -30,12 +30,12 @@ class Cassette(ContextDecorator):
                  path,
                  serializer=yamlserializer,
                  record_mode='once',
-                 match_on=[uri, method],
-                 filter_headers=[],
-                 filter_query_parameters=[],
+                 match_on=(uri, method),
+                 filter_headers=(),
+                 filter_query_parameters=(),
                  before_record=None,
-                 ignore_hosts=[],
-                 ignore_localhost=[],
+                 ignore_hosts=(),
+                 ignore_localhost=()
                  ):
         self._path = path
         self._serializer = serializer
