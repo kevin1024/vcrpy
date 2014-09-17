@@ -76,6 +76,7 @@ class Cassette(object):
                  filter_headers=(),
                  filter_query_parameters=(),
                  before_record=None,
+                 before_record_response=None,
                  ignore_hosts=(),
                  ignore_localhost=()
                  ):
@@ -85,6 +86,7 @@ class Cassette(object):
         self._filter_headers = filter_headers
         self._filter_query_parameters = filter_query_parameters
         self._before_record = before_record
+        self._before_record_response = before_record_response
         self._ignore_hosts = ignore_hosts
         if ignore_localhost:
             self._ignore_hosts = list(set(
@@ -136,6 +138,8 @@ class Cassette(object):
         request = self._filter_request(request)
         if not request:
             return
+        if self._before_record_response:
+            response = self._before_record_response(response)
         self.data.append((request, response))
         self.dirty = True
 

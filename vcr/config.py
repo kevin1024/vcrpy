@@ -12,6 +12,7 @@ class VCR(object):
                  filter_headers=[],
                  filter_query_parameters=[],
                  before_record=None,
+                 before_record_response=None,
                  match_on=[
                      'method',
                      'scheme',
@@ -46,6 +47,7 @@ class VCR(object):
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
         self.before_record = before_record
+        self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
 
@@ -94,6 +96,9 @@ class VCR(object):
             ),
             "before_record": kwargs.get(
                 "before_record", self.before_record
+            ),
+            "before_record_response": kwargs.get(
+                "before_record_response", self.before_record_response
             ),
             "ignore_hosts": kwargs.get(
                 'ignore_hosts', self.ignore_hosts

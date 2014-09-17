@@ -118,3 +118,13 @@ def test_global_toggle(mock_reset, mock_install):
     function()
     mock_install.assert_called_once_with(mock.ANY)
     mock_reset.assert_called_once_with()
+
+
+def test_before_record_response():
+    before_record_response = mock.Mock(return_value='mutated')
+    cassette = Cassette('test', before_record_response=before_record_response)
+    cassette.append('req', 'res')
+
+    before_record_response.assert_called_once_with('res')
+    assert cassette.responses[0] == 'mutated'
+

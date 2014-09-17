@@ -6,3 +6,5 @@ dist/
 .coverage
 *.egg-info/
 pytestdebug.log
+
+fixtures/
