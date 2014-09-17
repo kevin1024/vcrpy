@@ -14,7 +14,24 @@ from .matchers import requests_match, uri, method
 from .errors import UnhandledHTTPRequestError
 
 
+class NullContextDecorator(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self, *args):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    def __call__(self, function):
+        return function
+
+
 class use_cassette(object):
+
+    _enabled = True
 
     def __init__(self, cls, *args, **kwargs):
         self.args = args
@@ -22,7 +39,8 @@ class use_cassette(object):
         self.cls = cls
 
     def __enter__(self):
-        self._cassette = self.cls.load(*self.args, **self.kwargs)
+        self._cassette = self.cls.load(*self.args, **self.kwargs) if self._enabled \
+                         else NullContextDecorator()
         return self._cassette.__enter__()
 
     def __exit__(self, *args):
