@@ -68,6 +68,22 @@ def test_cassette_cant_read_same_request_twice():
         a.play_response('foo')
 
 
+@mock.patch('vcr.cassette.requests_match', return_value=True)
+@mock.patch('vcr.cassette.load_cassette', lambda *args, **kwargs: (('foo',), (mock.MagicMock(),)))
+@mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
+@mock.patch('vcr.stubs.VCRHTTPResponse')
+def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
+    from six.moves import http_client as httplib
+    @Cassette.use_cassette('test')
+    def decorated_function():
+        conn = httplib.HTTPConnection("www.python.org")
+        conn.request("GET", "/index.html")
+        conn.getresponse()
+
+    for i in range(2):
+         decorated_function()
+
+
 def test_cassette_not_all_played():
     a = Cassette('test')
     a.append('foo', 'bar')
