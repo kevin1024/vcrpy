@@ -1,11 +1,13 @@
 import copy
-from six.moves import http_client as httplib
 
+from six.moves import http_client as httplib
+import contextlib2
+import mock
 import pytest
 import yaml
-import mock
 
 from vcr.cassette import Cassette
+from vcr.patch import force_reset
 from vcr.errors import UnhandledHTTPRequestError
 
 
@@ -106,11 +108,9 @@ def test_arg_getter_functionality():
     def function():
         pass
 
-    with mock.patch.object(Cassette, '__init__', return_value=None) as cassette_init, \
-         mock.patch.object(Cassette, '_load'), \
-         mock.patch.object(Cassette, '__exit__'):
+    with mock.patch.object(Cassette, 'load') as cassette_load:
         function()
-        cassette_init.assert_called_once_with(arg_getter.return_value[0],
+        cassette_load.assert_called_once_with(arg_getter.return_value[0],
                                               **arg_getter.return_value[1])
 
 
@@ -153,22 +153,31 @@ def test_nesting_cassette_context_managers(*args):
     second_response = copy.deepcopy(first_response)
     second_response['body']['string'] = b'second_response'
 
-    with Cassette.use('test') as first_cassette, \
-        mock.patch.object(first_cassette, 'play_response', return_value=first_response):
+    with contextlib2.ExitStack() as exit_stack:
+        first_cassette = exit_stack.enter_context(Cassette.use('test'))
+        exit_stack.enter_context(mock.patch.object(first_cassette, 'play_response',
+                                                    return_value=first_response))
         assert_get_response_body_is('first_response')
 
         # Make sure a second cassette can supercede the first
-        with Cassette.use('test') as second_cassette, \
-        mock.patch.object(second_cassette, 'play_response', return_value=second_response):
-            assert_get_response_body_is('second_response')
+        with Cassette.use('test') as second_cassette:
+            with mock.patch.object(second_cassette, 'play_response', return_value=second_response):
+                assert_get_response_body_is('second_response')
 
         # Now the first cassette should be back in effect
         assert_get_response_body_is('first_response')
 
 
 def test_nesting_context_managers_by_checking_references_of_http_connection():
+    original = httplib.HTTPConnection
     with Cassette.use('test'):
         first_cassette_HTTPConnection = httplib.HTTPConnection
         with Cassette.use('test'):
-            pass
+            second_cassette_HTTPConnection = httplib.HTTPConnection
+            assert second_cassette_HTTPConnection is not first_cassette_HTTPConnection
+            with Cassette.use('test'):
+                assert httplib.HTTPConnection is not second_cassette_HTTPConnection
+                with force_reset():
+                    assert httplib.HTTPConnection is original
+            assert httplib.HTTPConnection is second_cassette_HTTPConnection
         assert httplib.HTTPConnection is first_cassette_HTTPConnection

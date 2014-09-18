@@ -1,4 +1,5 @@
 '''The container for recorded requests and responses'''
+import contextlib2
 import functools
 try:
     from collections import Counter
@@ -6,7 +7,7 @@ except ImportError:
     from .compat.counter import Counter
 
 # Internal imports
-from .patch import install, reset
+from .patch import build_patchers
 from .persist import load_cassette, save_cassette
 from .filters import filter_request
 from .serializers import yamlserializer
@@ -31,14 +32,27 @@ class CassetteContextDecorator(object):
     def __init__(self, cls, args_getter):
         self.cls = cls
         self._args_getter = args_getter
+        self.__finish = None
+
+    def _patch_generator(self, cassette):
+        with contextlib2.ExitStack() as exit_stack:
+            for patcher in build_patchers(cassette):
+                exit_stack.enter_context(patcher)
+            yield
+             # TODO(@IvanMalison): Hmmm. it kind of feels like this should be somewhere else.
+            cassette._save()
 
     def __enter__(self):
+        assert self.__finish is None
         path, kwargs = self._args_getter()
-        self._cassette = self.cls.load(path, **kwargs)
-        return self._cassette.__enter__()
+        cassette = self.cls.load(path, **kwargs)
+        self.__finish = self._patch_generator(cassette)
+        self.__finish.__next__()
+        return cassette
 
     def __exit__(self, *args):
-        return self._cassette.__exit__(*args)
+        [_ for _ in self.__finish] # this exits the context created by the call to _patch_generator.
+        self.__finish = None
 
     def __call__(self, function):
         @functools.wraps(function)
@@ -66,17 +80,10 @@ class Cassette(object):
     def use(cls, *args, **kwargs):
         return CassetteContextDecorator.from_args(cls, *args, **kwargs)
 
-    def __init__(self,
-                 path,
-                 serializer=yamlserializer,
-                 record_mode='once',
-                 match_on=(uri, method),
-                 filter_headers=(),
-                 filter_query_parameters=(),
-                 before_record=None,
-                 before_record_response=None,
-                 ignore_hosts=(),
-                 ignore_localhost=()):
+    def __init__(self, path, serializer=yamlserializer, record_mode='once',
+                 match_on=(uri, method), filter_headers=(),
+                 filter_query_parameters=(), before_record=None, before_record_response=None,
+                 ignore_hosts=(), ignore_localhost=()):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
@@ -228,12 +235,3 @@ class Cassette(object):
         for response in self._responses(request):
             return True
         return False
-
-    def __enter__(self):
-        '''Patch the fetching libraries we know about'''
-        install(self)
-        return self
-
-    def __exit__(self, typ, value, traceback):
-        self._save()
-        reset()

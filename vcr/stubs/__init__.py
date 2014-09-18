@@ -295,10 +295,9 @@ class VCRConnection:
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out
         # the reset if you want to see what I mean :)
-        from vcr.patch import install, reset
-        reset()
-        self.real_connection = self._baseclass(*args, **kwargs)
-        install(self.cassette)
+        from vcr.patch import force_reset
+        with force_reset():
+            self.real_connection = self._baseclass(*args, **kwargs)
 
 
 class VCRHTTPConnection(VCRConnection):

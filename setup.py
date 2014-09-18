@@ -41,7 +41,7 @@ setup(
         'vcr.compat': 'vcr/compat',
         'vcr.persisters': 'vcr/persisters',
         },
-    install_requires=['PyYAML', 'six'],
+    install_requires=['PyYAML', 'mock', 'six', 'contextlib2'],
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-localserver'],
     cmdclass={'test': PyTest},
