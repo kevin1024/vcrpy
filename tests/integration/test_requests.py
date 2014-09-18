@@ -146,6 +146,31 @@ def test_session_and_connection_close(tmpdir, scheme):
         resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
         resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
 
+
 def test_https_with_cert_validation_disabled(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('cert_validation_disabled.yaml'))):
         requests.get('https://httpbin.org', verify=False)
+
+
+def test_nested_context_managers_with_session_created_before_first_nesting(scheme, tmpdir):
+    '''
+    This tests ensures that a session that was created while one cassette was
+    '''
+    url = scheme + '://httpbin.org/bytes/1024'
+    with vcr.use_cassette(str(tmpdir.join('first_nested.yaml'))):
+        session = requests.session()
+        first_body = session.get(url).content
+        with vcr.use_cassette(str(tmpdir.join('second_nested.yaml'))):
+            second_body = session.get(url).content
+            third_body = requests.get(url).content
+
+    with vcr.use_cassette(str(tmpdir.join('second_nested.yaml'))):
+        session = requests.session()
+        assert session.get(url).content == second_body
+        with vcr.use_cassette(str(tmpdir.join('first_nested.yaml'))):
+            assert session.get(url).content == first_body
+        assert session.get(url).content == third_body
+
+    # Make sure that the session can now get content normally.
+    session.get('http://www.reddit.com')
+
