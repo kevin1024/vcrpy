@@ -1,4 +1,6 @@
 '''Utilities for patching in cassettes'''
+import types
+
 import contextlib2
 import mock
 
@@ -53,8 +55,10 @@ else:
 
 
 def cassette_subclass(base_class, cassette):
-    return type('{0}{1}'.format(base_class.__name__, cassette._path),
-                (base_class,), dict(cassette=cassette))
+    bases = (base_class,)
+    if not issubclass(base_class, object): # Check for old style class
+        bases += (object,)
+    return type('{0}{1}'.format(base_class.__name__, cassette._path), bases, dict(cassette=cassette))
 
 
 def build_patchers(cassette):
