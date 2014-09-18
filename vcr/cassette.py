@@ -1,11 +1,9 @@
 '''The container for recorded requests and responses'''
-
+import functools
 try:
     from collections import Counter
 except ImportError:
     from .compat.counter import Counter
-
-from contextdecorator import ContextDecorator
 
 # Internal imports
 from .patch import install, reset
@@ -16,7 +14,47 @@ from .matchers import requests_match, uri, method
 from .errors import UnhandledHTTPRequestError
 
 
-class Cassette(ContextDecorator):
+class NullContextDecorator(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self, *args):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    def __call__(self, function):
+        return function
+
+
+class use_cassette(object):
+
+    _enabled = True
+
+    def __init__(self, cls, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.cls = cls
+
+    def __enter__(self):
+        self._cassette = self.cls.load(*self.args, **self.kwargs) if self._enabled \
+                         else NullContextDecorator()
+        return self._cassette.__enter__()
+
+    def __exit__(self, *args):
+        return self._cassette.__exit__(*args)
+
+    def __call__(self, function):
+        @functools.wraps(function)
+        def wrapped(*args, **kwargs):
+            with self:
+                return function(*args, **kwargs)
+        return wrapped
+
+
+class Cassette(object):
     '''A container for recorded requests and responses'''
 
     @classmethod
@@ -25,6 +63,10 @@ class Cassette(ContextDecorator):
         new_cassette = cls(path, **kwargs)
         new_cassette._load()
         return new_cassette
+
+    @classmethod
+    def use_cassette(cls, *args, **kwargs):
+        return use_cassette(cls, *args, **kwargs)
 
     def __init__(self,
                  path,

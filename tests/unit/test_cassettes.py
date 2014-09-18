@@ -1,8 +1,12 @@
+from six.moves import http_client as httplib
+
 import pytest
 import yaml
 import mock
+
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
+from vcr import global_toggle
 
 
 def test_cassette_load(tmpdir):
@@ -68,6 +72,22 @@ def test_cassette_cant_read_same_request_twice():
         a.play_response('foo')
 
 
+@mock.patch('vcr.cassette.requests_match', return_value=True)
+@mock.patch('vcr.cassette.load_cassette',
+            lambda *args, **kwargs: (('foo',), (mock.MagicMock(),)))
+@mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
+@mock.patch('vcr.stubs.VCRHTTPResponse')
+def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
+    @Cassette.use_cassette('test')
+    def decorated_function():
+        conn = httplib.HTTPConnection("www.python.org")
+        conn.request("GET", "/index.html")
+        conn.getresponse()
+
+    for i in range(2):
+         decorated_function()
+
+
 def test_cassette_not_all_played():
     a = Cassette('test')
     a.append('foo', 'bar')
@@ -80,3 +100,21 @@ def test_cassette_all_played():
     a.append('foo', 'bar')
     a.play_response('foo')
     assert a.all_played
+
+@mock.patch('vcr.cassette.install')
+@mock.patch('vcr.cassette.reset')
+def test_global_toggle(mock_reset, mock_install):
+    @Cassette.use_cassette('test')
+    def function():
+        pass
+
+    global_toggle(enabled=False)
+
+    function()
+    assert mock_install.call_count == 0
+    assert mock_reset.call_count == 0
+
+    global_toggle(enabled=True)
+    function()
+    mock_install.assert_called_once_with(mock.ANY)
+    mock_reset.assert_called_once_with()
