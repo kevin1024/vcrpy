@@ -20,7 +20,7 @@ class PyTest(TestCommand):
 
 setup(
     name='vcrpy',
-    version='1.0.3',
+    version='1.0.4',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
@@ -41,7 +41,7 @@ setup(
         'vcr.compat': 'vcr/compat',
         'vcr.persisters': 'vcr/persisters',
         },
-    install_requires=['PyYAML', 'contextdecorator', 'six'],
+    install_requires=['PyYAML', 'six'],
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-localserver'],
     cmdclass={'test': PyTest},

@@ -1,11 +1,9 @@
 '''The container for recorded requests and responses'''
-
+import functools
 try:
     from collections import Counter
 except ImportError:
     from .compat.counter import Counter
-
-from contextdecorator import ContextDecorator
 
 # Internal imports
 from .patch import install, reset
@@ -16,7 +14,37 @@ from .matchers import requests_match, uri, method
 from .errors import UnhandledHTTPRequestError
 
 
-class Cassette(ContextDecorator):
+class CassetteContextDecorator(object):
+    """Context manager/decorator that handles installing the cassette and
+    removing cassettes.
+
+    This class defers the creation of a new cassette instance until the point at
+    which it is installed by context manager or decorator. The fact that a new
+    cassette is used with each application prevents the state of any cassette
+    from interfering with another.
+    """
+
+    def __init__(self, cls, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.cls = cls
+
+    def __enter__(self):
+        self._cassette = self.cls.load(*self.args, **self.kwargs)
+        return self._cassette.__enter__()
+
+    def __exit__(self, *args):
+        return self._cassette.__exit__(*args)
+
+    def __call__(self, function):
+        @functools.wraps(function)
+        def wrapped(*args, **kwargs):
+            with self:
+                return function(*args, **kwargs)
+        return wrapped
+
+
+class Cassette(object):
     '''A container for recorded requests and responses'''
 
     @classmethod
@@ -26,6 +54,12 @@ class Cassette(ContextDecorator):
         new_cassette._load()
         return new_cassette
 
+    @classmethod
+    def use(cls, *args, **kwargs):
+        return CassetteContextDecorator(cls, *args, **kwargs)
+
+    use_cassette = use
+
     def __init__(self,
                  path,
                  serializer=yamlserializer,
@@ -34,19 +68,20 @@ class Cassette(ContextDecorator):
                  filter_headers=(),
                  filter_query_parameters=(),
                  before_record=None,
+                 before_record_response=None,
                  ignore_hosts=(),
-                 ignore_localhost=()
-                 ):
+                 ignore_localhost=()):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
         self._filter_headers = filter_headers
         self._filter_query_parameters = filter_query_parameters
         self._before_record = before_record
+        self._before_record_response = before_record_response
         self._ignore_hosts = ignore_hosts
         if ignore_localhost:
             self._ignore_hosts = list(set(
-                self._ignore_hosts + ['localhost', '0.0.0.0', '127.0.0.1']
+                list(self._ignore_hosts) + ['localhost', '0.0.0.0', '127.0.0.1']
             ))
 
         # self.data is the list of (req, resp) tuples
@@ -94,6 +129,8 @@ class Cassette(ContextDecorator):
         request = self._filter_request(request)
         if not request:
             return
+        if self._before_record_response:
+            response = self._before_record_response(response)
         self.data.append((request, response))
         self.dirty = True
 
