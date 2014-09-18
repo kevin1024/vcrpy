@@ -38,20 +38,18 @@ class CassetteContextDecorator(object):
         with contextlib2.ExitStack() as exit_stack:
             for patcher in build_patchers(cassette):
                 exit_stack.enter_context(patcher)
-            yield
+            yield cassette
              # TODO(@IvanMalison): Hmmm. it kind of feels like this should be somewhere else.
             cassette._save()
 
     def __enter__(self):
         assert self.__finish is None
         path, kwargs = self._args_getter()
-        cassette = self.cls.load(path, **kwargs)
-        self.__finish = self._patch_generator(cassette)
-        self.__finish.__next__()
-        return cassette
+        self.__finish = self._patch_generator(self.cls.load(path, **kwargs))
+        return next(self.__finish)
 
     def __exit__(self, *args):
-        [_ for _ in self.__finish] # this exits the context created by the call to _patch_generator.
+        next(self.__finish, None)
         self.__finish = None
 
     def __call__(self, function):
