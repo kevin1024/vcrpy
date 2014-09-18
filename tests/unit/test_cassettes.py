@@ -1,3 +1,4 @@
+import copy
 from six.moves import http_client as httplib
 
 import pytest
@@ -71,17 +72,18 @@ def test_cassette_cant_read_same_request_twice():
         a.play_response('foo')
 
 
+def make_get_request():
+    conn = httplib.HTTPConnection("www.python.org")
+    conn.request("GET", "/index.html")
+    return conn.getresponse()
+
+
 @mock.patch('vcr.cassette.requests_match', return_value=True)
 @mock.patch('vcr.cassette.load_cassette', lambda *args, **kwargs: (('foo',), (mock.MagicMock(),)))
 @mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
 @mock.patch('vcr.stubs.VCRHTTPResponse')
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
-    @Cassette.use('test')
-    def decorated_function():
-        conn = httplib.HTTPConnection("www.python.org")
-        conn.request("GET", "/index.html")
-        conn.getresponse()
-
+    decorated_function = Cassette.use('test')(make_get_request)
     for i in range(2):
          decorated_function()
 
@@ -133,3 +135,40 @@ def test_before_record_response():
 
     before_record_response.assert_called_once_with('res')
     assert cassette.responses[0] == 'mutated'
+
+
+def assert_get_response_body_is(value):
+    conn = httplib.HTTPConnection("www.python.org")
+    conn.request("GET", "/index.html")
+    assert conn.getresponse().read().decode('utf8') == value
+
+
+@mock.patch('vcr.cassette.requests_match', _mock_requests_match)
+@mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
+@mock.patch('vcr.cassette.Cassette._save', return_value=True)
+def test_nesting_cassette_context_managers(*args):
+    first_response = {'body': {'string': b'first_response'}, 'headers': {},
+                      'status': {'message': 'm', 'code': 200}}
+
+    second_response = copy.deepcopy(first_response)
+    second_response['body']['string'] = b'second_response'
+
+    with Cassette.use('test') as first_cassette, \
+        mock.patch.object(first_cassette, 'play_response', return_value=first_response):
+        assert_get_response_body_is('first_response')
+
+        # Make sure a second cassette can supercede the first
+        with Cassette.use('test') as second_cassette, \
+        mock.patch.object(second_cassette, 'play_response', return_value=second_response):
+            assert_get_response_body_is('second_response')
+
+        # Now the first cassette should be back in effect
+        assert_get_response_body_is('first_response')
+
+
+def test_nesting_context_managers_by_checking_references_of_http_connection():
+    with Cassette.use('test'):
+        first_cassette_HTTPConnection = httplib.HTTPConnection
+        with Cassette.use('test'):
+            pass
+        assert httplib.HTTPConnection is first_cassette_HTTPConnection
