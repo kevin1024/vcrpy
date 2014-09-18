@@ -78,8 +78,7 @@ class Cassette(object):
                  before_record=None,
                  before_record_response=None,
                  ignore_hosts=(),
-                 ignore_localhost=()
-                 ):
+                 ignore_localhost=()):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on

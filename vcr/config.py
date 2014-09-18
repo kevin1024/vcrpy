@@ -9,19 +9,19 @@ class VCR(object):
                  serializer='yaml',
                  cassette_library_dir=None,
                  record_mode="once",
-                 filter_headers=[],
-                 filter_query_parameters=[],
+                 filter_headers=(),
+                 filter_query_parameters=(),
                  before_record=None,
                  before_record_response=None,
-                 match_on=[
+                 match_on=(
                      'method',
                      'scheme',
                      'host',
                      'port',
                      'path',
                      'query',
-                 ],
-                 ignore_hosts=[],
+                 ),
+                 ignore_hosts=(),
                  ignore_localhost=False,
                  ):
         self.serializer = serializer
