@@ -1,3 +1,4 @@
+import functools
 import os
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
@@ -74,13 +75,16 @@ class VCR(object):
         return matchers
 
     def use_cassette(self, path, **kwargs):
+        args_getter = functools.partial(self.get_path_and_merged_config, path, **kwargs)
+        return Cassette.use_arg_getter(args_getter)
+
+    def get_path_and_merged_config(self, path, **kwargs):
         serializer_name = kwargs.get('serializer', self.serializer)
         matcher_names = kwargs.get('match_on', self.match_on)
         cassette_library_dir = kwargs.get(
             'cassette_library_dir',
             self.cassette_library_dir
         )
-
         if cassette_library_dir:
             path = os.path.join(cassette_library_dir, path)
 
@@ -107,8 +111,7 @@ class VCR(object):
                 'ignore_localhost', self.ignore_localhost
             ),
         }
-
-        return Cassette.use(path, **merged_config)
+        return path, merged_config
 
     def register_serializer(self, name, serializer):
         self.serializers[name] = serializer

@@ -86,6 +86,32 @@ def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*arg
          decorated_function()
 
 
+def test_arg_getter_functionality():
+    arg_getter = mock.Mock(return_value=('test', {}))
+    context_decorator = Cassette.use_arg_getter(arg_getter)
+
+    with context_decorator as cassette:
+        assert cassette._path == 'test'
+
+    arg_getter.return_value = ('other', {})
+
+    with context_decorator as cassette:
+        assert cassette._path == 'other'
+
+    arg_getter.return_value = ('', {'filter_headers': ('header_name',)})
+
+    @context_decorator
+    def function():
+        pass
+
+    with mock.patch.object(Cassette, '__init__', return_value=None) as cassette_init, \
+         mock.patch.object(Cassette, '_load'), \
+         mock.patch.object(Cassette, '__exit__'):
+        function()
+        cassette_init.assert_called_once_with(arg_getter.return_value[0],
+                                              **arg_getter.return_value[1])
+
+
 def test_cassette_not_all_played():
     a = Cassette('test')
     a.append('foo', 'bar')

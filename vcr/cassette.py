@@ -24,13 +24,17 @@ class CassetteContextDecorator(object):
     from interfering with another.
     """
 
-    def __init__(self, cls, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
+    @classmethod
+    def from_args(cls, cassette_class, path, **kwargs):
+        return cls(cassette_class, lambda: (path, kwargs))
+
+    def __init__(self, cls, args_getter):
         self.cls = cls
+        self._args_getter = args_getter
 
     def __enter__(self):
-        self._cassette = self.cls.load(*self.args, **self.kwargs)
+        path, kwargs = self._args_getter()
+        self._cassette = self.cls.load(path, **kwargs)
         return self._cassette.__enter__()
 
     def __exit__(self, *args):
@@ -55,10 +59,12 @@ class Cassette(object):
         return new_cassette
 
     @classmethod
-    def use(cls, *args, **kwargs):
-        return CassetteContextDecorator(cls, *args, **kwargs)
+    def use_arg_getter(cls, arg_getter):
+        return CassetteContextDecorator(cls, arg_getter)
 
-    use_cassette = use
+    @classmethod
+    def use(cls, *args, **kwargs):
+        return CassetteContextDecorator.from_args(cls, *args, **kwargs)
 
     def __init__(self,
                  path,

@@ -3,14 +3,28 @@ import mock
 from vcr import VCR
 
 
-
 def test_vcr_use_cassette():
     filter_headers = mock.Mock()
     test_vcr = VCR(filter_headers=filter_headers)
-    with mock.patch('vcr.config.Cassette') as mock_cassette_class:
+    with mock.patch('vcr.cassette.Cassette.__init__', return_value=None) as mock_cassette_init, \
+         mock.patch('vcr.cassette.Cassette._load'), \
+         mock.patch('vcr.cassette.Cassette.__exit__'):
         @test_vcr.use_cassette('test')
         def function():
             pass
-        mock_cassette_class.call_count == 0
+        assert mock_cassette_init.call_count == 0
         function()
-    assert mock_cassette_class.use.call_args[1]['filter_headers'] is filter_headers
+        assert mock_cassette_init.call_args[1]['filter_headers'] is filter_headers
+
+        # Make sure that calls to function now use cassettes with the
+        # new filter_header_settings
+        test_vcr.filter_headers = ('a',)
+        function()
+        assert mock_cassette_init.call_args[1]['filter_headers'] == test_vcr.filter_headers
+
+        # Ensure that explicitly provided arguments still supercede
+        # those on the vcr.
+        new_filter_headers = mock.Mock()
+
+    with test_vcr.use_cassette('test', filter_headers=new_filter_headers) as cassette:
+        assert cassette._filter_headers == new_filter_headers
