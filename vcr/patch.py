@@ -1,6 +1,4 @@
 '''Utilities for patching in cassettes'''
-import types
-
 import contextlib2
 import mock
 
@@ -81,13 +79,20 @@ def build_patchers(cassette):
         pass
     else:
         from .stubs.requests_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
+
         # patch requests v1.x
-        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', cassette_subclass(VCRRequestsHTTPSConnection, cassette))
-        yield mock.patch.object(cpool, 'HTTPConnection', cassette_subclass(VCRRequestsHTTPConnection, cassette))
+        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection',
+                                cassette_subclass(VCRRequestsHTTPSConnection, cassette))
+        yield mock.patch.object(cpool, 'HTTPConnection',
+                                cassette_subclass(VCRRequestsHTTPConnection, cassette))
         yield mock.patch.object(cpool, 'HTTPConnection', _VCRHTTPConnection)
+
         # patch requests v2.x
-        yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', cassette_subclass(VCRRequestsHTTPConnection, cassette))
-        yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', cassette_subclass(VCRRequestsHTTPSConnection, cassette))
+        if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
+            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls',
+                                    cassette_subclass(VCRRequestsHTTPConnection, cassette))
+            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls',
+                                    cassette_subclass(VCRRequestsHTTPSConnection, cassette))
 
     # patch urllib3
     try:
@@ -96,7 +101,8 @@ def build_patchers(cassette):
         pass
     else:
         from .stubs.urllib3_stubs import VCRVerifiedHTTPSConnection
-        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', cassette_subclass(VCRVerifiedHTTPSConnection, cassette))
+        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection',
+                                cassette_subclass(VCRVerifiedHTTPSConnection, cassette))
         yield mock.patch.object(cpool, 'HTTPConnection', _VCRHTTPConnection)
 
     # patch httplib2
@@ -107,9 +113,17 @@ def build_patchers(cassette):
     else:
         from .stubs.httplib2_stubs import VCRHTTPConnectionWithTimeout
         from .stubs.httplib2_stubs import VCRHTTPSConnectionWithTimeout
-        yield mock.patch.object(cpool, 'HTTPConnectionWithTimeout', cassette_subclass(VCRHTTPConnectionWithTimeout, cassette))
-        yield mock.patch.object(cpool, 'HTTPSConnectionWithTimeout', cassette_subclass(VCRHTTPSConnectionWithTimeout, cassette))
-        yield mock.patch.object(cpool, 'SCHEME_TO_CONNECTION', {'http': VCRHTTPConnectionWithTimeout, 'https': VCRHTTPSConnectionWithTimeout})
+        _VCRHTTPConnectionWithTimeout = cassette_subclass(VCRHTTPConnectionWithTimeout,
+                                                          cassette)
+        _VCRHTTPSConnectionWithTimeout = cassette_subclass(VCRHTTPSConnectionWithTimeout,
+                                                           cassette)
+        yield mock.patch.object(cpool, 'HTTPConnectionWithTimeout',
+                                _VCRHTTPConnectionWithTimeout)
+        yield mock.patch.object(cpool, 'HTTPSConnectionWithTimeout',
+                                _VCRHTTPSConnectionWithTimeout)
+        yield mock.patch.object(cpool, 'SCHEME_TO_CONNECTION',
+                                {'http': _VCRHTTPConnectionWithTimeout,
+                                 'https': _VCRHTTPSConnectionWithTimeout})
 
     # patch boto
     try:
@@ -118,7 +132,8 @@ def build_patchers(cassette):
         pass
     else:
         from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
-        yield mock.patch.object(cpool, 'CertValidatingHTTPSConnection', cassette_subclass(VCRCertValidatingHTTPSConnection, cassette))
+        yield mock.patch.object(cpool, 'CertValidatingHTTPSConnection',
+                                cassette_subclass(VCRCertValidatingHTTPSConnection, cassette))
 
 
 def reset_patchers():
@@ -133,9 +148,11 @@ def reset_patchers():
         yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _VerifiedHTTPSConnection)
         yield mock.patch.object(cpool, 'HTTPConnection', _cpoolHTTPConnection)
         # unpatch requests v2.x
-        yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _cpoolHTTPConnection)
+        yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls',
+                                _cpoolHTTPConnection)
         yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolHTTPSConnection)
-        yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _cpoolHTTPSConnection)
+        yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls',
+                                _cpoolHTTPSConnection)
 
     try:
         import urllib3.connectionpool as cpool
@@ -162,7 +179,9 @@ def reset_patchers():
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(cpool, 'CertValidatingHTTPSConnection', _CertValidatingHTTPSConnection)
+        yield mock.patch.object(cpool, 'CertValidatingHTTPSConnection',
+                                _CertValidatingHTTPSConnection)
+
 
 @contextlib2.contextmanager
 def force_reset():
