@@ -71,7 +71,7 @@ class Cassette(object):
         self._ignore_hosts = ignore_hosts
         if ignore_localhost:
             self._ignore_hosts = list(set(
-                self._ignore_hosts + ['localhost', '0.0.0.0', '127.0.0.1']
+                list(self._ignore_hosts) + ['localhost', '0.0.0.0', '127.0.0.1']
             ))
 
         # self.data is the list of (req, resp) tuples
