@@ -79,11 +79,13 @@ class PatcherBuilder(object):
         return mock.patch.object(obj, patched_attribute, replacement_class)
 
     def _get_cassette_subclass(self, klass):
+        if klass.cassette is not None:
+            return klass
         if klass not in self._class_to_cassette_subclass:
-            self._class_to_cassette_subclass[klass] = self._cassette_subclass(klass)
+            self._class_to_cassette_subclass[klass] = self._build_cassette_subclass(klass)
         return self._class_to_cassette_subclass[klass]
 
-    def _cassette_subclass(self, base_class):
+    def _build_cassette_subclass(self, base_class):
         bases = (base_class,)
         if not issubclass(base_class, object): # Check for old style class
             bases += (object,)
@@ -142,7 +144,6 @@ class PatcherBuilder(object):
         else:
             from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
             yield cpool, 'CertValidatingHTTPSConnection', VCRCertValidatingHTTPSConnection
-
 
 
 def reset_patchers():

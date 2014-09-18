@@ -1,6 +1,7 @@
 '''The container for recorded requests and responses'''
+import logging
+
 import contextlib2
-import functools
 try:
     from collections import Counter
 except ImportError:
@@ -15,7 +16,10 @@ from .matchers import requests_match, uri, method
 from .errors import UnhandledHTTPRequestError
 
 
-class CassetteContextDecorator(object):
+log = logging.getLogger(__name__)
+
+
+class CassetteContextDecorator(contextlib2.ContextDecorator):
     """Context manager/decorator that handles installing the cassette and
     removing cassettes.
 
@@ -38,7 +42,9 @@ class CassetteContextDecorator(object):
         with contextlib2.ExitStack() as exit_stack:
             for patcher in PatcherBuilder(cassette).build_patchers():
                 exit_stack.enter_context(patcher)
+            log.debug('Entered context for cassette at {0}.'.format(cassette._path))
             yield cassette
+            log.debug('Exiting context for cassette at {0}.'.format(cassette._path))
              # TODO(@IvanMalison): Hmmm. it kind of feels like this should be somewhere else.
             cassette._save()
 
@@ -51,13 +57,6 @@ class CassetteContextDecorator(object):
     def __exit__(self, *args):
         next(self.__finish, None)
         self.__finish = None
-
-    def __call__(self, function):
-        @functools.wraps(function)
-        def wrapped(*args, **kwargs):
-            with self:
-                return function(*args, **kwargs)
-        return wrapped
 
 
 class Cassette(object):
