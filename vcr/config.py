@@ -108,7 +108,7 @@ class VCR(object):
             ),
         }
 
-        return Cassette.use_cassette(path, **merged_config)
+        return Cassette.use(path, **merged_config)
 
     def register_serializer(self, name, serializer):
         self.serializers[name] = serializer

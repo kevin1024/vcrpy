@@ -1,6 +1,9 @@
+from six.moves import http_client as httplib
+
 import pytest
 import yaml
 import mock
+
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 
@@ -73,8 +76,7 @@ def test_cassette_cant_read_same_request_twice():
 @mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
 @mock.patch('vcr.stubs.VCRHTTPResponse')
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
-    from six.moves import http_client as httplib
-    @Cassette.use_cassette('test')
+    @Cassette.use('test')
     def decorated_function():
         conn = httplib.HTTPConnection("www.python.org")
         conn.request("GET", "/index.html")

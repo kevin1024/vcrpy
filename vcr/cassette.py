@@ -14,7 +14,15 @@ from .matchers import requests_match, uri, method
 from .errors import UnhandledHTTPRequestError
 
 
-class use_cassette(object):
+class CassetteContextDecorator(object):
+    """Context manager/decorator that handles installing the cassette and
+    removing cassettes.
+
+    This class defers the creation of a new cassette instance until the point at
+    which it is installed by context manager or decorator. The fact that a new
+    cassette is used with each application prevents the state of any cassette
+    from interfering with another.
+    """
 
     def __init__(self, cls, *args, **kwargs):
         self.args = args
@@ -47,8 +55,10 @@ class Cassette(object):
         return new_cassette
 
     @classmethod
-    def use_cassette(cls, *args, **kwargs):
-        return use_cassette(cls, *args, **kwargs)
+    def use(cls, *args, **kwargs):
+        return CassetteContextDecorator(cls, *args, **kwargs)
+
+    use_cassette = use
 
     def __init__(self,
                  path,
