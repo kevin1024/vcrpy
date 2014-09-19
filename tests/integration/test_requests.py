@@ -152,6 +152,18 @@ def test_https_with_cert_validation_disabled(tmpdir):
         requests.get('https://httpbin.org', verify=False)
 
 
+def test_session_can_make_requests_after_requests_unpatched(tmpdir):
+    with vcr.use_cassette(str(tmpdir.join('test_session_after_unpatched.yaml'))):
+        session = requests.session()
+        session.get('http://httpbin.org/get')
+
+    with vcr.use_cassette(str(tmpdir.join('test_session_after_unpatched.yaml'))):
+        session = requests.session()
+        session.get('http://httpbin.org/get')
+
+    session.get('http://httpbin.org/status/200')
+
+
 def test_nested_context_managers_with_session_created_before_first_nesting(scheme, tmpdir):
     '''
     This tests ensures that a session that was created while one cassette was
