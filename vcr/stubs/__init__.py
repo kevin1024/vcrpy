@@ -119,7 +119,7 @@ class VCRHTTPResponse(HTTPResponse):
             return default
 
 
-class VCRConnection:
+class VCRConnection(object):
     # A reference to the cassette that's currently being patched in
     cassette = None
 
@@ -205,7 +205,7 @@ class VCRConnection:
         pass
 
     def getresponse(self, _=False):
-        '''Retrieve a the response'''
+        '''Retrieve the response'''
         # Check to see if the cassette has a response for this request. If so,
         # then return it
         if self.cassette.can_play_response_for(self._vcr_request):

@@ -24,30 +24,30 @@ def scheme(request):
 def test_status_code(scheme, tmpdir):
     '''Ensure that we can read the status code'''
     url = scheme + '://httpbin.org/'
-    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))):
         status_code = requests.get(url).status_code
 
-    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))):
         assert status_code == requests.get(url).status_code
 
 
 def test_headers(scheme, tmpdir):
     '''Ensure that we can read the headers back'''
     url = scheme + '://httpbin.org/'
-    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
         headers = requests.get(url).headers
 
-    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
         assert headers == requests.get(url).headers
 
 
 def test_body(tmpdir, scheme):
     '''Ensure the responses are all identical enough'''
     url = scheme + '://httpbin.org/bytes/1024'
-    with vcr.use_cassette(str(tmpdir.join('body.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('body.yaml'))):
         content = requests.get(url).content
 
-    with vcr.use_cassette(str(tmpdir.join('body.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('body.yaml'))):
         assert content == requests.get(url).content
 
 
@@ -55,10 +55,10 @@ def test_auth(tmpdir, scheme):
     '''Ensure that we can handle basic auth'''
     auth = ('user', 'passwd')
     url = scheme + '://httpbin.org/basic-auth/user/passwd'
-    with vcr.use_cassette(str(tmpdir.join('auth.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('auth.yaml'))):
         one = requests.get(url, auth=auth)
 
-    with vcr.use_cassette(str(tmpdir.join('auth.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('auth.yaml'))):
         two = requests.get(url, auth=auth)
         assert one.content == two.content
         assert one.status_code == two.status_code
@@ -68,7 +68,7 @@ def test_auth_failed(tmpdir, scheme):
     '''Ensure that we can save failed auth statuses'''
     auth = ('user', 'wrongwrongwrong')
     url = scheme + '://httpbin.org/basic-auth/user/passwd'
-    with vcr.use_cassette(str(tmpdir.join('auth-failed.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('auth-failed.yaml'))):
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
         one = requests.get(url, auth=auth)
@@ -81,10 +81,10 @@ def test_post(tmpdir, scheme):
     '''Ensure that we can post and cache the results'''
     data = {'key1': 'value1', 'key2': 'value2'}
     url = scheme + '://httpbin.org/post'
-    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
         req1 = requests.post(url, data).content
 
-    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
         req2 = requests.post(url, data).content
 
     assert req1 == req2
@@ -93,7 +93,7 @@ def test_post(tmpdir, scheme):
 def test_redirects(tmpdir, scheme):
     '''Ensure that we can handle redirects'''
     url = scheme + '://httpbin.org/redirect-to?url=bytes/1024'
-    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
         content = requests.get(url).content
 
     with vcr.use_cassette(str(tmpdir.join('requests.yaml'))) as cass:
@@ -124,11 +124,11 @@ def test_gzip(tmpdir, scheme):
     url = scheme + '://httpbin.org/gzip'
     response = requests.get(url)
 
-    with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))):
         response = requests.get(url)
         assert_is_json(response.content)
 
-    with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))):
         assert_is_json(response.content)
 
 
@@ -143,8 +143,8 @@ def test_session_and_connection_close(tmpdir, scheme):
     with vcr.use_cassette(str(tmpdir.join('session_connection_closed.yaml'))):
         session = requests.session()
 
-        resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
-        resp = session.get('http://httpbin.org/get', headers={'Connection': 'close'})
+        session.get('http://httpbin.org/get', headers={'Connection': 'close'})
+        session.get('http://httpbin.org/get', headers={'Connection': 'close'})
 
 
 def test_https_with_cert_validation_disabled(tmpdir):
@@ -164,9 +164,28 @@ def test_session_can_make_requests_after_requests_unpatched(tmpdir):
     session.get('http://httpbin.org/status/200')
 
 
-def test_nested_context_managers_with_session_created_before_first_nesting(scheme, tmpdir):
+def test_session_created_before_use_cassette_is_patched(tmpdir, scheme):
+    url = scheme + '://httpbin.org/bytes/1024'
+    # Record arbitrary, random data to the cassette
+    with vcr.use_cassette(str(tmpdir.join('session_created_outside.yaml'))):
+        session = requests.session()
+        body = session.get(url).content
+
+    # Create a session outside of any cassette context manager
+    session = requests.session()
+    # Make a request to make sure that a connectionpool is instantiated
+    session.get(scheme + '://httpbin.org/get')
+
+    with vcr.use_cassette(str(tmpdir.join('session_created_outside.yaml'))):
+        # These should only be the same if the patching succeeded.
+        assert session.get(url).content == body
+
+
+def test_nested_cassettes_with_session_created_before_nesting(scheme, tmpdir):
     '''
     This tests ensures that a session that was created while one cassette was
+    active is patched to the use the responses of a second cassette when it
+    is enabled.
     '''
     url = scheme + '://httpbin.org/bytes/1024'
     with vcr.use_cassette(str(tmpdir.join('first_nested.yaml'))):
