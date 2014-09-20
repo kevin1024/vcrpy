@@ -8,7 +8,7 @@ except ImportError:
     from .compat.counter import Counter
 
 # Internal imports
-from .patch import PatcherBuilder
+from .patch import CassettePatcherBuilder
 from .persist import load_cassette, save_cassette
 from .filters import filter_request
 from .serializers import yamlserializer
@@ -40,7 +40,7 @@ class CassetteContextDecorator(contextlib2.ContextDecorator):
 
     def _patch_generator(self, cassette):
         with contextlib2.ExitStack() as exit_stack:
-            for patcher in PatcherBuilder(cassette).build_patchers():
+            for patcher in CassettePatcherBuilder(cassette).build():
                 exit_stack.enter_context(patcher)
             log.debug('Entered context for cassette at {0}.'.format(cassette._path))
             yield cassette
