@@ -123,12 +123,6 @@ class CassettePatcherBuilder(object):
         except ImportError:  # pragma: no cover
             return
         from .stubs.requests_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
-        http_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(VCRHTTPConnection)
-        )
-        https_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(VCRHTTPSConnection)
-        )
         mock_triples = (
             (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
             (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
@@ -140,11 +134,8 @@ class CassettePatcherBuilder(object):
             # connections of the appropriate type.
             (cpool.HTTPConnectionPool, '_get_conn', self._patched_get_conn(cpool.HTTPConnectionPool)),
             (cpool.HTTPSConnectionPool, '_get_conn', self._patched_get_conn(cpool.HTTPSConnectionPool)),
-            (cpool.HTTPConnectionPool, '_new_conn', self._patched_new_conn(cpool.HTTPConnectionPool, http_connection_remover)),
-            (cpool.HTTPSConnectionPool, '_new_conn', self._patched_new_conn(cpool.HTTPConnectionPool, https_connection_remover))
         )
-        return itertools.chain(self._build_patchers_from_mock_triples(mock_triples),
-                               (http_connection_remover, https_connection_remover))
+        return self._build_patchers_from_mock_triples(mock_triples)
 
     def _patched_get_conn(self, connection_pool_class):
         get_conn = connection_pool_class._get_conn
@@ -155,15 +146,6 @@ class CassettePatcherBuilder(object):
                 connection = get_conn(pool, timeout)
             return connection
         return patched_get_conn
-
-    def _patched_new_conn(self, connection_pool_class, connection_remover):
-        new_conn = connection_pool_class._new_conn
-        @functools.wraps(new_conn)
-        def patched_new_conn(pool):
-            new_connection = new_conn(pool)
-            connection_remover.add_connection_to_pool_entry(pool, new_connection)
-            return new_connection
-        return patched_new_conn
 
     @_build_patchers_from_mock_triples_decorator
     def _urllib3(self):
@@ -201,36 +183,6 @@ class CassettePatcherBuilder(object):
         else:
             from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
             yield cpool, 'CertValidatingHTTPSConnection', VCRCertValidatingHTTPSConnection
-
-
-class ConnectionRemover(object):
-
-    def __init__(self, connection_class):
-        self._connection_class = connection_class
-        self._connection_pool_to_connections = {}
-
-    def add_connection_to_pool_entry(self, pool, connection):
-        if isinstance(connection, self._connection_class):
-            self._connection_pool_to_connection.setdefault(pool, set()).add(connection)
-
-    def remove_connection_to_pool_entry(self, pool, connection):
-        if isinstance(connection, self._connection_class):
-            self._connection_pool_to_connection[self._connection_class].remove(connection)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        for pool, connections in self._connection_pool_to_connections.items():
-            readd_connections = []
-            while pool.not_empty() and connections:
-                connection = pool.get()
-                if isinstance(connection, self._connection_class):
-                    connections.remove(connection)
-                else:
-                    readd_connections.append(connection)
-            for connection in readd_connections:
-                self.pool._put_conn(connection)
 
 
 def reset_patchers():
