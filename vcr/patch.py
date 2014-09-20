@@ -87,7 +87,7 @@ class CassettePatcherBuilder(object):
 
     def _recursively_apply_get_cassette_subclass(self, replacement_dict_or_obj):
         if isinstance(replacement_dict_or_obj, dict):
-            for key, replacement_obj  in replacement_dict_or_obj:
+            for key, replacement_obj  in replacement_dict_or_obj.items():
                 replacement_obj = self._recursively_apply_get_cassette_subclass(
                     replacement_obj)
                 replacement_dict_or_obj[key] = replacement_obj
@@ -121,7 +121,7 @@ class CassettePatcherBuilder(object):
         try:
             import requests.packages.urllib3.connectionpool as cpool
         except ImportError:  # pragma: no cover
-            return
+            return ()
         from .stubs.requests_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
         mock_triples = (
             (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
