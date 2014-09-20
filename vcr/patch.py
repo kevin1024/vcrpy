@@ -127,22 +127,28 @@ class CassettePatcherBuilder(object):
             (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
             (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
             (cpool, 'HTTPConnection', VCRRequestsHTTPConnection),
-            (cpool, 'HTTPConnection', VCRHTTPConnection),
+            (cpool, 'HTTPSConnection', VCRRequestsHTTPSConnection),
             (cpool.HTTPConnectionPool, 'ConnectionCls', VCRRequestsHTTPConnection),
             (cpool.HTTPSConnectionPool, 'ConnectionCls', VCRRequestsHTTPSConnection),
             # These handle making sure that sessions only use the
             # connections of the appropriate type.
-            (cpool.HTTPConnectionPool, '_get_conn', self._patched_get_conn(cpool.HTTPConnectionPool)),
-            (cpool.HTTPSConnectionPool, '_get_conn', self._patched_get_conn(cpool.HTTPSConnectionPool)),
         )
+        mock_triples += ((cpool.HTTPConnectionPool, '_get_conn',
+                          self._patched_get_conn(cpool.HTTPConnectionPool,
+                                                 lambda : cpool.HTTPConnection)),
+                         (cpool.HTTPSConnectionPool, '_get_conn',
+                          self._patched_get_conn(cpool.HTTPSConnectionPool,
+                                                 lambda : cpool.HTTPSConnection)))
         return self._build_patchers_from_mock_triples(mock_triples)
 
-    def _patched_get_conn(self, connection_pool_class):
+    def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
         @functools.wraps(get_conn)
         def patched_get_conn(pool, timeout=None):
             connection = get_conn(pool, timeout)
-            while not isinstance(connection, pool.ConnectionCls):
+            connection_class = pool.ConnectionCls if hasattr(pool, 'ConnectionCls') \
+                               else connection_class_getter()
+            while not isinstance(connection, connection_class):
                 connection = get_conn(pool, timeout)
             return connection
         return patched_get_conn
