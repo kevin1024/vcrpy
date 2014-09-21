@@ -2,7 +2,7 @@
 
 ![vcr.py](https://raw.github.com/kevin1024/vcrpy/master/vcr.png)
 
-This is a Python version of [Ruby's VCR library](https://github.com/myronmarston/vcr).
+This is a Python version of [Ruby's VCR library](https://github.com/vcr/vcr).
 
 [![Build Status](https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master)](http://travis-ci.org/kevin1024/vcrpy)
 [![Stories in Ready](https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=Ready)](https://waffle.io/kevin1024/vcrpy)
