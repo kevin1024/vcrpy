@@ -1,3 +1,4 @@
+import functools
 import os
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
@@ -9,18 +10,19 @@ class VCR(object):
                  serializer='yaml',
                  cassette_library_dir=None,
                  record_mode="once",
-                 filter_headers=[],
-                 filter_query_parameters=[],
+                 filter_headers=(),
+                 filter_query_parameters=(),
                  before_record=None,
-                 match_on=[
+                 before_record_response=None,
+                 match_on=(
                      'method',
                      'scheme',
                      'host',
                      'port',
                      'path',
                      'query',
-                 ],
-                 ignore_hosts=[],
+                 ),
+                 ignore_hosts=(),
                  ignore_localhost=False,
                  ):
         self.serializer = serializer
@@ -46,6 +48,7 @@ class VCR(object):
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
         self.before_record = before_record
+        self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
 
@@ -72,13 +75,16 @@ class VCR(object):
         return matchers
 
     def use_cassette(self, path, **kwargs):
+        args_getter = functools.partial(self.get_path_and_merged_config, path, **kwargs)
+        return Cassette.use_arg_getter(args_getter)
+
+    def get_path_and_merged_config(self, path, **kwargs):
         serializer_name = kwargs.get('serializer', self.serializer)
         matcher_names = kwargs.get('match_on', self.match_on)
         cassette_library_dir = kwargs.get(
             'cassette_library_dir',
             self.cassette_library_dir
         )
-
         if cassette_library_dir:
             path = os.path.join(cassette_library_dir, path)
 
@@ -95,6 +101,9 @@ class VCR(object):
             "before_record": kwargs.get(
                 "before_record", self.before_record
             ),
+            "before_record_response": kwargs.get(
+                "before_record_response", self.before_record_response
+            ),
             "ignore_hosts": kwargs.get(
                 'ignore_hosts', self.ignore_hosts
             ),
@@ -102,8 +111,7 @@ class VCR(object):
                 'ignore_localhost', self.ignore_localhost
             ),
         }
-
-        return Cassette.load(path, **merged_config)
+        return path, merged_config
 
     def register_serializer(self, name, serializer):
         self.serializers[name] = serializer
