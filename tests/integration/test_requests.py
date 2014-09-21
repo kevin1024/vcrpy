@@ -151,7 +151,7 @@ def test_https_with_cert_validation_disabled(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('cert_validation_disabled.yaml'))):
         requests.get('https://httpbin.org', verify=False)
 
-@pytest.mark.xfail
+
 def test_session_can_make_requests_after_requests_unpatched(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('test_session_after_unpatched.yaml'))):
         session = requests.session()

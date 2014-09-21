@@ -124,10 +124,10 @@ class CassettePatcherBuilder(object):
             return ()
         from .stubs.requests_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
         http_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(VCRHTTPConnection)
+            self._get_cassette_subclass(VCRRequestsHTTPConnection)
         )
         https_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(VCRHTTPSConnection)
+            self._get_cassette_subclass(VCRRequestsHTTPSConnection)
         )
         mock_triples = (
             (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
@@ -149,7 +149,7 @@ class CassettePatcherBuilder(object):
                           self._patched_new_conn(cpool.HTTPConnectionPool,
                                                  http_connection_remover)),
                          (cpool.HTTPSConnectionPool, '_new_conn',
-                          self._patched_new_conn(cpool.HTTPConnectionPool,
+                          self._patched_new_conn(cpool.HTTPSConnectionPool,
                                                  https_connection_remover)))
 
         return itertools.chain(self._build_patchers_from_mock_triples(mock_triples),
@@ -222,11 +222,11 @@ class ConnectionRemover(object):
 
     def add_connection_to_pool_entry(self, pool, connection):
         if isinstance(connection, self._connection_class):
-            self._connection_pool_to_connection.setdefault(pool, set()).add(connection)
+            self._connection_pool_to_connections.setdefault(pool, set()).add(connection)
 
     def remove_connection_to_pool_entry(self, pool, connection):
         if isinstance(connection, self._connection_class):
-            self._connection_pool_to_connection[self._connection_class].remove(connection)
+            self._connection_pool_to_connections[self._connection_class].remove(connection)
 
     def __enter__(self):
         return self
@@ -234,14 +234,14 @@ class ConnectionRemover(object):
     def __exit__(self, *args):
         for pool, connections in self._connection_pool_to_connections.items():
             readd_connections = []
-            while pool.not_empty() and connections:
-                connection = pool.get()
+            while not pool.pool.empty() and connections:
+                connection = pool.pool.get()
                 if isinstance(connection, self._connection_class):
                     connections.remove(connection)
                 else:
                     readd_connections.append(connection)
             for connection in readd_connections:
-                self.pool._put_conn(connection)
+                pool._put_conn(connection)
 
 
 def reset_patchers():
