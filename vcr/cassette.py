@@ -2,6 +2,7 @@
 import logging
 
 import contextlib2
+import wrapt
 try:
     from collections import Counter
 except ImportError:
@@ -19,7 +20,7 @@ from .errors import UnhandledHTTPRequestError
 log = logging.getLogger(__name__)
 
 
-class CassetteContextDecorator(contextlib2.ContextDecorator):
+class CassetteContextDecorator(object):
     """Context manager/decorator that handles installing the cassette and
     removing cassettes.
 
@@ -57,6 +58,11 @@ class CassetteContextDecorator(contextlib2.ContextDecorator):
     def __exit__(self, *args):
         next(self.__finish, None)
         self.__finish = None
+
+    @wrapt.decorator
+    def __call__(self, function, instance, args, kwargs):
+        with self:
+            return function(*args, **kwargs)
 
 
 class Cassette(object):

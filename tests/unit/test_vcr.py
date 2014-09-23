@@ -1,6 +1,7 @@
 import mock
+import pytest
 
-from vcr import VCR
+from vcr import VCR, use_cassette
 
 
 def test_vcr_use_cassette():
@@ -26,3 +27,21 @@ def test_vcr_use_cassette():
 
     with test_vcr.use_cassette('test', filter_headers=new_filter_headers) as cassette:
         assert cassette._filter_headers == new_filter_headers
+
+
+@pytest.fixture
+def random_fixture():
+    return 1
+
+
+@use_cassette('test')
+def test_fixtures_with_use_cassette(random_fixture):
+    # Applying a decorator to a test function that requests features can cause
+    # problems if the decorator does not preserve the signature of the original
+    # test function.
+
+    # This test ensures that use_cassette preserves the signature of the original
+    # test function, and thus that use_cassette is compatible with py.test
+    # fixtures. It is admittedly a bit strange because the test would never even
+    # run if the relevant feature were broken.
+    pass
