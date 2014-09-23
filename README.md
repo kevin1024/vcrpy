@@ -457,6 +457,10 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.1.1 Use function signature preserving `wrapt.decorator` to write the
+    decorator version of use_cassette in order to ensure compatibility with
+    py.test fixtures and python 2. Move all request filtering into the
+    `before_record_callable`.
   * 1.1.0 Add `before_record_response`. Fix several bugs related to the context
     management of cassettes.
   * 1.0.3: Fix an issue with requests 2.4 and make sure case sensitivity is
