@@ -1,30 +1,22 @@
+import collections
+import copy
 import functools
 import os
+
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
 from . import matchers
+from . import filters
 
 
 class VCR(object):
-    def __init__(self,
-                 serializer='yaml',
-                 cassette_library_dir=None,
-                 record_mode="once",
-                 filter_headers=(),
-                 filter_query_parameters=(),
-                 before_record=None,
-                 before_record_response=None,
-                 match_on=(
-                     'method',
-                     'scheme',
-                     'host',
-                     'port',
-                     'path',
-                     'query',
-                 ),
-                 ignore_hosts=(),
-                 ignore_localhost=False,
-                 ):
+
+    def __init__(self, serializer='yaml', cassette_library_dir=None,
+                 record_mode="once", filter_headers=(),
+                 filter_query_parameters=(), before_record_request=None,
+                 before_record_response=None, ignore_hosts=(),
+                 match_on=('method', 'scheme', 'host', 'port', 'path', 'query',),
+                 ignore_localhost=False, before_record=None):
         self.serializer = serializer
         self.match_on = match_on
         self.cassette_library_dir = cassette_library_dir
@@ -47,7 +39,7 @@ class VCR(object):
         self.record_mode = record_mode
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
-        self.before_record = before_record
+        self.before_record_request = before_record_request or before_record
         self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
@@ -69,12 +61,13 @@ class VCR(object):
                 matchers.append(self.matchers[m])
         except KeyError:
             raise KeyError(
-                "Matcher {0} doesn't exist or isn't registered".format(
-                    m)
+                "Matcher {0} doesn't exist or isn't registered".format(m)
             )
         return matchers
 
-    def use_cassette(self, path, **kwargs):
+    def use_cassette(self, path, with_current_defaults=False, **kwargs):
+        if with_current_defaults:
+            return Cassette.use(path, self.get_path_and_merged_config(path, **kwargs))
         args_getter = functools.partial(self.get_path_and_merged_config, path, **kwargs)
         return Cassette.use_arg_getter(args_getter)
 
@@ -89,29 +82,86 @@ class VCR(object):
             path = os.path.join(cassette_library_dir, path)
 
         merged_config = {
-            "serializer": self._get_serializer(serializer_name),
-            "match_on": self._get_matchers(matcher_names),
-            "record_mode": kwargs.get('record_mode', self.record_mode),
-            "filter_headers": kwargs.get(
-                'filter_headers', self.filter_headers
-            ),
-            "filter_query_parameters": kwargs.get(
-                'filter_query_parameters', self.filter_query_parameters
-            ),
-            "before_record": kwargs.get(
-                "before_record", self.before_record
-            ),
-            "before_record_response": kwargs.get(
-                "before_record_response", self.before_record_response
-            ),
-            "ignore_hosts": kwargs.get(
-                'ignore_hosts', self.ignore_hosts
-            ),
-            "ignore_localhost": kwargs.get(
-                'ignore_localhost', self.ignore_localhost
-            ),
+            'serializer': self._get_serializer(serializer_name),
+            'match_on': self._get_matchers(matcher_names),
+            'record_mode': kwargs.get('record_mode', self.record_mode),
+            'before_record_request': self._build_before_record_request(kwargs),
+            'before_record_response': self._build_before_record_response(kwargs)
         }
         return path, merged_config
+
+    def _build_before_record_response(self, options):
+        before_record_response = options.get(
+            'before_record_response', self.before_record_response
+        )
+        filter_functions = []
+        if before_record_response and not isinstance(before_record_response,
+                                                     collections.Iterable):
+            before_record_response = (before_record_response,)
+            for function in before_record_response:
+                filter_functions.append(function)
+        def before_record_response(response):
+            for function in filter_functions:
+                if response is None:
+                    break
+                response = function(response)
+            return response
+        return before_record_response
+
+    def _build_before_record_request(self, options):
+        filter_functions = []
+        filter_headers = options.get(
+            'filter_headers', self.filter_headers
+        )
+        filter_query_parameters = options.get(
+            'filter_query_parameters', self.filter_query_parameters
+        )
+        before_record_request = options.get(
+            "before_record_request", options.get("before_record", self.before_record_request)
+        )
+        ignore_hosts = options.get(
+            'ignore_hosts', self.ignore_hosts
+        )
+        ignore_localhost = options.get(
+            'ignore_localhost', self.ignore_localhost
+        )
+        if filter_headers:
+            filter_functions.append(functools.partial(filters.remove_headers,
+                                                      headers_to_remove=filter_headers))
+        if filter_query_parameters:
+            filter_functions.append(functools.partial(filters.remove_query_parameters,
+                                                      query_parameters_to_remove=filter_query_parameters))
+
+        hosts_to_ignore = list(ignore_hosts)
+        if ignore_localhost:
+            hosts_to_ignore.extend(('localhost', '0.0.0.0', '127.0.0.1'))
+
+        if hosts_to_ignore:
+            hosts_to_ignore = set(hosts_to_ignore)
+            filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
+
+        if before_record_request:
+            if not isinstance(before_record_request, collections.Iterable):
+                before_record_request = (before_record_request,)
+            for function in before_record_request:
+                filter_functions.append(function)
+        def before_record_request(request):
+            request = copy.copy(request)
+            for function in filter_functions:
+                if request is None:
+                    break
+                request = function(request)
+            return request
+
+        return before_record_request
+
+    @staticmethod
+    def _build_ignore_hosts(hosts_to_ignore):
+        def filter_ignored_hosts(request):
+            if hasattr(request, 'host') and request.host in hosts_to_ignore:
+                return
+            return request
+        return filter_ignored_hosts
 
     def register_serializer(self, name, serializer):
         self.serializers[name] = serializer

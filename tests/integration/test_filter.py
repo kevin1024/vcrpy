@@ -54,15 +54,20 @@ def test_filter_querystring(tmpdir):
         urlopen(url)
         assert 'foo' not in cass.requests[0].url
 
+
 def test_filter_callback(tmpdir):
     url = 'http://httpbin.org/get'
     cass_file = str(tmpdir.join('basic_auth_filter.yaml'))
     def before_record_cb(request):
         if request.path != '/get':
             return request
-    my_vcr = vcr.VCR(
-        before_record = before_record_cb,
-    )
+    # Test the legacy keyword.
+    my_vcr = vcr.VCR(before_record=before_record_cb)
+    with my_vcr.use_cassette(cass_file, filter_headers=['authorization']) as cass:
+        urlopen(url)
+        assert len(cass) == 0
+
+    my_vcr = vcr.VCR(before_record_request=before_record_cb)
     with my_vcr.use_cassette(cass_file, filter_headers=['authorization']) as cass:
         urlopen(url)
         assert len(cass) == 0

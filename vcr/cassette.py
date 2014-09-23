@@ -11,7 +11,6 @@ except ImportError:
 # Internal imports
 from .patch import CassettePatcherBuilder
 from .persist import load_cassette, save_cassette
-from .filters import filter_request
 from .serializers import yamlserializer
 from .matchers import requests_match, uri, method
 from .errors import UnhandledHTTPRequestError
@@ -25,7 +24,7 @@ class CassetteContextDecorator(object):
     removing cassettes.
 
     This class defers the creation of a new cassette instance until the point at
-    which it is installed by context manager or decorator. The fact that a new
+    which it is installned by context manager or decorator. The fact that a new
     cassette is used with each application prevents the state of any cassette
     from interfering with another.
     """
@@ -50,7 +49,7 @@ class CassetteContextDecorator(object):
             cassette._save()
 
     def __enter__(self):
-        assert self.__finish is None
+        assert self.__finish is None, "Cassette already open."
         path, kwargs = self._args_getter()
         self.__finish = self._patch_generator(self.cls.load(path, **kwargs))
         return next(self.__finish)
@@ -70,7 +69,7 @@ class Cassette(object):
 
     @classmethod
     def load(cls, path, **kwargs):
-        '''Load in the cassette stored at the provided path'''
+        '''Instantiate and load the cassette stored at the specified path.'''
         new_cassette = cls(path, **kwargs)
         new_cassette._load()
         return new_cassette
@@ -85,20 +84,13 @@ class Cassette(object):
 
     def __init__(self, path, serializer=yamlserializer, record_mode='once',
                  match_on=(uri, method), filter_headers=(),
-                 filter_query_parameters=(), before_record=None, before_record_response=None,
-                 ignore_hosts=(), ignore_localhost=()):
+                 filter_query_parameters=(), before_record_request=None,
+                 before_record_response=None, ignore_hosts=(), ignore_localhost=()):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
-        self._filter_headers = filter_headers
-        self._filter_query_parameters = filter_query_parameters
-        self._before_record = before_record
-        self._before_record_response = before_record_response
-        self._ignore_hosts = ignore_hosts
-        if ignore_localhost:
-            self._ignore_hosts = list(set(
-                list(self._ignore_hosts) + ['localhost', '0.0.0.0', '127.0.0.1']
-            ))
+        self._before_record_request = before_record_request or (lambda x: x)
+        self._before_record_response = before_record_response or (lambda x: x)
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -131,18 +123,9 @@ class Cassette(object):
         return self.rewound and self.record_mode == 'once' or \
             self.record_mode == 'none'
 
-    def _filter_request(self, request):
-        return filter_request(
-            request=request,
-            filter_headers=self._filter_headers,
-            filter_query_parameters=self._filter_query_parameters,
-            before_record=self._before_record,
-            ignore_hosts=self._ignore_hosts
-        )
-
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
-        request = self._filter_request(request)
+        request = self._before_record_request(request)
         if not request:
             return
         if self._before_record_response:
@@ -150,20 +133,21 @@ class Cassette(object):
         self.data.append((request, response))
         self.dirty = True
 
+    def filter_request(self, request):
+        return self._before_record_request(request)
+
     def _responses(self, request):
         """
         internal API, returns an iterator with all responses matching
         the request.
         """
-        request = self._filter_request(request)
-        if not request:
-            return
+        request = self._before_record_request(request)
         for index, (stored_request, response) in enumerate(self.data):
             if requests_match(request, stored_request, self._match_on):
                 yield index, response
 
     def can_play_response_for(self, request):
-        request = self._filter_request(request)
+        request = self._before_record_request(request)
         return request and request in self and \
             self.record_mode != 'all' and \
             self.rewound

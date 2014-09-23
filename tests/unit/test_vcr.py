@@ -2,31 +2,60 @@ import mock
 import pytest
 
 from vcr import VCR, use_cassette
+from vcr.request import Request
 
 
 def test_vcr_use_cassette():
-    filter_headers = mock.Mock()
-    test_vcr = VCR(filter_headers=filter_headers)
+    record_mode = mock.Mock()
+    test_vcr = VCR(record_mode=record_mode)
     with mock.patch('vcr.cassette.Cassette.load') as mock_cassette_load:
         @test_vcr.use_cassette('test')
         def function():
             pass
         assert mock_cassette_load.call_count == 0
         function()
-        assert mock_cassette_load.call_args[1]['filter_headers'] is filter_headers
+        assert mock_cassette_load.call_args[1]['record_mode'] is record_mode
 
         # Make sure that calls to function now use cassettes with the
         # new filter_header_settings
-        test_vcr.filter_headers = ('a',)
+        test_vcr.record_mode = mock.Mock()
         function()
-        assert mock_cassette_load.call_args[1]['filter_headers'] == test_vcr.filter_headers
+        assert mock_cassette_load.call_args[1]['record_mode'] == test_vcr.record_mode
 
         # Ensure that explicitly provided arguments still supercede
         # those on the vcr.
-        new_filter_headers = mock.Mock()
+        new_record_mode = mock.Mock()
 
-    with test_vcr.use_cassette('test', filter_headers=new_filter_headers) as cassette:
-        assert cassette._filter_headers == new_filter_headers
+    with test_vcr.use_cassette('test', record_mode=new_record_mode) as cassette:
+        assert cassette.record_mode == new_record_mode
+
+
+def test_vcr_before_record_request_params():
+    base_path = 'http://httpbin.org/'
+    def before_record_cb(request):
+        if request.path != '/get':
+            return request
+    test_vcr = VCR(filter_headers=('cookie',), before_record_request=before_record_cb,
+                   ignore_hosts=('www.test.com',), ignore_localhost=True,
+                   filter_query_parameters=('foo',))
+
+    with test_vcr.use_cassette('test') as cassette:
+        assert cassette.filter_request(Request('GET', base_path + 'get', '', {})) is None
+        assert cassette.filter_request(Request('GET', base_path + 'get2', '', {})) is not None
+
+        assert cassette.filter_request(Request('GET', base_path + '?foo=bar', '', {})).query == []
+        assert cassette.filter_request(
+            Request('GET', base_path + '?foo=bar', '',
+                    {'cookie': 'test', 'other': 'fun'})).headers == {'other': 'fun'}
+        assert cassette.filter_request(Request('GET', base_path + '?foo=bar', '',
+                                               {'cookie': 'test', 'other': 'fun'})).headers == {'other': 'fun'}
+
+        assert cassette.filter_request(Request('GET', 'http://www.test.com' + '?foo=bar', '',
+                                               {'cookie': 'test', 'other': 'fun'})) is None
+
+    with test_vcr.use_cassette('test', before_record_request=None) as cassette:
+        # Test that before_record can be overwritten with
+        assert cassette.filter_request(Request('GET', base_path + 'get', '', {})) is not None
 
 
 @pytest.fixture
