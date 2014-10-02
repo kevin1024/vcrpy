@@ -48,5 +48,5 @@ exclude:
 matrix:
   fast_finish: true
 install:
-- pip install tox >= 1.8.0
+- pip install "tox>=1.8.0"
 script: tox
