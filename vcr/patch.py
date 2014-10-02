@@ -273,8 +273,9 @@ def reset_patchers():
         yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _VerifiedHTTPSConnection)
         yield mock.patch.object(cpool, 'HTTPConnection', _HTTPConnection)
         yield mock.patch.object(cpool, 'HTTPSConnection', _HTTPSConnection)
-        yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _HTTPConnection)
-        yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _HTTPSConnection)
+        if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
+            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _HTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _HTTPSConnection)
 
     try:
         import httplib2 as cpool
