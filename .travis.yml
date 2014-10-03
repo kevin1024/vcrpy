@@ -12,39 +12,30 @@ env:
     - TOXENV=py26-requests1
     - TOXENV=py26-httplib2
     - TOXENV=py26-urllib3
-    - TOXENV=py26-boto
     - TOXENV=py27-requests24
     - TOXENV=py27-requests23
     - TOXENV=py27-requests22
     - TOXENV=py27-requests1
     - TOXENV=py27-httplib2
     - TOXENV=py27-urllib3
-    - TOXENV=py27-boto
     - TOXENV=py33-requests24
     - TOXENV=py33-requests23
     - TOXENV=py33-requests22
     - TOXENV=py33-requests1
     - TOXENV=py33-httplib2
     - TOXENV=py33-urllib3
-    - TOXENV=py33-boto
     - TOXENV=py34-requests24
     - TOXENV=py34-requests23
     - TOXENV=py34-requests22
-    - TOXENV=py34-requests1
     - TOXENV=py34-httplib2
     - TOXENV=py34-urllib3
-    - TOXENV=py34-boto
     - TOXENV=pypy-requests24
     - TOXENV=pypy-requests23
     - TOXENV=pypy-requests22
     - TOXENV=pypy-requests1
     - TOXENV=pypy-httplib2
     - TOXENV=pypy-urllib3
-    - TOXENV=pypy-boto
 exclude:
-- env: TOXENV=py33-boto
-- env: TOXENV=py34-boto
-- env: TOXENV=py34-requests1
 matrix:
   fast_finish: true
 install:
