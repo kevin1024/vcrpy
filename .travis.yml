@@ -1,43 +1,38 @@
 language: python
 before_install: openssl version
-
 env:
   global:
     - secure: AifoKzwhjV94cmcQZrdQmqRu/9rkZZvWpwBv1daeAQpLOKFPGsOm3D+x2cSw9+iCfkgDZDfqQVv1kCaFVxTll8v8jTq5SJdqEY0NmGWbj/UkNtShh609oRDsuzLxAEwtVKYjf/h8K2BRea+bl1tGkwZ2vtmYS6dxNlAijjWOfds=
-    - secure: LBSEg/gMj4u4Hrpo3zs6Y/1mTpd2RtcN49mZIFgTdbJ9IhpiNPqcEt647Lz94F9Eses2x2WbNuKqZKZZReY7QLbEzU1m0nN5jlaKrjcG5NR5clNABfFFyhgc0jBikyS4abAG8jc2efeaTrFuQwdoF4sE8YiVrkiVj2X5Xoi6s
+    - secure: LBSEg/gMj4u4Hrpo3zs6Y/1mTpd2RtcN49mZIFgTdbJ9IhpiNPqcEt647Lz94F9Eses2x2WbNuKqZKZZReY7QLbEzU1m0nN5jlaKrjcG5NR5clNABfFFyhgc0jBikyS4abAG8jc2efeaTrFuQwdoF4sE8YiVrkiVj2X5Xoi6sBk=
   matrix:
-    - TOXENV=py26-requests24
-    - TOXENV=py26-requests23
-    - TOXENV=py26-requests22
-    - TOXENV=py26-requests1
-    - TOXENV=py26-httplib2
-    - TOXENV=py26-urllib3
-    - TOXENV=py27-requests24
-    - TOXENV=py27-requests23
-    - TOXENV=py27-requests22
-    - TOXENV=py27-requests1
-    - TOXENV=py27-httplib2
-    - TOXENV=py27-urllib3
-    - TOXENV=py33-requests24
-    - TOXENV=py33-requests23
-    - TOXENV=py33-requests22
-    - TOXENV=py33-requests1
-    - TOXENV=py33-httplib2
-    - TOXENV=py33-urllib3
-    - TOXENV=py34-requests24
-    - TOXENV=py34-requests23
-    - TOXENV=py34-requests22
-    - TOXENV=py34-httplib2
-    - TOXENV=py34-urllib3
-    - TOXENV=pypy-requests24
-    - TOXENV=pypy-requests23
-    - TOXENV=pypy-requests22
-    - TOXENV=pypy-requests1
-    - TOXENV=pypy-httplib2
-    - TOXENV=pypy-urllib3
-exclude:
+    - WITH_LIB="requests2.2"
+    - WITH_LIB="requests2.3"
+    - WITH_LIB="requests2.4"
+    - WITH_LIB="requests1.x"
+    - WITH_LIB="httplib2"
+    - WITH_LIB="boto"
 matrix:
-  fast_finish: true
+  allow_failures:
+    - env: WITH_LIB="boto"
+  exclude:
+    - env: WITH_LIB="boto"
+      python: 3.3
+    - env: WITH_LIB="boto"
+      python: 3.4
+    - env: WITH_LIB="requests1.x"
+      python: 3.4
+python:
+- 2.6
+- 2.7
+- 3.3
+- 3.4
+- pypy
 install:
-- pip install "tox>=1.8.0"
-script: tox
+- pip install PyYAML pytest pytest-localserver --use-mirrors
+- if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
+- if [ $WITH_LIB = "requests2.2" ] ; then pip install requests==2.2.1; fi
+- if [ $WITH_LIB = "requests2.3" ] ; then pip install requests==2.3.0; fi
+- if [ $WITH_LIB = "requests2.4" ] ; then pip install requests==2.4.0; fi
+- if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
+- if [ $WITH_LIB = "boto" ] ; then pip install boto; fi
+script: python setup.py test
