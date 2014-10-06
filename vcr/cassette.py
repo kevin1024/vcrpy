@@ -1,4 +1,4 @@
-'''The container for recorded requests and responses'''
+"""The container for recorded requests and responses"""
 import logging
 
 import contextlib2
@@ -24,7 +24,7 @@ class CassetteContextDecorator(object):
     removing cassettes.
 
     This class defers the creation of a new cassette instance until the point at
-    which it is installned by context manager or decorator. The fact that a new
+    which it is installed by context manager or decorator. The fact that a new
     cassette is used with each application prevents the state of any cassette
     from interfering with another.
     """
@@ -45,7 +45,8 @@ class CassetteContextDecorator(object):
             log.debug('Entered context for cassette at {0}.'.format(cassette._path))
             yield cassette
             log.debug('Exiting context for cassette at {0}.'.format(cassette._path))
-             # TODO(@IvanMalison): Hmmm. it kind of feels like this should be somewhere else.
+            # TODO(@IvanMalison): Hmmm. it kind of feels like this should be
+            # somewhere else.
             cassette._save()
 
     def __enter__(self):
@@ -65,11 +66,11 @@ class CassetteContextDecorator(object):
 
 
 class Cassette(object):
-    '''A container for recorded requests and responses'''
+    """A container for recorded requests and responses"""
 
     @classmethod
     def load(cls, path, **kwargs):
-        '''Instantiate and load the cassette stored at the specified path.'''
+        """Instantiate and load the cassette stored at the specified path."""
         new_cassette = cls(path, **kwargs)
         new_cassette._load()
         return new_cassette
@@ -85,7 +86,8 @@ class Cassette(object):
     def __init__(self, path, serializer=yamlserializer, record_mode='once',
                  match_on=(uri, method), filter_headers=(),
                  filter_query_parameters=(), before_record_request=None,
-                 before_record_response=None, ignore_hosts=(), ignore_localhost=()):
+                 before_record_response=None, ignore_hosts=(),
+                 ignore_localhost=()):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
@@ -105,9 +107,7 @@ class Cassette(object):
 
     @property
     def all_played(self):
-        """
-        Returns True if all responses have been played, False otherwise.
-        """
+        """Returns True if all responses have been played, False otherwise."""
         return self.play_count == len(self)
 
     @property
@@ -124,7 +124,7 @@ class Cassette(object):
             self.record_mode == 'none'
 
     def append(self, request, response):
-        '''Add a request, response pair to this cassette'''
+        """Add a request, response pair to this cassette"""
         request = self._before_record_request(request)
         if not request:
             return
@@ -153,10 +153,10 @@ class Cassette(object):
             self.rewound
 
     def play_response(self, request):
-        '''
+        """
         Get the response corresponding to a request, but only if it
         hasn't been played back before, and mark it as played
-        '''
+        """
         for index, response in self._responses(request):
             if self.play_counts[index] == 0:
                 self.play_counts[index] += 1
@@ -168,11 +168,11 @@ class Cassette(object):
         )
 
     def responses_of(self, request):
-        '''
+        """
         Find the responses corresponding to a request.
         This function isn't actually used by VCR internally, but is
         provided as an external API.
-        '''
+        """
         responses = [response for index, response in self._responses(request)]
 
         if responses:
@@ -214,11 +214,11 @@ class Cassette(object):
         )
 
     def __len__(self):
-        '''Return the number of request,response pairs stored in here'''
+        """Return the number of request,response pairs stored in here"""
         return len(self.data)
 
     def __contains__(self, request):
-        '''Return whether or not a request has been stored'''
+        """Return whether or not a request has been stored"""
         for response in self._responses(request):
             return True
         return False

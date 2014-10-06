@@ -59,7 +59,9 @@ class CassettePatcherBuilder(object):
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
         def wrapped(self, *args, **kwargs):
-            return self._build_patchers_from_mock_triples(function(self, *args, **kwargs))
+            return self._build_patchers_from_mock_triples(
+                function(self, *args, **kwargs)
+            )
         return wrapped
 
     def __init__(self, cassette):
