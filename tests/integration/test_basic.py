@@ -1,4 +1,4 @@
-'''Basic tests about cassettes'''
+'''Basic tests for cassettes'''
 # coding=utf-8
 
 # External imports

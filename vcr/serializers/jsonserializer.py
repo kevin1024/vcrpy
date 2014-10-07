@@ -11,10 +11,14 @@ def deserialize(cassette_string):
 def serialize(cassette_dict):
     try:
         return json.dumps(cassette_dict, indent=4)
-    except UnicodeDecodeError:
+    except UnicodeDecodeError as original:
         raise UnicodeDecodeError(
-            "Error serializing cassette to JSON. ",
-            "Does this HTTP interaction contain binary data? ",
-            "If so, use a different serializer (like the yaml serializer) ",
-            "for this request"
+            original.encoding,
+            b"Error serializing cassette to JSON",
+            original.start,
+            original.end,
+            original.message +
+            ("Does this HTTP interaction contain binary data? "
+             "If so, use a different serializer (like the yaml serializer) "
+             "for this request?")
         )
