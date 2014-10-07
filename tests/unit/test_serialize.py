@@ -31,4 +31,5 @@ def test_deserialize_new_json_cassette():
                    side_effect=UnicodeDecodeError('utf-8', b'unicode error in serialization',
                                                   0, 10, 'blew up'))
 def test_serialize_constructs_UnicodeDecodeError(mock_dumps):
-    jsonserializer.serialize({})
+    with pytest.raises(UnicodeDecodeError):
+        jsonserializer.serialize({})

@@ -17,7 +17,7 @@ def serialize(cassette_dict):
             b"Error serializing cassette to JSON",
             original.start,
             original.end,
-            original.message +
+            original.args[-1] +
             ("Does this HTTP interaction contain binary data? "
              "If so, use a different serializer (like the yaml serializer) "
              "for this request?")
