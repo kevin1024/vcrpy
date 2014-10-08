@@ -457,6 +457,8 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.1.2 Add urllib==1.7.1 support. Make json serialize error handling correct
+    Improve logging of match failures.
   * 1.1.1 Use function signature preserving `wrapt.decorator` to write the
     decorator version of use_cassette in order to ensure compatibility with
     py.test fixtures and python 2. Move all request filtering into the
