@@ -18,7 +18,7 @@ def test_response_should_have_headers_field():
             "content-type": ["text/html; charset=utf-8"],
         },
         "body": {
-            "string": ""
+            "string": b""
         }
     }
     response = VCRHTTPResponse(recorded_response)
@@ -29,7 +29,7 @@ def test_response_should_have_headers_field():
 def test_response_headers_should_be_equal_to_msg():
     recorded_response = {
         "status": {
-            "message": "OK",
+            "message": b"OK",
             "code": 200
         },
         "headers": {
@@ -39,7 +39,7 @@ def test_response_headers_should_be_equal_to_msg():
             "content-type": ["text/html; charset=utf-8"],
         },
         "body": {
-            "string": ""
+            "string": b""
         }
     }
     response = VCRHTTPResponse(recorded_response)
@@ -59,7 +59,7 @@ def test_response_headers_should_have_correct_values():
             "content-type": ["text/html; charset=utf-8"],
         },
         "body": {
-            "string": ""
+            "string": b""
         }
     }
     response = VCRHTTPResponse(recorded_response)
