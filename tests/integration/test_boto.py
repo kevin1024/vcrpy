@@ -14,7 +14,7 @@ def test_boto_stubs(tmpdir):
         from boto.https_connection import CertValidatingHTTPSConnection
         from vcr.stubs.boto_stubs import VCRCertValidatingHTTPSConnection
         # Prove that the class was patched by the stub and that we can instantiate it.
-        assert CertValidatingHTTPSConnection is VCRCertValidatingHTTPSConnection
+        assert issubclass(CertValidatingHTTPSConnection, VCRCertValidatingHTTPSConnection)
         CertValidatingHTTPSConnection('hostname.does.not.matter')
 
 def test_boto_without_vcr():
