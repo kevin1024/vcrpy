@@ -76,7 +76,7 @@ class VCRHTTPResponse(HTTPResponse):
         self._closed = False
 
         headers = self.recorded_response['headers']
-        self.msg = parse_headers(headers)
+        self.headers = self.msg = parse_headers(headers)
 
         self.length = compat.get_header(self.msg, 'content-length') or None
 
