@@ -314,3 +314,4 @@ class VCRHTTPSConnection(VCRConnection):
     '''A Mocked class for HTTPS requests'''
     _baseclass = HTTPSConnection
     _protocol = 'https'
+    is_verified = True
