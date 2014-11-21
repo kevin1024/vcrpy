@@ -72,6 +72,21 @@ def test_new_episodes_record_mode(tmpdir):
         assert len(cass.responses) == 2
 
 
+def test_new_episodes_record_mode_two_times(tmpdir):
+    testfile = str(tmpdir.join('recordmode.yml'))
+    with vcr.use_cassette(testfile, record_mode="new_episodes"):
+        # cassette file doesn't exist, so create.
+        response1 = urlopen('http://httpbin.org/').read()
+
+    with vcr.use_cassette(testfile, record_mode="new_episodes") as cass:
+        # make the same request again
+        response = urlopen('http://httpbin.org/').read()
+
+        # in the "new_episodes" record mode, we can add the same request
+        # to the cassette without repercussions
+        response = urlopen('http://httpbin.org/').read()
+
+
 def test_all_record_mode(tmpdir):
     testfile = str(tmpdir.join('recordmode.yml'))
 

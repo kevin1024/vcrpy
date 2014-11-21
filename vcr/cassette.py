@@ -219,6 +219,7 @@ class Cassette(object):
 
     def __contains__(self, request):
         """Return whether or not a request has been stored"""
-        for response in self._responses(request):
-            return True
+        for index, response in self._responses(request):
+            if self.play_counts[index] == 0:
+                return True
         return False
