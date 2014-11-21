@@ -87,6 +87,22 @@ def test_new_episodes_record_mode_two_times(tmpdir):
         response = urlopen('http://httpbin.org/').read()
 
 
+def test_once_mode_after_new_episodes(tmpdir):
+    testfile = str(tmpdir.join('recordmode.yml'))
+    with vcr.use_cassette(testfile, record_mode="new_episodes"):
+        # cassette file doesn't exist, so create.
+        response1 = urlopen('http://httpbin.org/').read()
+
+    with vcr.use_cassette(testfile, record_mode="once") as cass:
+        # make the same request again
+        response = urlopen('http://httpbin.org/').read()
+
+        # now that we are back in once mode, this should raise
+        # an error.
+        with pytest.raises(Exception):
+            response = urlopen('http://httpbin.org/').read()
+
+
 def test_all_record_mode(tmpdir):
     testfile = str(tmpdir.join('recordmode.yml'))
 
