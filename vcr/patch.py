@@ -236,7 +236,7 @@ class ConnectionRemover(object):
     def __exit__(self, *args):
         for pool, connections in self._connection_pool_to_connections.items():
             readd_connections = []
-            while not pool.pool.empty() and connections:
+            while pool.pool and not pool.pool.empty() and connections:
                 connection = pool.pool.get()
                 if isinstance(connection, self._connection_class):
                     connections.remove(connection)
