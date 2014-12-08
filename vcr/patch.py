@@ -136,6 +136,7 @@ class CassettePatcherBuilder(object):
             (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
             (cpool, 'HTTPConnection', VCRRequestsHTTPConnection),
             (cpool, 'HTTPSConnection', VCRRequestsHTTPSConnection),
+            (cpool, 'is_connection_dropped', mock.Mock(return_value=False)),  # Needed on Windows only
             (cpool.HTTPConnectionPool, 'ConnectionCls', VCRRequestsHTTPConnection),
             (cpool.HTTPSConnectionPool, 'ConnectionCls', VCRRequestsHTTPSConnection),
         )
