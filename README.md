@@ -457,6 +457,9 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.1.3 Fix python3 headers field (thanks @rtaboada), fix boto test (thanks
+    @telaviv), fix new_episodes record mode (thanks @jashugan), fix Windows
+    connectionpool stub bug (thanks @gazpachoking)
   * 1.1.2 Add urllib==1.7.1 support. Make json serialize error handling correct
     Improve logging of match failures.
   * 1.1.1 Use function signature preserving `wrapt.decorator` to write the
