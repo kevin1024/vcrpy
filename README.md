@@ -457,6 +457,8 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.1.4 Add force reset around calls to actual connection from stubs, to ensure
+    compatibility with the version of httplib/urlib2 in python 2.7.9.
   * 1.1.3 Fix python3 headers field (thanks @rtaboada), fix boto test (thanks
     @telaviv), fix new_episodes record mode (thanks @jashugan), fix Windows
     connectionpool stub bug (thanks @gazpachoking), add support for requests 2.5
