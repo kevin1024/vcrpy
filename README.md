@@ -362,6 +362,23 @@ back from a cassette.  VCR will completely ignore those requests as if it
 didn't notice them at all, and they will continue to hit the server as if VCR
 were not there.
 
+## Custom Patches
+
+If you use a custom `HTTPConnection` class, or otherwise make http
+requests in a way that requires additional patching, you can use the
+`custom_patches` keyword argument of the `VCR` and `Cassette` objects
+to patch those objects whenever a cassette's context is entered. To
+patch a custom version of `HTTPConnection` you can do something like
+this:
+
+```
+import where_the_custom_https_connection_lives
+from vcr.stubs import VCRHTTPSConnection
+my_vcr = config.VCR(custom_patches=((where_the_custom_https_connection_lives, 'CustomHTTPSConnection', VCRHTTPSConnection),))
+
+@my_vcr.use_cassette(...)
+```
+
 ## Installation
 
 VCR.py is a package on PyPI, so you can `pip install vcrpy` (first you may need
