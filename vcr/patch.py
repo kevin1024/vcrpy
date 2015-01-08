@@ -69,9 +69,12 @@ class CassettePatcherBuilder(object):
         self._class_to_cassette_subclass = {}
 
     def build(self):
-        return itertools.chain(self._httplib(), self._requests(),
-                               self._urllib3(), self._httplib2(),
-                               self._boto())
+        return itertools.chain(
+            self._httplib(), self._requests(), self._urllib3(), self._httplib2(),
+            self._boto(), self._build_patchers_from_mock_triples(
+                self._cassette.custom_patches
+            )
+        )
 
     def _build_patchers_from_mock_triples(self, mock_triples):
         for args in mock_triples:
@@ -88,6 +91,17 @@ class CassettePatcherBuilder(object):
                                      replacement_class))
 
     def _recursively_apply_get_cassette_subclass(self, replacement_dict_or_obj):
+        """One of the subtleties of this class is that it does not directly
+        replace HTTPSConnection with VCRRequestsHTTPSConnection, but a
+        subclass of this class that has cassette assigned to the
+        appropriate value. This behavior is necessary to properly
+        support nested cassette contexts
+
+        This function exists to ensure that we use the same class
+        object (reference) to patch everything that replaces
+        VCRRequestHTTP[S]Connection, but that we can talk about
+        patching them with the raw references instead.
+        """
         if isinstance(replacement_dict_or_obj, dict):
             for key, replacement_obj  in replacement_dict_or_obj.items():
                 replacement_obj = self._recursively_apply_get_cassette_subclass(

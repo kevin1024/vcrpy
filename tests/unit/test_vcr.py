@@ -3,6 +3,7 @@ import pytest
 
 from vcr import VCR, use_cassette
 from vcr.request import Request
+from vcr.stubs import VCRHTTPSConnection
 
 
 def test_vcr_use_cassette():
@@ -74,3 +75,18 @@ def test_fixtures_with_use_cassette(random_fixture):
     # fixtures. It is admittedly a bit strange because the test would never even
     # run if the relevant feature were broken.
     pass
+
+
+def test_custom_patchers():
+    class Test(object):
+        attribute = None
+        attribute2 = None
+    test_vcr = VCR(custom_patches=((Test, 'attribute', VCRHTTPSConnection),))
+    with test_vcr.use_cassette('custom_patches'):
+        assert issubclass(Test.attribute, VCRHTTPSConnection)
+        assert VCRHTTPSConnection is not Test.attribute
+
+    with test_vcr.use_cassette('custom_patches', custom_patches=((Test, 'attribute2', VCRHTTPSConnection),)):
+        assert issubclass(Test.attribute, VCRHTTPSConnection)
+        assert VCRHTTPSConnection is not Test.attribute
+        assert Test.attribute is Test.attribute2

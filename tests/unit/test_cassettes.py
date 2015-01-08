@@ -7,8 +7,10 @@ import pytest
 import yaml
 
 from vcr.cassette import Cassette
-from vcr.patch import force_reset
 from vcr.errors import UnhandledHTTPRequestError
+from vcr.patch import force_reset
+from vcr.stubs import VCRHTTPSConnection
+
 
 
 def test_cassette_load(tmpdir):
@@ -181,3 +183,21 @@ def test_nesting_context_managers_by_checking_references_of_http_connection():
                     assert httplib.HTTPConnection is original
             assert httplib.HTTPConnection is second_cassette_HTTPConnection
         assert httplib.HTTPConnection is first_cassette_HTTPConnection
+
+
+def test_custom_patchers():
+    class Test(object):
+        attribute = None
+    with Cassette.use('custom_patches', custom_patches=((Test, 'attribute', VCRHTTPSConnection),)):
+        assert issubclass(Test.attribute, VCRHTTPSConnection)
+        assert VCRHTTPSConnection is not Test.attribute
+        old_attribute = Test.attribute
+
+        with Cassette.use('custom_patches', custom_patches=((Test, 'attribute', VCRHTTPSConnection),)):
+            assert issubclass(Test.attribute, VCRHTTPSConnection)
+            assert VCRHTTPSConnection is not Test.attribute
+            assert  Test.attribute is not old_attribute
+
+        assert issubclass(Test.attribute, VCRHTTPSConnection)
+        assert VCRHTTPSConnection is not Test.attribute
+        assert  Test.attribute is old_attribute

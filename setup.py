@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+##!/usr/bin/env python
 
 import sys
 from setuptools import setup
@@ -20,7 +20,7 @@ class PyTest(TestCommand):
 
 setup(
     name='vcrpy',
-    version='1.1.4',
+    version='1.2.0',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
