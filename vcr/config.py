@@ -12,7 +12,7 @@ from . import filters
 class VCR(object):
 
     def __init__(self, serializer='yaml', cassette_library_dir=None,
-                 record_mode="once", filter_headers=(),
+                 record_mode="once", filter_headers=(), custom_patches=(),
                  filter_query_parameters=(), before_record_request=None,
                  before_record_response=None, ignore_hosts=(),
                  match_on=('method', 'scheme', 'host', 'port', 'path', 'query',),
@@ -43,6 +43,7 @@ class VCR(object):
         self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
+        self._custom_patches = tuple(custom_patches)
 
     def _get_serializer(self, serializer_name):
         try:
@@ -68,6 +69,9 @@ class VCR(object):
     def use_cassette(self, path, with_current_defaults=False, **kwargs):
         if with_current_defaults:
             return Cassette.use(path, self.get_path_and_merged_config(path, **kwargs))
+        # This is made a function that evaluates every time a cassette is made so that
+        # changes that are made to this VCR instance that occur AFTER the use_cassette
+        # decorator is applied still affect subsequent calls to the decorated function.
         args_getter = functools.partial(self.get_path_and_merged_config, path, **kwargs)
         return Cassette.use_arg_getter(args_getter)
 
@@ -86,7 +90,8 @@ class VCR(object):
             'match_on': self._get_matchers(matcher_names),
             'record_mode': kwargs.get('record_mode', self.record_mode),
             'before_record_request': self._build_before_record_request(kwargs),
-            'before_record_response': self._build_before_record_response(kwargs)
+            'before_record_response': self._build_before_record_response(kwargs),
+            'custom_patches': self._custom_patches + kwargs.get('custom_patches', ())
         }
         return path, merged_config
 

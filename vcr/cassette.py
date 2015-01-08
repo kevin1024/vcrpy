@@ -87,7 +87,7 @@ class Cassette(object):
                  match_on=(uri, method), filter_headers=(),
                  filter_query_parameters=(), before_record_request=None,
                  before_record_response=None, ignore_hosts=(),
-                 ignore_localhost=()):
+                 ignore_localhost=(), custom_patches=()):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
@@ -100,6 +100,7 @@ class Cassette(object):
         self.dirty = False
         self.rewound = False
         self.record_mode = record_mode
+        self.custom_patches = custom_patches
 
     @property
     def play_count(self):
