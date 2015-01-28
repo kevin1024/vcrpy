@@ -336,7 +336,7 @@ argument. It's usage is similar to that of `before_record`:
 ```python
 def scrub_string(string, replacement=''):
     def before_record_reponse(response):
-        return response['body']['string] = response['body']['string].replace(string, replacement)
+        return response['body']['string'] = response['body']['string'].replace(string, replacement)
     return scrub_string
 
 my_vcr = vcr.VCR(
