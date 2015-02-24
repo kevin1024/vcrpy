@@ -54,7 +54,7 @@ def test_response_headers(scheme, tmpdir):
 
     with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
         resp, _ = httplib2.Http().request(url)
-        assert headers == resp.items()
+        assert set(headers) == set(resp.items())
 
 
 def test_multiple_requests(scheme, tmpdir):

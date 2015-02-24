@@ -128,7 +128,7 @@ class VCRConnection(object):
         Returns empty string for the default port and ':port' otherwise
         """
         port = self.real_connection.port
-        default_port = {'https': 433, 'http': 80}[self._protocol]
+        default_port = {'https': 443, 'http': 80}[self._protocol]
         return ':{0}'.format(port) if port != default_port else ''
 
     def _uri(self, url):

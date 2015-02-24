@@ -51,7 +51,7 @@ class Request(object):
         parse_uri = urlparse(self.uri)
         port = parse_uri.port
         if port is None:
-            port = {'https': 433, 'http': 80}[parse_uri.scheme]
+            port = {'https': 443, 'http': 80}[parse_uri.scheme]
         return port
 
     @property

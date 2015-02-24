@@ -21,8 +21,8 @@ def test_headers():
     ('http://go.com/', 80),
     ('http://go.com:80/', 80),
     ('http://go.com:3000/', 3000),
-    ('https://go.com/', 433),
-    ('https://go.com:433/', 433),
+    ('https://go.com/', 443),
+    ('https://go.com:443/', 443),
     ('https://go.com:3000/', 3000),
     ])
 def test_port(uri, expected_port):
