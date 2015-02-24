@@ -58,7 +58,7 @@ PARTS = [
 def build_uri(**parts):
     port = parts['port']
     scheme = parts['protocol']
-    default_port = {'https': 433, 'http': 80}[scheme]
+    default_port = {'https': 443, 'http': 80}[scheme]
     parts['port'] = ':{0}'.format(port) if port != default_port else ''
     return "{protocol}://{host}{port}{path}".format(**parts)
 
