@@ -4,10 +4,7 @@
 
 import pytest
 import vcr
-from assertions import (
-    assert_cassette_empty,
-    assert_is_json
-)
+from assertions import assert_cassette_empty, assert_is_json
 certifi = pytest.importorskip("certifi")
 urllib3 = pytest.importorskip("urllib3")
 
