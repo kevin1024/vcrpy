@@ -138,39 +138,8 @@ class CassettePatcherBuilder(object):
             import requests.packages.urllib3.connectionpool as cpool
         except ImportError:  # pragma: no cover
             return ()
-        from .stubs.requests_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
-        http_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(VCRRequestsHTTPConnection)
-        )
-        https_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(VCRRequestsHTTPSConnection)
-        )
-        mock_triples = (
-            (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
-            (cpool, 'VerifiedHTTPSConnection', VCRRequestsHTTPSConnection),
-            (cpool, 'HTTPConnection', VCRRequestsHTTPConnection),
-            (cpool, 'HTTPSConnection', VCRRequestsHTTPSConnection),
-            (cpool, 'is_connection_dropped', mock.Mock(return_value=False)),  # Needed on Windows only
-            (cpool.HTTPConnectionPool, 'ConnectionCls', VCRRequestsHTTPConnection),
-            (cpool.HTTPSConnectionPool, 'ConnectionCls', VCRRequestsHTTPSConnection),
-        )
-        # These handle making sure that sessions only use the
-        # connections of the appropriate type.
-        mock_triples += ((cpool.HTTPConnectionPool, '_get_conn',
-                          self._patched_get_conn(cpool.HTTPConnectionPool,
-                                                 lambda : cpool.HTTPConnection)),
-                         (cpool.HTTPSConnectionPool, '_get_conn',
-                          self._patched_get_conn(cpool.HTTPSConnectionPool,
-                                                 lambda : cpool.HTTPSConnection)),
-                         (cpool.HTTPConnectionPool, '_new_conn',
-                          self._patched_new_conn(cpool.HTTPConnectionPool,
-                                                 http_connection_remover)),
-                         (cpool.HTTPSConnectionPool, '_new_conn',
-                          self._patched_new_conn(cpool.HTTPSConnectionPool,
-                                                 https_connection_remover)))
-
-        return itertools.chain(self._build_patchers_from_mock_triples(mock_triples),
-                               (http_connection_remover, https_connection_remover))
+        from .stubs import requests_stubs
+        return self._mock_urllib3_triples(cpool, requests_stubs)
 
     def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
@@ -193,17 +162,13 @@ class CassettePatcherBuilder(object):
             return new_connection
         return patched_new_conn
 
-    @_build_patchers_from_mock_triples_decorator
     def _urllib3(self):
         try:
             import urllib3.connectionpool as cpool
         except ImportError:  # pragma: no cover
             pass
-        else:
-            from .stubs.urllib3_stubs import VCRVerifiedHTTPSConnection
-
-            yield cpool, 'VerifiedHTTPSConnection', VCRVerifiedHTTPSConnection
-            yield cpool, 'HTTPConnection', VCRHTTPConnection
+        from .stubs import urllib3_stubs
+        return self._mock_urllib3_triples(cpool, urllib3_stubs)
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib2(self):
@@ -229,6 +194,40 @@ class CassettePatcherBuilder(object):
         else:
             from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
             yield cpool, 'CertValidatingHTTPSConnection', VCRCertValidatingHTTPSConnection
+            
+    def _mock_urllib3_triples(self, cpool, stubs):
+        http_connection_remover = ConnectionRemover(
+            self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection)
+        )
+        https_connection_remover = ConnectionRemover(
+            self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection)
+        )
+        mock_triples = (
+            (cpool, 'VerifiedHTTPSConnection', stubs.VCRRequestsHTTPSConnection),
+            (cpool, 'VerifiedHTTPSConnection', stubs.VCRRequestsHTTPSConnection),
+            (cpool, 'HTTPConnection', stubs.VCRRequestsHTTPConnection),
+            (cpool, 'HTTPSConnection', stubs.VCRRequestsHTTPSConnection),
+            (cpool, 'is_connection_dropped', mock.Mock(return_value=False)),  # Needed on Windows only
+            (cpool.HTTPConnectionPool, 'ConnectionCls', stubs.VCRRequestsHTTPConnection),
+            (cpool.HTTPSConnectionPool, 'ConnectionCls', stubs.VCRRequestsHTTPSConnection),
+        )
+        # These handle making sure that sessions only use the
+        # connections of the appropriate type.
+        mock_triples += ((cpool.HTTPConnectionPool, '_get_conn',
+                          self._patched_get_conn(cpool.HTTPConnectionPool,
+                                                 lambda : cpool.HTTPConnection)),
+                         (cpool.HTTPSConnectionPool, '_get_conn',
+                          self._patched_get_conn(cpool.HTTPSConnectionPool,
+                                                 lambda : cpool.HTTPSConnection)),
+                         (cpool.HTTPConnectionPool, '_new_conn',
+                          self._patched_new_conn(cpool.HTTPConnectionPool,
+                                                 http_connection_remover)),
+                         (cpool.HTTPSConnectionPool, '_new_conn',
+                          self._patched_new_conn(cpool.HTTPSConnectionPool,
+                                                 https_connection_remover)))
+
+        return itertools.chain(self._build_patchers_from_mock_triples(mock_triples),
+                               (http_connection_remover, https_connection_remover))
 
 
 class ConnectionRemover(object):

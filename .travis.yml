@@ -12,6 +12,9 @@ env:
     - WITH_LIB="requests1.x"
     - WITH_LIB="httplib2"
     - WITH_LIB="boto"
+    - WITH_LIB="urllib31.7"
+    - WITH_LIB="urllib31.9"
+    - WITH_LIB="urllib31.10"
 matrix:
   allow_failures:
     - env: WITH_LIB="boto"
@@ -37,4 +40,7 @@ install:
 - if [ $WITH_LIB = "requests2.5" ] ; then pip install requests==2.5.0; fi
 - if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
 - if [ $WITH_LIB = "boto" ] ; then pip install boto; fi
+- if [ $WITH_LIB = "urllib31.7" ] ; then pip install certifi urllib3==1.7.1; fi
+- if [ $WITH_LIB = "urllib31.9" ] ; then pip install certifi urllib3==1.9.1; fi
+- if [ $WITH_LIB = "urllib31.10" ] ; then pip install certifi urllib3==1.10.2; fi
 script: python setup.py test
