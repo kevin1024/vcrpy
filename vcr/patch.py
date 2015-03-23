@@ -139,7 +139,7 @@ class CassettePatcherBuilder(object):
         except ImportError:  # pragma: no cover
             return ()
         from .stubs import requests_stubs
-        return self._mock_urllib3_triples(cpool, requests_stubs)
+        return self._urllib3_patchers(cpool, requests_stubs)
 
     def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
@@ -166,9 +166,9 @@ class CassettePatcherBuilder(object):
         try:
             import urllib3.connectionpool as cpool
         except ImportError:  # pragma: no cover
-            pass
+            return ()
         from .stubs import urllib3_stubs
-        return self._mock_urllib3_triples(cpool, urllib3_stubs)
+        return self._urllib3_patchers(cpool, urllib3_stubs)
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib2(self):
@@ -195,7 +195,7 @@ class CassettePatcherBuilder(object):
             from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
             yield cpool, 'CertValidatingHTTPSConnection', VCRCertValidatingHTTPSConnection
             
-    def _mock_urllib3_triples(self, cpool, stubs):
+    def _urllib3_patchers(self, cpool, stubs):
         http_connection_remover = ConnectionRemover(
             self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection)
         )
