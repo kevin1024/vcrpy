@@ -203,13 +203,16 @@ def test_nested_cassettes_with_session_created_before_nesting(scheme, tmpdir):
 def test_post_file(tmpdir, scheme):
     '''Ensure that we handle posting a file.'''
     url = scheme + '://httpbin.org/post'
-    with vcr.use_cassette(str(tmpdir.join('post_file.yaml'))) as cass, open('tox.ini') as f:
-        original_response = requests.post(url, f).content
+    with vcr.use_cassette(str(tmpdir.join('post_file.yaml'))) as cass:
+        # Don't use 2.7+ only style ',' separated with here because we support python 2.6
+        with open('tox.ini') as f:
+            original_response = requests.post(url, f).content
 
     # This also tests that we do the right thing with matching the body when they are files.
     with vcr.use_cassette(str(tmpdir.join('post_file.yaml')),
-                          match_on=('method', 'scheme', 'host', 'port', 'path', 'query', 'body')) as cass, open('tox.ini') as f:
-        tox_content = f.read()
+                          match_on=('method', 'scheme', 'host', 'port', 'path', 'query', 'body')) as cass:
+        with open('tox.ini') as f:
+            tox_content = f.read()
         assert cass.requests[0].body.read() == tox_content
         with open('tox.ini') as f:
             new_response = requests.post(url, f).content
