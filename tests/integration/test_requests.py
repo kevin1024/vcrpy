@@ -211,9 +211,9 @@ def test_post_file(tmpdir, scheme):
     # This also tests that we do the right thing with matching the body when they are files.
     with vcr.use_cassette(str(tmpdir.join('post_file.yaml')),
                           match_on=('method', 'scheme', 'host', 'port', 'path', 'query', 'body')) as cass:
-        with open('tox.ini') as f:
+        with open('tox.ini', 'rb') as f:
             tox_content = f.read()
         assert cass.requests[0].body.read() == tox_content
-        with open('tox.ini') as f:
+        with open('tox.ini', 'rb') as f:
             new_response = requests.post(url, f).content
         assert original_response == new_response

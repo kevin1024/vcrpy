@@ -1,4 +1,4 @@
-import StringIO
+from six import BytesIO, binary_type
 from six.moves.urllib.parse import urlparse, parse_qsl
 
 
@@ -28,14 +28,19 @@ class Request(object):
         self.method = method
         self.uri = uri
         self._was_file = hasattr(body, 'read')
-        self._body = body.read() if self._was_file else body
+        if self._was_file:
+            self._body = body.read()
+            if not isinstance(self._body, binary_type):
+                self._body = self._body.encode('utf-8')
+        else:
+            self._body = body
         self.headers = {}
         for key in headers:
             self.add_header(key, headers[key])
 
     @property
     def body(self):
-        return StringIO.StringIO(self._body) if self._was_file else self._body
+        return BytesIO(self._body) if self._was_file else self._body
 
     @body.setter
     def body(self, value):
