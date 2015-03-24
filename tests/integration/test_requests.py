@@ -1,18 +1,17 @@
+# -*- coding: utf-8 -*-
 '''Test requests' interaction with vcr'''
-
-# coding=utf-8
 
 import pytest
 import vcr
 from assertions import assert_cassette_empty, assert_is_json
+
+
 requests = pytest.importorskip("requests")
 
 
 @pytest.fixture(params=["https", "http"])
 def scheme(request):
-    """
-    Fixture that returns both http and https
-    """
+    '''Fixture that returns both http and https.'''
     return request.param
 
 
