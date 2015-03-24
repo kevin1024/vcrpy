@@ -158,7 +158,8 @@ class CassettePatcherBuilder(object):
             # patched version of the connection class. This might not
             # always be the case because the pool keeps previously
             # used connections (which might actually be of a different
-            # class) around.
+            # class) around. This while loop will terminate because
+            # eventually the pool will run out of connections.
             while not isinstance(connection, connection_class):
                 connection = get_conn(pool, timeout)
             return connection
