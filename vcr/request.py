@@ -37,6 +37,10 @@ class Request(object):
     def body(self):
         return StringIO.StringIO(self._body) if self._was_file else self._body
 
+    @body.setter
+    def body(self, value):
+        self._body = value
+
     def add_header(self, key, value):
         # see class docstring for an explanation
         if isinstance(value, (tuple, list)):
