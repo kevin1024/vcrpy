@@ -1,9 +1,6 @@
 '''Integration tests with urllib2'''
 # coding=utf-8
 
-# External imports
-import os
-
 import pytest
 from six.moves.urllib.request import urlopen
 from six.moves.urllib_parse import urlencode
@@ -11,7 +8,7 @@ from six.moves.urllib_parse import urlencode
 # Internal imports
 import vcr
 
-from assertions import assert_cassette_empty, assert_cassette_has_one_response
+from assertions import assert_cassette_has_one_response
 
 
 @pytest.fixture(params=["https", "http"])

@@ -2,14 +2,9 @@
 
 # coding=utf-8
 
-import os
 import pytest
 import vcr
-from assertions import (
-    assert_cassette_empty,
-    assert_cassette_has_one_response,
-    assert_is_json
-)
+from assertions import assert_cassette_empty, assert_is_json
 requests = pytest.importorskip("requests")
 
 
