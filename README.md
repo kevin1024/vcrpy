@@ -24,6 +24,7 @@ VCR.py supports Python 2.6 and 2.7, 3.3, 3.4, and [pypy](http://pypy.org).
 The following http libraries are supported:
 
   * urllib2
+  * urllib3
   * http.client (python3)
   * requests (both 1.x and 2.x versions)
   * httplib2

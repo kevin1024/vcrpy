@@ -31,6 +31,8 @@ def query(r1, r2):
 
 
 def body(r1, r2):
+    if hasattr(r1.body, 'read') and hasattr(r2.body, 'read'):
+        return r1.body.read() == r2.body.read()
     return r1.body == r2.body
 
 
