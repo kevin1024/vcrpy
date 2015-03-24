@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 '''Integration tests with urllib2'''
-# coding=utf-8
 
 import pytest
 from six.moves.urllib.request import urlopen

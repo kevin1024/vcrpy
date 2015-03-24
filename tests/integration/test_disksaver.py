@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 '''Basic tests about save behavior'''
-# coding=utf-8
 
 # External imports
 import os

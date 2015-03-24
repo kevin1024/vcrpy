@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 '''Basic tests for cassettes'''
-# coding=utf-8
 
 # External imports
 import os

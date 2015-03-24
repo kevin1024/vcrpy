@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 '''Integration tests with httplib2'''
-# coding=utf-8
 
 # External imports
 from six.moves.urllib_parse import urlencode
