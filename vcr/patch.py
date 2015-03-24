@@ -92,15 +92,21 @@ class CassettePatcherBuilder(object):
 
     def _recursively_apply_get_cassette_subclass(self, replacement_dict_or_obj):
         """One of the subtleties of this class is that it does not directly
-        replace HTTPSConnection with VCRRequestsHTTPSConnection, but a
-        subclass of this class that has cassette assigned to the
-        appropriate value. This behavior is necessary to properly
-        support nested cassette contexts
+        replace HTTPSConnection with `VCRRequestsHTTPSConnection`, but a
+        subclass of the aforementioned class that has the `cassette`
+        class attribute assigned to `self._cassette`. This behavior is
+        necessary to properly support nested cassette contexts.
 
         This function exists to ensure that we use the same class
         object (reference) to patch everything that replaces
         VCRRequestHTTP[S]Connection, but that we can talk about
-        patching them with the raw references instead.
+        patching them with the raw references instead, and without
+        worrying about exactly where the subclass with the relevant
+        value for `cassette` is first created.
+
+        The function is recursive because it looks in to dictionaries
+        and replaces class values at any depth with the subclass
+        described in the previous paragraph.
         """
         if isinstance(replacement_dict_or_obj, dict):
             for key, replacement_obj  in replacement_dict_or_obj.items():
@@ -148,6 +154,11 @@ class CassettePatcherBuilder(object):
             connection = get_conn(pool, timeout)
             connection_class = pool.ConnectionCls if hasattr(pool, 'ConnectionCls') \
                                else connection_class_getter()
+            # We need to make sure that we are actually providing a
+            # patched version of the connection class. This might not
+            # always be the case because the pool keeps previously
+            # used connections (which might actually be of a different
+            # class) around.
             while not isinstance(connection, connection_class):
                 connection = get_conn(pool, timeout)
             return connection
