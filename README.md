@@ -474,6 +474,8 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.3.0 Fix/add support for urllib3 (thanks @aisch), fix default
+    port for https (thanks @abhinav).
   * 1.2.0 Add custom_patches argument to VCR/Cassette objects to allow
     users to stub custom classes when cassettes become active.
   * 1.1.4 Add force reset around calls to actual connection from stubs, to ensure
