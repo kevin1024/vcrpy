@@ -204,7 +204,7 @@ class VCRConnection(object):
         """
         pass
 
-    def getresponse(self, _=False):
+    def getresponse(self, _=False, **kwargs):
         '''Retrieve the response'''
         # Check to see if the cassette has a response for this request. If so,
         # then return it
