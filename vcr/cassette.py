@@ -85,9 +85,9 @@ class Cassette(object):
 
     def __init__(self, path, serializer=yamlserializer, record_mode='once',
                  match_on=(uri, method), filter_headers=(),
-                 filter_query_parameters=(), before_record_request=None,
-                 before_record_response=None, ignore_hosts=(),
-                 ignore_localhost=(), custom_patches=()):
+                 filter_query_parameters=(), filter_post_data_parameters=(),
+                 before_record_request=None, before_record_response=None,
+                 ignore_hosts=(), ignore_localhost=(), custom_patches=()):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on

@@ -13,8 +13,8 @@ class VCR(object):
 
     def __init__(self, serializer='yaml', cassette_library_dir=None,
                  record_mode="once", filter_headers=(), custom_patches=(),
-                 filter_query_parameters=(), before_record_request=None,
-                 before_record_response=None, ignore_hosts=(),
+                 filter_query_parameters=(), filter_post_data_parameters=(),
+                 before_record_request=None, before_record_response=None, ignore_hosts=(),
                  match_on=('method', 'scheme', 'host', 'port', 'path', 'query',),
                  ignore_localhost=False, before_record=None):
         self.serializer = serializer
@@ -39,6 +39,7 @@ class VCR(object):
         self.record_mode = record_mode
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
+        self.filter_post_data_parameters = filter_post_data_parameters
         self.before_record_request = before_record_request or before_record
         self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
@@ -121,6 +122,9 @@ class VCR(object):
         filter_query_parameters = options.get(
             'filter_query_parameters', self.filter_query_parameters
         )
+        filter_post_data_parameters = options.get(
+            'filter_post_data_parameters', self.filter_post_data_parameters
+        )
         before_record_request = options.get(
             "before_record_request", options.get("before_record", self.before_record_request)
         )
@@ -136,6 +140,10 @@ class VCR(object):
         if filter_query_parameters:
             filter_functions.append(functools.partial(filters.remove_query_parameters,
                                                       query_parameters_to_remove=filter_query_parameters))
+
+        if filter_post_data_parameters:
+            filter_functions.append(functools.partial(filters.remove_post_data_parameters,
+                                                      post_data_parameters_to_remove=filter_post_data_parameters))
 
         hosts_to_ignore = list(ignore_hosts)
         if ignore_localhost:
