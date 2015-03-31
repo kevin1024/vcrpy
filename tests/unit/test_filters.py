@@ -1,4 +1,8 @@
-from vcr.filters import remove_headers, remove_query_parameters
+from vcr.filters import (
+    remove_headers,
+    remove_query_parameters,
+    remove_post_data_parameters
+)
 from vcr.request import Request
 
 
@@ -35,3 +39,31 @@ def test_remove_nonexistent_query_parameters():
     request = Request('GET', uri, '', {})
     remove_query_parameters(request, ['w', 'q'])
     assert request.uri == 'http://g.com/'
+
+
+def test_remove_post_data_parameters():
+    body = b'id=secret&foo=bar'
+    request = Request('POST', 'http://google.com', body, {})
+    remove_post_data_parameters(request, ['id'])
+    assert request.body == b'foo=bar'
+
+
+def test_preserve_multiple_post_data_parameters():
+    body = b'id=secret&foo=bar&foo=baz'
+    request = Request('POST', 'http://google.com', body, {})
+    remove_post_data_parameters(request, ['id'])
+    assert request.body == b'foo=bar&foo=baz'
+
+
+def test_remove_all_post_data_parameters():
+    body = b'id=secret&foo=bar'
+    request = Request('POST', 'http://google.com', body, {})
+    remove_post_data_parameters(request, ['id', 'foo'])
+    assert request.body == b''
+
+
+def test_remove_nonexistent_post_data_parameters():
+    body = b''
+    request = Request('POST', 'http://google.com', body, {})
+    remove_post_data_parameters(request, ['id'])
+    assert request.body == b''
