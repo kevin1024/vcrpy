@@ -84,23 +84,22 @@ class Cassette(object):
         return CassetteContextDecorator.from_args(cls, *args, **kwargs)
 
     def __init__(self, path, serializer=yamlserializer, record_mode='once',
-                 match_on=(uri, method), filter_headers=(),
-                 filter_query_parameters=(), before_record_request=None,
-                 before_record_response=None, ignore_hosts=(),
-                 ignore_localhost=(), custom_patches=()):
+                 match_on=(uri, method),  before_record_request=None,
+                 before_record_response=None, custom_patches=()):
+
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
         self._before_record_request = before_record_request or (lambda x: x)
         self._before_record_response = before_record_response or (lambda x: x)
+        self.record_mode = record_mode
+        self.custom_patches = custom_patches
 
         # self.data is the list of (req, resp) tuples
         self.data = []
         self.play_counts = Counter()
         self.dirty = False
         self.rewound = False
-        self.record_mode = record_mode
-        self.custom_patches = custom_patches
 
     @property
     def play_count(self):
