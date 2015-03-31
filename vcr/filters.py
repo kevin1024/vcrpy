@@ -1,6 +1,9 @@
 from six import BytesIO
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from .compat.ordereddict import OrderedDict
 import copy
 
 
