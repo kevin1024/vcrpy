@@ -1,6 +1,7 @@
 import base64
 import pytest
 from six.moves.urllib.request import urlopen, Request
+from six.moves.urllib.parse import urlencode
 from six.moves.urllib.error import HTTPError
 import vcr
 
@@ -53,6 +54,16 @@ def test_filter_querystring(tmpdir):
     with vcr.use_cassette(cass_file, filter_query_parameters=['foo']) as cass:
         urlopen(url)
         assert 'foo' not in cass.requests[0].url
+
+
+def test_filter_post_data(tmpdir):
+    url = 'http://httpbin.org/post'
+    data = urlencode({'id': 'secret', 'foo': 'bar'}).encode('utf-8')
+    cass_file = str(tmpdir.join('filter_pd.yaml'))
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=['id']):
+        urlopen(url, data)
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=['id']) as cass:
+        assert b'id=secret' not in cass.requests[0].body
 
 
 def test_filter_callback(tmpdir):

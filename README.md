@@ -294,9 +294,18 @@ with my_vcr.use_cassette('test.yml', filter_query_parameters=['api_key']):
     requests.get('http://api.com/getdata?api_key=secretstring')
 ```
 
+### Filter information from HTTP post data
+Use the `filter_post_data_parameters` configuration option with a list of post data
+parameters to filter.
+
+```python
+with my_vcr.use_cassette('test.yml', filter_post_data_parameters=['client_secret']):
+    requests.post('http://api.com/postdata', data={'api_key': 'secretstring'})
+```
+
 ### Custom Request filtering
 
-If neither of these covers your request filtering needs, you can register a callback
+If none of these covers your request filtering needs, you can register a callback
 that will manipulate the HTTP request before adding it to the cassette. Use the
 `before_record` configuration option to so this.  Here is an example that will
  never record requests to the /login endpoint.
