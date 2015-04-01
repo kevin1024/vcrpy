@@ -14,9 +14,9 @@ class VCR(object):
     def __init__(self, serializer='yaml', cassette_library_dir=None,
                  record_mode="once", filter_headers=(), custom_patches=(),
                  filter_query_parameters=(), filter_post_data_parameters=(),
-                 before_record_request=None, before_record_response=None, ignore_hosts=(),
-                 match_on=('method', 'scheme', 'host', 'port', 'path', 'query',),
-                 ignore_localhost=False, before_record=None):
+                 before_record_request=None, before_record_response=None,
+                 ignore_hosts=(), ignore_localhost=False, before_record=None,
+                 match_on=('method', 'scheme', 'host', 'port', 'path', 'query')):
         self.serializer = serializer
         self.match_on = match_on
         self.cassette_library_dir = cassette_library_dir
@@ -71,10 +71,12 @@ class VCR(object):
         if with_current_defaults:
             path, config = self.get_path_and_merged_config(path, **kwargs)
             return Cassette.use(path, **config)
-        # This is made a function that evaluates every time a cassette is made so that
-        # changes that are made to this VCR instance that occur AFTER the use_cassette
-        # decorator is applied still affect subsequent calls to the decorated function.
-        args_getter = functools.partial(self.get_path_and_merged_config, path, **kwargs)
+        # This is made a function that evaluates every time a cassette
+        # is made so that changes that are made to this VCR instance
+        # that occur AFTER the `use_cassette` decorator is applied
+        # still affect subsequent calls to the decorated function.
+        args_getter = functools.partial(self.get_path_and_merged_config,
+                                        path, **kwargs)
         return Cassette.use_arg_getter(args_getter)
 
     def get_path_and_merged_config(self, path, **kwargs):
@@ -92,8 +94,12 @@ class VCR(object):
             'match_on': self._get_matchers(matcher_names),
             'record_mode': kwargs.get('record_mode', self.record_mode),
             'before_record_request': self._build_before_record_request(kwargs),
-            'before_record_response': self._build_before_record_response(kwargs),
-            'custom_patches': self._custom_patches + kwargs.get('custom_patches', ())
+            'before_record_response': self._build_before_record_response(
+                kwargs
+            ),
+            'custom_patches': self._custom_patches + kwargs.get(
+                'custom_patches', ()
+            )
         }
         return path, merged_config
 
@@ -141,7 +147,6 @@ class VCR(object):
         if filter_query_parameters:
             filter_functions.append(functools.partial(filters.remove_query_parameters,
                                                       query_parameters_to_remove=filter_query_parameters))
-
         if filter_post_data_parameters:
             filter_functions.append(functools.partial(filters.remove_post_data_parameters,
                                                       post_data_parameters_to_remove=filter_post_data_parameters))
