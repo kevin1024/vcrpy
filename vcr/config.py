@@ -69,7 +69,8 @@ class VCR(object):
 
     def use_cassette(self, path, with_current_defaults=False, **kwargs):
         if with_current_defaults:
-            return Cassette.use(path, self.get_path_and_merged_config(path, **kwargs))
+            path, config = self.get_path_and_merged_config(path, **kwargs)
+            return Cassette.use(path, **config)
         # This is made a function that evaluates every time a cassette is made so that
         # changes that are made to this VCR instance that occur AFTER the use_cassette
         # decorator is applied still affect subsequent calls to the decorated function.
