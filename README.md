@@ -484,6 +484,10 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.4.0 Filter post data parameters (thanks @eadmundo), support for
+    posting files through requests, inject_cassette kwarg to access
+    cassette from `use_cassette` decorated function,
+    `with_current_defaults` actually works (thanks @samstav).
   * 1.3.0 Fix/add support for urllib3 (thanks @aisch), fix default
     port for https (thanks @abhinav).
   * 1.2.0 Add custom_patches argument to VCR/Cassette objects to allow
