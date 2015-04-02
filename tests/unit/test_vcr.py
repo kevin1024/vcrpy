@@ -105,3 +105,26 @@ def test_inject_cassette():
 
     with_cassette_injected()
     without_cassette_injected()
+
+
+def test_with_current_defaults():
+    vcr = VCR(inject_cassette=True, record_mode='once')
+    @vcr.use_cassette('test', with_current_defaults=False)
+    def changing_defaults(cassette, checks):
+        checks(cassette)
+    @vcr.use_cassette('test', with_current_defaults=True)
+    def current_defaults(cassette, checks):
+        checks(cassette)
+
+    def assert_record_mode_once(cassette):
+        assert cassette.record_mode == 'once'
+
+    def assert_record_mode_all(cassette):
+        assert cassette.record_mode == 'all'
+
+    changing_defaults(assert_record_mode_once)
+    current_defaults(assert_record_mode_once)
+
+    vcr.record_mode = 'all'
+    changing_defaults(assert_record_mode_all)
+    current_defaults(assert_record_mode_once)
