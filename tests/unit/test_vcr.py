@@ -9,7 +9,7 @@ from vcr.stubs import VCRHTTPSConnection
 def test_vcr_use_cassette():
     record_mode = mock.Mock()
     test_vcr = VCR(record_mode=record_mode)
-    with mock.patch('vcr.cassette.Cassette.load') as mock_cassette_load:
+    with mock.patch('vcr.cassette.Cassette.load', return_value=mock.MagicMock(inject=False)) as mock_cassette_load:
         @test_vcr.use_cassette('test')
         def function():
             pass

@@ -110,7 +110,7 @@ def test_arg_getter_functionality():
     def function():
         pass
 
-    with mock.patch.object(Cassette, 'load') as cassette_load:
+    with mock.patch.object(Cassette, 'load', return_value=mock.MagicMock(inject=False)) as cassette_load:
         function()
         cassette_load.assert_called_once_with(arg_getter.return_value[0],
                                               **arg_getter.return_value[1])
