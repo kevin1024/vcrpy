@@ -1,7 +1,7 @@
-##!/usr/bin/env python
+#!/usr/bin/env python
 
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
@@ -28,20 +28,9 @@ setup(
     author='Kevin McCarthy',
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
-    packages=[
-        'vcr',
-        'vcr.stubs',
-        'vcr.compat',
-        'vcr.persisters',
-        'vcr.serializers',
-        ],
-    package_dir={
-        'vcr': 'vcr',
-        'vcr.stubs': 'vcr/stubs',
-        'vcr.compat': 'vcr/compat',
-        'vcr.persisters': 'vcr/persisters',
-        },
-    install_requires=['PyYAML', 'mock', 'six', 'contextlib2', 'wrapt'],
+    packages=find_packages(exclude=("tests*",)),
+    install_requires=['PyYAML', 'mock', 'six', 'contextlib2',
+                      'wrapt', 'backport_collections'],
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-localserver'],
     cmdclass={'test': PyTest},
@@ -54,5 +43,5 @@ setup(
         'Topic :: Software Development :: Testing',
         'Topic :: Internet :: WWW/HTTP',
         'License :: OSI Approved :: MIT License',
-        ],
+    ]
 )
