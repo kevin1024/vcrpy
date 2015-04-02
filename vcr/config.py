@@ -12,11 +12,12 @@ from . import filters
 class VCR(object):
 
     def __init__(self, serializer='yaml', cassette_library_dir=None,
-                 record_mode="once", filter_headers=(), custom_patches=(),
-                 filter_query_parameters=(), filter_post_data_parameters=(),
-                 before_record_request=None, before_record_response=None,
-                 ignore_hosts=(), ignore_localhost=False, before_record=None,
-                 match_on=('method', 'scheme', 'host', 'port', 'path', 'query')):
+                 record_mode="once", filter_headers=(), ignore_localhost=False,
+                 custom_patches=(), filter_query_parameters=(),
+                 filter_post_data_parameters=(), before_record_request=None,
+                 before_record_response=None, ignore_hosts=(),
+                 match_on=('method', 'scheme', 'host', 'port', 'path', 'query'),
+                 before_record=None, inject_cassette=False):
         self.serializer = serializer
         self.match_on = match_on
         self.cassette_library_dir = cassette_library_dir
@@ -44,6 +45,7 @@ class VCR(object):
         self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
+        self.inject_cassette = inject_cassette
         self._custom_patches = tuple(custom_patches)
 
     def _get_serializer(self, serializer_name):
@@ -99,7 +101,8 @@ class VCR(object):
             ),
             'custom_patches': self._custom_patches + kwargs.get(
                 'custom_patches', ()
-            )
+            ),
+            'inject': kwargs.get('inject_cassette', self.inject_cassette)
         }
         return path, merged_config
 

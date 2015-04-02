@@ -61,8 +61,11 @@ class CassetteContextDecorator(object):
 
     @wrapt.decorator
     def __call__(self, function, instance, args, kwargs):
-        with self:
-            return function(*args, **kwargs)
+        with self as cassette:
+            if cassette.inject:
+                return function(cassette, *args, **kwargs)
+            else:
+                return function(*args, **kwargs)
 
 
 class Cassette(object):
@@ -85,13 +88,15 @@ class Cassette(object):
 
     def __init__(self, path, serializer=yamlserializer, record_mode='once',
                  match_on=(uri, method),  before_record_request=None,
-                 before_record_response=None, custom_patches=()):
+                 before_record_response=None, custom_patches=(),
+                 inject=False):
 
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
         self._before_record_request = before_record_request or (lambda x: x)
         self._before_record_response = before_record_response or (lambda x: x)
+        self.inject = inject
         self.record_mode = record_mode
         self.custom_patches = custom_patches
 

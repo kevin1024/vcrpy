@@ -70,10 +70,11 @@ def test_fixtures_with_use_cassette(random_fixture):
     # problems if the decorator does not preserve the signature of the original
     # test function.
 
-    # This test ensures that use_cassette preserves the signature of the original
-    # test function, and thus that use_cassette is compatible with py.test
-    # fixtures. It is admittedly a bit strange because the test would never even
-    # run if the relevant feature were broken.
+    # This test ensures that use_cassette preserves the signature of
+    # the original test function, and thus that use_cassette is
+    # compatible with py.test fixtures. It is admittedly a bit strange
+    # because the test would never even run if the relevant feature
+    # were broken.
     pass
 
 
@@ -90,3 +91,17 @@ def test_custom_patchers():
         assert issubclass(Test.attribute, VCRHTTPSConnection)
         assert VCRHTTPSConnection is not Test.attribute
         assert Test.attribute is Test.attribute2
+
+
+def test_inject_cassette():
+    vcr = VCR(inject_cassette=True)
+    @vcr.use_cassette('test', record_mode='once')
+    def with_cassette_injected(cassette):
+        assert cassette.record_mode == 'once'
+
+    @vcr.use_cassette('test', record_mode='once', inject_cassette=False)
+    def without_cassette_injected():
+        pass
+
+    with_cassette_injected()
+    without_cassette_injected()
