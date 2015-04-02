@@ -6,7 +6,7 @@ import wrapt
 try:
     from collections import Counter
 except ImportError:
-    from .compat.counter import Counter
+    from backport_collections import Counter
 
 # Internal imports
 from .patch import CassettePatcherBuilder

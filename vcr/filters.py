@@ -3,7 +3,7 @@ from six.moves.urllib.parse import urlparse, urlencode, urlunparse
 try:
     from collections import OrderedDict
 except ImportError:
-    from .compat.ordereddict import OrderedDict
+    from backport_collections import OrderedDict
 import copy
 
 
