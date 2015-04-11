@@ -64,8 +64,7 @@ setup(
     install_requires=install_requires,
     extras_require=extras_require,
     license='MIT',
-    tests_require=['pytest', 'mock', 'pytest-localserver'],
-    cmdclass={'test': PyTest},
+    tests_require=['pytest', 'mock', 'pytest-localserver', 'pytest-httpbin'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
