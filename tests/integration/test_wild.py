@@ -64,3 +64,11 @@ def test_cookies(tmpdir):
         r1 = s.get("http://httpbin.org/cookies/set?k1=v1&k2=v2")
         r2 = s.get("http://httpbin.org/cookies")
         assert len(r2.json()['cookies']) == 2
+
+
+def test_amazon_doctype(tmpdir):
+    # amazon gzips its homepage.  For some reason, in requests 2.7, it's not
+    # getting gunzipped.
+    with vcr.use_cassette(str(tmpdir.join('amz.yml'))):
+        r = requests.get('http://www.amazon.com')
+    assert 'html' in r.text
