@@ -81,8 +81,9 @@ class VCRHTTPResponse(HTTPResponse):
         # libraries trying to process a chunked response.  By removing the
         # transfer-encoding: chunked header, this should cause the downstream
         # libraries to process this as a non-chunked response.
-        if 'chunked' in headers.get('transfer-encoding', []):
-            del headers['transfer-encoding']
+        te_key = [h for h in headers.keys() if h.upper() == 'TRANSFER-ENCODING']
+        if te_key:
+            del headers[te_key[0]]
         self.headers = self.msg = parse_headers(headers)
 
         self.length = compat.get_header(self.msg, 'content-length') or None
