@@ -76,6 +76,13 @@ class VCRHTTPResponse(HTTPResponse):
         self._closed = False
 
         headers = self.recorded_response['headers']
+        # Since we are loading a response that has already been serialized, our
+        # response is no longer chunked.  That means we don't want any
+        # libraries trying to process a chunked response.  By removing the
+        # transfer-encoding: chunked header, this should cause the downstream
+        # libraries to process this as a non-chunked response.
+        if 'chunked' in headers.get('transfer-encoding', []):
+            del headers['transfer-encoding']
         self.headers = self.msg = parse_headers(headers)
 
         self.length = compat.get_header(self.msg, 'content-length') or None
