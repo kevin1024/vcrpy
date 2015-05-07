@@ -29,7 +29,7 @@ setup(
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
     packages=find_packages(exclude=("tests*",)),
-    install_requires=['PyYAML', 'mock', 'six', 'contextlib2',
+    install_requires=['PyYAML', 'mock', 'six>=1.5', 'contextlib2',
                       'wrapt', 'backport_collections'],
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-localserver'],
