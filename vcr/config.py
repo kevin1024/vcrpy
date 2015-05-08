@@ -4,7 +4,7 @@ import functools
 import os
 
 from .cassette import Cassette
-from .serializers import yamlserializer, jsonserializer
+from .serializers import yamlserializer, jsonserializer, harserializer
 from . import matchers
 from . import filters
 
@@ -24,6 +24,7 @@ class VCR(object):
         self.serializers = {
             'yaml': yamlserializer,
             'json': jsonserializer,
+            'har': harserializer,
         }
         self.matchers = {
             'method': matchers.method,
