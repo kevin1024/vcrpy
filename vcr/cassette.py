@@ -50,6 +50,14 @@ class CassetteContextDecorator(object):
             cassette._save()
 
     def __enter__(self):
+        # This assertion is here to prevent the dangerous behavior
+        # that would result from forgetting about a __finish before
+        # completing it.
+        # How might this condition be met? Here is an example:
+        # context_decorator = Cassette.use('whatever')
+        # with context_decorator:
+        #     with context_decorator:
+        #         pass
         assert self.__finish is None, "Cassette already open."
         path, kwargs = self._args_getter()
         self.__finish = self._patch_generator(self.cls.load(path, **kwargs))
@@ -61,7 +69,11 @@ class CassetteContextDecorator(object):
 
     @wrapt.decorator
     def __call__(self, function, instance, args, kwargs):
-        with self as cassette:
+        # This awkward cloning thing is done to ensure that decorated
+        # functions are reentrant. Reentrancy is required for thread
+        # safety and the correct operation of recursive functions.
+        clone = type(self)(self.cls, self._args_getter)
+        with clone as cassette:
             if cassette.inject:
                 return function(cassette, *args, **kwargs)
             else:

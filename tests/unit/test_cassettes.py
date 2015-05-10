@@ -201,3 +201,19 @@ def test_custom_patchers():
         assert issubclass(Test.attribute, VCRHTTPSConnection)
         assert VCRHTTPSConnection is not Test.attribute
         assert  Test.attribute is old_attribute
+
+
+def test_use_cassette_decorated_functions_are_reentrant():
+    info = {"second": False}
+    original_conn = httplib.HTTPConnection
+    @Cassette.use('whatever', inject=True)
+    def test_function(cassette):
+        if info['second']:
+            assert httplib.HTTPConnection is not info['first_conn']
+        else:
+            info['first_conn'] = httplib.HTTPConnection
+            info['second'] = True
+            test_function()
+            assert httplib.HTTPConnection is info['first_conn']
+    test_function()
+    assert httplib.HTTPConnection is original_conn
