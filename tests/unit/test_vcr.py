@@ -1,3 +1,5 @@
+import os
+
 import mock
 import pytest
 
@@ -9,7 +11,10 @@ from vcr.stubs import VCRHTTPSConnection
 def test_vcr_use_cassette():
     record_mode = mock.Mock()
     test_vcr = VCR(record_mode=record_mode)
-    with mock.patch('vcr.cassette.Cassette.load', return_value=mock.MagicMock(inject=False)) as mock_cassette_load:
+    with mock.patch(
+        'vcr.cassette.Cassette.load',
+        return_value=mock.MagicMock(inject=False)
+    ) as mock_cassette_load:
         @test_vcr.use_cassette('test')
         def function():
             pass
@@ -87,7 +92,10 @@ def test_custom_patchers():
         assert issubclass(Test.attribute, VCRHTTPSConnection)
         assert VCRHTTPSConnection is not Test.attribute
 
-    with test_vcr.use_cassette('custom_patches', custom_patches=((Test, 'attribute2', VCRHTTPSConnection),)):
+    with test_vcr.use_cassette(
+        'custom_patches',
+        custom_patches=((Test, 'attribute2', VCRHTTPSConnection),)
+    ):
         assert issubclass(Test.attribute, VCRHTTPSConnection)
         assert VCRHTTPSConnection is not Test.attribute
         assert Test.attribute is Test.attribute2
@@ -128,3 +136,57 @@ def test_with_current_defaults():
     vcr.record_mode = 'all'
     changing_defaults(assert_record_mode_all)
     current_defaults(assert_record_mode_once)
+
+
+def test_cassette_library_dir_with_decoration_and_no_explicit_path():
+    library_dir = '/libary_dir'
+    vcr = VCR(inject_cassette=True, cassette_library_dir=library_dir)
+    @vcr.use_cassette()
+    def function_name(cassette):
+        assert cassette._path == os.path.join(library_dir, 'function_name')
+    function_name()
+
+
+def test_cassette_library_dir_with_path_transformer():
+    library_dir = '/libary_dir'
+    vcr = VCR(inject_cassette=True, cassette_library_dir=library_dir,
+              path_transformer=lambda path: path + '.json')
+    @vcr.use_cassette()
+    def function_name(cassette):
+        assert cassette._path == os.path.join(library_dir, 'function_name.json')
+    function_name()
+
+
+def test_use_cassette_with_no_extra_invocation():
+    vcr = VCR(inject_cassette=True, cassette_library_dir='/')
+    @vcr.use_cassette
+    def function_name(cassette):
+        assert cassette._path == os.path.join('/', 'function_name')
+    function_name()
+
+
+def test_path_transformer():
+    vcr = VCR(inject_cassette=True, cassette_library_dir='/',
+              path_transformer=lambda x: x + '_test')
+    @vcr.use_cassette
+    def function_name(cassette):
+        assert cassette._path == os.path.join('/', 'function_name_test')
+    function_name()
+
+
+def test_cassette_name_generator_defaults_to_using_module_function_defined_in():
+    vcr = VCR(inject_cassette=True)
+    @vcr.use_cassette
+    def function_name(cassette):
+        assert cassette._path == os.path.join(os.path.dirname(__file__),
+                                              'function_name')
+    function_name()
+
+
+def test_ensure_suffix():
+    vcr = VCR(inject_cassette=True, path_transformer=VCR.ensure_suffix('.yaml'))
+    @vcr.use_cassette
+    def function_name(cassette):
+        assert cassette._path == os.path.join(os.path.dirname(__file__),
+                                              'function_name.yaml')
+    function_name()

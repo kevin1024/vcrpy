@@ -389,6 +389,43 @@ my_vcr = config.VCR(custom_patches=((where_the_custom_https_connection_lives, 'C
 @my_vcr.use_cassette(...)
 ```
 
+## Automatic Cassette Naming
+
+VCR.py now allows the omission of the path argument to the
+use_cassette function. Both of the following are now legal/should work
+
+``` python
+@my_vcr.use_cassette
+def my_test_function():
+    ...
+```
+
+``` python
+@my_vcr.use_cassette()
+def my_test_function():
+    ...
+```
+
+In both cases, VCR.py will use a path that is generated from the
+provided test function's name. If no `cassette_library_dir` has been
+set, the cassette will be in a file with the name of the test function
+in directory of the file in which the test function is declared. If a
+`cassette_library_dir` is set, has been set, the cassette will appear
+in that directory in a file with the name of the decorated function.
+
+It is possible to control the path produced by the automatic naming
+machinery by customizing the `path_transformer` and
+`func_path_generator` vcr variables. To add an extension to all
+cassette names, use `VCR.ensure_suffix` as follows:
+
+``` python
+my_vcr = VCR(path_transformer=VCR.ensure_suffix('.yaml'))
+
+@my_vcr.use_cassette
+def my_test_function():
+
+```
+
 ## Installation
 
 VCR.py is a package on PyPI, so you can `pip install vcrpy` (first you may need
