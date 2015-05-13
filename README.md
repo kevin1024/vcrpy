@@ -7,16 +7,28 @@ This is a Python version of [Ruby's VCR library](https://github.com/vcr/vcr).
 [![Build Status](https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master)](http://travis-ci.org/kevin1024/vcrpy)
 [![Stories in Ready](https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=Ready)](https://waffle.io/kevin1024/vcrpy)
 
-## What it does
-Simplify and speed up testing HTTP by recording all HTTP interactions and
-saving them to "cassette" files, which are yaml files containing the contents
-of your requests and responses.  Then when you run your tests again, they all
-just hit the text files instead of the internet.  This speeds up your tests and
-lets you work offline.
+## What it does VCR.py simplifies and speeds up tests that make HTTP
+requests. The first time you run code that is inside a VCR.py context
+manager or decorated function, VCR.py records all HTTP interactions
+that take place through the libraries it supports and serializes and
+writes them to a flat file (in yaml format by default). This flat file
+is called a cassette. When the relevant peice of code is executed
+again, VCR.py will read the serialized requests and responses from the
+aforementioned cassette file, and intercept any HTTP requests that it
+recognizes from the original test run and return responses that
+corresponded to those requests. This means that the requests will not
+actually result in HTTP traffic, which confers several benefits
+including:
 
-If the server you are testing against ever changes its API, all you need to do
-is delete your existing cassette files, and run your tests again.  All of the
-mocked responses will be updated with the new API.
+- The ability to work offline
+- Completely deterministic tests
+- Increased test execution speed
+
+If the server you are testing against ever changes its API, all you
+need to do is delete your existing cassette files, and run your tests
+again. VCR.py will detect the absence of a cassette file and once
+again record all HTTP interactions, which will update them to
+correspond to the new API.
 
 ## Compatibility Notes
 VCR.py supports Python 2.6 and 2.7, 3.3, 3.4, and [pypy](http://pypy.org).
@@ -58,8 +70,17 @@ def test_iana():
     assert 'Example domains' in response
 ```
 
-All of the parameters and configuration works the same for the decorator
-version.
+When using the decorator version of `use_cassette`, it is possible to
+omit the path to the cassette file.
+
+```python
+@vcr.use_cassette()
+def test_iana():
+    response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+    assert 'Example domains' in response
+```
+
+In this case, the cassette file will be given the same name as the test function, and it will be placed in the same directory as the file in which the test is defined. See the Automatic Test Naming section below for more details.
 
 ## Configuration
 
@@ -410,7 +431,7 @@ In both cases, VCR.py will use a path that is generated from the
 provided test function's name. If no `cassette_library_dir` has been
 set, the cassette will be in a file with the name of the test function
 in directory of the file in which the test function is declared. If a
-`cassette_library_dir` is set, has been set, the cassette will appear
+`cassette_library_dir` has been set, the cassette will appear
 in that directory in a file with the name of the decorated function.
 
 It is possible to control the path produced by the automatic naming
