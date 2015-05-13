@@ -4,6 +4,7 @@ from six.moves.urllib.request import urlopen, Request
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.error import HTTPError
 import vcr
+import json
 
 
 def _request_with_auth(url, username, password):
@@ -64,6 +65,18 @@ def test_filter_post_data(tmpdir):
         urlopen(url, data)
     with vcr.use_cassette(cass_file, filter_post_data_parameters=['id']) as cass:
         assert b'id=secret' not in cass.requests[0].body
+
+
+def test_filter_json_post_data(tmpdir):
+    data = json.dumps({'id': 'secret', 'foo': 'bar'}).encode('utf-8')
+    request = Request('http://httpbin.org/post', data=data)
+    request.add_header('Content-Type', 'application/json')
+
+    cass_file = str(tmpdir.join('filter_jpd.yaml'))
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=['id']):
+        urlopen(request)
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=['id']) as cass:
+        assert b'"id": "secret"' not in cass.requests[0].body
 
 
 def test_filter_callback(tmpdir):
