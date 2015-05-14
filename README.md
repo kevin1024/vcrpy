@@ -7,7 +7,8 @@ This is a Python version of [Ruby's VCR library](https://github.com/vcr/vcr).
 [![Build Status](https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master)](http://travis-ci.org/kevin1024/vcrpy)
 [![Stories in Ready](https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=Ready)](https://waffle.io/kevin1024/vcrpy)
 
-## What it does VCR.py simplifies and speeds up tests that make HTTP
+## What it does
+VCR.py simplifies and speeds up tests that make HTTP
 requests. The first time you run code that is inside a VCR.py context
 manager or decorated function, VCR.py records all HTTP interactions
 that take place through the libraries it supports and serializes and
