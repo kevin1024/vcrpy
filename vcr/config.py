@@ -120,6 +120,7 @@ class VCR(object):
             def add_cassette_library_dir(path):
                 if not path.startswith(cassette_library_dir):
                     return os.path.join(cassette_library_dir, path)
+                return path
             path_transformer = compose(add_cassette_library_dir, path_transformer)
         elif not func_path_generator:
             # If we don't have a library dir, use the functions
