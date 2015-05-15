@@ -543,6 +543,8 @@ API in version 1.0.x
 
 
 ## Changelog
+  * 1.5.2 Fix crash when cassette path contains cassette library
+    directory (thanks @gazpachoking).
   * 1.5.0 Automatic cassette naming and 'application/json' post data
     filtering (thanks @marco-santamaria).
   * 1.4.2 Fix a bug caused by requests 2.7 and chunked transfer encoding
