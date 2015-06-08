@@ -204,13 +204,14 @@ class VCRConnection(object):
         # no need to check that here.
         self.real_connection.close()
 
-    def endheaders(self, *args, **kwargs):
+    def endheaders(self, message_body=None):
         """
-        Normally, this would atually send the request to the server.
+        Normally, this would actually send the request to the server.
         We are not sending the request until getting the response,
-        so bypass this method for now.
+        so bypass this part and just append the message body, if any.
         """
-        pass
+        if message_body is not None:
+            self._vcr_request.body = message_body
 
     def getresponse(self, _=False, **kwargs):
         '''Retrieve the response'''
