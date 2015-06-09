@@ -1,4 +1,6 @@
 import pytest
+from six.moves import xmlrpc_client
+
 requests = pytest.importorskip("requests")
 
 import vcr
@@ -72,3 +74,16 @@ def test_amazon_doctype(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('amz.yml'))):
         r = requests.get('http://www.amazon.com')
     assert 'html' in r.text
+
+
+def test_xmlrpclib(tmpdir):
+    with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))):
+        roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
+        original_schema = roundup_server.schema()
+
+    with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))) as cassette:
+        roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
+        second_schema = roundup_server.schema()
+
+    assert original_schema == second_schema
+
