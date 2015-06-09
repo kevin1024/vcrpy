@@ -206,7 +206,7 @@ class CassettePatcherBuilder(object):
         else:
             from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
             yield cpool, 'CertValidatingHTTPSConnection', VCRCertValidatingHTTPSConnection
-            
+
     def _urllib3_patchers(self, cpool, stubs):
         http_connection_remover = ConnectionRemover(
             self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection)
