@@ -217,3 +217,20 @@ def test_post_file(tmpdir, scheme):
         with open('tox.ini', 'rb') as f:
             new_response = requests.post(url, f).content
         assert original_response == new_response
+
+
+def test_filter_post_params(tmpdir, scheme):
+    '''
+    This tests the issue in https://github.com/kevin1024/vcrpy/issues/158
+
+    Ensure that a post request made through requests can still be filtered.
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=['id']) as cass:
+        assert b'id=secret' not in cass.requests[0].body
+    '''
+    url = scheme + '://httpbin.org/post'
+    cass_loc = str(tmpdir.join('filter_post_params.yaml'))
+    with vcr.use_cassette(cass_loc, filter_post_data_parameters=['key']) as cass:
+        requests.post(url, data={'key': 'value'})
+    with vcr.use_cassette(cass_loc, filter_post_data_parameters=['key']) as cass:
+        assert b'key=value' not in cass.requests[0].body
+

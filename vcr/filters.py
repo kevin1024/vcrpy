@@ -1,4 +1,4 @@
-from six import BytesIO
+from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
 try:
     from collections import OrderedDict
@@ -41,7 +41,10 @@ def remove_post_data_parameters(request, post_data_parameters_to_remove):
             request.body = json.dumps(json_data).encode('utf-8')
         else:
             post_data = OrderedDict()
-            for k, sep, v in [p.partition(b'=') for p in request.body.split(b'&')]:
+            if isinstance(request.body, text_type):
+                request.body = request.body.encode('utf-8')
+
+            for k, sep, v in (p.partition(b'=') for p in request.body.split(b'&')):
                 if k in post_data:
                     post_data[k].append(v)
                 elif len(k) > 0 and k.decode('utf-8') not in post_data_parameters_to_remove:
