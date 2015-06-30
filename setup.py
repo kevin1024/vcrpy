@@ -4,6 +4,7 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
+long_description = open('README.rst', 'r').read()
 
 class PyTest(TestCommand):
 
@@ -25,6 +26,7 @@ setup(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
     ),
+    long_description=long_description,
     author='Kevin McCarthy',
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
