@@ -33,7 +33,7 @@ python:
 - 3.4
 - pypy
 install:
-- pip install PyYAML pytest pytest-localserver --use-mirrors
+- pip install .
 - if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
 - if [ $WITH_LIB = "requests2.2" ] ; then pip install requests==2.2.1; fi
 - if [ $WITH_LIB = "requests2.3" ] ; then pip install requests==2.3.0; fi

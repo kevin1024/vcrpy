@@ -19,6 +19,7 @@ class PyTest(TestCommand):
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
+
 setup(
     name='vcrpy',
     version='1.5.2',
@@ -31,8 +32,12 @@ setup(
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
     packages=find_packages(exclude=("tests*",)),
-    install_requires=['PyYAML', 'mock', 'six>=1.5', 'contextlib2',
-                      'wrapt', 'backport_collections'],
+    install_requires=['PyYAML', 'wrapt', 'six>=1.5'],
+    extras_require = {
+        ':python_version in "2.4, 2.5, 2.6"':
+            ['contextlib2', 'backport_collections', 'mock'],
+        ':python_version in "2.7, 3.1, 3.2"': ['contextlib2', 'mock'],
+    },
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-localserver'],
     cmdclass={'test': PyTest},

@@ -1,4 +1,3 @@
-import collections
 import copy
 import functools
 import inspect
@@ -6,6 +5,7 @@ import os
 
 import six
 
+from .compat import collections
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
 from .util import compose

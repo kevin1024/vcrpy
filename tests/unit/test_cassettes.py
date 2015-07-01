@@ -3,11 +3,10 @@ import inspect
 import os
 
 from six.moves import http_client as httplib
-import contextlib2
-import mock
 import pytest
 import yaml
 
+from vcr.compat import mock, contextlib
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset
@@ -158,7 +157,7 @@ def test_nesting_cassette_context_managers(*args):
     second_response = copy.deepcopy(first_response)
     second_response['body']['string'] = b'second_response'
 
-    with contextlib2.ExitStack() as exit_stack:
+    with contextlib.ExitStack() as exit_stack:
         first_cassette = exit_stack.enter_context(Cassette.use(path='test'))
         exit_stack.enter_context(mock.patch.object(first_cassette, 'play_response',
                                                     return_value=first_response))

@@ -1,11 +1,9 @@
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
-try:
-    from collections import OrderedDict
-except ImportError:
-    from backport_collections import OrderedDict
 import copy
 import json
+
+from .compat import collections
 
 
 def remove_headers(request, headers_to_remove):
@@ -40,7 +38,7 @@ def remove_post_data_parameters(request, post_data_parameters_to_remove):
                     del json_data[k]
             request.body = json.dumps(json_data).encode('utf-8')
         else:
-            post_data = OrderedDict()
+            post_data = collections.OrderedDict()
             if isinstance(request.body, text_type):
                 request.body = request.body.encode('utf-8')
 

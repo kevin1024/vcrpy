@@ -2,9 +2,7 @@
 import functools
 import itertools
 
-import contextlib2
-import mock
-
+from .compat import contextlib, mock
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
 from six.moves import http_client as httplib
 
@@ -323,9 +321,9 @@ def reset_patchers():
                                 _CertValidatingHTTPSConnection)
 
 
-@contextlib2.contextmanager
+@contextlib.contextmanager
 def force_reset():
-    with contextlib2.ExitStack() as exit_stack:
+    with contextlib.ExitStack() as exit_stack:
         for patcher in reset_patchers():
             exit_stack.enter_context(patcher)
         yield

@@ -2,14 +2,11 @@
 import functools
 import logging
 
-import contextlib2
+
 import wrapt
-try:
-    from collections import Counter
-except ImportError:
-    from backport_collections import Counter
 
 # Internal imports
+from .compat import contextlib, collections
 from .errors import UnhandledHTTPRequestError
 from .matchers import requests_match, uri, method
 from .patch import CassettePatcherBuilder
@@ -43,7 +40,7 @@ class CassetteContextDecorator(object):
         self.__finish = None
 
     def _patch_generator(self, cassette):
-        with contextlib2.ExitStack() as exit_stack:
+        with contextlib.ExitStack() as exit_stack:
             for patcher in CassettePatcherBuilder(cassette).build():
                 exit_stack.enter_context(patcher)
             log.debug('Entered context for cassette at {0}.'.format(cassette._path))
@@ -148,7 +145,7 @@ class Cassette(object):
 
         # self.data is the list of (req, resp) tuples
         self.data = []
-        self.play_counts = Counter()
+        self.play_counts = collections.Counter()
         self.dirty = False
         self.rewound = False
 
