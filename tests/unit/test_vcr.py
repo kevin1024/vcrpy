@@ -1,9 +1,9 @@
 import os
 
-import mock
 import pytest
 
 from vcr import VCR, use_cassette
+from vcr.compat import mock
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 

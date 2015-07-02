@@ -1,6 +1,6 @@
-import mock
 import pytest
 
+from vcr.compat import mock
 from vcr.serialize import deserialize
 from vcr.serializers import yamlserializer, jsonserializer
 
