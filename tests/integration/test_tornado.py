@@ -5,6 +5,7 @@ import json
 
 import pytest
 import vcr
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 from assertions import assert_cassette_empty, assert_is_json
 
@@ -203,3 +204,74 @@ def test_https_with_cert_validation_disabled(get_client, tmpdir):
     with vcr.use_cassette(cass_path) as cass:
         yield get(get_client(), 'https://httpbin.org', validate_cert=False)
         assert 1 == cass.play_count
+
+
+@pytest.mark.gen_test
+def test_unsupported_features_raises_in_future(get_client, tmpdir):
+    '''Ensure that the exception for an AsyncHTTPClient feature not being
+    supported is raised inside the future.'''
+
+    def callback(chunk):
+        assert False, "Did not expect to be called."
+
+    with vcr.use_cassette(str(tmpdir.join('invalid.yaml'))):
+        future = get(
+            get_client(), 'http://httpbin.org', streaming_callback=callback
+        )
+
+    with pytest.raises(Exception) as excinfo:
+        yield future
+
+    assert "not yet supported by VCR" in str(excinfo)
+
+
+@pytest.mark.gen_test
+def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
+    '''Ensure that the exception for an AsyncHTTPClient feature not being
+    supported is not raised if raise_error=False.'''
+
+    def callback(chunk):
+        assert False, "Did not expect to be called."
+
+    with vcr.use_cassette(str(tmpdir.join('invalid.yaml'))):
+        response = yield get(
+            get_client(),
+            'http://httpbin.org',
+            streaming_callback=callback,
+            raise_error=False,
+        )
+
+    assert "not yet supported by VCR" in str(response.error)
+
+
+@pytest.mark.gen_test
+def test_cannot_overwrite_cassette_raises_in_future(get_client, tmpdir):
+    '''Ensure that CannotOverwriteExistingCassetteException is raised inside
+    the future.'''
+
+    with vcr.use_cassette(str(tmpdir.join('overwrite.yaml'))):
+        yield get(get_client(), 'http://httpbin.org/get')
+
+    with vcr.use_cassette(str(tmpdir.join('overwrite.yaml'))):
+        future = get(get_client(), 'http://httpbin.org/headers')
+
+    with pytest.raises(CannotOverwriteExistingCassetteException):
+        yield future
+
+
+@pytest.mark.gen_test
+def test_cannot_overwrite_cassette_raise_error_disabled(get_client, tmpdir):
+    '''Ensure that CannotOverwriteExistingCassetteException is not raised if
+    raise_error=False in the fetch() call.'''
+
+    with vcr.use_cassette(str(tmpdir.join('overwrite.yaml'))):
+        yield get(
+            get_client(), 'http://httpbin.org/get', raise_error=False
+        )
+
+    with vcr.use_cassette(str(tmpdir.join('overwrite.yaml'))):
+        response = yield get(
+            get_client(), 'http://httpbin.org/headers', raise_error=False
+        )
+
+    assert isinstance(response.error, CannotOverwriteExistingCassetteException)

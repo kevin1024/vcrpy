@@ -65,6 +65,7 @@ class _VCRAsyncClient(object):
                     "request outside a VCR.py context." % repr(request)
                 ),
             )
+            return callback(response)
 
         vcr_request = Request(
             request.method,
@@ -90,7 +91,7 @@ class _VCRAsyncClient(object):
                 headers=headers,
                 buffer=BytesIO(vcr_response['body']['string']),
             )
-            callback(response)
+            return callback(response)
         else:
             if self.cassette.write_protected and self.cassette.filter_request(
                 vcr_request
@@ -106,7 +107,7 @@ class _VCRAsyncClient(object):
                            self.cassette.record_mode)
                     ),
                 )
-                callback(response)
+                return callback(response)
 
             def new_callback(response):
                 headers = [
@@ -123,7 +124,7 @@ class _VCRAsyncClient(object):
                     'body': {'string': response.body},
                 }
                 self.cassette.append(vcr_request, vcr_response)
-                callback(response)
+                return callback(response)
 
             from vcr.patch import force_reset
             with force_reset():
