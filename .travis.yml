@@ -16,6 +16,7 @@ env:
     - WITH_LIB="urllib31.7"
     - WITH_LIB="urllib31.9"
     - WITH_LIB="urllib31.10"
+    - WITH_LIB="tornado"
 matrix:
   allow_failures:
     - env: WITH_LIB="boto"
@@ -45,4 +46,6 @@ install:
 - if [ $WITH_LIB = "urllib31.7" ] ; then pip install certifi urllib3==1.7.1; fi
 - if [ $WITH_LIB = "urllib31.9" ] ; then pip install certifi urllib3==1.9.1; fi
 - if [ $WITH_LIB = "urllib31.10" ] ; then pip install certifi urllib3==1.10.2; fi
+- if [ $WITH_LIB = "tornado" ] ; then pip install tornado==4.2 pytest-tornado; fi
+- if [ $WITH_LIB = "tornado" -a $TRAVIS_PYTHON_VERSION != "pypy" ] ; then pip install pycurl; fi
 script: python setup.py test

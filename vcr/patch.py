@@ -52,6 +52,25 @@ else:
     _CertValidatingHTTPSConnection = boto.https_connection.CertValidatingHTTPSConnection
 
 
+# Try to save the original types for Tornado
+try:
+    import tornado.httpclient
+    import tornado.simple_httpclient
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _AsyncHTTPClient = tornado.httpclient.AsyncHTTPClient
+    _SimpleAsyncHTTPClient = tornado.simple_httpclient.SimpleAsyncHTTPClient
+
+
+try:
+    import tornado.curl_httpclient
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _CurlAsyncHTTPClient = tornado.curl_httpclient.CurlAsyncHTTPClient
+
+
 class CassettePatcherBuilder(object):
 
     def _build_patchers_from_mock_triples_decorator(function):
@@ -68,10 +87,11 @@ class CassettePatcherBuilder(object):
 
     def build(self):
         return itertools.chain(
-            self._httplib(), self._requests(), self._urllib3(), self._httplib2(),
-            self._boto(), self._build_patchers_from_mock_triples(
+            self._httplib(), self._requests(), self._urllib3(),
+            self._httplib2(), self._boto(), self._tornado(),
+            self._build_patchers_from_mock_triples(
                 self._cassette.custom_patches
-            )
+            ),
         )
 
     def _build_patchers_from_mock_triples(self, mock_triples):
@@ -205,6 +225,27 @@ class CassettePatcherBuilder(object):
             from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
             yield cpool, 'CertValidatingHTTPSConnection', VCRCertValidatingHTTPSConnection
 
+    @_build_patchers_from_mock_triples_decorator
+    def _tornado(self):
+        try:
+            import tornado.httpclient as http
+            import tornado.simple_httpclient as simple
+        except ImportError:  # pragma: no cover
+            pass
+        else:
+            from .stubs.tornado_stubs import VCRAsyncHTTPClient
+            from .stubs.tornado_stubs import VCRSimpleAsyncHTTPClient
+
+            yield http, 'AsyncHTTPClient', VCRAsyncHTTPClient
+            yield simple, 'SimpleAsyncHTTPClient', VCRSimpleAsyncHTTPClient
+        try:
+            import tornado.curl_httpclient as curl
+        except ImportError:  # pragma: no cover
+            pass
+        else:
+            from .stubs.tornado_stubs import VCRCurlAsyncHTTPClient
+            yield curl, 'CurlAsyncHTTPClient', VCRCurlAsyncHTTPClient
+
     def _urllib3_patchers(self, cpool, stubs):
         http_connection_remover = ConnectionRemover(
             self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection)
@@ -319,6 +360,21 @@ def reset_patchers():
     else:
         yield mock.patch.object(cpool, 'CertValidatingHTTPSConnection',
                                 _CertValidatingHTTPSConnection)
+
+    try:
+        import tornado.httpclient as http
+        import tornado.simple_httpclient as simple
+    except ImportError:  # pragma: no cover
+        pass
+    else:
+        yield mock.patch.object(http, 'AsyncHTTPClient', _AsyncHTTPClient)
+        yield mock.patch.object(simple, 'SimpleAsyncHTTPClient', _SimpleAsyncHTTPClient)
+    try:
+        import tornado.curl_httpclient as curl
+    except ImportError:  # pragma: no cover
+        pass
+    else:
+        yield mock.patch.object(curl, 'CurlAsyncHTTPClient', _CurlAsyncHTTPClient)
 
 
 @contextlib.contextmanager
