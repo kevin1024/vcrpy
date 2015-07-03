@@ -603,7 +603,9 @@ new API in version 1.0.x
 
 Changelog
 ---------
-
+- 1.6.0 [#120] Tornado support thanks (thanks @abhinav), [#147] packaging fixes
+   (thanks @graingert), [#158] allow filtering post params in requests
+   (thanks @MrJohz), [#140] add xmlrpclib support (thanks @Diaoul).
 -  1.5.2 Fix crash when cassette path contains cassette library
    directory (thanks @gazpachoking).
 -  1.5.0 Automatic cassette naming and 'application/json' post data
