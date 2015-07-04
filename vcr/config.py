@@ -47,6 +47,7 @@ class VCR(object):
             'path': matchers.path,
             'query': matchers.query,
             'headers': matchers.headers,
+            'raw_body': matchers.raw_body,
             'body': matchers.body,
         }
         self.record_mode = record_mode

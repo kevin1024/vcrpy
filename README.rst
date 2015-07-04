@@ -144,7 +144,9 @@ The following options are available :
 -  port (the port of the server receiving the request)
 -  path (the path of the request)
 -  query (the query string of the request)
--  body (the entire request body)
+-  raw\_body (the entire request body as is)
+-  body (the entire request body unmarshalled by content-type
+   i.e. xmlrpc, json, form-urlencoded, falling back on raw\_body)
 -  headers (the headers of the request)
 
    Backwards compatible matchers:

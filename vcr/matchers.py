@@ -1,3 +1,5 @@
+import json
+from six.moves import urllib, xmlrpc_client
 import logging
 log = logging.getLogger(__name__)
 
@@ -30,10 +32,27 @@ def query(r1, r2):
     return r1.query == r2.query
 
 
-def body(r1, r2):
+def raw_body(r1, r2):
     if hasattr(r1.body, 'read') and hasattr(r2.body, 'read'):
         return r1.body.read() == r2.body.read()
     return r1.body == r2.body
+
+
+def body(r1, r2):
+    if hasattr(r1.body, 'read') and hasattr(r2.body, 'read'):
+        r1_body = r1.body.read()
+        r2_body  = r2.body.read()
+    else:
+        r1_body = r1.body
+        r2_body  = r2.body
+    if r1.headers.get('Content-Type') == r2.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+        return urllib.parse.parse_qs(r1_body) == urllib.parse.parse_qs(r2_body)
+    if r1.headers.get('Content-Type') == r2.headers.get('Content-Type') == 'application/json':
+        return json.loads(r1_body) == json.loads(r2_body)
+    if ('xmlrpc' in r1.headers.get('User-Agent', '') and 'xmlrpc' in r2.headers.get('User-Agent', '') and
+        r1.headers.get('Content-Type') == r2.headers.get('Content-Type') == 'text/xml'):
+        return xmlrpc_client.loads(r1_body) == xmlrpc_client.loads(r2_body)
+    return r1_body == r2_body
 
 
 def headers(r1, r2):
