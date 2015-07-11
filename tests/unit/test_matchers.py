@@ -35,6 +35,38 @@ def test_uri_matcher():
             assert matched
 
 
+def test_body_matcher():
+    # raw
+    req1 = request.Request('POST', 'http://host.com/', '123', {})
+    req2 = request.Request('POST', 'http://another-host.com/', '123', {'Some-Header': 'value'})
+    assert matchers.body(req1, req2)
+
+    # application/x-www-form-urlencoded
+    req1 = request.Request('POST', 'http://host.com/', 'a=1&b=2', {'Content-Type': 'application/x-www-form-urlencoded'})
+    req2 = request.Request('POST', 'http://host.com/', 'b=2&a=1', {'Content-Type': 'application/x-www-form-urlencoded'})
+    assert matchers.body(req1, req2)
+
+    # application/json
+    req1 = request.Request('POST', 'http://host.com/', '{"a": 1, "b": 2}', {'Content-Type': 'application/json'})
+    req2 = request.Request('POST', 'http://host.com/', '{"b": 2, "a": 1}', {'content-type': 'application/json'})
+    assert matchers.body(req1, req2)
+
+    # xmlrpc
+    req1_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
+                 b"<params><param><value><array><data><value><struct>"
+                 b"<member><name>a</name><value><string>1</string></value></member>"
+                 b"<member><name>b</name><value><string>2</string></value></member>"
+                 b"</struct></value></data></array></value></param></params></methodCall>")
+    req2_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
+                 b"<params><param><value><array><data><value><struct>"
+                 b"<member><name>b</name><value><string>2</string></value></member>"
+                 b"<member><name>a</name><value><string>1</string></value></member>"
+                 b"</struct></value></data></array></value></param></params></methodCall>")
+    req1 = request.Request('POST', 'http://host.com/', req1_body, {'User-Agent': 'xmlrpclib', 'Content-Type': 'text/xml'})
+    req2 = request.Request('POST', 'http://host.com/', req2_body, {'user-agent': 'somexmlrpc', 'content-type': 'text/xml'})
+    assert matchers.body(req1, req2)
+
+
 def test_query_matcher():
     req1 = request.Request('GET', 'http://host.com/?a=b&c=d', '', {})
     req2 = request.Request('GET', 'http://host.com/?c=d&a=b', '', {})
