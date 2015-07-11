@@ -1,5 +1,6 @@
 import json
 from six.moves import urllib, xmlrpc_client
+from .util import CaseInsensitiveDict
 import logging
 log = logging.getLogger(__name__)
 
@@ -45,12 +46,14 @@ def body(r1, r2):
     else:
         r1_body = r1.body
         r2_body  = r2.body
-    if r1.headers.get('Content-Type') == r2.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+    r1_headers = CaseInsensitiveDict(r1.headers)
+    r2_headers = CaseInsensitiveDict(r2.headers)
+    if r1_headers.get('Content-Type') == r2_headers.get('Content-Type') == 'application/x-www-form-urlencoded':
         return urllib.parse.parse_qs(r1_body) == urllib.parse.parse_qs(r2_body)
-    if r1.headers.get('Content-Type') == r2.headers.get('Content-Type') == 'application/json':
+    if r1_headers.get('Content-Type') == r2_headers.get('Content-Type') == 'application/json':
         return json.loads(r1_body) == json.loads(r2_body)
-    if ('xmlrpc' in r1.headers.get('User-Agent', '') and 'xmlrpc' in r2.headers.get('User-Agent', '') and
-        r1.headers.get('Content-Type') == r2.headers.get('Content-Type') == 'text/xml'):
+    if ('xmlrpc' in r1_headers.get('User-Agent', '') and 'xmlrpc' in r2_headers.get('User-Agent', '') and
+        r1_headers.get('Content-Type') == r2_headers.get('Content-Type') == 'text/xml'):
         return xmlrpc_client.loads(r1_body) == xmlrpc_client.loads(r2_body)
     return r1_body == r2_body
 
