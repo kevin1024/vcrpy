@@ -85,3 +85,8 @@ def compose(*functions):
             res = function(res)
         return res
     return composed
+
+def read_body(request):
+    if hasattr(request.body, 'read'):
+        return request.body.read()
+    return request.body

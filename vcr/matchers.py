@@ -1,6 +1,6 @@
 import json
 from six.moves import urllib, xmlrpc_client
-from .util import CaseInsensitiveDict
+from .util import CaseInsensitiveDict, read_body
 import logging
 log = logging.getLogger(__name__)
 
@@ -34,18 +34,12 @@ def query(r1, r2):
 
 
 def raw_body(r1, r2):
-    if hasattr(r1.body, 'read') and hasattr(r2.body, 'read'):
-        return r1.body.read() == r2.body.read()
-    return r1.body == r2.body
+    return read_body(r1) == read_body(r2)
 
 
 def body(r1, r2):
-    if hasattr(r1.body, 'read') and hasattr(r2.body, 'read'):
-        r1_body = r1.body.read()
-        r2_body  = r2.body.read()
-    else:
-        r1_body = r1.body
-        r2_body  = r2.body
+    r1_body = read_body(r1)
+    r2_body  = read_body(r2)
     r1_headers = CaseInsensitiveDict(r1.headers)
     r2_headers = CaseInsensitiveDict(r2.headers)
     if r1_headers.get('Content-Type') == r2_headers.get('Content-Type') == 'application/x-www-form-urlencoded':
