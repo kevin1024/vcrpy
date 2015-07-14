@@ -44,9 +44,7 @@ def deserialize(cassette_string, serializer):
     requests = []
     responses = []
     for interaction in data['interactions']:
-        request = Request._from_dict(interaction['request'])
-        request.body = compat.convert_body_to_bytes(request.body)
-        requests.append(request)
+        requests.append(Request._from_dict(interaction['request']))
 
         response = interaction['response']
         try:
