@@ -1,0 +1,17 @@
+interactions:
+- request:
+    body: !!binary |
+      eD01Jnk9Mg==
+    headers:
+      Content-Length: ['7']
+      Content-Type: [application/x-www-form-urlencoded]
+      Host: [httpbin.org]
+    method: POST
+    uri: http://httpbin.org/post
+  response:
+    body: {string: "{}\n"}
+    headers:
+      content-length: ['3']
+      content-type: [application/json]
+    status: {code: 200, message: OK}
+version: 1
