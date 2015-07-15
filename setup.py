@@ -38,7 +38,7 @@ if 'bdist_wheel' not in sys.argv:
 
 setup(
     name='vcrpy',
-    version='1.6.0',
+    version='1.6.1',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
