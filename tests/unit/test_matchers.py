@@ -1,5 +1,7 @@
 import itertools
 
+import pytest
+
 from vcr import matchers
 from vcr import request
 
@@ -35,36 +37,105 @@ def test_uri_matcher():
             assert matched
 
 
-def test_body_matcher():
-    # raw
-    req1 = request.Request('POST', 'http://host.com/', '123', {})
-    req2 = request.Request('POST', 'http://another-host.com/', '123', {'Some-Header': 'value'})
-    assert matchers.body(req1, req2)
+req1_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
+             b"<params><param><value><array><data><value><struct>"
+             b"<member><name>a</name><value><string>1</string></value></member>"
+             b"<member><name>b</name><value><string>2</string></value></member>"
+             b"</struct></value></data></array></value></param></params></methodCall>")
+req2_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
+             b"<params><param><value><array><data><value><struct>"
+             b"<member><name>b</name><value><string>2</string></value></member>"
+             b"<member><name>a</name><value><string>1</string></value></member>"
+             b"</struct></value></data></array></value></param></params></methodCall>")
 
-    # application/x-www-form-urlencoded
-    req1 = request.Request('POST', 'http://host.com/', 'a=1&b=2', {'Content-Type': 'application/x-www-form-urlencoded'})
-    req2 = request.Request('POST', 'http://host.com/', 'b=2&a=1', {'Content-Type': 'application/x-www-form-urlencoded'})
-    assert matchers.body(req1, req2)
 
-    # application/json
-    req1 = request.Request('POST', 'http://host.com/', '{"a": 1, "b": 2}', {'Content-Type': 'application/json'})
-    req2 = request.Request('POST', 'http://host.com/', '{"b": 2, "a": 1}', {'content-type': 'application/json'})
-    assert matchers.body(req1, req2)
+@pytest.mark.parametrize("r1, r2", [
+    (
+        request.Request('POST', 'http://host.com/', '123', {}),
+        request.Request('POST', 'http://another-host.com/',
+                        '123', {'Some-Header': 'value'})
+    ),
+    (
+        request.Request('POST', 'http://host.com/', 'a=1&b=2',
+                        {'Content-Type': 'application/x-www-form-urlencoded'}),
+        request.Request('POST', 'http://host.com/', 'b=2&a=1',
+                        {'Content-Type': 'application/x-www-form-urlencoded'})
+    ),
+    (
+        request.Request('POST', 'http://host.com/', '123', {}),
+        request.Request('POST', 'http://another-host.com/', '123', {'Some-Header': 'value'})
+    ),
+    (
+        request.Request(
+            'POST', 'http://host.com/', 'a=1&b=2',
+            {'Content-Type': 'application/x-www-form-urlencoded'}
+        ),
+        request.Request(
+            'POST', 'http://host.com/', 'b=2&a=1',
+            {'Content-Type': 'application/x-www-form-urlencoded'}
+        )
+    ),
+    (
+        request.Request(
+            'POST', 'http://host.com/', '{"a": 1, "b": 2}',
+            {'Content-Type': 'application/json'}
+        ),
+        request.Request(
+            'POST', 'http://host.com/', '{"b": 2, "a": 1}',
+            {'content-type': 'application/json'}
+        )
+    ),
+    (
+        request.Request(
+            'POST', 'http://host.com/', req1_body,
+            {'User-Agent': 'xmlrpclib', 'Content-Type': 'text/xml'}
+        ),
+        request.Request(
+            'POST', 'http://host.com/', req2_body,
+            {'user-agent': 'somexmlrpc', 'content-type': 'text/xml'}
+        )
+    ),
+    (
+        request.Request(
+            'POST', 'http://host.com/',
+            '{"a": 1, "b": 2}', {'Content-Type': 'application/json'}
+        ),
+        request.Request(
+            'POST', 'http://host.com/',
+            '{"b": 2, "a": 1}', {'content-type': 'application/json'}
+        )
+    )
+])
+def test_body_matcher_does_match(r1, r2):
+    assert matchers.body(r1, r2)
 
-    # xmlrpc
-    req1_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
-                 b"<params><param><value><array><data><value><struct>"
-                 b"<member><name>a</name><value><string>1</string></value></member>"
-                 b"<member><name>b</name><value><string>2</string></value></member>"
-                 b"</struct></value></data></array></value></param></params></methodCall>")
-    req2_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
-                 b"<params><param><value><array><data><value><struct>"
-                 b"<member><name>b</name><value><string>2</string></value></member>"
-                 b"<member><name>a</name><value><string>1</string></value></member>"
-                 b"</struct></value></data></array></value></param></params></methodCall>")
-    req1 = request.Request('POST', 'http://host.com/', req1_body, {'User-Agent': 'xmlrpclib', 'Content-Type': 'text/xml'})
-    req2 = request.Request('POST', 'http://host.com/', req2_body, {'user-agent': 'somexmlrpc', 'content-type': 'text/xml'})
-    assert matchers.body(req1, req2)
+
+@pytest.mark.parametrize("r1, r2", [
+    (
+        request.Request('POST', 'http://host.com/', '{"a": 1, "b": 2}', {}),
+        request.Request('POST', 'http://host.com/', '{"b": 2, "a": 1}', {}),
+    ),
+    (
+        request.Request(
+            'POST', 'http://host.com/',
+            '{"a": 1, "b": 3}', {'Content-Type': 'application/json'}
+        ),
+        request.Request(
+            'POST', 'http://host.com/',
+            '{"b": 2, "a": 1}', {'content-type': 'application/json'}
+        )
+    ),
+    (
+        request.Request(
+            'POST', 'http://host.com/', req1_body, {'Content-Type': 'text/xml'}
+        ),
+        request.Request(
+            'POST', 'http://host.com/', req2_body, {'content-type': 'text/xml'}
+        )
+    )
+])
+def test_body_match_does_not_match(r1, r2):
+    assert not matchers.body(r1, r2)
 
 
 def test_query_matcher():

@@ -37,19 +37,39 @@ def raw_body(r1, r2):
     return read_body(r1) == read_body(r2)
 
 
+def _header_checker(value, header='Content-Type'):
+    def checker(headers):
+        return value in headers.get(header, '').lower()
+    return checker
+
+
+_xml_header_checker = _header_checker('text/xml')
+_xmlrpc_header_checker = _header_checker('xmlrpc', header='User-Agent')
+_checker_transformer_pairs = (
+    (_header_checker('application/x-www-form-urlencoded'), urllib.parse.parse_qs),
+    (_header_checker('application/json'), json.loads),
+    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc_client.loads),
+)
+
+
+def _identity(x):
+    return x
+
+
+def _get_transformer(request):
+    headers = CaseInsensitiveDict(request.headers)
+    for checker, transformer in _checker_transformer_pairs:
+        if checker(headers): return transformer
+    else:
+        return _identity
+
+
 def body(r1, r2):
-    r1_body = read_body(r1)
-    r2_body  = read_body(r2)
-    r1_headers = CaseInsensitiveDict(r1.headers)
-    r2_headers = CaseInsensitiveDict(r2.headers)
-    if r1_headers.get('Content-Type') == r2_headers.get('Content-Type') == 'application/x-www-form-urlencoded':
-        return urllib.parse.parse_qs(r1_body) == urllib.parse.parse_qs(r2_body)
-    if r1_headers.get('Content-Type') == r2_headers.get('Content-Type') == 'application/json':
-        return json.loads(r1_body) == json.loads(r2_body)
-    if ('xmlrpc' in r1_headers.get('User-Agent', '') and 'xmlrpc' in r2_headers.get('User-Agent', '') and
-        r1_headers.get('Content-Type') == r2_headers.get('Content-Type') == 'text/xml'):
-        return xmlrpc_client.loads(r1_body) == xmlrpc_client.loads(r2_body)
-    return r1_body == r2_body
+    transformer = _get_transformer(r1)
+    r2_transformer = _get_transformer(r2)
+    if transformer != r2_transformer:
+        transformer = _identity
+    return transformer(read_body(r1)) == transformer(read_body(r2))
 
 
 def headers(r1, r2):
