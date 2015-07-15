@@ -50,6 +50,7 @@ The following http libraries are supported:
 -  requests (both 1.x and 2.x versions)
 -  httplib2
 -  boto
+-  Tornado's AsyncHTTPClient
 
 Usage
 -----
