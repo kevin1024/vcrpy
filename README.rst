@@ -5,6 +5,7 @@ VCR.py
    :alt: vcr.py
 
    vcr.py
+
 This is a Python version of `Ruby's VCR
 library <https://github.com/vcr/vcr>`__.
 

@@ -3,6 +3,7 @@
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
+import pkg_resources
 
 long_description = open('README.rst', 'r').read()
 
@@ -20,6 +21,21 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+install_requires=['PyYAML', 'wrapt', 'six>=1.5']
+
+
+extras_require = {
+    ':python_version in "2.4, 2.5, 2.6"':
+        ['contextlib2', 'backport_collections', 'mock'],
+    ':python_version in "2.7, 3.1, 3.2"': ['contextlib2', 'mock'],
+}
+
+
+if 'bdist_wheel' not in sys.argv:
+    for key, value in extras_require.items():
+        if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
+            install_requires.extend(value)
+
 setup(
     name='vcrpy',
     version='1.6.0',
@@ -32,12 +48,8 @@ setup(
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
     packages=find_packages(exclude=("tests*",)),
-    install_requires=['PyYAML', 'wrapt', 'six>=1.5'],
-    extras_require = {
-        ':python_version in "2.4, 2.5, 2.6"':
-            ['contextlib2', 'backport_collections', 'mock'],
-        ':python_version in "2.7, 3.1, 3.2"': ['contextlib2', 'mock'],
-    },
+    install_requires=install_requires,
+    extras_require=extras_require,
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-localserver'],
     cmdclass={'test': PyTest},
