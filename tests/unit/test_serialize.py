@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 import pytest
 
 from vcr.compat import mock
@@ -54,6 +55,19 @@ interactions:
     ('x=5&y=2', b'x=5&y=2'),
     # Cassette written under Python 3 (pure ASCII body)
     ('!!binary |\n      eD01Jnk9Mg==', b'x=5&y=2'),
+
+    # Request body has non-ASCII chars (x=föo&y=2), encoded in UTF-8.
+    ('!!python/str "x=f\\xF6o&y=2"', b'x=f\xc3\xb6o&y=2'),
+    ('!!binary |\n      eD1mw7ZvJnk9Mg==', b'x=f\xc3\xb6o&y=2'),
+
+    # Same request body, this time encoded in UTF-16. In this case, we
+    # write the same YAML file under both Python 2 and 3, so there's only
+    # one test case here.
+    ('!!binary |\n      //54AD0AZgD2AG8AJgB5AD0AMgA=',
+     b'\xff\xfex\x00=\x00f\x00\xf6\x00o\x00&\x00y\x00=\x002\x00'),
+
+    # Same again, this time encoded in ISO-8859-1.
+    ('!!binary |\n      eD1m9m8meT0y', b'x=f\xf6o&y=2'),
 ])
 def test_deserialize_py2py3_yaml_cassette(tmpdir, req_body, expect):
     cfile = tmpdir.join('test_cassette.yaml')
