@@ -419,10 +419,10 @@ that of ``before_record``:
     def scrub_string(string, replacement=''):
         def before_record_reponse(response):
             return response['body']['string'] = response['body']['string'].replace(string, replacement)
-        return scrub_string
+        return before_record_reponse
 
     my_vcr = vcr.VCR(
-        before_record=scrub_string(settings.USERNAME, 'username'),
+        before_record_reponse=scrub_string(settings.USERNAME, 'username'),
     )
     with my_vcr.use_cassette('test.yml'):
          # your http code here    
