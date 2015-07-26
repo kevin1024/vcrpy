@@ -43,11 +43,18 @@ def _header_checker(value, header='Content-Type'):
     return checker
 
 
+def _transform_json(body):
+    # Request body is always a byte string, but json.loads() wants a text
+    # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
+    # and UTF-32 are also allowed: hmmmmm).
+    return json.loads(body.decode('utf-8'))
+
+
 _xml_header_checker = _header_checker('text/xml')
 _xmlrpc_header_checker = _header_checker('xmlrpc', header='User-Agent')
 _checker_transformer_pairs = (
     (_header_checker('application/x-www-form-urlencoded'), urllib.parse.parse_qs),
-    (_header_checker('application/json'), json.loads),
+    (_header_checker('application/json'), _transform_json),
     (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc_client.loads),
 )
 
