@@ -109,10 +109,10 @@ If you don't like VCR's defaults, you can set options by instantiating a
     import vcr
 
     my_vcr = vcr.VCR(
-        serializer = 'json',
-        cassette_library_dir = 'fixtures/cassettes',
-        record_mode = 'once',
-        match_on = ['uri', 'method'],
+        serializer='json',
+        cassette_library_dir='fixtures/cassettes',
+        record_mode='once',
+        match_on=['uri', 'method'],
     )
 
     with my_vcr.use_cassette('test.json'):
