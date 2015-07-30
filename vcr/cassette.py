@@ -1,11 +1,8 @@
-"""The container for recorded requests and responses"""
-import functools
+import inspect
 import logging
-
 
 import wrapt
 
-# Internal imports
 from .compat import contextlib, collections
 from .errors import UnhandledHTTPRequestError
 from .matchers import requests_match, uri, method
@@ -50,14 +47,6 @@ class CassetteContextDecorator(object):
             # somewhere else.
             cassette._save()
 
-    @classmethod
-    def key_predicate(cls, key, value):
-        return key in cls._non_cassette_arguments
-
-    @classmethod
-    def _split_keys(cls, kwargs):
-        return partition_dict(cls.key_predicate, kwargs)
-
     def __enter__(self):
         # This assertion is here to prevent the dangerous behavior
         # that would result from forgetting about a __finish before
@@ -68,7 +57,10 @@ class CassetteContextDecorator(object):
         #     with context_decorator:
         #         pass
         assert self.__finish is None, "Cassette already open."
-        other_kwargs, cassette_kwargs = self._split_keys(self._args_getter())
+        other_kwargs, cassette_kwargs = partition_dict(
+            lambda key, _: key in self._non_cassette_arguments,
+            self._args_getter()
+        )
         if 'path_transformer' in other_kwargs:
             transformer = other_kwargs['path_transformer']
             cassette_kwargs['path'] = transformer(cassette_kwargs['path'])
@@ -84,27 +76,48 @@ class CassetteContextDecorator(object):
         # This awkward cloning thing is done to ensure that decorated
         # functions are reentrant. This is required for thread
         # safety and the correct operation of recursive functions.
-        args_getter = self._build_args_getter_for_decorator(
-            function, self._args_getter
-        )
-        clone = type(self)(self.cls, args_getter)
-        with clone as cassette:
-            if cassette.inject:
-                return function(cassette, *args, **kwargs)
-            else:
-                return function(*args, **kwargs)
+        args_getter = self._build_args_getter_for_decorator(function)
+        return type(self)(self.cls, args_getter)._execute_function(function, args, kwargs)
+
+    def _execute_function(self, function, args, kwargs):
+        if inspect.isgeneratorfunction(function):
+            handler = self._handle_coroutine
+        else:
+            handler = self._handle_function
+        return handler(function, args, kwargs)
+
+    def _handle_coroutine(self, function, args, kwargs):
+        with self as cassette:
+            coroutine = self.__handle_function(cassette, function, args, kwargs)
+            to_send = None
+            while True:
+                try:
+                    to_yield = coroutine.send(to_send)
+                except StopIteration:
+                    break
+                else:
+                    to_send = yield to_yield
+
+    def __handle_function(self, cassette, function, args, kwargs):
+        if cassette.inject:
+            return function(cassette, *args, **kwargs)
+        else:
+            return function(*args, **kwargs)
+
+    def _handle_function(self, function, args, kwargs):
+        with self as cassette:
+            self.__handle_function(cassette, function, args, kwargs)
 
     @staticmethod
     def get_function_name(function):
         return function.__name__
 
-    @classmethod
-    def _build_args_getter_for_decorator(cls, function, args_getter):
+    def _build_args_getter_for_decorator(self, function):
         def new_args_getter():
-            kwargs = args_getter()
+            kwargs = self._args_getter()
             if 'path' not in kwargs:
                 name_generator = (kwargs.get('func_path_generator') or
-                                  cls.get_function_name)
+                                  self.get_function_name)
                 path = name_generator(function)
                 kwargs['path'] = path
             return kwargs

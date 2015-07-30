@@ -275,3 +275,12 @@ def test_cannot_overwrite_cassette_raise_error_disabled(get_client, tmpdir):
         )
 
     assert isinstance(response.error, CannotOverwriteExistingCassetteException)
+
+
+@pytest.mark.gen_test
+@vcr.use_cassette
+def test_tornado_with_decorator_use_cassette(get_client):
+    response = yield get_client().fetch(
+        http.HTTPRequest('http://www.google.com/', method='GET')
+    )
+    assert response.body == "not actually google"

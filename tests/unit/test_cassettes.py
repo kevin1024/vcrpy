@@ -253,3 +253,37 @@ def test_func_path_generator():
     def function_name(cassette):
         assert cassette._path == os.path.join(os.path.dirname(__file__), 'function_name')
     function_name()
+
+
+def test_use_as_decorator_on_coroutine():
+    original_http_connetion = httplib.HTTPConnection
+    @Cassette.use(inject=True)
+    def test_function(cassette):
+        assert httplib.HTTPConnection.cassette is cassette
+        assert httplib.HTTPConnection is not original_http_connetion
+        value = yield 1
+        assert value == 1
+        assert httplib.HTTPConnection.cassette is cassette
+        assert httplib.HTTPConnection is not original_http_connetion
+        value = yield 2
+        assert value == 2
+    coroutine = test_function()
+    value = coroutine.next()
+    while True:
+        try:
+            value = coroutine.send(value)
+        except StopIteration:
+            break
+
+
+def test_use_as_decorator_on_generator():
+    original_http_connetion = httplib.HTTPConnection
+    @Cassette.use(inject=True)
+    def test_function(cassette):
+        assert httplib.HTTPConnection.cassette is cassette
+        assert httplib.HTTPConnection is not original_http_connetion
+        yield 1
+        assert httplib.HTTPConnection.cassette is cassette
+        assert httplib.HTTPConnection is not original_http_connetion
+        yield 2
+        assert list(test_function()) == [1, 2]
