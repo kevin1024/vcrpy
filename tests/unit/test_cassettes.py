@@ -286,4 +286,4 @@ def test_use_as_decorator_on_generator():
         assert httplib.HTTPConnection.cassette is cassette
         assert httplib.HTTPConnection is not original_http_connetion
         yield 2
-        assert list(test_function()) == [1, 2]
+    assert list(test_function()) == [1, 2]
