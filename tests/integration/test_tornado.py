@@ -283,4 +283,4 @@ def test_tornado_with_decorator_use_cassette(get_client):
     response = yield get_client().fetch(
         http.HTTPRequest('http://www.google.com/', method='GET')
     )
-    assert response.body == "not actually google"
+    assert response.body.decode('utf-8') == "not actually google"
