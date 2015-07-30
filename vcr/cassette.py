@@ -1,3 +1,4 @@
+import sys
 import inspect
 import logging
 
@@ -87,16 +88,21 @@ class CassetteContextDecorator(object):
         return handler(function, args, kwargs)
 
     def _handle_coroutine(self, function, args, kwargs):
+        """Wraps a coroutine so that we're inside the cassette context for the
+        duration of the coroutine.
+        """
         with self as cassette:
             coroutine = self.__handle_function(cassette, function, args, kwargs)
-            to_send = None
+            # We don't need to catch StopIteration. The caller (Tornado's
+            # gen.coroutine, for example) will handle that.
+            to_yield = next(coroutine)
             while True:
                 try:
-                    to_yield = coroutine.send(to_send)
-                except StopIteration:
-                    break
-                else:
                     to_send = yield to_yield
+                except Exception:
+                    to_yield = coroutine.throw(*sys.exc_info())
+                else:
+                    to_yield = coroutine.send(to_send)
 
     def __handle_function(self, cassette, function, args, kwargs):
         if cassette.inject:
