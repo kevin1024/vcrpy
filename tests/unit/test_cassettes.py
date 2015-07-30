@@ -268,7 +268,7 @@ def test_use_as_decorator_on_coroutine():
         value = yield 2
         assert value == 2
     coroutine = test_function()
-    value = coroutine.next()
+    value = next(coroutine)
     while True:
         try:
             value = coroutine.send(value)
