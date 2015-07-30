@@ -284,3 +284,17 @@ def test_tornado_with_decorator_use_cassette(get_client):
         http.HTTPRequest('http://www.google.com/', method='GET')
     )
     assert response.body.decode('utf-8') == "not actually google"
+
+
+@pytest.mark.gen_test
+@vcr.use_cassette(path_transformer=vcr.default_vcr.ensure_suffix('.yaml'))
+def test_tornado_exception_can_be_caught(get_client):
+    try:
+        yield get(get_client(), 'http://httpbin.org/status/500')
+    except http.HTTPError as e:
+        assert e.code == 500
+
+    try:
+        yield get(get_client(), 'http://httpbin.org/status/404')
+    except http.HTTPError as e:
+        assert e.code == 404
