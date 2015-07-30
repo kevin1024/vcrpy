@@ -278,7 +278,7 @@ def test_cannot_overwrite_cassette_raise_error_disabled(get_client, tmpdir):
 
 
 @pytest.mark.gen_test
-@vcr.use_cassette
+@vcr.use_cassette(path_transformer=vcr.default_vcr.ensure_suffix('.yaml'))
 def test_tornado_with_decorator_use_cassette(get_client):
     response = yield get_client().fetch(
         http.HTTPRequest('http://www.google.com/', method='GET')

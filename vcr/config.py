@@ -23,7 +23,7 @@ class VCR(object):
             return path
         return ensure
 
-    def __init__(self, path_transformer=None, before_record_request=None,
+    def __init__(self, path_transformer=lambda x: x, before_record_request=None,
                  custom_patches=(), filter_query_parameters=(), ignore_hosts=(),
                  record_mode="once", ignore_localhost=False, filter_headers=(),
                  before_record_response=None, filter_post_data_parameters=(),
@@ -59,7 +59,7 @@ class VCR(object):
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
         self.inject_cassette = inject_cassette
-        self.path_transformer = path_transformer or self.ensure_suffix('.yaml')
+        self.path_transformer = path_transformer
         self.func_path_generator = func_path_generator
         self._custom_patches = tuple(custom_patches)
 
