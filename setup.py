@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import sys
+import logging
+
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import pkg_resources
@@ -31,9 +33,18 @@ extras_require = {
 }
 
 
-if 'bdist_wheel' not in sys.argv:
+try:
+    if 'bdist_wheel' not in sys.argv:
+        for key, value in extras_require.items():
+            if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
+                install_requires.extend(value)
+except Exception:
+    logging.getLogger(__name__).exception(
+        'Something went wrong calculating platform specific dependencies, so '
+        "you're getting them all!"
+    )
     for key, value in extras_require.items():
-        if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
+        if key.startswith(':'):
             install_requires.extend(value)
 
 setup(
