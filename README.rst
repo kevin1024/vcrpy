@@ -417,12 +417,13 @@ that of ``before_record``:
 .. code:: python
 
     def scrub_string(string, replacement=''):
-        def before_record_reponse(response):
-            return response['body']['string'] = response['body']['string'].replace(string, replacement)
-        return before_record_reponse
+        def before_record_response(response):
+            response['body']['string'] = response['body']['string'].replace(string, replacement)
+            return response
+        return before_record_response
 
     my_vcr = vcr.VCR(
-        before_record_reponse=scrub_string(settings.USERNAME, 'username'),
+        before_record_response=scrub_string(settings.USERNAME, 'username'),
     )
     with my_vcr.use_cassette('test.yml'):
          # your http code here    
