@@ -608,6 +608,8 @@ new API in version 1.0.x
 
 Changelog
 ---------
+-  1.7.1 [#183] Patch ``fetch_impl`` instead of the entire HTTPClient
+   class for Tornado (thanks @abhinav).
 -  1.7.0 [#177] Properly support coroutine/generator decoration. [#178]
    Support distribute (thanks @graingert). [#163] Make compatibility
    between python2 and python3 recorded cassettes more robust (thanks

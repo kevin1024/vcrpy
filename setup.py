@@ -9,6 +9,7 @@ import pkg_resources
 
 long_description = open('README.rst', 'r').read()
 
+
 class PyTest(TestCommand):
 
     def finalize_options(self):
@@ -23,7 +24,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-install_requires=['PyYAML', 'wrapt', 'six>=1.5']
+install_requires = ['PyYAML', 'wrapt', 'six>=1.5']
 
 
 extras_require = {
@@ -47,9 +48,10 @@ except Exception:
         if key.startswith(':'):
             install_requires.extend(value)
 
+
 setup(
     name='vcrpy',
-    version='1.7.0',
+    version='1.7.1',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
