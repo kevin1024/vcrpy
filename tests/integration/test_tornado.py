@@ -298,3 +298,31 @@ def test_tornado_exception_can_be_caught(get_client):
         yield get(get_client(), 'http://httpbin.org/status/404')
     except http.HTTPError as e:
         assert e.code == 404
+
+
+@pytest.mark.gen_test
+def test_existing_references_get_patched(tmpdir):
+    from tornado.httpclient import AsyncHTTPClient
+
+    with vcr.use_cassette(str(tmpdir.join('data.yaml'))):
+        client = AsyncHTTPClient()
+        yield get(client, 'http://httpbin.org/get')
+
+    with vcr.use_cassette(str(tmpdir.join('data.yaml'))) as cass:
+        yield get(client, 'http://httpbin.org/get')
+        assert cass.play_count == 1
+
+
+@pytest.mark.gen_test
+def test_existing_instances_get_patched(get_client, tmpdir):
+    '''Ensure that existing instances of AsyncHTTPClient get patched upon
+    entering VCR context.'''
+
+    client = get_client()
+
+    with vcr.use_cassette(str(tmpdir.join('data.yaml'))):
+        yield get(client, 'http://httpbin.org/get')
+
+    with vcr.use_cassette(str(tmpdir.join('data.yaml'))) as cass:
+        yield get(client, 'http://httpbin.org/get')
+        assert cass.play_count == 1
