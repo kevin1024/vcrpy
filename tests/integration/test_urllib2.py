@@ -49,6 +49,15 @@ def test_response_headers(scheme, tmpdir):
         open2 = urlopen(url).info().items()
         assert sorted(open1) == sorted(open2)
 
+def test_effective_url(scheme, tmpdir):
+    '''Ensure that the effective_url is captured'''
+    url = scheme + '://httpbin.org/redirect-to?url=/html'
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+        effective_url = urlopen(url).geturl()
+        assert effective_url == scheme + '://httpbin.org/html'
+
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+        assert effective_url == urlopen(url).geturl()
 
 def test_multiple_requests(scheme, tmpdir):
     '''Ensure that we can cache multiple requests'''
