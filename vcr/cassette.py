@@ -47,14 +47,16 @@ class CassetteContextDecorator(object):
 
     def _patch_generator(self, cassette):
         with contextlib.ExitStack() as exit_stack:
-            for patcher in CassettePatcherBuilder(cassette).build:
-                exit_stack.enter_contextpatcher
+            for patcher in CassettePatcherBuilder(cassette).build():
+                exit_stack.enter_context(patcher)
             log_format = '{action} context for cassette at {path}.'
             log.debug(log_format.format(
-                cassette._path
+                action="Entering", path=cassette._path
             ))
             yield cassette
-            log.debug('Exiting context for cassette at {0}.'.format(cassette._path))
+            log.debug(log_format.format(
+                action="Exiting", path=cassette._path
+            ))
             # TODO(@IvanMalison): Hmmm. it kind of feels like this should be
             # somewhere else.
             cassette._save()

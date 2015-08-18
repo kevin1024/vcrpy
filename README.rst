@@ -608,6 +608,8 @@ new API in version 1.0.x
 
 Changelog
 ---------
+-  1.7.2 [#186] Get effective_url in tornado (thanks @mvschaik), [#187]
+   Set request_time on Response object in tornado (thanks @abhinav).
 -  1.7.1 [#183] Patch ``fetch_impl`` instead of the entire HTTPClient
    class for Tornado (thanks @abhinav).
 -  1.7.0 [#177] Properly support coroutine/generator decoration. [#178]
