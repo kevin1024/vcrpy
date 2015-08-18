@@ -36,6 +36,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                     "that is not yet supported by VCR.py. Please make the "
                     "request outside a VCR.py context." % repr(request)
                 ),
+                request_time=self.io_loop.time() - request.start_time,
             )
             return callback(response)
 
@@ -63,6 +64,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                 headers=headers,
                 buffer=BytesIO(vcr_response['body']['string']),
                 effective_url=vcr_response.get('url'),
+                request_time=self.io_loop.time() - request.start_time,
             )
             return callback(response)
         else:
@@ -78,6 +80,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                         "your current record mode (%r)."
                         % (vcr_request, cassette._path, cassette.record_mode)
                     ),
+                    request_time=self.io_loop.time() - request.start_time,
                 )
                 return callback(response)
 
