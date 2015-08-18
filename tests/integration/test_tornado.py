@@ -337,3 +337,19 @@ def test_existing_instances_get_patched(get_client, tmpdir):
     with vcr.use_cassette(str(tmpdir.join('data.yaml'))) as cass:
         yield get(client, 'http://httpbin.org/get')
         assert cass.play_count == 1
+
+
+@pytest.mark.gen_test
+def test_request_time_is_set(get_client, tmpdir):
+    '''Ensures that the request_time on HTTPResponses is set.'''
+
+    with vcr.use_cassette(str(tmpdir.join('data.yaml'))):
+        client = get_client()
+        response = yield get(client, 'http://httpbin.org/get')
+        assert response.request_time is not None
+
+    with vcr.use_cassette(str(tmpdir.join('data.yaml'))) as cass:
+        client = get_client()
+        response = yield get(client, 'http://httpbin.org/get')
+        assert response.request_time is not None
+        assert cass.play_count == 1
