@@ -20,10 +20,18 @@ class CassetteContextDecorator(object):
     """Context manager/decorator that handles installing the cassette and
     removing cassettes.
 
-    This class defers the creation of a new cassette instance until the point at
-    which it is installed by context manager or decorator. The fact that a new
-    cassette is used with each application prevents the state of any cassette
-    from interfering with another.
+    This class defers the creation of a new cassette instance until
+    the point at which it is installed by context manager or
+    decorator. The fact that a new cassette is used with each
+    application prevents the state of any cassette from interfering
+    with another.
+
+    Instances of this class are NOT reentrant as context managers.
+    However, functions that are decorated by
+    ``CassetteContextDecorator`` instances ARE reentrant. See the
+    implementation of ``__call__`` on this class for more details.
+    There is also a guard against attempts to reenter instances of
+    this class as a context manager in ``__exit__``.
     """
 
     _non_cassette_arguments = ('path_transformer', 'func_path_generator')
@@ -39,9 +47,12 @@ class CassetteContextDecorator(object):
 
     def _patch_generator(self, cassette):
         with contextlib.ExitStack() as exit_stack:
-            for patcher in CassettePatcherBuilder(cassette).build():
-                exit_stack.enter_context(patcher)
-            log.debug('Entered context for cassette at {0}.'.format(cassette._path))
+            for patcher in CassettePatcherBuilder(cassette).build:
+                exit_stack.enter_contextpatcher
+            log_format = '{action} context for cassette at {path}.'
+            log.debug(log_format.format(
+                cassette._path
+            ))
             yield cassette
             log.debug('Exiting context for cassette at {0}.'.format(cassette._path))
             # TODO(@IvanMalison): Hmmm. it kind of feels like this should be
@@ -78,7 +89,9 @@ class CassetteContextDecorator(object):
         # functions are reentrant. This is required for thread
         # safety and the correct operation of recursive functions.
         args_getter = self._build_args_getter_for_decorator(function)
-        return type(self)(self.cls, args_getter)._execute_function(function, args, kwargs)
+        return type(self)(self.cls, args_getter)._execute_function(
+            function, args, kwargs
+        )
 
     def _execute_function(self, function, args, kwargs):
         if inspect.isgeneratorfunction(function):
