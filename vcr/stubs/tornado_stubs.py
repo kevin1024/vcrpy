@@ -62,6 +62,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                 reason=vcr_response['status']['message'],
                 headers=headers,
                 buffer=BytesIO(vcr_response['body']['string']),
+                effective_url=vcr_response.get('url'),
             )
             return callback(response)
         else:
@@ -93,6 +94,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                     },
                     'headers': headers,
                     'body': {'string': response.body},
+                    'url': response.effective_url,
                 }
                 cassette.append(vcr_request, vcr_response)
                 return callback(response)

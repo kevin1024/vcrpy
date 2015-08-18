@@ -56,6 +56,17 @@ def test_response_headers(scheme, tmpdir):
         resp, _ = httplib2.Http().request(url)
         assert set(headers) == set(resp.items())
 
+def test_effective_url(scheme, tmpdir):
+    '''Ensure that the effective_url is captured'''
+    url = scheme + '://httpbin.org/redirect-to?url=/html'
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+        resp, _ = httplib2.Http().request(url)
+        effective_url = resp['content-location']
+        assert effective_url == scheme + '://httpbin.org/html'
+
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+        resp, _ = httplib2.Http().request(url)
+        assert effective_url == resp['content-location']
 
 def test_multiple_requests(scheme, tmpdir):
     '''Ensure that we can cache multiple requests'''

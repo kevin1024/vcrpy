@@ -44,6 +44,15 @@ def test_body(tmpdir, scheme):
     with vcr.use_cassette(str(tmpdir.join('body.yaml'))):
         assert content == requests.get(url).content
 
+def test_effective_url(scheme, tmpdir):
+    '''Ensure that the effective_url is captured'''
+    url = scheme + '://httpbin.org/redirect-to?url=/html'
+    with vcr.use_cassette(str(tmpdir.join('url.yaml'))):
+        effective_url = requests.get(url).url
+        assert effective_url == scheme + '://httpbin.org/html'
+
+    with vcr.use_cassette(str(tmpdir.join('url.yaml'))):
+        assert effective_url == requests.get(url).url
 
 def test_auth(tmpdir, scheme):
     '''Ensure that we can handle basic auth'''

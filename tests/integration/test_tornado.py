@@ -81,6 +81,17 @@ def test_body(get_client, tmpdir, scheme):
         assert content == (yield get(get_client(), url)).body
         assert 1 == cass.play_count
 
+@pytest.mark.gen_test
+def test_effective_url(get_client, scheme, tmpdir):
+    '''Ensure that the effective_url is captured'''
+    url = scheme + '://httpbin.org/redirect-to?url=/html'
+    with vcr.use_cassette(str(tmpdir.join('url.yaml'))):
+        effective_url = (yield get(get_client(), url)).effective_url
+        assert effective_url == scheme + '://httpbin.org/html'
+
+    with vcr.use_cassette(str(tmpdir.join('url.yaml'))) as cass:
+        assert effective_url == (yield get(get_client(), url)).effective_url
+        assert 1 == cass.play_count
 
 @pytest.mark.gen_test
 def test_auth(get_client, tmpdir, scheme):
