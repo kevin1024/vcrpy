@@ -72,6 +72,32 @@ def test_vcr_before_record_request_params():
         assert cassette.filter_request(Request('GET', base_path + 'get', '', {})) is not None
 
 
+def test_vcr_before_record_response_iterable():
+    # Regression test for #191
+
+    request = Request('GET', '/', '', {})
+    response = object()  # just can't be None
+
+    # Prevent actually saving the cassette
+    with mock.patch('vcr.cassette.save_cassette'):
+
+        # Baseline: non-iterable before_record_response should work
+        mock_filter = mock.Mock()
+        vcr = VCR(before_record_response=mock_filter)
+        with vcr.use_cassette('test') as cassette:
+            assert mock_filter.call_count == 0
+            cassette.append(request, response)
+            assert mock_filter.call_count == 1
+
+        # Regression test: iterable before_record_response should work too
+        mock_filter = mock.Mock()
+        vcr = VCR(before_record_response=(mock_filter,))
+        with vcr.use_cassette('test') as cassette:
+            assert mock_filter.call_count == 0
+            cassette.append(request, response)
+            assert mock_filter.call_count == 1
+
+
 @pytest.fixture
 def random_fixture():
     return 1
