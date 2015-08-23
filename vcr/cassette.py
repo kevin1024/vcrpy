@@ -210,8 +210,7 @@ class Cassette(object):
         request = self._before_record_request(request)
         if not request:
             return
-        if self._before_record_response:
-            response = self._before_record_response(response)
+        response = self._before_record_response(response)
         self.data.append((request, response))
         self.dirty = True
 
