@@ -67,10 +67,11 @@ class VCR(object):
         try:
             serializer = self.serializers[serializer_name]
         except KeyError:
-            print("Serializer {0} doesn't exist or isn't registered".format(
-                serializer_name
-            ))
-            raise KeyError
+            raise KeyError(
+                "Serializer {0} doesn't exist or isn't registered".format(
+                    serializer_name
+                )
+            )
         return serializer
 
     def _get_matchers(self, matcher_names):
