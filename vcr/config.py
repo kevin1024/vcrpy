@@ -67,10 +67,11 @@ class VCR(object):
         try:
             serializer = self.serializers[serializer_name]
         except KeyError:
-            print("Serializer {0} doesn't exist or isn't registered".format(
-                serializer_name
-            ))
-            raise KeyError
+            raise KeyError(
+                "Serializer {0} doesn't exist or isn't registered".format(
+                    serializer_name
+                )
+            )
         return serializer
 
     def _get_matchers(self, matcher_names):
@@ -157,12 +158,10 @@ class VCR(object):
             'before_record_response', self.before_record_response
         )
         filter_functions = []
-        if before_record_response and not isinstance(before_record_response,
-                                                     collections.Iterable):
-            before_record_response = (before_record_response,)
-            for function in before_record_response:
-                filter_functions.append(function)
-
+        if before_record_response:
+            if not isinstance(before_record_response, collections.Iterable):
+                before_record_response = (before_record_response,)
+            filter_functions.extend(before_record_response)
         def before_record_response(response):
             for function in filter_functions:
                 if response is None:
@@ -212,20 +211,16 @@ class VCR(object):
                 )
             )
 
-        hosts_to_ignore = list(ignore_hosts)
+        hosts_to_ignore = set(ignore_hosts)
         if ignore_localhost:
-            hosts_to_ignore.extend(('localhost', '0.0.0.0', '127.0.0.1'))
-
+            hosts_to_ignore.update(('localhost', '0.0.0.0', '127.0.0.1'))
         if hosts_to_ignore:
-            hosts_to_ignore = set(hosts_to_ignore)
             filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
 
         if before_record_request:
             if not isinstance(before_record_request, collections.Iterable):
                 before_record_request = (before_record_request,)
-            for function in before_record_request:
-                filter_functions.append(function)
-
+            filter_functions.extend(before_record_request)
         def before_record_request(request):
             request = copy.copy(request)
             for function in filter_functions:
@@ -233,7 +228,6 @@ class VCR(object):
                     break
                 request = function(request)
             return request
-
         return before_record_request
 
     @staticmethod
