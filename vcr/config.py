@@ -25,7 +25,7 @@ class VCR(object):
 
     def __init__(self, path_transformer=lambda x: x, before_record_request=None,
                  custom_patches=(), filter_query_parameters=(), ignore_hosts=(),
-                 record_mode="once", ignore_localhost=False, filter_headers=(),
+                 record_mode=None, ignore_localhost=False, filter_headers=(),
                  before_record_response=None, filter_post_data_parameters=(),
                  match_on=('method', 'scheme', 'host', 'port', 'path', 'query'),
                  before_record=None, inject_cassette=False, serializer='yaml',
@@ -50,7 +50,7 @@ class VCR(object):
             'raw_body': matchers.raw_body,
             'body': matchers.body,
         }
-        self.record_mode = record_mode
+        self.record_mode = record_mode or os.environ.get('VCR_RECORD_MODE', 'once')
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
         self.filter_post_data_parameters = filter_post_data_parameters
