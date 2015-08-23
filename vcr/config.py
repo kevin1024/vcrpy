@@ -117,6 +117,8 @@ class VCR(object):
             'cassette_library_dir',
             self.cassette_library_dir
         )
+        additional_matchers = kwargs.get('additional_matchers', ())
+
         if cassette_library_dir:
             def add_cassette_library_dir(path):
                 if not path.startswith(cassette_library_dir):
@@ -130,7 +132,9 @@ class VCR(object):
 
         merged_config = {
             'serializer': self._get_serializer(serializer_name),
-            'match_on': self._get_matchers(matcher_names),
+            'match_on': self._get_matchers(
+                tuple(matcher_names) + tuple(additional_matchers)
+            ),
             'record_mode': kwargs.get('record_mode', self.record_mode),
             'before_record_request': self._build_before_record_request(kwargs),
             'before_record_response': self._build_before_record_response(
