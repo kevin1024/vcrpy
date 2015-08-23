@@ -208,3 +208,18 @@ def test_ensure_suffix():
         assert cassette._path == os.path.join(os.path.dirname(__file__),
                                               'function_name.yaml')
     function_name()
+
+
+def test_additional_matchers():
+    vcr = VCR(match_on=('uri',), inject_cassette=True)
+
+    @vcr.use_cassette
+    def function_defaults(cassette):
+        assert set(cassette._match_on) == set([vcr.matchers['uri']])
+
+    @vcr.use_cassette(additional_matchers=('body'))
+    def function_additional(cassette):
+        assert set(cassette._match_on) == set([vcr.matchers['uri'], vcr.matchers['body']])
+
+    function_defaults()
+    function_additional()
