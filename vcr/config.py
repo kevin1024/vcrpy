@@ -211,12 +211,10 @@ class VCR(object):
                 )
             )
 
-        hosts_to_ignore = list(ignore_hosts)
+        hosts_to_ignore = set(ignore_hosts)
         if ignore_localhost:
-            hosts_to_ignore.extend(('localhost', '0.0.0.0', '127.0.0.1'))
-
+            hosts_to_ignore.update(('localhost', '0.0.0.0', '127.0.0.1'))
         if hosts_to_ignore:
-            hosts_to_ignore = set(hosts_to_ignore)
             filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
 
         if before_record_request:
