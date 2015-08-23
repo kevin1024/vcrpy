@@ -124,7 +124,9 @@ class VCR(object):
                 if not path.startswith(cassette_library_dir):
                     return os.path.join(cassette_library_dir, path)
                 return path
-            path_transformer = compose(add_cassette_library_dir, path_transformer)
+            path_transformer = compose(
+                add_cassette_library_dir, path_transformer
+            )
         elif not func_path_generator:
             # If we don't have a library dir, use the functions
             # location to build a full path for cassettes.
@@ -137,9 +139,7 @@ class VCR(object):
             ),
             'record_mode': kwargs.get('record_mode', self.record_mode),
             'before_record_request': self._build_before_record_request(kwargs),
-            'before_record_response': self._build_before_record_response(
-                kwargs
-            ),
+            'before_record_response': self._build_before_record_response(kwargs),
             'custom_patches': self._custom_patches + kwargs.get(
                 'custom_patches', ()
             ),
@@ -162,6 +162,7 @@ class VCR(object):
             before_record_response = (before_record_response,)
             for function in before_record_response:
                 filter_functions.append(function)
+
         def before_record_response(response):
             for function in filter_functions:
                 if response is None:
@@ -182,7 +183,8 @@ class VCR(object):
             'filter_post_data_parameters', self.filter_post_data_parameters
         )
         before_record_request = options.get(
-            "before_record_request", options.get("before_record", self.before_record_request)
+            "before_record_request",
+            options.get("before_record", self.before_record_request)
         )
         ignore_hosts = options.get(
             'ignore_hosts', self.ignore_hosts
@@ -191,14 +193,24 @@ class VCR(object):
             'ignore_localhost', self.ignore_localhost
         )
         if filter_headers:
-            filter_functions.append(functools.partial(filters.remove_headers,
-                                                      headers_to_remove=filter_headers))
+            filter_functions.append(
+                functools.partial(
+                    filters.remove_headers,
+                    headers_to_remove=filter_headers
+                )
+            )
         if filter_query_parameters:
-            filter_functions.append(functools.partial(filters.remove_query_parameters,
-                                                      query_parameters_to_remove=filter_query_parameters))
+            filter_functions.append(functools.partial(
+                filters.remove_query_parameters,
+                query_parameters_to_remove=filter_query_parameters
+            ))
         if filter_post_data_parameters:
-            filter_functions.append(functools.partial(filters.remove_post_data_parameters,
-                                                      post_data_parameters_to_remove=filter_post_data_parameters))
+            filter_functions.append(
+                functools.partial(
+                    filters.remove_post_data_parameters,
+                    post_data_parameters_to_remove=filter_post_data_parameters
+                )
+            )
 
         hosts_to_ignore = list(ignore_hosts)
         if ignore_localhost:
@@ -213,6 +225,7 @@ class VCR(object):
                 before_record_request = (before_record_request,)
             for function in before_record_request:
                 filter_functions.append(function)
+
         def before_record_request(request):
             request = copy.copy(request)
             for function in filter_functions:
@@ -234,7 +247,7 @@ class VCR(object):
     @staticmethod
     def _build_path_from_func_using_module(function):
         return os.path.join(os.path.dirname(inspect.getfile(function)),
-                                            function.__name__)
+                            function.__name__)
 
     def register_serializer(self, name, serializer):
         self.serializers[name] = serializer
