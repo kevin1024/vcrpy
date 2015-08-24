@@ -1,19 +1,16 @@
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
-import copy
 import json
 
 from .compat import collections
 
 
 def remove_headers(request, headers_to_remove):
-    headers = copy.copy(request.headers)
-    headers_to_remove = [h.lower() for h in headers_to_remove]
-    keys = [k for k in headers if k.lower() in headers_to_remove]
-    if keys:
-        for k in keys:
-            headers.pop(k)
-        request.headers = headers
+    new_headers = request.headers.copy()
+    for k in headers_to_remove:
+        if k in new_headers:
+            del new_headers[k]
+    request.headers = new_headers
     return request
 
 

@@ -15,7 +15,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
 
     @functools.wraps(real_fetch_impl)
     def new_fetch_impl(self, request, callback):
-        headers = dict(request.headers)
+        headers = request.headers.copy()
         if request.user_agent:
             headers.setdefault('User-Agent', request.user_agent)
 

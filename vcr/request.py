@@ -1,10 +1,11 @@
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, parse_qsl
+from .util import CaseInsensitiveDict
 
 
 class Request(object):
     """
-    VCR's  representation of a request.
+    VCR's representation of a request.
 
     There is a weird quirk in HTTP.  You can send the same header twice.  For
     this reason, headers are represented by a dict, with lists as the values.
@@ -32,9 +33,19 @@ class Request(object):
             self.body = body.read()
         else:
             self.body = body
-        self.headers = {}
-        for key in headers:
-            self.add_header(key, headers[key])
+        self.headers = CaseInsensitiveDict()
+        for key, value in headers.items():
+            self.add_header(key, value)
+
+    @property
+    def headers(self):
+        return self._headers
+
+    @headers.setter
+    def headers(self, value):
+        if not isinstance(value, CaseInsensitiveDict):
+            value = CaseInsensitiveDict(value)
+        self._headers = value
 
     @property
     def body(self):
