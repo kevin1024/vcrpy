@@ -1,4 +1,5 @@
 language: python
+sudo: false
 before_install: openssl version
 env:
   global:
