@@ -27,8 +27,7 @@ def remove_query_parameters(request, query_parameters_to_remove):
 
 def remove_post_data_parameters(request, post_data_parameters_to_remove):
     if request.method == 'POST' and not isinstance(request.body, BytesIO):
-        if ('Content-Type' in request.headers and
-                request.headers['Content-Type'] == 'application/json'):
+        if request.headers.get('Content-Type') == 'application/json':
             json_data = json.loads(request.body.decode('utf-8'))
             for k in list(json_data.keys()):
                 if k in post_data_parameters_to_remove:
