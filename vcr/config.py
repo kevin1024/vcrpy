@@ -162,6 +162,7 @@ class VCR(object):
             if not isinstance(before_record_response, collections.Iterable):
                 before_record_response = (before_record_response,)
             filter_functions.extend(before_record_response)
+
         def before_record_response(response):
             for function in filter_functions:
                 if response is None:
@@ -221,6 +222,7 @@ class VCR(object):
             if not isinstance(before_record_request, collections.Iterable):
                 before_record_request = (before_record_request,)
             filter_functions.extend(before_record_request)
+
         def before_record_request(request):
             request = copy.copy(request)
             for function in filter_functions:

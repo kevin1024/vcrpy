@@ -14,17 +14,18 @@ library <https://github.com/vcr/vcr>`__.
 What it does
 ------------
 
-VCR.py simplifies and speeds up tests that make HTTP requests. The first
-time you run code that is inside a VCR.py context manager or decorated
-function, VCR.py records all HTTP interactions that take place through
-the libraries it supports and serializes and writes them to a flat file
-(in yaml format by default). This flat file is called a cassette. When
-the relevant peice of code is executed again, VCR.py will read the
-serialized requests and responses from the aforementioned cassette file,
-and intercept any HTTP requests that it recognizes from the original
-test run and return responses that corresponded to those requests. This
-means that the requests will not actually result in HTTP traffic, which
-confers several benefits including:
+VCR.py simplifies and speeds up tests that make HTTP requests. The
+first time you run code that is inside a VCR.py context manager or
+decorated function, VCR.py records all HTTP interactions that take
+place through the libraries it supports and serializes and writes them
+to a flat file (in yaml format by default). This flat file is called a
+cassette. When the relevant peice of code is executed again, VCR.py
+will read the serialized requests and responses from the
+aforementioned cassette file, and intercept any HTTP requests that it
+recognizes from the original test run and return the responses that
+corresponded to those requests. This means that the requests will not
+actually result in HTTP traffic, which confers several benefits
+including:
 
 -  The ability to work offline
 -  Completely deterministic tests
@@ -608,6 +609,9 @@ new API in version 1.0.x
 
 Changelog
 ---------
+-  1.7.3 [#188] ``additional_matchers`` kwarg on ``use_casstte``.
+   [#191] Actually support passing multiple before_record_request
+   functions (thanks @agriffis).
 -  1.7.2 [#186] Get effective_url in tornado (thanks @mvschaik), [#187]
    Set request_time on Response object in tornado (thanks @abhinav).
 -  1.7.1 [#183] Patch ``fetch_impl`` instead of the entire HTTPClient
