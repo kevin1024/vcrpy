@@ -1,6 +1,6 @@
 from vcr.filters import (
     remove_headers, replace_headers,
-    remove_query_parameters,
+    remove_query_parameters, replace_query_parameters,
     remove_post_data_parameters
 )
 from vcr.compat import mock
@@ -66,25 +66,56 @@ def test_remove_headers():
     assert request.headers == {'hello': 'goodbye'}
 
 
-def test_remove_query_parameters():
-    uri = 'http://g.com/?q=cowboys&w=1'
+def test_replace_query_parameters():
+    # This tests all of:
+    #   1. keeping a parameter
+    #   2. removing a parameter
+    #   3. replacing a parameter
+    #   4. replacing a parameter using a callable
+    #   5. removing a parameter using a callable
+    #   6. replacing a parameter that doesn't exist
+    uri = 'http://g.com/?one=keep&two=lose&three=change&four=shout&five=whisper'
     request = Request('GET', uri, '', {})
-    remove_query_parameters(request, ['w'])
-    assert request.uri == 'http://g.com/?q=cowboys'
+    replace_query_parameters(request, [
+        ('two', None),
+        ('three', 'tada'),
+        ('four', lambda key, value, request: value.upper()),
+        ('five', lambda key, value, request: None),
+        ('six', 'doesntexist'),
+    ])
+    assert request.query == [
+        ('four', 'SHOUT'),
+        ('one', 'keep'),
+        ('three', 'tada'),
+    ]
 
 
 def test_remove_all_query_parameters():
     uri = 'http://g.com/?q=cowboys&w=1'
     request = Request('GET', uri, '', {})
-    remove_query_parameters(request, ['w', 'q'])
+    replace_query_parameters(request, [('w', None), ('q', None)])
     assert request.uri == 'http://g.com/'
 
 
-def test_remove_nonexistent_query_parameters():
-    uri = 'http://g.com/'
+def test_replace_query_parameters_callable():
+    # This goes beyond test_replace_query_parameters() to ensure that the
+    # callable receives the expected arguments.
+    uri = 'http://g.com/?hey=there'
     request = Request('GET', uri, '', {})
-    remove_query_parameters(request, ['w', 'q'])
-    assert request.uri == 'http://g.com/'
+    callme = mock.Mock(return_value='ho')
+    replace_query_parameters(request, [('hey', callme)])
+    assert request.uri == 'http://g.com/?hey=ho'
+    assert callme.call_args == ((), {'request': request,
+                                     'key': 'hey',
+                                     'value': 'there'})
+
+
+def test_remove_query_parameters():
+    # Test the backward-compatible API wrapper.
+    uri = 'http://g.com/?q=cowboys&w=1'
+    request = Request('GET', uri, '', {})
+    remove_query_parameters(request, ['w'])
+    assert request.uri == 'http://g.com/?q=cowboys'
 
 
 def test_remove_post_data_parameters():

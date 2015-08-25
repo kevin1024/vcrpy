@@ -33,15 +33,40 @@ def remove_headers(request, headers_to_remove):
     return replace_headers(request, replacements)
 
 
-def remove_query_parameters(request, query_parameters_to_remove):
+def replace_query_parameters(request, replacements):
+    """
+    Replace query parameters in request according to replacements. The
+    replacements should be a list of (key, value) pairs where the value can be
+    any of:
+      1. A simple replacement string value.
+      2. None to remove the given header.
+      3. A callable which accepts (key, value, request) and returns a string
+         value or None.
+    """
     query = request.query
-    new_query = [(k, v) for (k, v) in query
-                 if k not in query_parameters_to_remove]
-    if len(new_query) != len(query):
-        uri_parts = list(urlparse(request.uri))
-        uri_parts[4] = urlencode(new_query)
-        request.uri = urlunparse(uri_parts)
+    new_query = []
+    replacements = dict(replacements)
+    for k, ov in query:
+        if k not in replacements:
+            new_query.append((k, ov))
+        else:
+            rv = replacements[k]
+            if callable(rv):
+                rv = rv(key=k, value=ov, request=request)
+            if rv is not None:
+                new_query.append((k, rv))
+    uri_parts = list(urlparse(request.uri))
+    uri_parts[4] = urlencode(new_query)
+    request.uri = urlunparse(uri_parts)
     return request
+
+
+def remove_query_parameters(request, query_parameters_to_remove):
+    """
+    Wrap replace_query_parameters() for API backward compatibility.
+    """
+    replacements = [(k, None) for k in query_parameters_to_remove]
+    return replace_query_parameters(request, replacements)
 
 
 def remove_post_data_parameters(request, post_data_parameters_to_remove):
