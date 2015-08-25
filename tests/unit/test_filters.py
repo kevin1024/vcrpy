@@ -1,24 +1,69 @@
 from vcr.filters import (
-    remove_headers,
+    remove_headers, replace_headers,
     remove_query_parameters,
     remove_post_data_parameters
 )
+from vcr.compat import mock
 from vcr.request import Request
 import json
 
 
+def test_replace_headers():
+    # This tests all of:
+    #   1. keeping a header
+    #   2. removing a header
+    #   3. replacing a header
+    #   4. replacing a header using a callable
+    #   5. removing a header using a callable
+    #   6. replacing a header that doesn't exist
+    headers = {
+        'one': ['keep'],
+        'two': ['lose'],
+        'three': ['change'],
+        'four': ['shout'],
+        'five': ['whisper'],
+    }
+    request = Request('GET', 'http://google.com', '', headers)
+    replace_headers(request, [
+        ('two', None),
+        ('three', 'tada'),
+        ('four', lambda key, value, request: value.upper()),
+        ('five', lambda key, value, request: None),
+        ('six', 'doesntexist'),
+    ])
+    assert request.headers == {
+        'one': 'keep',
+        'three': 'tada',
+        'four': 'SHOUT',
+    }
+
+
+def test_replace_headers_empty():
+    headers = {'hello': 'goodbye', 'secret': 'header'}
+    request = Request('GET', 'http://google.com', '', headers)
+    replace_headers(request, [])
+    assert request.headers == headers
+
+
+def test_replace_headers_callable():
+    # This goes beyond test_replace_headers() to ensure that the callable
+    # receives the expected arguments.
+    headers = {'hey': 'there'}
+    request = Request('GET', 'http://google.com', '', headers)
+    callme = mock.Mock(return_value='ho')
+    replace_headers(request, [('hey', callme)])
+    assert request.headers == {'hey': 'ho'}
+    assert callme.call_args == ((), {'request': request,
+                                     'key': 'hey',
+                                     'value': 'there'})
+
+
 def test_remove_headers():
+    # Test the backward-compatible API wrapper.
     headers = {'hello': ['goodbye'], 'secret': ['header']}
     request = Request('GET', 'http://google.com', '', headers)
     remove_headers(request, ['secret'])
     assert request.headers == {'hello': 'goodbye'}
-
-
-def test_remove_headers_empty():
-    headers = {'hello': 'goodbye', 'secret': 'header'}
-    request = Request('GET', 'http://google.com', '', headers)
-    remove_headers(request, [])
-    assert request.headers == headers
 
 
 def test_remove_query_parameters():

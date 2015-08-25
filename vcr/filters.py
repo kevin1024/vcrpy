@@ -4,14 +4,33 @@ import json
 
 from .compat import collections
 
-
-def remove_headers(request, headers_to_remove):
+def replace_headers(request, replacements):
+    """
+    Replace headers in request according to replacements. The replacements
+    should be a list of (key, value) pairs where the value can be any of:
+      1. A simple replacement string value.
+      2. None to remove the given header.
+      3. A callable which accepts (key, value, request) and returns a string
+         value or None.
+    """
     new_headers = request.headers.copy()
-    for k in headers_to_remove:
+    for k, rv in replacements:
         if k in new_headers:
-            del new_headers[k]
+            ov = new_headers.pop(k)
+            if callable(rv):
+                rv = rv(key=k, value=ov, request=request)
+            if rv is not None:
+                new_headers[k] = rv
     request.headers = new_headers
     return request
+
+
+def remove_headers(request, headers_to_remove):
+    """
+    Wrap replace_headers() for API backward compatibility.
+    """
+    replacements = [(k, None) for k in headers_to_remove]
+    return replace_headers(request, replacements)
 
 
 def remove_query_parameters(request, query_parameters_to_remove):
