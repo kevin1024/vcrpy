@@ -2,7 +2,6 @@ from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
 import json
 
-from .compat import collections
 
 def replace_headers(request, replacements):
     """
@@ -69,25 +68,55 @@ def remove_query_parameters(request, query_parameters_to_remove):
     return replace_query_parameters(request, replacements)
 
 
-def remove_post_data_parameters(request, post_data_parameters_to_remove):
+def replace_post_data_parameters(request, replacements):
+    """
+    Replace post data in request--either form data or json--according to
+    replacements. The replacements should be a list of (key, value) pairs where
+    the value can be any of:
+      1. A simple replacement string value.
+      2. None to remove the given header.
+      3. A callable which accepts (key, value, request) and returns a string
+         value or None.
+    """
+    replacements = dict(replacements)
     if request.method == 'POST' and not isinstance(request.body, BytesIO):
         if request.headers.get('Content-Type') == 'application/json':
             json_data = json.loads(request.body.decode('utf-8'))
-            for k in list(json_data.keys()):
-                if k in post_data_parameters_to_remove:
-                    del json_data[k]
+            for k, rv in replacements.items():
+                if k in json_data:
+                    ov = json_data.pop(k)
+                    if callable(rv):
+                        rv = rv(key=k, value=ov, request=request)
+                    if rv is not None:
+                        json_data[k] = rv
             request.body = json.dumps(json_data).encode('utf-8')
         else:
-            post_data = collections.OrderedDict()
             if isinstance(request.body, text_type):
                 request.body = request.body.encode('utf-8')
-
-            for k, sep, v in (p.partition(b'=') for p in request.body.split(b'&')):
-                if k in post_data:
-                    post_data[k].append(v)
-                elif len(k) > 0 and k.decode('utf-8') not in post_data_parameters_to_remove:
-                    post_data[k] = [v]
-            request.body = b'&'.join(
-                b'='.join([k, v])
-                for k, vals in post_data.items() for v in vals)
+            splits = [p.partition(b'=') for p in request.body.split(b'&')]
+            new_splits = []
+            for k, sep, ov in splits:
+                if sep is None:
+                    new_splits.append((k, sep, ov))
+                else:
+                    rk = k.decode('utf-8')
+                    if rk not in replacements:
+                        new_splits.append((k, sep, ov))
+                    else:
+                        rv = replacements[rk]
+                        if callable(rv):
+                            rv = rv(key=rk, value=ov.decode('utf-8'),
+                                    request=request)
+                        if rv is not None:
+                            new_splits.append((k, sep, rv.encode('utf-8')))
+            request.body = b'&'.join(k if sep is None else b''.join([k, sep, v])
+                                     for k, sep, v in new_splits)
     return request
+
+
+def remove_post_data_parameters(request, post_data_parameters_to_remove):
+    """
+    Wrap replace_post_data_parameters() for API backward compatibility.
+    """
+    replacements = [(k, None) for k in post_data_parameters_to_remove]
+    return replace_post_data_parameters(request, replacements)

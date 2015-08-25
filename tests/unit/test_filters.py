@@ -1,7 +1,7 @@
 from vcr.filters import (
     remove_headers, replace_headers,
     remove_query_parameters, replace_query_parameters,
-    remove_post_data_parameters
+    remove_post_data_parameters, replace_post_data_parameters,
 )
 from vcr.compat import mock
 from vcr.request import Request
@@ -118,7 +118,28 @@ def test_remove_query_parameters():
     assert request.uri == 'http://g.com/?q=cowboys'
 
 
+def test_replace_post_data_parameters():
+    # This tests all of:
+    #   1. keeping a parameter
+    #   2. removing a parameter
+    #   3. replacing a parameter
+    #   4. replacing a parameter using a callable
+    #   5. removing a parameter using a callable
+    #   6. replacing a parameter that doesn't exist
+    body = b'one=keep&two=lose&three=change&four=shout&five=whisper'
+    request = Request('POST', 'http://google.com', body, {})
+    replace_post_data_parameters(request, [
+        ('two', None),
+        ('three', 'tada'),
+        ('four', lambda key, value, request: value.upper()),
+        ('five', lambda key, value, request: None),
+        ('six', 'doesntexist'),
+    ])
+    assert request.body == b'one=keep&three=tada&four=SHOUT'
+
+
 def test_remove_post_data_parameters():
+    # Test the backward-compatible API wrapper.
     body = b'id=secret&foo=bar'
     request = Request('POST', 'http://google.com', body, {})
     remove_post_data_parameters(request, ['id'])
@@ -128,25 +149,42 @@ def test_remove_post_data_parameters():
 def test_preserve_multiple_post_data_parameters():
     body = b'id=secret&foo=bar&foo=baz'
     request = Request('POST', 'http://google.com', body, {})
-    remove_post_data_parameters(request, ['id'])
+    replace_post_data_parameters(request, [('id', None)])
     assert request.body == b'foo=bar&foo=baz'
 
 
 def test_remove_all_post_data_parameters():
     body = b'id=secret&foo=bar'
     request = Request('POST', 'http://google.com', body, {})
-    remove_post_data_parameters(request, ['id', 'foo'])
+    replace_post_data_parameters(request, [('id', None), ('foo', None)])
     assert request.body == b''
 
 
-def test_remove_nonexistent_post_data_parameters():
-    body = b''
+def test_replace_json_post_data_parameters():
+    # This tests all of:
+    #   1. keeping a parameter
+    #   2. removing a parameter
+    #   3. replacing a parameter
+    #   4. replacing a parameter using a callable
+    #   5. removing a parameter using a callable
+    #   6. replacing a parameter that doesn't exist
+    body = b'{"one": "keep", "two": "lose", "three": "change", "four": "shout", "five": "whisper"}'
     request = Request('POST', 'http://google.com', body, {})
-    remove_post_data_parameters(request, ['id'])
-    assert request.body == b''
+    request.headers['Content-Type'] = 'application/json'
+    replace_post_data_parameters(request, [
+        ('two', None),
+        ('three', 'tada'),
+        ('four', lambda key, value, request: value.upper()),
+        ('five', lambda key, value, request: None),
+        ('six', 'doesntexist'),
+    ])
+    request_data = json.loads(request.body.decode('utf-8'))
+    expected_data = json.loads('{"one": "keep", "three": "tada", "four": "SHOUT"}')
+    assert request_data == expected_data
 
 
 def test_remove_json_post_data_parameters():
+    # Test the backward-compatible API wrapper.
     body = b'{"id": "secret", "foo": "bar", "baz": "qux"}'
     request = Request('POST', 'http://google.com', body, {})
     request.headers['Content-Type'] = 'application/json'
@@ -160,13 +198,5 @@ def test_remove_all_json_post_data_parameters():
     body = b'{"id": "secret", "foo": "bar"}'
     request = Request('POST', 'http://google.com', body, {})
     request.headers['Content-Type'] = 'application/json'
-    remove_post_data_parameters(request, ['id', 'foo'])
-    assert request.body == b'{}'
-
-
-def test_remove_nonexistent_json_post_data_parameters():
-    body = b'{}'
-    request = Request('POST', 'http://google.com', body, {})
-    request.headers['Content-Type'] = 'application/json'
-    remove_post_data_parameters(request, ['id'])
+    replace_post_data_parameters(request, [('id', None), ('foo', None)])
     assert request.body == b'{}'
