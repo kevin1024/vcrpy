@@ -1,13 +1,15 @@
+|Build Status| |Stories in Ready| |Gitter|
+
 VCR.py
 ======
 
-.. image:: vcr.png
+.. figure:: https://raw.github.com/kevin1024/vcrpy/master/vcr.png
    :alt: vcr.py
+
+   vcr.py
 
 This is a Python version of `Ruby's VCR
 library <https://github.com/vcr/vcr>`__.
-
-|Build Status| |Stories in Ready| |Gitter Chat|
 
 What it does
 ------------
@@ -607,7 +609,7 @@ new API in version 1.0.x
 
 Changelog
 ---------
--  1.7.3 [#188] ``additional_matchers`` kwarg on ``use_cassette``.
+-  1.7.3 [#188] ``additional_matchers`` kwarg on ``use_casstte``.
    [#191] Actually support passing multiple before_record_request
    functions (thanks @agriffis).
 -  1.7.2 [#186] Get effective_url in tornado (thanks @mvschaik), [#187]
@@ -756,6 +758,6 @@ more details
    :target: http://travis-ci.org/kevin1024/vcrpy
 .. |Stories in Ready| image:: https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=Ready
    :target: https://waffle.io/kevin1024/vcrpy
-.. |Gitter Chat| image:: https://badges.gitter.im/Join%20Chat.svg
+.. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
    :target: https://gitter.im/kevin1024/vcrpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
