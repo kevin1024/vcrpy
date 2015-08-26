@@ -1,19 +1,13 @@
 VCR.py
 ======
 
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
-   :target: https://gitter.im/kevin1024/vcrpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-
-.. figure:: https://raw.github.com/kevin1024/vcrpy/master/vcr.png
+.. image:: vcr.png
    :alt: vcr.py
-
-   vcr.py
 
 This is a Python version of `Ruby's VCR
 library <https://github.com/vcr/vcr>`__.
 
-|Build Status| |Stories in Ready|
+|Build Status| |Stories in Ready| |Gitter Chat|
 
 What it does
 ------------
@@ -762,3 +756,6 @@ more details
    :target: http://travis-ci.org/kevin1024/vcrpy
 .. |Stories in Ready| image:: https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=Ready
    :target: https://waffle.io/kevin1024/vcrpy
+.. |Gitter Chat| image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
+   :target: https://gitter.im/kevin1024/vcrpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
