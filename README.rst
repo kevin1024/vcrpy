@@ -1,6 +1,10 @@
 VCR.py
 ======
 
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
+   :target: https://gitter.im/kevin1024/vcrpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 .. figure:: https://raw.github.com/kevin1024/vcrpy/master/vcr.png
    :alt: vcr.py
 
