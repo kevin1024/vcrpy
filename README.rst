@@ -575,7 +575,7 @@ matchers.
 
 Speed
 -----
-VCR.py runs about 10x faster when pyyaml can use the libyaml extensions. However, just installing ``libyaml`` (Mac) or `libyaml-dev`` (Linux) is not enough, as pyyaml needs to be rebuild with the proper flag. Note that this flag is cached by pip, so clear the cache first. 
+VCR.py runs about 10x faster when pyyaml can use the libyaml extensions. However, just installing ``libyaml`` (Mac) or ``libyaml-dev`` (Linux) is not enough, as pyyaml needs to be rebuild with the proper flag. Note that this flag is cached by pip, so clear the cache first. 
 
 Are you using libyaml already? This should work:
 
