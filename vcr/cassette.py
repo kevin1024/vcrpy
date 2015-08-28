@@ -75,7 +75,7 @@ class CassetteContextDecorator(object):
             lambda key, _: key in self._non_cassette_arguments,
             self._args_getter()
         )
-        if 'path_transformer' in other_kwargs:
+        if other_kwargs.get('path_transformer'):
             transformer = other_kwargs['path_transformer']
             cassette_kwargs['path'] = transformer(cassette_kwargs['path'])
         self.__finish = self._patch_generator(self.cls.load(**cassette_kwargs))

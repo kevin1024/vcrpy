@@ -245,6 +245,13 @@ def test_path_transformer_with_context_manager():
         assert cassette._path == 'a'
 
 
+def test_path_transformer_None():
+    with Cassette.use(
+        path='a', path_transformer=None,
+    ) as cassette:
+        assert cassette._path == 'a'
+
+
 def test_func_path_generator():
     def generator(function):
         return os.path.join(os.path.dirname(inspect.getfile(function)),
