@@ -579,13 +579,13 @@ VCR.py runs about 10x faster when pyyaml can use the libyaml extensions. However
 
 Are you using libyaml already? This should work:
 
-:: code:: bash
+.. code:: sh
 
     python -c 'from yaml import CLoader'
 
 If not:
 
-:: code:: bash
+.. code:: sh
 
     pip uninstall pyyaml
     pip --no-cache-dir install pyyaml
