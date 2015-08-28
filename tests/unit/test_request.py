@@ -1,6 +1,7 @@
 import pytest
 
-from vcr.request import Request, HeadersDict
+from vcr.request import Request
+from vcr.util import HeadersDict
 
 
 def test_str():
@@ -29,7 +30,7 @@ def test_add_header_deprecated():
     ('https://go.com/', 443),
     ('https://go.com:443/', 443),
     ('https://go.com:3000/', 3000),
-    ])
+])
 def test_port(uri, expected_port):
     req = Request('GET', uri,  '', {})
     assert req.port == expected_port
