@@ -98,6 +98,28 @@ def test_vcr_before_record_response_iterable():
             assert mock_filter.call_count == 1
 
 
+def test_vcr_path_transformer():
+    # Regression test for #199
+
+    # Prevent actually saving the cassette
+    with mock.patch('vcr.cassette.save_cassette'):
+
+        # Baseline: path should be unchanged
+        vcr = VCR()
+        with vcr.use_cassette('test') as cassette:
+            assert cassette._path == 'test'
+
+        # Regression test: path_transformer=None should do the same.
+        vcr = VCR(path_transformer=None)
+        with vcr.use_cassette('test') as cassette:
+            assert cassette._path == 'test'
+
+        # and it should still work with cassette_library_dir
+        vcr = VCR(cassette_library_dir='/foo')
+        with vcr.use_cassette('test') as cassette:
+            assert cassette._path == '/foo/test'
+
+
 @pytest.fixture
 def random_fixture():
     return 1

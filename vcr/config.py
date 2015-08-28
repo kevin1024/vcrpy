@@ -23,7 +23,7 @@ class VCR(object):
             return path
         return ensure
 
-    def __init__(self, path_transformer=lambda x: x, before_record_request=None,
+    def __init__(self, path_transformer=None, before_record_request=None,
                  custom_patches=(), filter_query_parameters=(), ignore_hosts=(),
                  record_mode="once", ignore_localhost=False, filter_headers=(),
                  before_record_response=None, filter_post_data_parameters=(),
@@ -108,7 +108,7 @@ class VCR(object):
         matcher_names = kwargs.get('match_on', self.match_on)
         path_transformer = kwargs.get(
             'path_transformer',
-            self.path_transformer or self.ensure_suffix('.yaml')
+            self.path_transformer
         )
         func_path_generator = kwargs.get(
             'func_path_generator',

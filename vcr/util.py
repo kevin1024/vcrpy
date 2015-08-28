@@ -81,8 +81,9 @@ def partition_dict(predicate, dictionary):
 def compose(*functions):
     def composed(incoming):
         res = incoming
-        for function in functions[::-1]:
-            res = function(res)
+        for function in reversed(functions):
+            if function:
+                res = function(res)
         return res
     return composed
 
