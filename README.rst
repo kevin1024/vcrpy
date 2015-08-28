@@ -609,7 +609,7 @@ new API in version 1.0.x
 
 Changelog
 ---------
--  1.7.3 [#188] ``additional_matchers`` kwarg on ``use_casstte``.
+-  1.7.3 [#188] ``additional_matchers`` kwarg on ``use_cassette``.
    [#191] Actually support passing multiple before_record_request
    functions (thanks @agriffis).
 -  1.7.2 [#186] Get effective_url in tornado (thanks @mvschaik), [#187]
