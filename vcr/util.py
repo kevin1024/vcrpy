@@ -1,4 +1,6 @@
 import collections
+import types
+
 
 # Shamelessly stolen from https://github.com/kennethreitz/requests/blob/master/requests/structures.py
 class CaseInsensitiveDict(collections.MutableMapping):
@@ -90,3 +92,30 @@ def read_body(request):
     if hasattr(request.body, 'read'):
         return request.body.read()
     return request.body
+
+
+def auto_decorate(
+    decorator,
+    predicate=lambda name, value: isinstance(value, types.FunctionType)
+):
+    def maybe_decorate(attribute, value):
+        if predicate(attribute, value):
+            value = decorator(value)
+        return value
+
+    class DecorateAll(type):
+
+        def __setattr__(cls, attribute, value):
+            return super(DecorateAll, cls).__setattr__(
+                attribute, maybe_decorate(attribute, value)
+            )
+
+        def __new__(cls, name, bases, attributes_dict):
+            new_attributes_dict = dict(
+                (attribute, maybe_decorate(attribute, value))
+                for attribute, value in attributes_dict.items()
+            )
+            return super(DecorateAll, cls).__new__(
+                cls, name, bases, new_attributes_dict
+            )
+    return DecorateAll
