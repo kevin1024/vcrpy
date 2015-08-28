@@ -283,6 +283,8 @@ class TestVCRClass(VCR().test_case()):
 
     def no_decoration(self):
         assert httplib.HTTPConnection == _HTTPConnection
+        self.test_dynamically_added()
+        assert httplib.HTTPConnection == _HTTPConnection
 
     def test_one(self):
         with force_reset():
@@ -293,3 +295,11 @@ class TestVCRClass(VCR().test_case()):
 
     def test_two(self):
         assert httplib.HTTPConnection != _HTTPConnection
+
+
+def test_dynamically_added(self):
+    assert httplib.HTTPConnection != _HTTPConnection
+
+
+TestVCRClass.test_dynamically_added = test_dynamically_added
+del test_dynamically_added
