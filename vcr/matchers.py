@@ -1,6 +1,6 @@
 import json
 from six.moves import urllib, xmlrpc_client
-from .util import CaseInsensitiveDict, read_body
+from .util import read_body
 import logging
 
 
@@ -66,9 +66,8 @@ def _identity(x):
 
 
 def _get_transformer(request):
-    headers = CaseInsensitiveDict(request.headers)
     for checker, transformer in _checker_transformer_pairs:
-        if checker(headers): return transformer
+        if checker(request.headers): return transformer
     else:
         return _identity
 

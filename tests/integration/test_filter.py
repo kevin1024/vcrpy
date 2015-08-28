@@ -17,11 +17,7 @@ def _request_with_auth(url, username, password):
 
 
 def _find_header(cassette, header):
-    for request in cassette.requests:
-        for k in request.headers:
-            if header.lower() == k.lower():
-                return True
-    return False
+    return any(header in request.headers for request in cassette.requests)
 
 
 def test_filter_basic_auth(tmpdir):

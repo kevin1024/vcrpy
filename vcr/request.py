@@ -1,27 +1,12 @@
+import warnings
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, parse_qsl
+from .util import CaseInsensitiveDict
 
 
 class Request(object):
     """
-    VCR's  representation of a request.
-
-    There is a weird quirk in HTTP.  You can send the same header twice.  For
-    this reason, headers are represented by a dict, with lists as the values.
-    However, it appears that HTTPlib is completely incapable of sending the
-    same header twice.  This puts me in a weird position: I want to be able to
-    accurately represent HTTP headers in cassettes, but I don't want the extra
-    step of always having to do [0] in the general case, i.e.
-    request.headers['key'][0]
-
-    In addition, some servers sometimes send the same header more than once,
-    and httplib *can* deal with this situation.
-
-    Futhermore, I wanted to keep the request and response cassette format as
-    similar as possible.
-
-    For this reason, in cassettes I keep a dict with lists as keys, but once
-    deserialized into VCR, I keep them as plain, naked dicts.
+    VCR's representation of a request.
     """
 
     def __init__(self, method, uri, body, headers):
@@ -32,9 +17,17 @@ class Request(object):
             self.body = body.read()
         else:
             self.body = body
-        self.headers = {}
-        for key in headers:
-            self.add_header(key, headers[key])
+        self.headers = headers
+
+    @property
+    def headers(self):
+        return self._headers
+
+    @headers.setter
+    def headers(self, value):
+        if not isinstance(value, HeadersDict):
+            value = HeadersDict(value)
+        self._headers = value
 
     @property
     def body(self):
@@ -47,11 +40,10 @@ class Request(object):
         self._body = value
 
     def add_header(self, key, value):
-        # see class docstring for an explanation
-        if isinstance(value, (tuple, list)):
-            self.headers[key] = value[0]
-        else:
-            self.headers[key] = value
+        warnings.warn("Request.add_header is deprecated. "
+                      "Please assign to request.headers instead.",
+                      DeprecationWarning)
+        self.headers[key] = value
 
     @property
     def scheme(self):
@@ -105,3 +97,35 @@ class Request(object):
     @classmethod
     def _from_dict(cls, dct):
         return Request(**dct)
+
+
+class HeadersDict(CaseInsensitiveDict):
+    """
+    There is a weird quirk in HTTP.  You can send the same header twice.  For
+    this reason, headers are represented by a dict, with lists as the values.
+    However, it appears that HTTPlib is completely incapable of sending the
+    same header twice.  This puts me in a weird position: I want to be able to
+    accurately represent HTTP headers in cassettes, but I don't want the extra
+    step of always having to do [0] in the general case, i.e.
+    request.headers['key'][0]
+
+    In addition, some servers sometimes send the same header more than once,
+    and httplib *can* deal with this situation.
+
+    Futhermore, I wanted to keep the request and response cassette format as
+    similar as possible.
+
+    For this reason, in cassettes I keep a dict with lists as keys, but once
+    deserialized into VCR, I keep them as plain, naked dicts.
+    """
+
+    def __setitem__(self, key, value):
+        if isinstance(value, (tuple, list)):
+            value = value[0]
+
+        # Preserve the case from the first time this key was set.
+        old = self._store.get(key.lower())
+        if old:
+            key = old[0]
+
+        super(HeadersDict, self).__setitem__(key, value)

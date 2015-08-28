@@ -73,7 +73,7 @@ def test_remove_nonexistent_post_data_parameters():
 def test_remove_json_post_data_parameters():
     body = b'{"id": "secret", "foo": "bar", "baz": "qux"}'
     request = Request('POST', 'http://google.com', body, {})
-    request.add_header('Content-Type', 'application/json')
+    request.headers['Content-Type'] = 'application/json'
     remove_post_data_parameters(request, ['id'])
     request_body_json = json.loads(request.body.decode('utf-8'))
     expected_json = json.loads(b'{"foo": "bar", "baz": "qux"}'.decode('utf-8'))
@@ -83,7 +83,7 @@ def test_remove_json_post_data_parameters():
 def test_remove_all_json_post_data_parameters():
     body = b'{"id": "secret", "foo": "bar"}'
     request = Request('POST', 'http://google.com', body, {})
-    request.add_header('Content-Type', 'application/json')
+    request.headers['Content-Type'] = 'application/json'
     remove_post_data_parameters(request, ['id', 'foo'])
     assert request.body == b'{}'
 
@@ -91,6 +91,6 @@ def test_remove_all_json_post_data_parameters():
 def test_remove_nonexistent_json_post_data_parameters():
     body = b'{}'
     request = Request('POST', 'http://google.com', body, {})
-    request.add_header('Content-Type', 'application/json')
+    request.headers['Content-Type'] = 'application/json'
     remove_post_data_parameters(request, ['id'])
     assert request.body == b'{}'

@@ -1,19 +1,16 @@
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
-import copy
 import json
 
 from .compat import collections
 
 
 def remove_headers(request, headers_to_remove):
-    headers = copy.copy(request.headers)
-    headers_to_remove = [h.lower() for h in headers_to_remove]
-    keys = [k for k in headers if k.lower() in headers_to_remove]
-    if keys:
-        for k in keys:
-            headers.pop(k)
-        request.headers = headers
+    new_headers = request.headers.copy()
+    for k in headers_to_remove:
+        if k in new_headers:
+            del new_headers[k]
+    request.headers = new_headers
     return request
 
 
@@ -30,8 +27,7 @@ def remove_query_parameters(request, query_parameters_to_remove):
 
 def remove_post_data_parameters(request, post_data_parameters_to_remove):
     if request.method == 'POST' and not isinstance(request.body, BytesIO):
-        if ('Content-Type' in request.headers and
-                request.headers['Content-Type'] == 'application/json'):
+        if request.headers.get('Content-Type') == 'application/json':
             json_data = json.loads(request.body.decode('utf-8'))
             for k in list(json_data.keys()):
                 if k in post_data_parameters_to_remove:

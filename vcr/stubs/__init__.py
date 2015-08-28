@@ -188,8 +188,7 @@ class VCRConnection(object):
         log.debug('Got {0}'.format(self._vcr_request))
 
     def putheader(self, header, *values):
-        for value in values:
-            self._vcr_request.add_header(header, value)
+        self._vcr_request.headers[header] = values
 
     def send(self, data):
         '''
