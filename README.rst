@@ -3,7 +3,7 @@
 VCR.py
 ======
 
-.. image:: vcr.png
+.. image:: https://raw.github.com/kevin1024/vcrpy/master/vcr.png
    :alt: vcr.py
 
 This is a Python version of `Ruby's VCR
