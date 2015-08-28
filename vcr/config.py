@@ -2,18 +2,24 @@ import copy
 import functools
 import inspect
 import os
+import types
 
 import six
 
 from .compat import collections
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
-from .util import compose
+from .util import compose, auto_decorate
 from . import matchers
 from . import filters
 
 
 class VCR(object):
+
+    @staticmethod
+    def is_test_method(method_name, function):
+        return method_name.startswith('test') and \
+            isinstance(function, types.FunctionType)
 
     @staticmethod
     def ensure_suffix(suffix):
@@ -202,7 +208,7 @@ class VCR(object):
         if filter_query_parameters:
             filter_functions.append(functools.partial(
                 filters.remove_query_parameters,
-                query_parameters_to_remove=filter_query_parameters
+               query_parameters_to_remove=filter_query_parameters
             ))
         if filter_post_data_parameters:
             filter_functions.append(
@@ -250,3 +256,7 @@ class VCR(object):
 
     def register_matcher(self, name, matcher):
         self.matchers[name] = matcher
+
+    def test_case(self, predicate=None):
+        predicate = predicate or self.is_test_method
+        return six.with_metaclass(auto_decorate(self.use_cassette, predicate))

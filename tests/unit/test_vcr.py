@@ -1,11 +1,13 @@
 import os
 
 import pytest
+from six.moves import http_client as httplib
 
 from vcr import VCR, use_cassette
 from vcr.compat import mock
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
+from vcr.patch import _HTTPConnection, force_reset
 
 
 def test_vcr_use_cassette():
@@ -243,6 +245,7 @@ def test_path_transformer():
 
 def test_cassette_name_generator_defaults_to_using_module_function_defined_in():
     vcr = VCR(inject_cassette=True)
+
     @vcr.use_cassette
     def function_name(cassette):
         assert cassette._path == os.path.join(os.path.dirname(__file__),
@@ -274,3 +277,19 @@ def test_additional_matchers():
 
     function_defaults()
     function_additional()
+
+
+class TestVCRClass(VCR().test_case()):
+
+    def no_decoration(self):
+        assert httplib.HTTPConnection == _HTTPConnection
+
+    def test_one(self):
+        with force_reset():
+            self.no_decoration()
+        with force_reset():
+            self.test_two()
+        assert httplib.HTTPConnection != _HTTPConnection
+
+    def test_two(self):
+        assert httplib.HTTPConnection != _HTTPConnection
