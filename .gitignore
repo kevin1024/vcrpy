@@ -8,3 +8,4 @@ dist/
 pytestdebug.log
 
 fixtures/
+/docs/_build
