@@ -323,10 +323,15 @@ class VCRConnection(object):
         For example, urllib3 will set certain attributes on the connection,
         such as 'ssl_version'. These attributes need to get set on the real
         connection to have the correct and expected behavior.
+
+        TODO: Separately setting the attribute on the two instances is not
+        ideal. We should switch to a proxying implementation.
         """
         try:
             setattr(self.real_connection, name, value)
-        except AttributeError: # raised if real_connection has not been set yet
+        except AttributeError:
+             # raised if real_connection has not been set yet, such as when
+             # we're setting the real_connection itself for the first time
             pass
 
         super(VCRConnection, self).__setattr__(name, value)
