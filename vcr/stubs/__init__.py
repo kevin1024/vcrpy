@@ -315,6 +315,27 @@ class VCRConnection(object):
         with force_reset():
             self.real_connection = self._baseclass(*args, **kwargs)
 
+    def __setattr__(self, name, value):
+        """
+        We need to define this because any attributes that are set on the
+        VCRConnection need to be propogated to the real connection.
+
+        For example, urllib3 will set certain attributes on the connection,
+        such as 'ssl_version'. These attributes need to get set on the real
+        connection to have the correct and expected behavior.
+
+        TODO: Separately setting the attribute on the two instances is not
+        ideal. We should switch to a proxying implementation.
+        """
+        try:
+            setattr(self.real_connection, name, value)
+        except AttributeError:
+             # raised if real_connection has not been set yet, such as when
+             # we're setting the real_connection itself for the first time
+            pass
+
+        super(VCRConnection, self).__setattr__(name, value)
+
 
 class VCRHTTPConnection(VCRConnection):
     '''A Mocked class for HTTP requests'''
