@@ -24,7 +24,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-install_requires = ['PyYAML', 'wrapt', 'six>=1.5']
+install_requires = ['PyYAML', 'wrapt', 'six>=1.5', 'byteplay']
 
 
 extras_require = {

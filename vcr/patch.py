@@ -5,12 +5,35 @@ import itertools
 from .compat import contextlib, mock
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
 from six.moves import http_client as httplib
+from byteplay import LOAD_GLOBAL, LOAD_ATTR, Code
+
+
+def _patch_name(func, old, new):
+    """Replace references to old with new in func bytecode
+
+    This effectively renames variables and attributes in the code for
+    the function passed.
+    """
+    bytecode = Code.from_code(func.func_code)
+    for i, (opcode, arg) in enumerate(bytecode.code):
+        if opcode in [LOAD_GLOBAL, LOAD_ATTR] and arg == old:
+            bytecode.code[i] = (opcode, new)
+    func.func_code = bytecode.to_code()
 
 
 # Save some of the original types for the purposes of unpatching
 _HTTPConnection = httplib.HTTPConnection
 _HTTPSConnection = httplib.HTTPSConnection
 
+httplib._HTTPConnection = _HTTPConnection
+httplib._HTTPSConnection = _HTTPSConnection
+# Make the original HTTPSConnection class refer to the original
+# HTTPConnection class, always. This means that we don't need to
+# unpatch things when creating HTTPSConnection instances.
+_patch_name(_HTTPSConnection.__init__.im_func,
+            'HTTPConnection', '_HTTPConnection')
+_patch_name(_HTTPSConnection.connect.im_func,
+            'HTTPConnection', '_HTTPConnection')
 
 # Try to save the original types for requests
 try:
@@ -42,6 +65,12 @@ else:
     _HTTPSConnectionWithTimeout = httplib2.HTTPSConnectionWithTimeout
     _SCHEME_TO_CONNECTION = httplib2.SCHEME_TO_CONNECTION
 
+    # Make the original classes refer to the original httplib classes.
+    _patch_name(_HTTPConnectionWithTimeout.__init__.im_func,
+                'HTTPConnection', '_HTTPConnection')
+    _patch_name(_HTTPSConnectionWithTimeout.__init__.im_func,
+                'HTTPSConnection', '_HTTPSConnection')
+
 
 # Try to save the original types for boto
 try:
@@ -50,6 +79,9 @@ except ImportError:  # pragma: no cover
     pass
 else:
     _CertValidatingHTTPSConnection = boto.https_connection.CertValidatingHTTPSConnection
+    # Make the original class refer to the original httplib class.
+    _patch_name(_CertValidatingHTTPSConnection.__init__.im_func,
+                'HTTPConnection', '_HTTPConnection')
 
 
 # Try to save the original types for Tornado
