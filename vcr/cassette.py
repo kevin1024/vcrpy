@@ -127,7 +127,7 @@ class CassetteContextDecorator(object):
 
     def _handle_function(self, function, args, kwargs):
         with self as cassette:
-            self.__handle_function(cassette, function, args, kwargs)
+            return self.__handle_function(cassette, function, args, kwargs)
 
     @staticmethod
     def get_function_name(function):
