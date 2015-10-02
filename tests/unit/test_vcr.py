@@ -301,6 +301,17 @@ def test_additional_matchers():
     function_additional()
 
 
+def test_decoration_should_respect_function_return_value():
+    vcr = VCR()
+    ret = 'a-return-value'
+
+    @vcr.use_cassette
+    def function_with_return():
+        return ret
+
+    assert ret == function_with_return()
+
+
 class TestVCRClass(VCR().test_case()):
 
     def no_decoration(self):
