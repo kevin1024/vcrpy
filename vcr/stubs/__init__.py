@@ -252,7 +252,7 @@ class VCRConnection(object):
                     method=self._vcr_request.method,
                     url=self._url(self._vcr_request.uri),
                     body=self._vcr_request.body,
-                    headers=self._vcr_request.headers,
+                    headers=self._vcr_request.headers.single_valued,
                 )
 
             # get the response
