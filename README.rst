@@ -625,6 +625,9 @@ new API in version 1.0.x
 
 Changelog
 ---------
+-  1.7.4 [#217] Make use_cassette decorated functions actually return a
+   value (thanks @bcen). [#199] Fix path transfromation defaults.
+   Better headers dictionary management.
 -  1.7.3 [#188] ``additional_matchers`` kwarg on ``use_cassette``.
    [#191] Actually support passing multiple before_record_request
    functions (thanks @agriffis).
