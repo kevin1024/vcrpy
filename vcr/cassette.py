@@ -1,6 +1,7 @@
-import sys
 import inspect
 import logging
+import operator
+import sys
 
 import wrapt
 
@@ -145,8 +146,32 @@ class CassetteContextDecorator(object):
         return new_args_getter
 
 
+class SimilarityScorer(object):
+
+    def __init__(self, matchers, request, ascending=False):
+        self._matchers = matchers
+        self._request = request
+        self._ascending = False
+
+    def score(self, candidate, play_count):
+        value = 1
+        total = 0
+        if play_count < 1:
+            total += value
+        if self._ascending:
+            value *= 2
+        for matcher in self._matchers[::-1]:
+            if matcher(self._request, candidate):
+                total += value
+            if self._ascending:
+                value *= 2
+        return total
+
+
 class Cassette(object):
     """A container for recorded requests and responses"""
+
+    max_playcount = 1
 
     @classmethod
     def load(cls, **kwargs):
@@ -166,13 +191,14 @@ class Cassette(object):
     def __init__(self, path, serializer=yamlserializer, record_mode='once',
                  match_on=(uri, method), before_record_request=None,
                  before_record_response=None, custom_patches=(),
-                 inject=False):
+                 inject=False, similarity_scorer_factory=None):
 
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
         self._before_record_request = before_record_request or (lambda x: x)
         self._before_record_response = before_record_response or (lambda x: x)
+        self._similarity_scorer_factory = similarity_scorer_factory or SimilarityScorer
         self.inject = inject
         self.record_mode = record_mode
         self.custom_patches = custom_patches
@@ -227,6 +253,20 @@ class Cassette(object):
             if requests_match(request, stored_request, self._match_on):
                 yield index, response
 
+    def failing_matchers(self, a, b):
+        return [matcher for matcher in self._match_on if not matcher(a, b)]
+
+    def similar_requests(self, request):
+        scorer = self._similarity_scorer_factory(self._match_on, request).score
+        scored_requests = [
+            (
+                stored_request,
+                scorer(stored_request, self.play_counts[index])
+            )
+            for index, (stored_request, response) in enumerate(self.data)
+        ]
+        return sorted(scored_requests, key=operator.itemgetter(1), reverse=True)
+
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
         return request and request in self and \
@@ -239,7 +279,7 @@ class Cassette(object):
         hasn't been played back before, and mark it as played
         """
         for index, response in self._responses(request):
-            if self.play_counts[index] == 0:
+            if self.play_counts[index] < self.max_playcount:
                 self.play_counts[index] += 1
                 return response
         # The cassette doesn't contain the request asked for.

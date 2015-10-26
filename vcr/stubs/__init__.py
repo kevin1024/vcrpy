@@ -227,12 +227,26 @@ class VCRConnection(object):
             if self.cassette.write_protected and self.cassette.filter_request(
                 self._vcr_request
             ):
+                most_similar_request = None
+                failing_matchers = None
+                most_similar_request_info = None
+                try:
+                    most_similar_request_info = self.cassette.similar_requests(self._vcr_request)
+                    most_similar_request = most_similar_request_info[0][0]
+                    failing_matchers = self.cassette.failing_matchers(
+                        self._vcr_request, most_similar_request
+                    )
+                except Exception as err:
+                    print "XXXX {0}".format(err)
+                    import ipdb; ipdb.set_trace()
                 raise CannotOverwriteExistingCassetteException(
                     "No match for the request (%r) was found. "
                     "Can't overwrite existing cassette (%r) in "
-                    "your current record mode (%r)."
+                    "your current record mode (%r). Most similar request was (%r). "
+                    "It differed from the request according to (%r). \n\n\n(%r)"
                     % (self._vcr_request, self.cassette._path,
-                       self.cassette.record_mode)
+                       self.cassette.record_mode, most_similar_request,
+                       failing_matchers, most_similar_request_info)
                 )
 
             # Otherwise, we should send the request, then get the response

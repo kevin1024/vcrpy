@@ -10,6 +10,7 @@ from vcr.compat import mock, contextlib
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset
+from vcr.matchers import path, method, query, host
 from vcr.stubs import VCRHTTPSConnection
 
 
@@ -294,3 +295,18 @@ def test_use_as_decorator_on_generator():
         assert httplib.HTTPConnection is not original_http_connetion
         yield 2
     assert list(test_function()) == [1, 2]
+
+
+def test_similar_requests(tmpdir):
+    # WIP needs to be finished
+    @Cassette.use(inject=True, match_on=(path, query, host, method))
+    def test_function(cassette):
+        conn = httplib.HTTPConnection("www.python.org")
+        conn.request("GET", "/index.html?test=1")
+
+        conn = httplib.HTTPConnection("www.python.org")
+        conn.request("GET", "/index.html?test=0")
+
+        conn = httplib.HTTPConnection("www.cool.org")
+        conn.request("GET", "/index.html?test=0")
+        cassette.similar_requests()
