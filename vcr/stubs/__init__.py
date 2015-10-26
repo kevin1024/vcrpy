@@ -9,7 +9,6 @@ import six
 from six.moves.http_client import (
     HTTPConnection,
     HTTPSConnection,
-    HTTPMessage,
     HTTPResponse,
 )
 from six import BytesIO
@@ -306,7 +305,7 @@ class VCRConnection(object):
 
     def __init__(self, *args, **kwargs):
         if six.PY3:
-            kwargs.pop('strict', None) # apparently this is gone in py3
+            kwargs.pop('strict', None)  # apparently this is gone in py3
 
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out
