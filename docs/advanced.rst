@@ -163,6 +163,39 @@ of post data parameters to filter.
     with my_vcr.use_cassette('test.yml', filter_post_data_parameters=['client_secret']):
         requests.post('http://api.com/postdata', data={'api_key': 'secretstring'})
 
+Advanced use of filter_headers, filter_query_parameters and filter_post_data_parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In all of the above cases, it's also possible to pass a list of ``(key, value)``
+tuples where the value can be any of the following:
+
+* A new value to replace the original value.
+* ``None`` to remove the key/value pair. (Same as passing a simple key string.)
+* A callable that returns a new value or ``None``.
+
+So these two calls are the same:
+
+.. code:: python
+
+    # original (still works)
+    vcr = VCR(filter_headers=['authorization'])
+    
+    # new
+    vcr = VCR(filter_headers=[('authorization', None)])
+
+Here are two examples of the new functionality:
+
+.. code:: python
+
+    # replace with a static value (most common)
+    vcr = VCR(filter_headers=[('authorization', 'XXXXXX')])
+    
+    # replace with a callable, for example when testing
+    # lots of different kinds of authorization.
+    def replace_auth(key, value, request):
+        auth_type = value.split(' ', 1)[0]
+        return '{} {}'.format(auth_type, 'XXXXXX')
+
 Custom Request filtering
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
