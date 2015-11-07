@@ -1,5 +1,8 @@
+API
+===
+
 :mod:`~vcr.config`
-=================
+------------------
 
 .. automodule:: vcr.config
    :members:
