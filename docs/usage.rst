@@ -88,3 +88,10 @@ all
    temporarily used to force VCR to re-record a cassette (i.e. to ensure
    the responses are not out of date) or can be used when you simply
    want to log all HTTP requests.
+
+Unittest Integration
+--------------------
+
+While it's possible to use the context manager or decorator forms with unittest,
+there's also a ``VCRTestCase`` provided separately by `vcrpy-unittest
+<https://github.com/agriffis/vcrpy-unittest>`__.
