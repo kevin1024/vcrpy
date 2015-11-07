@@ -1,4 +1,4 @@
-|Build Status| |Stories in Ready| |Gitter|
+|Build Status| |Waffle Ready| |Gitter|
 
 VCR.py
 ======
@@ -49,7 +49,7 @@ more details
 
 .. |Build Status| image:: https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master
    :target: http://travis-ci.org/kevin1024/vcrpy
-.. |Stories in Ready| image:: https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=Ready
+.. |Waffle Ready| image:: https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=waffle
    :target: https://waffle.io/kevin1024/vcrpy
 .. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
