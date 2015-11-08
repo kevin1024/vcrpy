@@ -47,31 +47,44 @@ def test_vcr_before_record_request_params():
         if request.path != '/get':
             return request
 
-    test_vcr = VCR(filter_headers=('cookie',), before_record_request=before_record_cb,
+    test_vcr = VCR(filter_headers=('cookie', ('bert', 'ernie')),
+                   before_record_request=before_record_cb,
                    ignore_hosts=('www.test.com',), ignore_localhost=True,
-                   filter_query_parameters=('foo',))
+                   filter_query_parameters=('foo', ('tom', 'jerry')),
+                   filter_post_data_parameters=('posted', ('no', 'trespassing')))
 
     with test_vcr.use_cassette('test') as cassette:
-        assert cassette.filter_request(Request('GET', base_path + 'get', '', {})) is None
-        assert cassette.filter_request(Request('GET', base_path + 'get2', '', {})) is not None
+        # Test explicit before_record_cb
+        request_get = Request('GET', base_path + 'get', '', {})
+        assert cassette.filter_request(request_get) is None
+        request = Request('GET', base_path + 'get2', '', {})
+        assert cassette.filter_request(request) is not None
 
-        assert cassette.filter_request(Request('GET', base_path + '?foo=bar', '', {})).query == []
-        assert cassette.filter_request(
-            Request('GET', base_path + '?foo=bar', '',
-                    {'cookie': 'test', 'other': 'fun'})).headers == {'other': 'fun'}
-        assert cassette.filter_request(
-            Request(
-                'GET', base_path + '?foo=bar', '',
-                {'cookie': 'test', 'other': 'fun'}
-            )
-        ).headers == {'other': 'fun'}
+        # Test filter_query_parameters
+        request = Request('GET', base_path + '?foo=bar', '', {})
+        assert cassette.filter_request(request).query == []
+        request = Request('GET', base_path + '?tom=nobody', '', {})
+        assert cassette.filter_request(request).query == [('tom', 'jerry')]
 
-        assert cassette.filter_request(Request('GET', 'http://www.test.com' + '?foo=bar', '',
-                                               {'cookie': 'test', 'other': 'fun'})) is None
+        # Test filter_headers
+        request = Request('GET', base_path + '?foo=bar', '',
+                          {'cookie': 'test', 'other': 'fun', 'bert': 'nobody'})
+        assert (cassette.filter_request(request).headers ==
+                {'other': 'fun', 'bert': 'ernie'})
+
+        # Test ignore_hosts
+        request = Request('GET', 'http://www.test.com' + '?foo=bar', '',
+                          {'cookie': 'test', 'other': 'fun'})
+        assert cassette.filter_request(request) is None
+
+        # Test ignore_localhost
+        request = Request('GET', 'http://localhost:8000' + '?foo=bar', '',
+                          {'cookie': 'test', 'other': 'fun'})
+        assert cassette.filter_request(request) is None
 
     with test_vcr.use_cassette('test', before_record_request=None) as cassette:
-        # Test that before_record can be overwritten with
-        assert cassette.filter_request(Request('GET', base_path + 'get', '', {})) is not None
+        # Test that before_record can be overwritten in context manager.
+        assert cassette.filter_request(request_get) is not None
 
 
 def test_vcr_before_record_response_iterable():
