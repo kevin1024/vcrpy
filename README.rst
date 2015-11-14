@@ -23,7 +23,7 @@ first time you run code that is inside a VCR.py context manager or
 decorated function, VCR.py records all HTTP interactions that take
 place through the libraries it supports and serializes and writes them
 to a flat file (in yaml format by default). This flat file is called a
-cassette. When the relevant peice of code is executed again, VCR.py
+cassette. When the relevant piece of code is executed again, VCR.py
 will read the serialized requests and responses from the
 aforementioned cassette file, and intercept any HTTP requests that it
 recognizes from the original test run and return the responses that
