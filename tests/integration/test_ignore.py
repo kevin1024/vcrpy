@@ -1,7 +1,5 @@
-import base64
-import pytest
-from six.moves.urllib.request import urlopen, Request
-from six.moves.urllib.error import HTTPError
+from six.moves.urllib.request import urlopen
+
 import vcr
 
 
@@ -39,6 +37,7 @@ def test_ignore_localhost_and_httpbin(tmpdir, httpserver):
         urlopen('http://httpbin.org')
         urlopen(httpserver.url)
         assert len(cass) == 0
+
 
 def test_ignore_localhost_twice(tmpdir, httpserver):
     httpserver.serve_content('Hello!')

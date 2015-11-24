@@ -20,7 +20,7 @@ def scheme(request):
 @pytest.fixture(scope='module')
 def verify_pool_mgr():
     return urllib3.PoolManager(
-        cert_reqs='CERT_REQUIRED', # Force certificate check.
+        cert_reqs='CERT_REQUIRED',  # Force certificate check.
         ca_certs=certifi.where()
     )
 

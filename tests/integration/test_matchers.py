@@ -37,7 +37,7 @@ def cassette(tmpdir):
     ('query',
      'https://google.com/get?p2=q2&p1=q1',
      'http://httpbin.org/get?p1=q1&a=b')
-    ])
+])
 def test_matchers(cassette, matcher, matching_uri, not_matching_uri):
     # play cassette with default uri
     with vcr.use_cassette(cassette, match_on=[matcher]) as cass:

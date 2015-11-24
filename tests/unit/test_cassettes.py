@@ -89,7 +89,7 @@ def make_get_request():
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
     decorated_function = Cassette.use(path='test')(make_get_request)
     for i in range(4):
-         decorated_function()
+        decorated_function()
 
 
 def test_arg_getter_functionality():
@@ -160,7 +160,7 @@ def test_nesting_cassette_context_managers(*args):
     with contextlib.ExitStack() as exit_stack:
         first_cassette = exit_stack.enter_context(Cassette.use(path='test'))
         exit_stack.enter_context(mock.patch.object(first_cassette, 'play_response',
-                                                    return_value=first_response))
+                                                   return_value=first_response))
         assert_get_response_body_is('first_response')
 
         # Make sure a second cassette can supercede the first
@@ -200,16 +200,17 @@ def test_custom_patchers():
                           custom_patches=((Test, 'attribute', VCRHTTPSConnection),)):
             assert issubclass(Test.attribute, VCRHTTPSConnection)
             assert VCRHTTPSConnection is not Test.attribute
-            assert  Test.attribute is not old_attribute
+            assert Test.attribute is not old_attribute
 
         assert issubclass(Test.attribute, VCRHTTPSConnection)
         assert VCRHTTPSConnection is not Test.attribute
-        assert  Test.attribute is old_attribute
+        assert Test.attribute is old_attribute
 
 
 def test_decorated_functions_are_reentrant():
     info = {"second": False}
     original_conn = httplib.HTTPConnection
+
     @Cassette.use(path='whatever', inject=True)
     def test_function(cassette):
         if info['second']:
@@ -219,6 +220,7 @@ def test_decorated_functions_are_reentrant():
             info['second'] = True
             test_function()
             assert httplib.HTTPConnection is info['first_conn']
+
     test_function()
     assert httplib.HTTPConnection is original_conn
 
@@ -232,9 +234,11 @@ def test_cassette_use_called_without_path_uses_function_to_generate_path():
 
 def test_path_transformer_with_function_path():
     path_transformer = lambda path: os.path.join('a', path)
+
     @Cassette.use(inject=True, path_transformer=path_transformer)
     def function_name(cassette):
         assert cassette._path == os.path.join('a', 'function_name')
+
     function_name()
 
 
@@ -255,15 +259,18 @@ def test_path_transformer_None():
 def test_func_path_generator():
     def generator(function):
         return os.path.join(os.path.dirname(inspect.getfile(function)),
-                                            function.__name__)
+                            function.__name__)
+
     @Cassette.use(inject=True, func_path_generator=generator)
     def function_name(cassette):
         assert cassette._path == os.path.join(os.path.dirname(__file__), 'function_name')
+
     function_name()
 
 
 def test_use_as_decorator_on_coroutine():
     original_http_connetion = httplib.HTTPConnection
+
     @Cassette.use(inject=True)
     def test_function(cassette):
         assert httplib.HTTPConnection.cassette is cassette
@@ -274,6 +281,7 @@ def test_use_as_decorator_on_coroutine():
         assert httplib.HTTPConnection is not original_http_connetion
         value = yield 2
         assert value == 2
+
     coroutine = test_function()
     value = next(coroutine)
     while True:
@@ -285,6 +293,7 @@ def test_use_as_decorator_on_coroutine():
 
 def test_use_as_decorator_on_generator():
     original_http_connetion = httplib.HTTPConnection
+
     @Cassette.use(inject=True)
     def test_function(cassette):
         assert httplib.HTTPConnection.cassette is cassette
@@ -293,4 +302,5 @@ def test_use_as_decorator_on_generator():
         assert httplib.HTTPConnection.cassette is cassette
         assert httplib.HTTPConnection is not original_http_connetion
         yield 2
+
     assert list(test_function()) == [1, 2]

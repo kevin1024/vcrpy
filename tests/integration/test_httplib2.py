@@ -24,11 +24,11 @@ def scheme(request):
 def test_response_code(scheme, tmpdir):
     '''Ensure we can read a response code from a fetch'''
     url = scheme + '://httpbin.org/'
-    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))):
         resp, _ = httplib2.Http().request(url)
         code = resp.status
 
-    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('atts.yaml'))):
         resp, _ = httplib2.Http().request(url)
         assert code == resp.status
 
@@ -36,11 +36,11 @@ def test_response_code(scheme, tmpdir):
 def test_random_body(scheme, tmpdir):
     '''Ensure we can read the content, and that it's served from cache'''
     url = scheme + '://httpbin.org/bytes/1024'
-    with vcr.use_cassette(str(tmpdir.join('body.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('body.yaml'))):
         _, content = httplib2.Http().request(url)
         body = content
 
-    with vcr.use_cassette(str(tmpdir.join('body.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('body.yaml'))):
         _, content = httplib2.Http().request(url)
         assert body == content
 
@@ -48,25 +48,27 @@ def test_random_body(scheme, tmpdir):
 def test_response_headers(scheme, tmpdir):
     '''Ensure we can get information from the response'''
     url = scheme + '://httpbin.org/'
-    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
         resp, _ = httplib2.Http().request(url)
         headers = resp.items()
 
-    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
         resp, _ = httplib2.Http().request(url)
         assert set(headers) == set(resp.items())
+
 
 def test_effective_url(scheme, tmpdir):
     '''Ensure that the effective_url is captured'''
     url = scheme + '://httpbin.org/redirect-to?url=/html'
-    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
         resp, _ = httplib2.Http().request(url)
         effective_url = resp['content-location']
         assert effective_url == scheme + '://httpbin.org/html'
 
-    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
         resp, _ = httplib2.Http().request(url)
         assert effective_url == resp['content-location']
+
 
 def test_multiple_requests(scheme, tmpdir):
     '''Ensure that we can cache multiple requests'''
@@ -85,10 +87,10 @@ def test_get_data(scheme, tmpdir):
     '''Ensure that it works with query data'''
     data = urlencode({'some': 1, 'data': 'here'})
     url = scheme + '://httpbin.org/get?' + data
-    with vcr.use_cassette(str(tmpdir.join('get_data.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('get_data.yaml'))):
         _, res1 = httplib2.Http().request(url)
 
-    with vcr.use_cassette(str(tmpdir.join('get_data.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('get_data.yaml'))):
         _, res2 = httplib2.Http().request(url)
 
     assert res1 == res2
@@ -98,7 +100,7 @@ def test_post_data(scheme, tmpdir):
     '''Ensure that it works when posting data'''
     data = urlencode({'some': 1, 'data': 'here'})
     url = scheme + '://httpbin.org/post'
-    with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))):
         _, res1 = httplib2.Http().request(url, "POST", data)
 
     with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
@@ -112,7 +114,7 @@ def test_post_unicode_data(scheme, tmpdir):
     '''Ensure that it works when posting unicode data'''
     data = urlencode({'snowman': u'☃'.encode('utf-8')})
     url = scheme + '://httpbin.org/post'
-    with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))):
         _, res1 = httplib2.Http().request(url, "POST", data)
 
     with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))) as cass:

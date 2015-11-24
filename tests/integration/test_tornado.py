@@ -81,6 +81,7 @@ def test_body(get_client, tmpdir, scheme):
         assert content == (yield get(get_client(), url)).body
         assert 1 == cass.play_count
 
+
 @pytest.mark.gen_test
 def test_effective_url(get_client, scheme, tmpdir):
     '''Ensure that the effective_url is captured'''
@@ -92,6 +93,7 @@ def test_effective_url(get_client, scheme, tmpdir):
     with vcr.use_cassette(str(tmpdir.join('url.yaml'))) as cass:
         assert effective_url == (yield get(get_client(), url)).effective_url
         assert 1 == cass.play_count
+
 
 @pytest.mark.gen_test
 def test_auth(get_client, tmpdir, scheme):

@@ -31,26 +31,26 @@ def test_boto_without_vcr():
 def test_boto_medium_difficulty(tmpdir):
     s3_conn = S3Connection()
     s3_bucket = s3_conn.get_bucket('boto-demo-1394171994')  # a bucket you can access
-    with vcr.use_cassette(str(tmpdir.join('boto-medium.yml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('boto-medium.yml'))):
         k = Key(s3_bucket)
         k.key = 'test.txt'
         k.set_contents_from_string('hello world i am a string')
 
-    with vcr.use_cassette(str(tmpdir.join('boto-medium.yml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('boto-medium.yml'))):
         k = Key(s3_bucket)
         k.key = 'test.txt'
         k.set_contents_from_string('hello world i am a string')
 
 
 def test_boto_hardcore_mode(tmpdir):
-    with vcr.use_cassette(str(tmpdir.join('boto-hardcore.yml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('boto-hardcore.yml'))):
         s3_conn = S3Connection()
         s3_bucket = s3_conn.get_bucket('boto-demo-1394171994')  # a bucket you can access
         k = Key(s3_bucket)
         k.key = 'test.txt'
         k.set_contents_from_string('hello world i am a string')
 
-    with vcr.use_cassette(str(tmpdir.join('boto-hardcore.yml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('boto-hardcore.yml'))):
         s3_conn = S3Connection()
         s3_bucket = s3_conn.get_bucket('boto-demo-1394171994')  # a bucket you can access
         k = Key(s3_bucket)
@@ -68,10 +68,10 @@ def test_boto_iam(tmpdir):
     # Ensure that boto uses CertValidatingHTTPSConnection
     boto.config.set('Boto', 'https_validate_certificates', 'true')
 
-    with vcr.use_cassette(str(tmpdir.join('boto-iam.yml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('boto-iam.yml'))):
         iam_conn = boto.iam.connect_to_region('universal')
         iam_conn.get_all_users()
 
-    with vcr.use_cassette(str(tmpdir.join('boto-iam.yml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('boto-iam.yml'))):
         iam_conn = boto.iam.connect_to_region('universal')
         iam_conn.get_all_users()
