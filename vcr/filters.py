@@ -1,7 +1,10 @@
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
+import copy
 import json
 import zlib
+
+from .util import CaseInsensitiveDict
 
 
 def replace_headers(request, replacements):
@@ -130,8 +133,8 @@ def decode_response(response):
       2. delete the content-encoding header
       3. update content-length header to decompressed length
     """
-    def is_compressed(response):
-        encoding = response['headers'].get('content-encoding', [])
+    def is_compressed(headers):
+        encoding = headers.get('content-encoding', [])
         return encoding and encoding[0] in ('gzip', 'deflate')
 
     def decompress_body(body, encoding):
@@ -143,15 +146,16 @@ def decode_response(response):
         else:  # encoding == 'deflate'
             return zlib.decompress(body)
 
-    if is_compressed(response):
-        response = response.copy()
-        encoding = response['headers']['content-encoding'][0]
-
-        response['headers']['content-encoding'].remove(encoding)
-        if not response['headers']['content-encoding']:
-            del response['headers']['content-encoding']
+    headers = CaseInsensitiveDict(response['headers'])
+    if is_compressed(headers):
+        response = copy.deepcopy(response)
+        encoding = headers['content-encoding'][0]
+        headers['content-encoding'].remove(encoding)
+        if not headers['content-encoding']:
+            del headers['content-encoding']
 
         new_body = decompress_body(response['body']['string'], encoding)
         response['body']['string'] = new_body
-        response['content-length'] = len(new_body)
+        headers['content-length'] = [str(len(new_body))]
+        response['headers'] = dict(headers)
     return response

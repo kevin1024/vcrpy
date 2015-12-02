@@ -96,9 +96,10 @@ def test_filter_callback(tmpdir):
 
 def test_decompress_gzip(tmpdir):
     url = 'http://httpbin.org/gzip'
+    request = Request(url, headers={'Accept-Encoding': ['gzip, deflate']})
     cass_file = str(tmpdir.join('gzip_response.yaml'))
     with vcr.use_cassette(cass_file, decode_compressed_response=True):
-        urlopen(url)
+        urlopen(request)
     with vcr.use_cassette(cass_file) as cass:
         decoded_response = urlopen(url).read()
         assert_cassette_has_one_response(cass)
@@ -107,9 +108,10 @@ def test_decompress_gzip(tmpdir):
 
 def test_decompress_deflate(tmpdir):
     url = 'http://httpbin.org/deflate'
+    request = Request(url, headers={'Accept-Encoding': ['gzip, deflate']})
     cass_file = str(tmpdir.join('deflate_response.yaml'))
     with vcr.use_cassette(cass_file, decode_compressed_response=True):
-        urlopen(url)
+        urlopen(request)
     with vcr.use_cassette(cass_file) as cass:
         decoded_response = urlopen(url).read()
         assert_cassette_has_one_response(cass)

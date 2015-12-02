@@ -1,3 +1,4 @@
+from six import BytesIO
 from vcr.filters import (
     remove_headers, replace_headers,
     remove_query_parameters, replace_query_parameters,
@@ -6,7 +7,6 @@ from vcr.filters import (
 )
 from vcr.compat import mock
 from vcr.request import Request
-import cStringIO
 import gzip
 import json
 import zlib
@@ -225,7 +225,7 @@ def test_decode_response_uncompressed():
 
 
 def test_decode_response_deflate():
-    body = 'deflate message'
+    body = b'deflate message'
     deflate_response = {
         'body': {'string': zlib.compress(body)},
         'headers': {
@@ -242,14 +242,17 @@ def test_decode_response_deflate():
     }
     decoded_response = decode_response(deflate_response)
     assert decoded_response['body']['string'] == body
-    assert decoded_response['content-length'] == len(body)
+    assert decoded_response['headers']['content-length'] == [str(len(body))]
 
 
 def test_decode_response_gzip():
-    body = 'gzip message'
-    buf = cStringIO.StringIO()
-    with gzip.GzipFile('a', fileobj=buf, mode='wb') as f:
-        f.write(body)
+    body = b'gzip message'
+
+    buf = BytesIO()
+    f = gzip.GzipFile('a', fileobj=buf, mode='wb')
+    f.write(body)
+    f.close()
+
     compressed_body = buf.getvalue()
     buf.close()
     gzip_response = {
@@ -268,4 +271,4 @@ def test_decode_response_gzip():
     }
     decoded_response = decode_response(gzip_response)
     assert decoded_response['body']['string'] == body
-    assert decoded_response['content-length'] == len(body)
+    assert decoded_response['headers']['content-length'] == [str(len(body))]
