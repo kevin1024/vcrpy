@@ -50,7 +50,7 @@ def deserialize(cassette_string, serializer):
 
 def serialize(cassette_dict, serializer):
     interactions = ([{
-        'request': request._to_dict(),
+        'request': compat.convert_to_unicode(request._to_dict()),
         'response': compat.convert_to_unicode(response),
     } for request, response in zip(
         cassette_dict['requests'],
