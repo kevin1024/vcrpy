@@ -1,6 +1,7 @@
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
 import json
+import zlib
 
 
 def replace_headers(request, replacements):
@@ -120,3 +121,37 @@ def remove_post_data_parameters(request, post_data_parameters_to_remove):
     """
     replacements = [(k, None) for k in post_data_parameters_to_remove]
     return replace_post_data_parameters(request, replacements)
+
+
+def decode_response(response):
+    """
+    If the response is compressed with gzip or deflate:
+      1. decompress the response body
+      2. delete the content-encoding header
+      3. update content-length header to decompressed length
+    """
+    def is_compressed(response):
+        encoding = response['headers'].get('content-encoding', [])
+        return encoding and encoding[0] in ('gzip', 'deflate')
+
+    def decompress_body(body, encoding):
+        """Returns decompressed body according to encoding using zlib.
+        to (de-)compress gzip format, use wbits = zlib.MAX_WBITS | 16
+        """
+        if encoding == 'gzip':
+            return zlib.decompress(body, zlib.MAX_WBITS | 16)
+        else:  # encoding == 'deflate'
+            return zlib.decompress(body)
+
+    if is_compressed(response):
+        response = response.copy()
+        encoding = response['headers']['content-encoding'][0]
+
+        response['headers']['content-encoding'].remove(encoding)
+        if not response['headers']['content-encoding']:
+            del response['headers']['content-encoding']
+
+        new_body = decompress_body(response['body']['string'], encoding)
+        response['body']['string'] = new_body
+        response['content-length'] = len(new_body)
+    return response
