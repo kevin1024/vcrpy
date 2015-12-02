@@ -2,10 +2,14 @@ from vcr.filters import (
     remove_headers, replace_headers,
     remove_query_parameters, replace_query_parameters,
     remove_post_data_parameters, replace_post_data_parameters,
+    decode_response
 )
 from vcr.compat import mock
 from vcr.request import Request
+import cStringIO
+import gzip
 import json
+import zlib
 
 
 def test_replace_headers():
@@ -200,3 +204,68 @@ def test_remove_all_json_post_data_parameters():
     request.headers['Content-Type'] = 'application/json'
     replace_post_data_parameters(request, [('id', None), ('foo', None)])
     assert request.body == b'{}'
+
+
+def test_decode_response_uncompressed():
+    recorded_response = {
+        "status": {
+            "message": "OK",
+            "code": 200
+        },
+        "headers": {
+            "content-length": ["10806"],
+            "date": ["Fri, 24 Oct 2014 18:35:37 GMT"],
+            "content-type": ["text/html; charset=utf-8"],
+        },
+        "body": {
+            "string": b""
+        }
+    }
+    assert decode_response(recorded_response) == recorded_response
+
+
+def test_decode_response_deflate():
+    body = 'deflate message'
+    deflate_response = {
+        'body': {'string': zlib.compress(body)},
+        'headers': {
+            'access-control-allow-credentials': ['true'],
+            'access-control-allow-origin': ['*'],
+            'connection': ['keep-alive'],
+            'content-encoding': ['deflate'],
+            'content-length': ['177'],
+            'content-type': ['application/json'],
+            'date': ['Wed, 02 Dec 2015 19:44:32 GMT'],
+            'server': ['nginx']
+        },
+        'status': {'code': 200, 'message': 'OK'}
+    }
+    decoded_response = decode_response(deflate_response)
+    assert decoded_response['body']['string'] == body
+    assert decoded_response['content-length'] == len(body)
+
+
+def test_decode_response_gzip():
+    body = 'gzip message'
+    buf = cStringIO.StringIO()
+    with gzip.GzipFile('a', fileobj=buf, mode='wb') as f:
+        f.write(body)
+    compressed_body = buf.getvalue()
+    buf.close()
+    gzip_response = {
+        'body': {'string': compressed_body},
+        'headers': {
+            'access-control-allow-credentials': ['true'],
+            'access-control-allow-origin': ['*'],
+            'connection': ['keep-alive'],
+            'content-encoding': ['gzip'],
+            'content-length': ['177'],
+            'content-type': ['application/json'],
+            'date': ['Wed, 02 Dec 2015 19:44:32 GMT'],
+            'server': ['nginx']
+        },
+        'status': {'code': 200, 'message': 'OK'}
+    }
+    decoded_response = decode_response(gzip_response)
+    assert decoded_response['body']['string'] == body
+    assert decoded_response['content-length'] == len(body)
