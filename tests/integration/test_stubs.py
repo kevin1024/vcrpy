@@ -1,6 +1,7 @@
 import vcr
 import six.moves.http_client as httplib
 
+
 def _headers_are_case_insensitive():
     conn = httplib.HTTPConnection('httpbin.org')
     conn.request('GET', "/cookies/set?k1=v1")
@@ -11,6 +12,7 @@ def _headers_are_case_insensitive():
     r2 = conn.getresponse()
     cookie_data2 = r2.getheader('Set-Cookie')
     return cookie_data1 == cookie_data2
+
 
 def test_case_insensitivity(tmpdir):
     testfile = str(tmpdir.join('case_insensitivity.yml'))
@@ -25,11 +27,13 @@ def test_case_insensitivity(tmpdir):
     # behavior should be the same both inside and outside
     assert outside == inside == inside2
 
+
 def _multiple_header_value(httpserver):
     conn = httplib.HTTPConnection('%s:%s' % httpserver.server_address)
     conn.request('GET', "/")
     r = conn.getresponse()
     return r.getheader('foo')
+
 
 def test_multiple_headers(tmpdir, httpserver):
     testfile = str(tmpdir.join('multiple_headers.yaml'))

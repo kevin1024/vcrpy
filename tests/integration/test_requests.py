@@ -44,6 +44,7 @@ def test_body(tmpdir, scheme):
     with vcr.use_cassette(str(tmpdir.join('body.yaml'))):
         assert content == requests.get(url).content
 
+
 def test_effective_url(scheme, tmpdir):
     '''Ensure that the effective_url is captured'''
     url = scheme + '://httpbin.org/redirect-to?url=/html'
@@ -53,6 +54,7 @@ def test_effective_url(scheme, tmpdir):
 
     with vcr.use_cassette(str(tmpdir.join('url.yaml'))):
         assert effective_url == requests.get(url).url
+
 
 def test_auth(tmpdir, scheme):
     '''Ensure that we can handle basic auth'''
@@ -242,4 +244,3 @@ def test_filter_post_params(tmpdir, scheme):
         requests.post(url, data={'key': 'value'})
     with vcr.use_cassette(cass_loc, filter_post_data_parameters=['key']) as cass:
         assert b'key=value' not in cass.requests[0].body
-

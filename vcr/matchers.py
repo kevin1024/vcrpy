@@ -67,7 +67,8 @@ def _identity(x):
 
 def _get_transformer(request):
     for checker, transformer in _checker_transformer_pairs:
-        if checker(request.headers): return transformer
+        if checker(request.headers):
+            return transformer
     else:
         return _identity
 

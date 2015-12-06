@@ -19,7 +19,7 @@ import sys
 import tempfile
 import yaml
 
-from .serializers import compat, yamlserializer, jsonserializer
+from .serializers import yamlserializer, jsonserializer
 from .serialize import serialize
 from . import request
 from .stubs.compat import get_httpmessage
