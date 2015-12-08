@@ -42,4 +42,5 @@ install:
 script:
 - v=$TRAVIS_PYTHON_VERSION
 - if [[ ${v%py} != $v ]]; then TOXPY=$v; else TOXPY=py"${v/./}"; fi
-- tox -e "${TOXPY}-${TOX_SUFFIX}"
+- if [[ $TOX_SUFFIX != flakes ]]; then tox -e "${TOXPY}-${TOX_SUFFIX}" ; fi
+- if [[ $TOX_SUFFIX == flakes ]]; then tox -e "${TOX_SUFFIX}" ; fi
