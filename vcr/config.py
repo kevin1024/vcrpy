@@ -49,6 +49,7 @@ class VCR:
         cassette_library_dir=None,
         func_path_generator=None,
         decode_compressed_response=False,
+        record_on_exception=True,
     ):
         self.serializer = serializer
         self.match_on = match_on
@@ -80,6 +81,7 @@ class VCR:
         self.path_transformer = path_transformer
         self.func_path_generator = func_path_generator
         self.decode_compressed_response = decode_compressed_response
+        self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
 
     def _get_serializer(self, serializer_name):
@@ -123,6 +125,7 @@ class VCR:
         func_path_generator = kwargs.get("func_path_generator", self.func_path_generator)
         cassette_library_dir = kwargs.get("cassette_library_dir", self.cassette_library_dir)
         additional_matchers = kwargs.get("additional_matchers", ())
+        record_on_exception = kwargs.get("record_on_exception", self.record_on_exception)
 
         if cassette_library_dir:
 
@@ -149,6 +152,7 @@ class VCR:
             "path_transformer": path_transformer,
             "func_path_generator": func_path_generator,
             "allow_playback_repeats": kwargs.get("allow_playback_repeats", False),
+            "record_on_exception": record_on_exception,
         }
         path = kwargs.get("path")
         if path:
