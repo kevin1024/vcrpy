@@ -45,7 +45,9 @@ class CassetteContextDecorator:
     this class as a context manager in ``__exit__``.
     """
 
-    _non_cassette_arguments = ("path_transformer", "func_path_generator")
+    _non_cassette_arguments = (
+        "path_transformer", "func_path_generator", "record_on_exception",
+    )
 
     @classmethod
     def from_args(cls, cassette_class, **kwargs):
@@ -87,8 +89,13 @@ class CassetteContextDecorator:
         self.__finish = self._patch_generator(self.cls.load(**cassette_kwargs))
         return next(self.__finish)
 
-    def __exit__(self, *args):
-        next(self.__finish, None)
+    def __exit__(self, *exc_info):
+        exception_was_raised = any(exc_info)
+        record_on_exception = self._args_getter().get(
+            'record_on_exception', True
+        )
+        if record_on_exception or not exception_was_raised:
+            next(self.__finish, None)
         self.__finish = None
 
     @wrapt.decorator
