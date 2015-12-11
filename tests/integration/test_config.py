@@ -56,3 +56,23 @@ def test_missing_matcher():
     with pytest.raises(KeyError):
         with my_vcr.use_cassette("test.yaml", match_on=['notawesome']):
             pass
+
+
+def test_dont_record_on_exception(tmpdir):
+    my_vcr = vcr.VCR(record_on_exception=False)
+
+    @my_vcr.use_cassette(str(tmpdir.join('dontsave.yml')))
+    def some_test():
+        assert 'Not in content' in urlopen('http://httpbin.org/get')
+
+    with pytest.raises(AssertionError):
+        some_test()
+
+    assert not os.path.exists(str(tmpdir.join('dontsave.yml')))
+
+    # Make sure context decorator has the same behavior
+    with pytest.raises(AssertionError):
+        with my_vcr.use_cassette(str(tmpdir.join('dontsave2.yml'))):
+            assert 'Not in content' in urlopen('http://httpbin.org/get').read()
+
+    assert not os.path.exists(str(tmpdir.join('dontsave2.yml')))

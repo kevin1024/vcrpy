@@ -35,7 +35,8 @@ class VCR(object):
                  before_record_response=None, filter_post_data_parameters=(),
                  match_on=('method', 'scheme', 'host', 'port', 'path', 'query'),
                  before_record=None, inject_cassette=False, serializer='yaml',
-                 cassette_library_dir=None, func_path_generator=None):
+                 cassette_library_dir=None, func_path_generator=None,
+                 record_on_exception=True):
         self.serializer = serializer
         self.match_on = match_on
         self.cassette_library_dir = cassette_library_dir
@@ -67,6 +68,7 @@ class VCR(object):
         self.inject_cassette = inject_cassette
         self.path_transformer = path_transformer
         self.func_path_generator = func_path_generator
+        self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
 
     def _get_serializer(self, serializer_name):
@@ -120,6 +122,10 @@ class VCR(object):
             'func_path_generator',
             self.func_path_generator
         )
+        record_on_exception = kwargs.get(
+            'record_on_exception',
+            self.record_on_exception
+        )
         cassette_library_dir = kwargs.get(
             'cassette_library_dir',
             self.cassette_library_dir
@@ -152,6 +158,7 @@ class VCR(object):
             ),
             'inject': kwargs.get('inject_cassette', self.inject_cassette),
             'path_transformer': path_transformer,
+            'record_on_exception': record_on_exception,
             'func_path_generator': func_path_generator
         }
         path = kwargs.get('path')
