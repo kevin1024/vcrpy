@@ -37,9 +37,7 @@ python:
 - 3.4
 - pypy
 install:
-- pip install tox
+- pip install tox-travis
 - if [[ $TOX_SUFFIX != flakes ]]; then python setup.py install ; fi
 script:
-- v=$TRAVIS_PYTHON_VERSION
-- if [[ ${v%py} != $v ]]; then TOXPY=$v; else TOXPY=py"${v/./}"; fi
-- tox -e "${TOXPY}-${TOX_SUFFIX}"
+- tox -e "${TOX_SUFFIX}"
