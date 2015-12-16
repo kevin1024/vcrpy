@@ -191,7 +191,7 @@ class VCRConnection(object):
         body of the request.  So if that happens, let's just append the data
         onto the most recent request in the cassette.
         '''
-        self._vcr_request.body = (self._vcr_request.body or '') + data
+        self._vcr_request.body = (self._vcr_request.body or b'') + data
 
     def close(self):
         # Note: the real connection will only close if it's open, so
