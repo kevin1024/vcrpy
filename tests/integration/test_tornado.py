@@ -9,8 +9,12 @@ from vcr.errors import CannotOverwriteExistingCassetteException
 
 from assertions import assert_cassette_empty, assert_is_json
 
-
+tornado = pytest.importorskip("tornado")
 http = pytest.importorskip("tornado.httpclient")
+
+# whether the current version of Tornado supports the raise_error argument for
+# fetch().
+supports_raise_error = tornado.version_info >= (4,)
 
 
 @pytest.fixture(params=['simple', 'curl', 'default'])
@@ -26,10 +30,13 @@ def get_client(request):
 
 
 def get(client, url, **kwargs):
-    raise_error = kwargs.pop('raise_error', True)
+    fetch_kwargs = {}
+    if supports_raise_error:
+        fetch_kwargs['raise_error'] = kwargs.pop('raise_error', True)
+
     return client.fetch(
         http.HTTPRequest(url, method='GET', **kwargs),
-        raise_error=raise_error,
+        **fetch_kwargs
     )
 
 
@@ -122,22 +129,26 @@ def test_auth_failed(get_client, tmpdir, scheme):
     with vcr.use_cassette(str(tmpdir.join('auth-failed.yaml'))) as cass:
         # Ensure that this is empty to begin with
         assert_cassette_empty(cass)
-        one = yield get(
-            get_client(),
-            url,
-            auth_username=auth[0],
-            auth_password=auth[1],
-            raise_error=False
-        )
+        with pytest.raises(http.HTTPError) as exc_info:
+            yield get(
+                get_client(),
+                url,
+                auth_username=auth[0],
+                auth_password=auth[1],
+            )
+        one = exc_info.value.response
+        assert exc_info.value.code == 401
 
     with vcr.use_cassette(str(tmpdir.join('auth-failed.yaml'))) as cass:
-        two = yield get(
-            get_client(),
-            url,
-            auth_username=auth[0],
-            auth_password=auth[1],
-            raise_error=False
-        )
+        with pytest.raises(http.HTTPError) as exc_info:
+            two = yield get(
+                get_client(),
+                url,
+                auth_username=auth[0],
+                auth_password=auth[1],
+            )
+        two = exc_info.value.response
+        assert exc_info.value.code == 401
         assert one.body == two.body
         assert one.code == two.code == 401
         assert 1 == cass.play_count
@@ -197,12 +208,19 @@ def test_gzip(get_client, tmpdir, scheme):
     '''
     url = scheme + '://httpbin.org/gzip'
 
+    # use_gzip was renamed to decompress_response in 4.0
+    kwargs = {}
+    if tornado.version_info < (4,):
+        kwargs['use_gzip'] = True
+    else:
+        kwargs['decompress_response'] = True
+
     with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))):
-        response = yield get(get_client(), url, decompress_response=True)
+        response = yield get(get_client(), url, **kwargs)
         assert_is_json(response.body)
 
     with vcr.use_cassette(str(tmpdir.join('gzip.yaml'))) as cass:
-        response = yield get(get_client(), url, decompress_response=True)
+        response = yield get(get_client(), url, **kwargs)
         assert_is_json(response.body)
         assert 1 == cass.play_count
 
@@ -238,6 +256,10 @@ def test_unsupported_features_raises_in_future(get_client, tmpdir):
     assert "not yet supported by VCR" in str(excinfo)
 
 
+@pytest.mark.skipif(
+    not supports_raise_error,
+    reason='raise_error unavailable in tornado <= 3',
+)
 @pytest.mark.gen_test
 def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
     '''Ensure that the exception for an AsyncHTTPClient feature not being
@@ -272,6 +294,10 @@ def test_cannot_overwrite_cassette_raises_in_future(get_client, tmpdir):
         yield future
 
 
+@pytest.mark.skipif(
+    not supports_raise_error,
+    reason='raise_error unavailable in tornado <= 3',
+)
 @pytest.mark.gen_test
 def test_cannot_overwrite_cassette_raise_error_disabled(get_client, tmpdir):
     '''Ensure that CannotOverwriteExistingCassetteException is not raised if
