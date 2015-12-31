@@ -23,7 +23,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
         # yet supported.
 
         unsupported_call = (
-            request.body_producer is not None or
+            getattr(request, 'body_producer', None) is not None or
             request.header_callback is not None or
             request.streaming_callback is not None
         )
