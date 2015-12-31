@@ -255,6 +255,21 @@ that of ``before_record``:
     with my_vcr.use_cassette('test.yml'):
          # your http code here    
 
+
+Decode compressed response
+---------------------------
+
+When the ``decode_compressed_response`` keyword argument of a ``VCR`` object
+is set to True, VCR will decompress "gzip" and "deflate" response bodies
+before recording. This ensures that these interactions become readable and
+editable after being serialized.
+
+.. note::
+    Decompression is done before any other specified `Custom Response Filtering`_.
+
+This option should be avoided if the actual decompression of response bodies
+is part of the functionality of the library or app being tested.
+
 Ignore requests
 ---------------
 

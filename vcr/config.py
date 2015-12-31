@@ -35,7 +35,8 @@ class VCR(object):
                  before_record_response=None, filter_post_data_parameters=(),
                  match_on=('method', 'scheme', 'host', 'port', 'path', 'query'),
                  before_record=None, inject_cassette=False, serializer='yaml',
-                 cassette_library_dir=None, func_path_generator=None):
+                 cassette_library_dir=None, func_path_generator=None,
+                 decode_compressed_response=False):
         self.serializer = serializer
         self.match_on = match_on
         self.cassette_library_dir = cassette_library_dir
@@ -67,6 +68,7 @@ class VCR(object):
         self.inject_cassette = inject_cassette
         self.path_transformer = path_transformer
         self.func_path_generator = func_path_generator
+        self.decode_compressed_response = decode_compressed_response
         self._custom_patches = tuple(custom_patches)
 
     def _get_serializer(self, serializer_name):
@@ -163,7 +165,12 @@ class VCR(object):
         before_record_response = options.get(
             'before_record_response', self.before_record_response
         )
+        decode_compressed_response = options.get(
+            'decode_compressed_response', self.decode_compressed_response
+        )
         filter_functions = []
+        if decode_compressed_response:
+            filter_functions.append(filters.decode_response)
         if before_record_response:
             if not isinstance(before_record_response, collections.Iterable):
                 before_record_response = (before_record_response,)

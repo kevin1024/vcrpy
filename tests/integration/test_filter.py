@@ -5,6 +5,7 @@ from six.moves.urllib.parse import urlencode
 from six.moves.urllib.error import HTTPError
 import vcr
 import json
+from assertions import assert_cassette_has_one_response, assert_is_json
 
 
 def _request_with_auth(url, username, password):
@@ -93,3 +94,39 @@ def test_filter_callback(tmpdir):
     with my_vcr.use_cassette(cass_file, filter_headers=['authorization']) as cass:
         urlopen(url)
         assert len(cass) == 0
+
+
+def test_decompress_gzip(tmpdir):
+    url = 'http://httpbin.org/gzip'
+    request = Request(url, headers={'Accept-Encoding': ['gzip, deflate']})
+    cass_file = str(tmpdir.join('gzip_response.yaml'))
+    with vcr.use_cassette(cass_file, decode_compressed_response=True):
+        urlopen(request)
+    with vcr.use_cassette(cass_file) as cass:
+        decoded_response = urlopen(url).read()
+        assert_cassette_has_one_response(cass)
+    assert_is_json(decoded_response)
+
+
+def test_decompress_deflate(tmpdir):
+    url = 'http://httpbin.org/deflate'
+    request = Request(url, headers={'Accept-Encoding': ['gzip, deflate']})
+    cass_file = str(tmpdir.join('deflate_response.yaml'))
+    with vcr.use_cassette(cass_file, decode_compressed_response=True):
+        urlopen(request)
+    with vcr.use_cassette(cass_file) as cass:
+        decoded_response = urlopen(url).read()
+        assert_cassette_has_one_response(cass)
+    assert_is_json(decoded_response)
+
+
+def test_decompress_regular(tmpdir):
+    """Test that it doesn't try to decompress content that isn't compressed"""
+    url = 'http://httpbin.org/get'
+    cass_file = str(tmpdir.join('noncompressed_response.yaml'))
+    with vcr.use_cassette(cass_file, decode_compressed_response=True):
+        urlopen(url)
+    with vcr.use_cassette(cass_file) as cass:
+        resp = urlopen(url).read()
+        assert_cassette_has_one_response(cass)
+    assert_is_json(resp)
