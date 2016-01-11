@@ -113,6 +113,21 @@ def test_vcr_before_record_response_iterable():
             assert mock_filter.call_count == 1
 
 
+def test_before_record_response_as_filter():
+    request = Request('GET', '/', '', {})
+    response = object()  # just can't be None
+
+    # Prevent actually saving the cassette
+    with mock.patch('vcr.cassette.save_cassette'):
+
+        filter_all = mock.Mock(return_value=None)
+        vcr = VCR(before_record_response=filter_all)
+        with vcr.use_cassette('test') as cassette:
+            cassette.append(request, response)
+            assert cassette.data == []e
+            assert not cassette.dirty
+
+
 def test_vcr_path_transformer():
     # Regression test for #199
 
