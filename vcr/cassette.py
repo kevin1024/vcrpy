@@ -190,8 +190,8 @@ class Cassette(object):
 
     def __init__(self, path, serializer=yamlserializer, record_mode='once',
                  match_on=(uri, method), before_record_request=None,
-                 before_record_response=None, custom_patches=(),
-                 inject=False, similarity_scorer_factory=None):
+                 before_record_response=None, custom_patches=(), inject=False,
+                 similarity_scorer_factory=None):
 
         self._path = path
         self._serializer = serializer
