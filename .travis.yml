@@ -39,6 +39,6 @@ python:
 - pypy
 install:
 - pip install tox-travis
-- if [[ $TOX_SUFFIX != flakes ]]; then python setup.py install ; fi
+- if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
 script:
 - tox -e "${TOX_SUFFIX}"

@@ -124,7 +124,7 @@ def test_before_record_response_as_filter():
         vcr = VCR(before_record_response=filter_all)
         with vcr.use_cassette('test') as cassette:
             cassette.append(request, response)
-            assert cassette.data == []e
+            assert cassette.data == []
             assert not cassette.dirty
 
 
