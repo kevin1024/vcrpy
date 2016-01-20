@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 '''Test requests' interaction with vcr'''
+from io import BytesIO
 
 import pytest
 import vcr
@@ -91,6 +92,21 @@ def test_post(tmpdir, scheme):
 
     with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
         req2 = requests.post(url, data).content
+
+    assert req1 == req2
+
+
+def test_post_chunked_binary(tmpdir, scheme):
+    '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with string.'''
+    data1 = iter([b'data', b'to', b'send'])
+    data2 = iter([b'data', b'to', b'send'])
+    url = scheme + '://httpbin.org/post'
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
+        req1 = requests.post(url, data1).content
+        print(req1)
+
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
+        req2 = requests.post(url, data2).content
 
     assert req1 == req2
 
