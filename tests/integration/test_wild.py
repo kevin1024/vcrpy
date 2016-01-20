@@ -3,7 +3,7 @@ from six.moves import xmlrpc_client
 
 requests = pytest.importorskip("requests")
 
-import vcr
+import vcr  # NOQA
 
 try:
     import httplib

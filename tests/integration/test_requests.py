@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 '''Test requests' interaction with vcr'''
-from io import BytesIO
-
 import pytest
 import vcr
 from assertions import assert_cassette_empty, assert_is_json
@@ -97,7 +95,7 @@ def test_post(tmpdir, scheme):
 
 
 def test_post_chunked_binary(tmpdir, scheme):
-    '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with string.'''
+    '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str.'''
     data1 = iter([b'data', b'to', b'send'])
     data2 = iter([b'data', b'to', b'send'])
     url = scheme + '://httpbin.org/post'
