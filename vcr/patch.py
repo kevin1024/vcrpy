@@ -22,6 +22,16 @@ else:
     _cpoolHTTPConnection = cpool.HTTPConnection
     _cpoolHTTPSConnection = cpool.HTTPSConnection
 
+# Try to save the original types for boto3
+try:
+    import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _Boto3VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+    _cpoolBoto3HTTPConnection = cpool.HTTPConnection
+    _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
+
 
 # Try to save the original types for urllib3
 try:
@@ -87,7 +97,7 @@ class CassettePatcherBuilder(object):
 
     def build(self):
         return itertools.chain(
-            self._httplib(), self._requests(), self._urllib3(),
+            self._httplib(), self._requests(), self._boto3(), self._urllib3(),
             self._httplib2(), self._boto(), self._tornado(),
             self._build_patchers_from_mock_triples(
                 self._cassette.custom_patches
@@ -164,6 +174,14 @@ class CassettePatcherBuilder(object):
             return ()
         from .stubs import requests_stubs
         return self._urllib3_patchers(cpool, requests_stubs)
+
+    def _boto3(self):
+        try:
+            import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+        except ImportError:  # pragma: no cover
+            return ()
+        from .stubs import boto3_stubs
+        return self._urllib3_patchers(cpool, boto3_stubs)
 
     def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
@@ -352,6 +370,24 @@ def reset_patchers():
         if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
             yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _HTTPConnection)
             yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _HTTPSConnection)
+
+    try:
+        import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+    except ImportError:  # pragma: no cover
+        pass
+    else:
+        # unpatch requests v1.x
+        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _Boto3VerifiedHTTPSConnection)
+        yield mock.patch.object(cpool, 'HTTPConnection', _cpoolBoto3HTTPConnection)
+        # unpatch requests v2.x
+        if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
+            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls',
+                                    _cpoolBoto3HTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls',
+                                    _cpoolBoto3HTTPSConnection)
+
+        if hasattr(cpool, 'HTTPSConnection'):
+            yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolBoto3HTTPSConnection)
 
     try:
         import httplib2 as cpool
