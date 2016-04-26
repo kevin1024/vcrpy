@@ -233,7 +233,8 @@ def test_cassette_use_called_without_path_uses_function_to_generate_path():
 
 
 def test_path_transformer_with_function_path():
-    path_transformer = lambda path: os.path.join('a', path)
+    def path_transformer(path):
+        return os.path.join('a', path)
 
     @Cassette.use(inject=True, path_transformer=path_transformer)
     def function_name(cassette):
