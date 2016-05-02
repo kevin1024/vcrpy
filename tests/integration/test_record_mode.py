@@ -105,7 +105,7 @@ def test_all_record_mode(tmpdir, httpbin):
 
     with vcr.use_cassette(testfile, record_mode="all") as cass:
         # make the same request again
-        urlopen('http://httpbin.org/').read()
+        urlopen(httpbin.url).read()
 
         # in the "all" record mode, we can add more requests to
         # a cassette without repurcussions.
