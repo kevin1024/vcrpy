@@ -9,74 +9,63 @@ from six.moves.urllib.request import urlopen
 import vcr
 
 
-def test_nonexistent_directory(tmpdir):
+def test_nonexistent_directory(tmpdir, httpbin):
     '''If we load a cassette in a nonexistent directory, it can save ok'''
     # Check to make sure directory doesnt exist
     assert not os.path.exists(str(tmpdir.join('nonexistent')))
 
     # Run VCR to create dir and cassette file
     with vcr.use_cassette(str(tmpdir.join('nonexistent', 'cassette.yml'))):
-        urlopen('http://httpbin.org/').read()
+        urlopen(httpbin.url).read()
 
     # This should have made the file and the directory
     assert os.path.exists(str(tmpdir.join('nonexistent', 'cassette.yml')))
 
 
-def test_unpatch(tmpdir):
+def test_unpatch(tmpdir, httpbin):
     '''Ensure that our cassette gets unpatched when we're done'''
     with vcr.use_cassette(str(tmpdir.join('unpatch.yaml'))) as cass:
-        urlopen('http://httpbin.org/').read()
+        urlopen(httpbin.url).read()
 
     # Make the same request, and assert that we haven't served any more
     # requests out of cache
-    urlopen('http://httpbin.org/').read()
+    urlopen(httpbin.url).read()
     assert cass.play_count == 0
 
 
-def test_basic_use(tmpdir):
-    '''
-    Copied from the docs
-    '''
-    with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
-        response = urlopen(
-            'http://www.iana.org/domains/reserved'
-        ).read()
-        assert b'Example domains' in response
-
-
-def test_basic_json_use(tmpdir):
+def test_basic_json_use(tmpdir, httpbin):
     '''
     Ensure you can load a json serialized cassette
     '''
-    test_fixture = 'fixtures/vcr_cassettes/synopsis.json'
+    test_fixture = str(tmpdir.join('synopsis.json'))
     with vcr.use_cassette(test_fixture, serializer='json'):
-        response = urlopen('http://httpbin.org/').read()
+        response = urlopen(httpbin.url).read()
         assert b'difficult sometimes' in response
 
 
-def test_patched_content(tmpdir):
+def test_patched_content(tmpdir, httpbin):
     '''
     Ensure that what you pull from a cassette is what came from the
     request
     '''
     with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
-        response = urlopen('http://httpbin.org/').read()
+        response = urlopen(httpbin.url).read()
         assert cass.play_count == 0
 
     with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
-        response2 = urlopen('http://httpbin.org/').read()
+        response2 = urlopen(httpbin.url).read()
         assert cass.play_count == 1
         cass._save(force=True)
 
     with vcr.use_cassette(str(tmpdir.join('synopsis.yaml'))) as cass:
-        response3 = urlopen('http://httpbin.org/').read()
+        response3 = urlopen(httpbin.url).read()
         assert cass.play_count == 1
 
     assert response == response2
     assert response2 == response3
 
 
-def test_patched_content_json(tmpdir):
+def test_patched_content_json(tmpdir, httpbin):
     '''
     Ensure that what you pull from a json cassette is what came from the
     request
@@ -85,16 +74,16 @@ def test_patched_content_json(tmpdir):
     testfile = str(tmpdir.join('synopsis.json'))
 
     with vcr.use_cassette(testfile) as cass:
-        response = urlopen('http://httpbin.org/').read()
+        response = urlopen(httpbin.url).read()
         assert cass.play_count == 0
 
     with vcr.use_cassette(testfile) as cass:
-        response2 = urlopen('http://httpbin.org/').read()
+        response2 = urlopen(httpbin.url).read()
         assert cass.play_count == 1
         cass._save(force=True)
 
     with vcr.use_cassette(testfile) as cass:
-        response3 = urlopen('http://httpbin.org/').read()
+        response3 = urlopen(httpbin.url).read()
         assert cass.play_count == 1
 
     assert response == response2

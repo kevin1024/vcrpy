@@ -41,6 +41,7 @@ class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection,
             'strict',
             'timeout',
             'source_address',
+            'ca_certs',
         ))
         unknown_keys = set(kwargs.keys()) - safe_keys
         safe_kwargs = kwargs.copy()
