@@ -1,5 +1,11 @@
 Changelog
 ---------
+-  1.8.0 Fix for Serialization errors with JSON adapter (thanks
+   @aliaksandrb). Avoid concatenating bytes with strings (thanks
+   @jaysonsantos). Exclude __pycache__ dirs & compiled files in sdist
+   (thanks @koobs). Fix Tornado support behavior for Tornado 3 (thanks
+   @abhinav). decode_compressed_response option and filter (thanks
+   @jayvdb).
 -  1.7.4 [#217] Make use_cassette decorated functions actually return a
    value (thanks @bcen). [#199] Fix path transfromation defaults.
    Better headers dictionary management.
