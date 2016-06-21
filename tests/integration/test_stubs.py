@@ -1,5 +1,8 @@
 import vcr
 import six.moves.http_client as httplib
+from six.moves.urllib.request import urlopen, Request
+
+from assertions import assert_is_json
 
 
 def _headers_are_case_insensitive(host, port):
@@ -44,3 +47,28 @@ def test_multiple_headers(tmpdir, httpbin):
         inside = _multiple_header_value(httpbin)
 
     assert outside == inside
+
+
+def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
+    testfile = str(tmpdir.join('decoded_response.yml'))
+    url = httpbin.url + '/gzip'
+    request = Request(url)
+    outside = urlopen(request)
+
+    with vcr.use_cassette(testfile, decode_compressed_response=True):
+        inside = urlopen(request)
+
+        # Assert that we do not modify the original response while appending
+        # to the casssette.
+        assert 'gzip' == inside.headers['content-encoding']
+
+        # They should be the same response.
+        assert inside.headers.items() == outside.headers.items()
+        assert inside.read() == outside.read()
+
+    # Even though the above are raw bytes, the JSON data should have be decoded
+    # and saved to the cassette.
+    with vcr.use_cassette(testfile) as cass:
+        inside2 = urlopen(request)
+        assert 'content-encoding' not in inside2.headers
+        assert_is_json(inside2.read())
