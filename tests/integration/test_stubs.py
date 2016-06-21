@@ -66,8 +66,8 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
         assert inside.headers.items() == outside.headers.items()
         assert inside.read() == outside.read()
 
-    # Even though the above are raw bytes, the JSON data should have be decoded
-    # and saved to the cassette.
+    # Even though the above are raw bytes, the JSON data should have been
+    # decoded and saved to the cassette.
     with vcr.use_cassette(testfile) as cass:
         inside2 = urlopen(request)
         assert 'content-encoding' not in inside2.headers
