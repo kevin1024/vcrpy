@@ -146,6 +146,8 @@ def decode_response(response):
         else:  # encoding == 'deflate'
             return zlib.decompress(body)
 
+    # Deepcopy here in case headers contain lists and other objects that could
+    # be mutated by a shallow copy.
     response = copy.deepcopy(response)
     headers = CaseInsensitiveDict(response['headers'])
     if is_compressed(headers):
