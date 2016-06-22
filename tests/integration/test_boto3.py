@@ -1,8 +1,8 @@
 import pytest
 boto3 = pytest.importorskip("boto3")
 
-import boto3
-import vcr
+import boto3  # NOQA
+import vcr  # NOQA
 
 bucket = 'boto3-demo-1337'              # a bucket you can access
 key = 'test/my_test.txt'                # key with r+w access
@@ -65,4 +65,3 @@ def test_boto_hardcore_mode(tmpdir):
         o = s3_resource.Object(bucket, key).get()
         assert content == o['Body'].read().decode('utf-8')
         assert cass.all_played
-

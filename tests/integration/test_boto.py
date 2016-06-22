@@ -6,11 +6,11 @@ import boto.iam  # NOQA
 from boto.s3.connection import S3Connection  # NOQA
 from boto.s3.key import Key  # NOQA
 import vcr  # NOQA
-try: # NOQA
-    from ConfigParser import DuplicateSectionError # NOQA
-except ImportError: # NOQA
+try:  # NOQA
+    from ConfigParser import DuplicateSectionError  # NOQA
+except ImportError:  # NOQA
     # python3
-    from configparser import DuplicateSectionError # NOQA
+    from configparser import DuplicateSectionError  # NOQA
 
 
 def test_boto_stubs(tmpdir):
