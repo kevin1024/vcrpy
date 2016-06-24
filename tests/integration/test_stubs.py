@@ -66,7 +66,9 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
         assert 'gzip' == inside.headers['content-encoding']
 
         # They should effectively be the same response.
-        assert inside.headers.items() == outside.getheaders()
+        inside_headers = (h for h in inside.headers.items() if h[0] != 'Date')
+        outside_headers = (h for h in outside.getheaders() if h[0] != 'Date')
+        assert set(inside_headers) == set(outside_headers)
         assert inside.read() == outside.read()
 
     # Even though the above are raw bytes, the JSON data should have been
