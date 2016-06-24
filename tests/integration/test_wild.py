@@ -76,7 +76,7 @@ def test_amazon_doctype(tmpdir):
     # amazon gzips its homepage.  For some reason, in requests 2.7, it's not
     # getting gunzipped.
     with vcr.use_cassette(str(tmpdir.join('amz.yml'))):
-        r = requests.get('http://www.amazon.com')
+        r = requests.get('http://www.amazon.com', verify=False)
     assert 'html' in r.text
 
 
