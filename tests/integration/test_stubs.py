@@ -1,4 +1,5 @@
 import vcr
+import zlib
 import six.moves.http_client as httplib
 
 from assertions import assert_is_json
@@ -69,7 +70,9 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
         inside_headers = (h for h in inside.headers.items() if h[0] != 'Date')
         outside_headers = (h for h in outside.getheaders() if h[0] != 'Date')
         assert set(inside_headers) == set(outside_headers)
-        assert inside.read() == outside.read()
+        inside = zlib.decompress(inside.read(), 16+zlib.MAX_WBITS)
+        outside = zlib.decompress(outside.read(), 16+zlib.MAX_WBITS)
+        assert inside == outside
 
     # Even though the above are raw bytes, the JSON data should have been
     # decoded and saved to the cassette.
