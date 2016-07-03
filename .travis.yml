@@ -16,6 +16,7 @@ env:
     - TOX_SUFFIX="requests1"
     - TOX_SUFFIX="httplib2"
     - TOX_SUFFIX="boto"
+    - TOX_SUFFIX="boto3"
     - TOX_SUFFIX="urllib317"
     - TOX_SUFFIX="urllib319"
     - TOX_SUFFIX="urllib3110"
@@ -24,6 +25,7 @@ env:
 matrix:
   allow_failures:
     - env: TOX_SUFFIX="boto"
+    - env: TOX_SUFFIX="boto3"
   exclude:
     - env: TOX_SUFFIX="boto"
       python: 3.3
