@@ -17,7 +17,7 @@ def convert_body_to_bytes(resp):
 
     By default yaml serializes to utf-8 encoded bytestrings.
     When this cassette is loaded by python3, it's automatically decoded
-    into unicode strings.  This makes sure that it stays a bytestring, since
+    into unicode strings. This makes sure that it stays a bytestring, since
     that's what all the internal httplib machinery is expecting.
 
     For more info on py3 yaml:
@@ -37,19 +37,43 @@ def convert_body_to_bytes(resp):
     return resp
 
 
+def _convert_string_to_unicode(string):
+    """
+    If the string is bytes, decode it to a string (for python3 support)
+    """
+    result = string
+
+    try:
+        if string is not None and not isinstance(string, six.text_type):
+            result = string.decode('utf-8')
+    except (TypeError, UnicodeDecodeError, AttributeError):
+        # Sometimes the string actually is binary or StringIO object,
+        # so if you can't decode it, just give up.
+        pass
+
+    return result
+
+
 def convert_body_to_unicode(resp):
     """
-    If the request body is bytes, decode it to a string (for python3 support)
+    If the request or responses body is bytes, decode it to a string
+    (for python3 support)
     """
-    try:
-        if not isinstance(resp['body']['string'], six.text_type):
-            resp['body']['string'] = resp['body']['string'].decode('utf-8')
-    except (KeyError, TypeError, UnicodeDecodeError):
-        # The thing we were converting either wasn't a dictionary or didn't
-        # have the keys we were expecting.  Some of the tests just serialize
-        # and deserialize a string.
+    if type(resp) is not dict:
+        # Some of the tests just serialize and deserialize a string.
+        return _convert_string_to_unicode(resp)
+    else:
+        body = resp.get('body')
 
-        # Also, sometimes the thing actually is binary, so if you can't decode
-        # it, just give up.
-        pass
+        if body is not None:
+            try:
+                body['string'] = _convert_string_to_unicode(
+                    body['string']
+                )
+            except (KeyError, TypeError, AttributeError):
+                # The thing we were converting either wasn't a dictionary or
+                # didn't have the keys we were expecting.
+                # For example request object has no 'string' key.
+                resp['body'] = _convert_string_to_unicode(body)
+
     return resp

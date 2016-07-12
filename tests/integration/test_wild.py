@@ -3,7 +3,7 @@ from six.moves import xmlrpc_client
 
 requests = pytest.importorskip("requests")
 
-import vcr
+import vcr  # NOQA
 
 try:
     import httplib
@@ -24,14 +24,14 @@ def test_domain_redirect():
         assert len(cass) == 2
 
 
-def test_flickr_multipart_upload():
+def test_flickr_multipart_upload(httpbin, tmpdir):
     """
     The python-flickr-api project does a multipart
     upload that confuses vcrpy
     """
     def _pretend_to_be_flickr_library():
         content_type, body = "text/plain", "HELLO WORLD"
-        h = httplib.HTTPConnection("httpbin.org")
+        h = httplib.HTTPConnection(httpbin.host, httpbin.port)
         headers = {
             "Content-Type": content_type,
             "content-length": str(len(body))
@@ -42,11 +42,14 @@ def test_flickr_multipart_upload():
         data = r.read()
         h.close()
 
-    with vcr.use_cassette('fixtures/vcr_cassettes/flickr.yaml') as cass:
+        return data
+
+    testfile = str(tmpdir.join('flickr.yml'))
+    with vcr.use_cassette(testfile) as cass:
         _pretend_to_be_flickr_library()
         assert len(cass) == 1
 
-    with vcr.use_cassette('fixtures/vcr_cassettes/flickr.yaml') as cass:
+    with vcr.use_cassette(testfile) as cass:
         assert len(cass) == 1
         _pretend_to_be_flickr_library()
         assert cass.play_count == 1
@@ -59,12 +62,13 @@ def test_flickr_should_respond_with_200(tmpdir):
         assert r.status_code == 200
 
 
-def test_cookies(tmpdir):
+def test_cookies(tmpdir, httpbin):
     testfile = str(tmpdir.join('cookies.yml'))
     with vcr.use_cassette(testfile):
         s = requests.Session()
-        r1 = s.get("http://httpbin.org/cookies/set?k1=v1&k2=v2")
-        r2 = s.get("http://httpbin.org/cookies")
+        s.get(httpbin.url + "/cookies/set?k1=v1&k2=v2")
+
+        r2 = s.get(httpbin.url + "/cookies")
         assert len(r2.json()['cookies']) == 2
 
 
@@ -72,7 +76,7 @@ def test_amazon_doctype(tmpdir):
     # amazon gzips its homepage.  For some reason, in requests 2.7, it's not
     # getting gunzipped.
     with vcr.use_cassette(str(tmpdir.join('amz.yml'))):
-        r = requests.get('http://www.amazon.com')
+        r = requests.get('http://www.amazon.com', verify=False)
     assert 'html' in r.text
 
 
@@ -81,9 +85,8 @@ def test_xmlrpclib(tmpdir):
         roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
         original_schema = roundup_server.schema()
 
-    with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))) as cassette:
+    with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))):
         roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
         second_schema = roundup_server.schema()
 
     assert original_schema == second_schema
-

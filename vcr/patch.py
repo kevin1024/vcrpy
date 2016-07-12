@@ -22,6 +22,16 @@ else:
     _cpoolHTTPConnection = cpool.HTTPConnection
     _cpoolHTTPSConnection = cpool.HTTPSConnection
 
+# Try to save the original types for boto3
+try:
+    import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _Boto3VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+    _cpoolBoto3HTTPConnection = cpool.HTTPConnection
+    _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
+
 
 # Try to save the original types for urllib3
 try:
@@ -59,7 +69,7 @@ except ImportError:  # pragma: no cover
     pass
 else:
     _SimpleAsyncHTTPClient_fetch_impl = \
-            tornado.simple_httpclient.SimpleAsyncHTTPClient.fetch_impl
+        tornado.simple_httpclient.SimpleAsyncHTTPClient.fetch_impl
 
 
 try:
@@ -68,7 +78,7 @@ except ImportError:  # pragma: no cover
     pass
 else:
     _CurlAsyncHTTPClient_fetch_impl = \
-            tornado.curl_httpclient.CurlAsyncHTTPClient.fetch_impl
+        tornado.curl_httpclient.CurlAsyncHTTPClient.fetch_impl
 
 
 class CassettePatcherBuilder(object):
@@ -87,7 +97,7 @@ class CassettePatcherBuilder(object):
 
     def build(self):
         return itertools.chain(
-            self._httplib(), self._requests(), self._urllib3(),
+            self._httplib(), self._requests(), self._boto3(), self._urllib3(),
             self._httplib2(), self._boto(), self._tornado(),
             self._build_patchers_from_mock_triples(
                 self._cassette.custom_patches
@@ -127,13 +137,13 @@ class CassettePatcherBuilder(object):
         described in the previous paragraph.
         """
         if isinstance(replacement_dict_or_obj, dict):
-            for key, replacement_obj  in replacement_dict_or_obj.items():
+            for key, replacement_obj in replacement_dict_or_obj.items():
                 replacement_obj = self._recursively_apply_get_cassette_subclass(
                     replacement_obj)
                 replacement_dict_or_obj[key] = replacement_obj
             return replacement_dict_or_obj
         if hasattr(replacement_dict_or_obj, 'cassette'):
-            replacement_dict_or_obj =  self._get_cassette_subclass(
+            replacement_dict_or_obj = self._get_cassette_subclass(
                 replacement_dict_or_obj)
         return replacement_dict_or_obj
 
@@ -147,7 +157,7 @@ class CassettePatcherBuilder(object):
 
     def _build_cassette_subclass(self, base_class):
         bases = (base_class,)
-        if not issubclass(base_class, object): # Check for old style class
+        if not issubclass(base_class, object):  # Check for old style class
             bases += (object,)
         return type('{0}{1}'.format(base_class.__name__, self._cassette._path),
                     bases, dict(cassette=self._cassette))
@@ -165,13 +175,23 @@ class CassettePatcherBuilder(object):
         from .stubs import requests_stubs
         return self._urllib3_patchers(cpool, requests_stubs)
 
+    def _boto3(self):
+        try:
+            import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+        except ImportError:  # pragma: no cover
+            return ()
+        from .stubs import boto3_stubs
+        return self._urllib3_patchers(cpool, boto3_stubs)
+
     def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
+
         @functools.wraps(get_conn)
         def patched_get_conn(pool, timeout=None):
             connection = get_conn(pool, timeout)
-            connection_class = pool.ConnectionCls if hasattr(pool, 'ConnectionCls') \
-                               else connection_class_getter()
+            connection_class = (
+                pool.ConnectionCls if hasattr(pool, 'ConnectionCls')
+                else connection_class_getter())
             # We need to make sure that we are actually providing a
             # patched version of the connection class. This might not
             # always be the case because the pool keeps previously
@@ -181,15 +201,18 @@ class CassettePatcherBuilder(object):
             while not isinstance(connection, connection_class):
                 connection = get_conn(pool, timeout)
             return connection
+
         return patched_get_conn
 
     def _patched_new_conn(self, connection_pool_class, connection_remover):
         new_conn = connection_pool_class._new_conn
+
         @functools.wraps(new_conn)
         def patched_new_conn(pool):
             new_connection = new_conn(pool)
             connection_remover.add_connection_to_pool_entry(pool, new_connection)
             return new_connection
+
         return patched_new_conn
 
     def _urllib3(self):
@@ -270,10 +293,10 @@ class CassettePatcherBuilder(object):
         # connections of the appropriate type.
         mock_triples += ((cpool.HTTPConnectionPool, '_get_conn',
                           self._patched_get_conn(cpool.HTTPConnectionPool,
-                                                 lambda : cpool.HTTPConnection)),
+                                                 lambda: cpool.HTTPConnection)),
                          (cpool.HTTPSConnectionPool, '_get_conn',
                           self._patched_get_conn(cpool.HTTPSConnectionPool,
-                                                 lambda : cpool.HTTPSConnection)),
+                                                 lambda: cpool.HTTPSConnection)),
                          (cpool.HTTPConnectionPool, '_new_conn',
                           self._patched_new_conn(cpool.HTTPConnectionPool,
                                                  http_connection_remover)),
@@ -349,6 +372,24 @@ def reset_patchers():
             yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _HTTPSConnection)
 
     try:
+        import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+    except ImportError:  # pragma: no cover
+        pass
+    else:
+        # unpatch requests v1.x
+        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _Boto3VerifiedHTTPSConnection)
+        yield mock.patch.object(cpool, 'HTTPConnection', _cpoolBoto3HTTPConnection)
+        # unpatch requests v2.x
+        if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
+            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls',
+                                    _cpoolBoto3HTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls',
+                                    _cpoolBoto3HTTPSConnection)
+
+        if hasattr(cpool, 'HTTPSConnection'):
+            yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolBoto3HTTPSConnection)
+
+    try:
         import httplib2 as cpool
     except ImportError:  # pragma: no cover
         pass
@@ -382,7 +423,7 @@ def reset_patchers():
     else:
         yield mock.patch.object(
             curl.CurlAsyncHTTPClient,
-            'fetch_impl', 
+            'fetch_impl',
             _CurlAsyncHTTPClient_fetch_impl,
         )
 

@@ -218,6 +218,8 @@ class Cassette(object):
         if not request:
             return
         response = self._before_record_response(response)
+        if response is None:
+            return
         self.data.append((request, response))
         self.dirty = True
 

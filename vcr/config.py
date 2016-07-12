@@ -36,6 +36,7 @@ class VCR(object):
                  match_on=('method', 'scheme', 'host', 'port', 'path', 'query'),
                  before_record=None, inject_cassette=False, serializer='yaml',
                  cassette_library_dir=None, func_path_generator=None,
+                 decode_compressed_response=False,
                  record_on_exception=True):
         self.serializer = serializer
         self.match_on = match_on
@@ -68,6 +69,7 @@ class VCR(object):
         self.inject_cassette = inject_cassette
         self.path_transformer = path_transformer
         self.func_path_generator = func_path_generator
+        self.decode_compressed_response = decode_compressed_response
         self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
 
@@ -170,7 +172,12 @@ class VCR(object):
         before_record_response = options.get(
             'before_record_response', self.before_record_response
         )
+        decode_compressed_response = options.get(
+            'decode_compressed_response', self.decode_compressed_response
+        )
         filter_functions = []
+        if decode_compressed_response:
+            filter_functions.append(filters.decode_response)
         if before_record_response:
             if not isinstance(before_record_response, collections.Iterable):
                 before_record_response = (before_record_response,)

@@ -1,9 +1,5 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
-try:
-    import http.client
-except ImportError:
-    pass
 import logging
 import six
 from six.moves.http_client import (
@@ -195,7 +191,8 @@ class VCRConnection(object):
         body of the request.  So if that happens, let's just append the data
         onto the most recent request in the cassette.
         '''
-        self._vcr_request.body = (self._vcr_request.body or '') + data
+        self._vcr_request.body = self._vcr_request.body + data \
+            if self._vcr_request.body else data
 
     def close(self):
         # Note: the real connection will only close if it's open, so
@@ -329,8 +326,8 @@ class VCRConnection(object):
         try:
             setattr(self.real_connection, name, value)
         except AttributeError:
-             # raised if real_connection has not been set yet, such as when
-             # we're setting the real_connection itself for the first time
+            # raised if real_connection has not been set yet, such as when
+            # we're setting the real_connection itself for the first time
             pass
 
         super(VCRConnection, self).__setattr__(name, value)

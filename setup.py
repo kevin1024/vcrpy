@@ -51,7 +51,7 @@ except Exception:
 
 setup(
     name='vcrpy',
-    version='1.7.4',
+    version='1.8.0',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
@@ -64,8 +64,7 @@ setup(
     install_requires=install_requires,
     extras_require=extras_require,
     license='MIT',
-    tests_require=['pytest', 'mock', 'pytest-localserver'],
-    cmdclass={'test': PyTest},
+    tests_require=['pytest', 'mock', 'pytest-httpbin'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',

@@ -1,55 +1,73 @@
-import base64
-import pytest
-from six.moves.urllib.request import urlopen, Request
-from six.moves.urllib.error import HTTPError
+from six.moves.urllib.request import urlopen
+import socket
+from contextlib import contextmanager
 import vcr
 
 
-def test_ignore_localhost(tmpdir, httpserver):
-    httpserver.serve_content('Hello!')
-    cass_file = str(tmpdir.join('filter_qs.yaml'))
-    with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
-        urlopen(httpserver.url)
-        assert len(cass) == 0
-        urlopen('http://httpbin.org')
-        assert len(cass) == 1
+@contextmanager
+def overridden_dns(overrides):
+    """
+    Monkeypatch socket.getaddrinfo() to override DNS lookups (name will resolve
+    to address)
+    """
+    real_getaddrinfo = socket.getaddrinfo
+
+    def fake_getaddrinfo(*args, **kwargs):
+        if args[0] in overrides:
+            address = overrides[args[0]]
+            return [(2, 1, 6, '', (address, args[1]))]
+        return real_getaddrinfo(*args, **kwargs)
+    socket.getaddrinfo = fake_getaddrinfo
+    yield
+    socket.getaddrinfo = real_getaddrinfo
 
 
-def test_ignore_httpbin(tmpdir, httpserver):
-    httpserver.serve_content('Hello!')
-    cass_file = str(tmpdir.join('filter_qs.yaml'))
-    with vcr.use_cassette(
-        cass_file,
-        ignore_hosts=['httpbin.org']
-    ) as cass:
-        urlopen('http://httpbin.org')
-        assert len(cass) == 0
-        urlopen(httpserver.url)
-        assert len(cass) == 1
+def test_ignore_localhost(tmpdir, httpbin):
+    with overridden_dns({'httpbin.org': '127.0.0.1'}):
+        cass_file = str(tmpdir.join('filter_qs.yaml'))
+        with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
+            urlopen('http://localhost:{0}/'.format(httpbin.port))
+            assert len(cass) == 0
+            urlopen('http://httpbin.org:{0}/'.format(httpbin.port))
+            assert len(cass) == 1
 
 
-def test_ignore_localhost_and_httpbin(tmpdir, httpserver):
-    httpserver.serve_content('Hello!')
-    cass_file = str(tmpdir.join('filter_qs.yaml'))
-    with vcr.use_cassette(
-        cass_file,
-        ignore_hosts=['httpbin.org'],
-        ignore_localhost=True
-    ) as cass:
-        urlopen('http://httpbin.org')
-        urlopen(httpserver.url)
-        assert len(cass) == 0
+def test_ignore_httpbin(tmpdir, httpbin):
+    with overridden_dns({'httpbin.org': '127.0.0.1'}):
+        cass_file = str(tmpdir.join('filter_qs.yaml'))
+        with vcr.use_cassette(
+            cass_file,
+            ignore_hosts=['httpbin.org']
+        ) as cass:
+            urlopen('http://httpbin.org:{0}/'.format(httpbin.port))
+            assert len(cass) == 0
+            urlopen('http://localhost:{0}/'.format(httpbin.port))
+            assert len(cass) == 1
 
-def test_ignore_localhost_twice(tmpdir, httpserver):
-    httpserver.serve_content('Hello!')
-    cass_file = str(tmpdir.join('filter_qs.yaml'))
-    with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
-        urlopen(httpserver.url)
-        assert len(cass) == 0
-        urlopen('http://httpbin.org')
-        assert len(cass) == 1
-    with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
-        assert len(cass) == 1
-        urlopen(httpserver.url)
-        urlopen('http://httpbin.org')
-        assert len(cass) == 1
+
+def test_ignore_localhost_and_httpbin(tmpdir, httpbin):
+    with overridden_dns({'httpbin.org': '127.0.0.1'}):
+        cass_file = str(tmpdir.join('filter_qs.yaml'))
+        with vcr.use_cassette(
+            cass_file,
+            ignore_hosts=['httpbin.org'],
+            ignore_localhost=True
+        ) as cass:
+            urlopen('http://httpbin.org:{0}'.format(httpbin.port))
+            urlopen('http://localhost:{0}'.format(httpbin.port))
+            assert len(cass) == 0
+
+
+def test_ignore_localhost_twice(tmpdir, httpbin):
+    with overridden_dns({'httpbin.org': '127.0.0.1'}):
+        cass_file = str(tmpdir.join('filter_qs.yaml'))
+        with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
+            urlopen('http://localhost:{0}'.format(httpbin.port))
+            assert len(cass) == 0
+            urlopen('http://httpbin.org:{0}'.format(httpbin.port))
+            assert len(cass) == 1
+        with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
+            assert len(cass) == 1
+            urlopen('http://localhost:{0}'.format(httpbin.port))
+            urlopen('http://httpbin.org:{0}'.format(httpbin.port))
+            assert len(cass) == 1

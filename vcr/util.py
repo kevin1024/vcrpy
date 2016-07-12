@@ -71,6 +71,7 @@ class CaseInsensitiveDict(collections.MutableMapping):
     def __repr__(self):
         return str(dict(self.items()))
 
+
 def partition_dict(predicate, dictionary):
     true_dict = {}
     false_dict = {}
@@ -88,6 +89,7 @@ def compose(*functions):
                 res = function(res)
         return res
     return composed
+
 
 def read_body(request):
     if hasattr(request.body, 'read'):

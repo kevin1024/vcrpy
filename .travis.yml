@@ -6,49 +6,45 @@ env:
     - secure: AifoKzwhjV94cmcQZrdQmqRu/9rkZZvWpwBv1daeAQpLOKFPGsOm3D+x2cSw9+iCfkgDZDfqQVv1kCaFVxTll8v8jTq5SJdqEY0NmGWbj/UkNtShh609oRDsuzLxAEwtVKYjf/h8K2BRea+bl1tGkwZ2vtmYS6dxNlAijjWOfds=
     - secure: LBSEg/gMj4u4Hrpo3zs6Y/1mTpd2RtcN49mZIFgTdbJ9IhpiNPqcEt647Lz94F9Eses2x2WbNuKqZKZZReY7QLbEzU1m0nN5jlaKrjcG5NR5clNABfFFyhgc0jBikyS4abAG8jc2efeaTrFuQwdoF4sE8YiVrkiVj2X5Xoi6sBk=
   matrix:
-    - WITH_LIB="requests2.2"
-    - WITH_LIB="requests2.3"
-    - WITH_LIB="requests2.4"
-    - WITH_LIB="requests2.5"
-    - WITH_LIB="requests2.6"
-    - WITH_LIB="requests2.7"
-    - WITH_LIB="requests1.x"
-    - WITH_LIB="httplib2"
-    - WITH_LIB="boto"
-    - WITH_LIB="urllib31.7"
-    - WITH_LIB="urllib31.9"
-    - WITH_LIB="urllib31.10"
-    - WITH_LIB="tornado"
+    - TOX_SUFFIX="flakes"
+    - TOX_SUFFIX="requests22"
+    - TOX_SUFFIX="requests23"
+    - TOX_SUFFIX="requests24"
+    - TOX_SUFFIX="requests25"
+    - TOX_SUFFIX="requests26"
+    - TOX_SUFFIX="requests27"
+    - TOX_SUFFIX="requests1"
+    - TOX_SUFFIX="httplib2"
+    - TOX_SUFFIX="boto"
+    - TOX_SUFFIX="boto3"
+    - TOX_SUFFIX="urllib317"
+    - TOX_SUFFIX="urllib319"
+    - TOX_SUFFIX="urllib3110"
+    - TOX_SUFFIX="tornado3"
+    - TOX_SUFFIX="tornado4"
 matrix:
   allow_failures:
-    - env: WITH_LIB="boto"
+    - env: TOX_SUFFIX="boto"
+    - env: TOX_SUFFIX="boto3"
   exclude:
-    - env: WITH_LIB="boto"
+    - env: TOX_SUFFIX="boto"
       python: 3.3
-    - env: WITH_LIB="boto"
+    - env: TOX_SUFFIX="boto"
       python: 3.4
-    - env: WITH_LIB="requests1.x"
+    - env: TOX_SUFFIX="requests1"
       python: 3.4
+    - env: TOX_SUFFIX="requests1"
+      python: 3.5
 python:
 - 2.6
 - 2.7
 - 3.3
 - 3.4
+- 3.5
 - pypy
+- pypy3
 install:
-- pip install .
-- if [ $WITH_LIB = "requests1.x" ] ; then pip install requests==1.2.3; fi
-- if [ $WITH_LIB = "requests2.2" ] ; then pip install requests==2.2.1; fi
-- if [ $WITH_LIB = "requests2.3" ] ; then pip install requests==2.3.0; fi
-- if [ $WITH_LIB = "requests2.4" ] ; then pip install requests==2.4.0; fi
-- if [ $WITH_LIB = "requests2.5" ] ; then pip install requests==2.5.0; fi
-- if [ $WITH_LIB = "requests2.6" ] ; then pip install requests==2.6.0; fi
-- if [ $WITH_LIB = "requests2.7" ] ; then pip install requests==2.7.0; fi
-- if [ $WITH_LIB = "httplib2" ] ; then pip install httplib2; fi
-- if [ $WITH_LIB = "boto" ] ; then pip install boto; fi
-- if [ $WITH_LIB = "urllib31.7" ] ; then pip install certifi urllib3==1.7.1; fi
-- if [ $WITH_LIB = "urllib31.9" ] ; then pip install certifi urllib3==1.9.1; fi
-- if [ $WITH_LIB = "urllib31.10" ] ; then pip install certifi urllib3==1.10.2; fi
-- if [ $WITH_LIB = "tornado" ] ; then pip install tornado==4.2 pytest-tornado; fi
-- if [ $WITH_LIB = "tornado" -a $TRAVIS_PYTHON_VERSION != "pypy" ] ; then pip install pycurl; fi
-script: python setup.py test
+- pip install tox-travis
+- if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
+script:
+- tox -e "${TOX_SUFFIX}"

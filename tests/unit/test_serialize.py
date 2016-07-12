@@ -2,7 +2,8 @@
 import pytest
 
 from vcr.compat import mock
-from vcr.serialize import deserialize
+from vcr.request import Request
+from vcr.serialize import deserialize, serialize
 from vcr.serializers import yamlserializer, jsonserializer
 
 
@@ -83,3 +84,50 @@ def test_deserialize_py2py3_yaml_cassette(tmpdir, req_body, expect):
 def test_serialize_constructs_UnicodeDecodeError(mock_dumps):
     with pytest.raises(UnicodeDecodeError):
         jsonserializer.serialize({})
+
+
+def test_serialize_empty_request():
+    request = Request(
+        method='POST',
+        uri='http://localhost/',
+        body='',
+        headers={},
+    )
+
+    serialize(
+        {'requests': [request], 'responses': [{}]},
+        jsonserializer
+    )
+
+
+def test_serialize_json_request():
+    request = Request(
+        method='POST',
+        uri='http://localhost/',
+        body="{'hello': 'world'}",
+        headers={},
+    )
+
+    serialize(
+        {'requests': [request], 'responses': [{}]},
+        jsonserializer
+    )
+
+
+def test_serialize_binary_request():
+    msg = "Does this HTTP interaction contain binary data?"
+
+    request = Request(
+        method='POST',
+        uri='http://localhost/',
+        body=b'\x8c',
+        headers={},
+    )
+
+    try:
+        serialize(
+            {'requests': [request], 'responses': [{}]},
+            jsonserializer
+        )
+    except (UnicodeDecodeError, TypeError) as exc:
+        assert msg in str(exc)
