@@ -19,7 +19,7 @@ that has ``requests`` installed.
 
 Also, in order for the boto tests to run, you will need an AWS key.
 Refer to the `boto
-documentation <http://boto.readthedocs.org/en/latest/getting_started.html>`__
+documentation <https://boto.readthedocs.io/en/latest/getting_started.html>`__
 for how to set this up. I have marked the boto tests as optional in
 Travis so you don't have to worry about them failing if you submit a
 pull request.

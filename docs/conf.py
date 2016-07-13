@@ -110,7 +110,7 @@ todo_include_todos = False
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.
-# https://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
+# https://read-the-docs.readthedocs.io/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
 if 'READTHEDOCS' not in os.environ:
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'
