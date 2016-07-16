@@ -1,5 +1,8 @@
 Changelog
 ---------
+-  1.9.0 Add support for boto3 (thanks @desdm, @foorbarna). Fix deepcopy issue
+   for response headers when `decode_compressed_response` is enabled (thanks
+   @nickdirienzo)
 -  1.8.0 Fix for Serialization errors with JSON adapter (thanks
    @aliaksandrb). Avoid concatenating bytes with strings (thanks
    @jaysonsantos). Exclude __pycache__ dirs & compiled files in sdist
