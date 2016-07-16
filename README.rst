@@ -13,7 +13,7 @@ Source code
   https://github.com/kevin1024/vcrpy
 
 Documentation
-  https://vcrpy.readthedocs.org/
+  https://vcrpy.readthedocs.io/
 
 Rationale
 ---------
