@@ -18,7 +18,7 @@ class MockClientResponse(ClientResponse):
         return self.content.decode(encoding)
 
     async def release(self):
-        self.close()
+        pass
 
 
 def vcr_request(cassette, real_request):
@@ -40,6 +40,7 @@ def vcr_request(cassette, real_request):
             response.reason = vcr_response['status']['message']
             response.headers = vcr_response['headers']
 
+            response.close()
             return response
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
@@ -58,7 +59,7 @@ def vcr_request(cassette, real_request):
                 'code': response.status,
                 'message': response.reason,
             },
-            'headers': response.headers,
+            'headers': dict(response.headers),
             'body': {'string': await response.text()},
             'url': response.url,
         }
