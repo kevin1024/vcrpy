@@ -5,7 +5,6 @@ import functools
 import json
 
 from aiohttp import ClientResponse
-from multidict import CIMultiDictProxy
 
 from vcr.request import Request
 
@@ -35,22 +34,16 @@ def vcr_request(cassette, real_request):
         if cassette.can_play_response_for(vcr_request):
             vcr_response = cassette.play_response(vcr_request)
 
-            response = MockClientResponse(
-                method,
-                vcr_response.get('url'),
-            )
+            response = MockClientResponse(method, vcr_response.get('url'))
             response.status = vcr_response['status']['code']
             response.content = vcr_response['body']['string']
             response.reason = vcr_response['status']['message']
-            response.headers = CIMultiDictProxy(headers)
+            response.headers = vcr_response['headers']
 
             return response
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
-            response = MockClientResponse(
-                method,
-                vcr_response.get('url'),
-            )
+            response = MockClientResponse(method, url)
             response.status = 599
             response.content = ("No match for the request (%r) was found. "
                                 "Can't overwrite existing cassette (%r) in "
