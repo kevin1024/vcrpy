@@ -22,10 +22,12 @@ env:
     - TOX_SUFFIX="urllib3110"
     - TOX_SUFFIX="tornado3"
     - TOX_SUFFIX="tornado4"
+    - TOX_SUFFIX="aiohttp"
 matrix:
   allow_failures:
     - env: TOX_SUFFIX="boto"
     - env: TOX_SUFFIX="boto3"
+    - TOX_SUFFIX="aiohttp"
   exclude:
     - env: TOX_SUFFIX="boto"
       python: 3.3
@@ -34,6 +36,10 @@ matrix:
     - env: TOX_SUFFIX="requests1"
       python: 3.4
     - env: TOX_SUFFIX="requests1"
+      python: 3.5
+    - env: TOX_SUFFIX="aiohttp"
+      python: 3.4
+    - env: TOX_SUFFIX="aiohttp"
       python: 3.5
 python:
 - 2.6
