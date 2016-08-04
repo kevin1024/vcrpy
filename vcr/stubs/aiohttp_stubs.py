@@ -1,6 +1,7 @@
 '''Stubs for aiohttp HTTP clients'''
 from __future__ import absolute_import
 
+import asyncio
 import functools
 import json
 
@@ -11,20 +12,24 @@ from vcr.request import Request
 
 class MockClientResponse(ClientResponse):
     # TODO: get encoding from header
-    async def json(self, *, encoding='utf-8', loads=json.loads):
+    @asyncio.coroutine
+    def json(self, *, encoding='utf-8', loads=json.loads):
         return loads(self.content.decode(encoding))
 
-    async def text(self, encoding='utf-8'):
+    @asyncio.coroutine
+    def text(self, encoding='utf-8'):
         return self.content.decode(encoding)
 
-    async def release(self):
+    @asyncio.coroutine
+    def release(self):
         pass
 
 
 def vcr_request(cassette, real_request):
 
     @functools.wraps(real_request)
-    async def new_request(self, method, url, **kwargs):
+    @asyncio.coroutine
+    def new_request(self, method, url, **kwargs):
         headers = kwargs.get('headers')
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
@@ -53,7 +58,7 @@ def vcr_request(cassette, real_request):
             response.close()
             return response
 
-        response = await real_request(self, method, url, **kwargs)
+        response = yield from real_request(self, method, url, **kwargs)
 
         vcr_response = {
             'status': {
@@ -61,7 +66,7 @@ def vcr_request(cassette, real_request):
                 'message': response.reason,
             },
             'headers': dict(response.headers),
-            'body': {'string': await response.text()},
+            'body': {'string': (yield from response.text())},
             'url': response.url,
         }
         cassette.append(vcr_request, vcr_response)
