@@ -46,9 +46,10 @@ def vcr_request(cassette, real_request):
         if cassette.write_protected and cassette.filter_request(vcr_request):
             response = MockClientResponse(method, url)
             response.status = 599
-            response.content = ("No match for the request (%r) was found. "
-                                "Can't overwrite existing cassette (%r) in "
-                                "your current record mode (%r).")
+            msg = ("No match for the request {!r} was found. Can't overwrite "
+                   "existing cassette {!r} in your current record mode {!r}.")
+            msg = msg.format(vcr_request, cassette._path, cassette.record_mode)
+            response.content = msg.encode()
             response.close()
             return response
 
