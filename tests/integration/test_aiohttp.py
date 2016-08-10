@@ -1,30 +1,27 @@
 import pytest
-asyncio = pytest.importorskip("boto3")
+aiohttp = pytest.importorskip("aiohttp")
 
 import asyncio  # NOQA
+import sys  # NOQA
 
 import aiohttp  # NOQA
 import pytest  # NOQA
 import vcr  # NOQA
 
-
-@asyncio.coroutine
-def request(session, method, url, as_text, **kwargs):
-    response = yield from session.request(method, url, **kwargs)
-    return response, (yield from response.text()) if as_text else (yield from response.json())
+from .utils import aiohttp_request  # NOQA
 
 
 def get(url, as_text=True, **kwargs):
     loop = asyncio.get_event_loop()
     with aiohttp.ClientSession() as session:
-        task = loop.create_task(request(session, 'GET', url, as_text, **kwargs))
+        task = loop.create_task(aiohttp_request(session, 'GET', url, as_text, **kwargs))
         return loop.run_until_complete(task)
 
 
 def post(url, as_text=True, **kwargs):
     loop = asyncio.get_event_loop()
     with aiohttp.ClientSession() as session:
-        task = loop.create_task(request(session, 'POST', url, as_text, **kwargs))
+        task = loop.create_task(aiohttp_request(session, 'POST', url, as_text, **kwargs))
         return loop.run_until_complete(task)
 
 
