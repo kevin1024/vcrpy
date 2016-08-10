@@ -44,6 +44,8 @@ matrix:
       python: 3.3
     - env: TOX_SUFFIX="aiohttp"
       python: pypy
+    - env: TOX_SUFFIX="aiohttp"
+      python: pypy3
 python:
 - 2.6
 - 2.7
