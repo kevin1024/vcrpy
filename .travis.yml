@@ -27,7 +27,6 @@ matrix:
   allow_failures:
     - env: TOX_SUFFIX="boto"
     - env: TOX_SUFFIX="boto3"
-    - env: TOX_SUFFIX="aiohttp"
   exclude:
     - env: TOX_SUFFIX="boto"
       python: 3.3

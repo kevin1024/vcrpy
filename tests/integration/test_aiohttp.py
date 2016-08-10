@@ -1,8 +1,11 @@
-import asyncio
-
-import aiohttp
 import pytest
-import vcr
+asyncio = pytest.importorskip("boto3")
+
+import asyncio  # NOQA
+
+import aiohttp  # NOQA
+import pytest  # NOQA
+import vcr  # NOQA
 
 
 @asyncio.coroutine
