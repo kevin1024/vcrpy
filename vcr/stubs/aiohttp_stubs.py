@@ -13,7 +13,7 @@ from vcr.request import Request
 class MockClientResponse(ClientResponse):
     # TODO: get encoding from header
     @asyncio.coroutine
-    def json(self, *, encoding='utf-8', loads=json.loads):
+    def json(self, *, encoding='utf-8', loads=json.loads):  # NOQA: E999
         return loads(self.content.decode(encoding))
 
     @asyncio.coroutine
@@ -58,7 +58,7 @@ def vcr_request(cassette, real_request):
             response.close()
             return response
 
-        response = yield from real_request(self, method, url, **kwargs)
+        response = yield from real_request(self, method, url, **kwargs)  # NOQA: E999
 
         vcr_response = {
             'status': {
@@ -66,7 +66,7 @@ def vcr_request(cassette, real_request):
                 'message': response.reason,
             },
             'headers': dict(response.headers),
-            'body': {'string': (yield from response.text())},
+            'body': {'string': (yield from response.text())},  # NOQA: E999
             'url': response.url,
         }
         cassette.append(vcr_request, vcr_response)
