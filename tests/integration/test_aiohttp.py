@@ -8,7 +8,7 @@ import aiohttp  # NOQA
 import pytest  # NOQA
 import vcr  # NOQA
 
-from .utils import aiohttp_request  # NOQA
+from .aiohttp_utils import aiohttp_request  # NOQA
 
 
 def get(url, as_text=True, **kwargs):
