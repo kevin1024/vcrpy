@@ -80,6 +80,13 @@ else:
     _CurlAsyncHTTPClient_fetch_impl = \
         tornado.curl_httpclient.CurlAsyncHTTPClient.fetch_impl
 
+try:
+    import aiohttp.client
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _AiohttpClientSessionRequest = aiohttp.client.ClientSession._request
+
 
 class CassettePatcherBuilder(object):
 
@@ -98,7 +105,7 @@ class CassettePatcherBuilder(object):
     def build(self):
         return itertools.chain(
             self._httplib(), self._requests(), self._boto3(), self._urllib3(),
-            self._httplib2(), self._boto(), self._tornado(),
+            self._httplib2(), self._boto(), self._tornado(), self._aiohttp(),
             self._build_patchers_from_mock_triples(
                 self._cassette.custom_patches
             ),
@@ -272,6 +279,19 @@ class CassettePatcherBuilder(object):
                 self._cassette, _CurlAsyncHTTPClient_fetch_impl
             )
             yield curl.CurlAsyncHTTPClient, 'fetch_impl', new_fetch_impl
+
+    @_build_patchers_from_mock_triples_decorator
+    def _aiohttp(self):
+        try:
+            import aiohttp.client as client
+        except ImportError:  # pragma: no cover
+            pass
+        else:
+            from .stubs.aiohttp_stubs import vcr_request
+            new_request = vcr_request(
+                self._cassette, _AiohttpClientSessionRequest
+            )
+            yield client.ClientSession, '_request', new_request
 
     def _urllib3_patchers(self, cpool, stubs):
         http_connection_remover = ConnectionRemover(
