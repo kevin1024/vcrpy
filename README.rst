@@ -41,6 +41,20 @@ VCR.py will detect the absence of a cassette file and once again record
 all HTTP interactions, which will update them to correspond to the new
 API.
 
+Support
+-------
+
+VCR.py works great with the following HTTP clients:
+
+-  requests
+-  aiohttp
+-  urllib3
+-  tornado
+-  urllib2
+-  boto
+-  boto3
+
+
 License
 =======
 

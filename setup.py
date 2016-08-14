@@ -51,7 +51,7 @@ except Exception:
 
 setup(
     name='vcrpy',
-    version='1.9.0',
+    version='1.10.0',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
