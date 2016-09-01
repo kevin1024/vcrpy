@@ -49,6 +49,10 @@ except Exception:
             install_requires.extend(value)
 
 
+excluded_packages = ["tests*"]
+if sys.version_info[0] == 2:
+    excluded_packages.append("vcr.stubs.aiohttp_stubs")
+
 setup(
     name='vcrpy',
     version='1.9.0',
@@ -60,7 +64,7 @@ setup(
     author='Kevin McCarthy',
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
-    packages=find_packages(exclude=("tests*",)),
+    packages=find_packages(exclude=excluded_packages),
     install_requires=install_requires,
     extras_require=extras_require,
     license='MIT',
