@@ -4,8 +4,9 @@ from __future__ import absolute_import
 import asyncio
 import functools
 import json
+import urllib
 
-from aiohttp import ClientResponse
+from aiohttp import ClientResponse, helpers
 
 from vcr.request import Request
 
@@ -26,15 +27,38 @@ class MockClientResponse(ClientResponse):
 
 
 def vcr_request(cassette, real_request):
-
     @functools.wraps(real_request)
     @asyncio.coroutine
     def new_request(self, method, url, **kwargs):
         headers = kwargs.get('headers')
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
+        params = kwargs.get('params')
 
-        vcr_request = Request(method, url, data, headers)
+        # INFO: Query join logic from
+        # https://github.com/KeepSafe/aiohttp/blob/b3eeedbc2f515ec2aa6e87ba129524c17b6fe4e3/aiohttp/client_reqrep.py#L167-L188
+        scheme, netloc, path, query, fragment = urllib.parse.urlsplit(url)
+        if not path:
+            path = '/'
+
+        # NOTICE: Not sure this is applicable here:
+        # if isinstance(params, collections.Mapping):
+        #     params = list(params.items())
+
+        if params:
+            if not isinstance(params, str):
+                params = urllib.parse.urlencode(params)
+            if query:
+                query = '%s&%s' % (query, params)
+            else:
+                query = params
+
+        request_path = urllib.parse.urlunsplit(('', '', helpers.requote_uri(path),
+                                                query, fragment))
+        request_url = urllib.parse.urlunsplit(
+            (scheme, netloc, request_path, '', ''))
+
+        vcr_request = Request(method, request_url, data, headers)
 
         if cassette.can_play_response_for(vcr_request):
             vcr_response = cassette.play_response(vcr_request)
