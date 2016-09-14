@@ -1,6 +1,7 @@
 Changelog
 ---------
--  1.10.1 Fix build for Fedora package + python2 (thanks @puiterwijk and @lamenezes)
+-  1.10.2 Fix 1.10.1 release - add aiohttp support back in
+-  1.10.1 [bad release] Fix build for Fedora package + python2 (thanks @puiterwijk and @lamenezes)
 -  1.10.0 Add support for aiohttp (thanks @lamenezes)
 -  1.9.0 Add support for boto3 (thanks @desdm, @foorbarna). Fix deepcopy issue
    for response headers when `decode_compressed_response` is enabled (thanks
