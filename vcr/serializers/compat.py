@@ -24,7 +24,7 @@ def convert_body_to_bytes(resp):
     http://pyyaml.org/wiki/PyYAMLDocumentation#Python3support
     """
     try:
-        if not isinstance(resp['body']['string'], six.binary_type):
+        if resp['body']['string'] is not None and not isinstance(resp['body']['string'], six.binary_type):
             resp['body']['string'] = resp['body']['string'].encode('utf-8')
     except (KeyError, TypeError, UnicodeEncodeError):
         # The thing we were converting either wasn't a dictionary or didn't
