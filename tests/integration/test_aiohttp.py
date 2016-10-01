@@ -85,3 +85,33 @@ def test_post(tmpdir, scheme):
         _, cassette_response_json = post(url, data=data)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
+
+
+def test_params(tmpdir, scheme):
+    url = scheme + '://httpbin.org/get'
+    params = {'a': 1, 'b': False, 'c': 'c'}
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, response_json = get(url, as_text=False, params=params)
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, cassette_response_json = get(url, as_text=False, params=params)
+        assert cassette_response_json == response_json
+        assert cassette.play_count == 1
+
+
+def test_params_same_url_distinct_params(tmpdir, scheme):
+    url = scheme + '://httpbin.org/get'
+    params = {'a': 1, 'b': False, 'c': 'c'}
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, response_json = get(url, as_text=False, params=params)
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, cassette_response_json = get(url, as_text=False, params=params)
+        assert cassette_response_json == response_json
+        assert cassette.play_count == 1
+
+    other_params = {'other': 'params'}
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        response, cassette_response_text = get(url, as_text=True, params=other_params)
+        assert 'No match for the request' in cassette_response_text
+        assert response.status == 599
