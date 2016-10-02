@@ -38,6 +38,18 @@ def test_body(tmpdir, httpbin_both):
         assert content == requests.get(url).content
 
 
+def test_get_empty_content_type_json(tmpdir, httpbin_both):
+    '''Ensure GET with application/json content-type and empty request body doesn't crash'''
+    url = httpbin_both + '/status/200'
+    headers = {'Content-Type': 'application/json'}
+
+    with vcr.use_cassette(str(tmpdir.join('get_empty_json.yaml')), match_on=('body',)):
+        status = requests.get(url, headers=headers).status_code
+
+    with vcr.use_cassette(str(tmpdir.join('get_empty_json.yaml')), match_on=('body',)):
+        assert status == requests.get(url, headers=headers).status_code
+
+
 def test_effective_url(tmpdir, httpbin_both):
     '''Ensure that the effective_url is captured'''
     url = httpbin_both.url + '/redirect-to?url=/html'
