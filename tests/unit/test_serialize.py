@@ -132,6 +132,7 @@ def test_serialize_binary_request():
     except (UnicodeDecodeError, TypeError) as exc:
         assert msg in str(exc)
 
+
 def test_deserialize_no_body_string():
     data = {'body': {'string': None}}
     output = compat.convert_to_bytes(data)
