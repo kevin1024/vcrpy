@@ -4,7 +4,7 @@ import pytest
 from vcr.compat import mock
 from vcr.request import Request
 from vcr.serialize import deserialize, serialize
-from vcr.serializers import yamlserializer, jsonserializer
+from vcr.serializers import yamlserializer, jsonserializer, compat
 
 
 def test_deserialize_old_yaml_cassette():
@@ -131,3 +131,9 @@ def test_serialize_binary_request():
         )
     except (UnicodeDecodeError, TypeError) as exc:
         assert msg in str(exc)
+
+
+def test_deserialize_no_body_string():
+    data = {'body': {'string': None}}
+    output = compat.convert_to_bytes(data)
+    assert data == output
