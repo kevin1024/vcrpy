@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import asyncio
 import functools
 import json
-import urllib
 
 from aiohttp import ClientResponse
 from yarl import URL
