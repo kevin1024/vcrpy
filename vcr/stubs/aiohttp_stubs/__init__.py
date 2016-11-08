@@ -4,9 +4,9 @@ from __future__ import absolute_import
 import asyncio
 import functools
 import json
-import urllib
 
-from aiohttp import ClientResponse, helpers
+from aiohttp import ClientResponse
+from yarl import URL
 
 from vcr.request import Request
 
@@ -34,36 +34,17 @@ def vcr_request(cassette, real_request):
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
         params = kwargs.get('params')
-
-        # INFO: Query join logic from
-        # https://github.com/KeepSafe/aiohttp/blob/b3eeedbc2f515ec2aa6e87ba129524c17b6fe4e3/aiohttp/client_reqrep.py#L167-L188
-        scheme, netloc, path, query, fragment = urllib.parse.urlsplit(url)
-        if not path:
-            path = '/'
-
-        # NOTICE: Not sure this is applicable here:
-        # if isinstance(params, collections.Mapping):
-        #     params = list(params.items())
-
         if params:
-            if not isinstance(params, str):
-                params = urllib.parse.urlencode(params)
-            if query:
-                query = '%s&%s' % (query, params)
-            else:
-                query = params
+            for k, v in params.items():
+                params[k] = str(v)
 
-        request_path = urllib.parse.urlunsplit(('', '', helpers.requote_uri(path),
-                                                query, fragment))
-        request_url = urllib.parse.urlunsplit(
-            (scheme, netloc, request_path, '', ''))
-
-        vcr_request = Request(method, request_url, data, headers)
+        request_url = URL(url).with_query(params)
+        vcr_request = Request(method, str(request_url), data, headers)
 
         if cassette.can_play_response_for(vcr_request):
             vcr_response = cassette.play_response(vcr_request)
 
-            response = MockClientResponse(method, vcr_response.get('url'))
+            response = MockClientResponse(method, URL(vcr_response.get('url')))
             response.status = vcr_response['status']['code']
             response.content = vcr_response['body']['string']
             response.reason = vcr_response['status']['message']
@@ -73,7 +54,7 @@ def vcr_request(cassette, real_request):
             return response
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
-            response = MockClientResponse(method, url)
+            response = MockClientResponse(method, URL(url))
             response.status = 599
             msg = ("No match for the request {!r} was found. Can't overwrite "
                    "existing cassette {!r} in your current record mode {!r}.")
