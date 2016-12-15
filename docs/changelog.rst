@@ -1,5 +1,6 @@
 Changelog
 ---------
+-  1.10.4 Fix an issue with asyncio aiohttp (thanks @madninja)
 -  1.10.3 Fix some issues with asyncio and params (thanks @anovikov1984 and
    @lamenezes), Fix some issues with cassette serialize / deserialize and empty
    response bodies (thanks @gRoussac and @dz0ny)
