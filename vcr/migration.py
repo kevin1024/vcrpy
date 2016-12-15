@@ -164,5 +164,6 @@ def main():
             sys.stderr.write("[{0}] {1}\n".format(status, file_path))
     sys.stderr.write("Done.\n")
 
+
 if __name__ == '__main__':
     main()
