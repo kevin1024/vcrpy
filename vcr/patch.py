@@ -302,7 +302,6 @@ class CassettePatcherBuilder(object):
         )
         mock_triples = (
             (cpool, 'VerifiedHTTPSConnection', stubs.VCRRequestsHTTPSConnection),
-            (cpool, 'VerifiedHTTPSConnection', stubs.VCRRequestsHTTPSConnection),
             (cpool, 'HTTPConnection', stubs.VCRRequestsHTTPConnection),
             (cpool, 'HTTPSConnection', stubs.VCRRequestsHTTPSConnection),
             (cpool, 'is_connection_dropped', mock.Mock(return_value=False)),  # Needed on Windows only
