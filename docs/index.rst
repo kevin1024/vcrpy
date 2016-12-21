@@ -10,6 +10,7 @@ Contents
    usage
    configuration
    advanced
+   cli
    api
    debugging
    contributing

@@ -68,7 +68,12 @@ setup(
     install_requires=install_requires,
     extras_require=extras_require,
     license='MIT',
-    tests_require=['pytest', 'mock', 'pytest-httpbin'],
+    tests_require=['pytest', 'mock', 'pytest-mock', 'pytest-httpbin'],
+    entry_points={
+        'console_scripts': [
+            'vcr = vcr.main:main',
+        ]
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
