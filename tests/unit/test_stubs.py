@@ -11,7 +11,7 @@ class TestVCRConnection(object):
 
     @mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=False)
     def testing_connect(self):
-        vcr_connection = VCRHTTPSConnection('www.google.com')
+        vcr_connection = VCRHTTPSConnection('www.examplehost.com')
         vcr_connection.cassette.write_protected = False
         vcr_connection.real_connection.connect()
         assert vcr_connection.real_connection.sock is not None
