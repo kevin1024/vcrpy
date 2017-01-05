@@ -2,6 +2,7 @@ from vcr.stubs import VCRHTTPSConnection
 from vcr.compat import mock
 from vcr.cassette import Cassette
 
+
 class TestVCRConnection(object):
 
     def test_setting_of_attributes_get_propogated_to_real_connection(self):
