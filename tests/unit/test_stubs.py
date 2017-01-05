@@ -10,7 +10,7 @@ class TestVCRConnection(object):
         assert vcr_connection.real_connection.ssl_version == 'example_ssl_version'
 
     @mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=False)
-    def testing_connect(self):
+    def testing_connect(*args):
         vcr_connection = VCRHTTPSConnection('www.examplehost.com')
         vcr_connection.cassette.write_protected = False
         vcr_connection.real_connection.connect()
