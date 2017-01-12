@@ -163,13 +163,16 @@ class Cassette(object):
     def use(cls, **kwargs):
         return CassetteContextDecorator.from_args(cls, **kwargs)
 
-    def __init__(self, path, serializer=yamlserializer, record_mode='once',
+    def __init__(self, path, serializer=yamlserializer, save_callback=None,
+                 load_callback=None, record_mode='once',
                  match_on=(uri, method), before_record_request=None,
                  before_record_response=None, custom_patches=(),
                  inject=False):
 
         self._path = path
         self._serializer = serializer
+        self._save_callback = save_callback
+        self._load_callback = load_callback
         self._match_on = match_on
         self._before_record_request = before_record_request or (lambda x: x)
         self._before_record_response = before_record_response or (lambda x: x)
@@ -274,7 +277,8 @@ class Cassette(object):
             save_cassette(
                 self._path,
                 self._as_dict(),
-                serializer=self._serializer
+                serializer=self._serializer,
+                save_callback=self._save_callback
             )
             self.dirty = False
 
@@ -282,7 +286,8 @@ class Cassette(object):
         try:
             requests, responses = load_cassette(
                 self._path,
-                serializer=self._serializer
+                serializer=self._serializer,
+                load_callback=self._load_callback
             )
             for request, response in zip(requests, responses):
                 self.append(request, response)
