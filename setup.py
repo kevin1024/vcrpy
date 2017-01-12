@@ -56,7 +56,7 @@ if sys.version_info[0] == 2:
 
 setup(
     name='vcrpy',
-    version='1.10.4',
+    version='1.10.5',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"

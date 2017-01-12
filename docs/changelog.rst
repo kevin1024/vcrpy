@@ -1,5 +1,8 @@
 Changelog
 ---------
+-  1.10.5 Added a fix to httplib2 (thanks @carlosds730), Fix an issue with
+   aiohttp (thanks @madninja), Add missing requirement yarl (thanks @lamenezes),
+   Remove duplicate mock triple (thanks @FooBarQuaxx)
 -  1.10.4 Fix an issue with asyncio aiohttp (thanks @madninja)
 -  1.10.3 Fix some issues with asyncio and params (thanks @anovikov1984 and
    @lamenezes), Fix some issues with cassette serialize / deserialize and empty
