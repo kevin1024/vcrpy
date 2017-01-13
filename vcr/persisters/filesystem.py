@@ -3,6 +3,7 @@ from ..serialize import serialize, deserialize
 
 
 class FilesystemPersister(object):
+
     @classmethod
     def load_cassette(cls, cassette_path, serializer):
         with open(cassette_path) as f:
