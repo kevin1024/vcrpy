@@ -9,6 +9,7 @@ import six
 from .compat import collections
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
+from .persisters.filesystem import FilesystemPersister
 from .util import compose, auto_decorate
 from . import matchers
 from . import filters
@@ -36,8 +37,7 @@ class VCR(object):
                  match_on=('method', 'scheme', 'host', 'port', 'path', 'query'),
                  before_record=None, inject_cassette=False, serializer='yaml',
                  cassette_library_dir=None, func_path_generator=None,
-                 decode_compressed_response=False, save_callback=None,
-                 load_callback=None):
+                 decode_compressed_response=False):
         self.serializer = serializer
         self.match_on = match_on
         self.cassette_library_dir = cassette_library_dir
@@ -58,6 +58,7 @@ class VCR(object):
             'raw_body': matchers.raw_body,
             'body': matchers.body,
         }
+        self.persister = FilesystemPersister
         self.record_mode = record_mode
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
@@ -70,8 +71,6 @@ class VCR(object):
         self.path_transformer = path_transformer
         self.func_path_generator = func_path_generator
         self.decode_compressed_response = decode_compressed_response
-        self.save_callback = save_callback
-        self.load_callback = load_callback
         self._custom_patches = tuple(custom_patches)
 
     def _get_serializer(self, serializer_name):
@@ -150,8 +149,6 @@ class VCR(object):
                 tuple(matcher_names) + tuple(additional_matchers)
             ),
             'record_mode': kwargs.get('record_mode', self.record_mode),
-            'save_callback': kwargs.get('save_callback', self.save_callback),
-            'load_callback': kwargs.get('load_callback', self.load_callback),
             'before_record_request': self._build_before_record_request(kwargs),
             'before_record_response': self._build_before_record_response(kwargs),
             'custom_patches': self._custom_patches + kwargs.get(
@@ -274,6 +271,10 @@ class VCR(object):
 
     def register_matcher(self, name, matcher):
         self.matchers[name] = matcher
+
+    def register_persister(self, persister):
+        # Singleton, no name required
+        self.persister = persister
 
     def test_case(self, predicate=None):
         predicate = predicate or self.is_test_method

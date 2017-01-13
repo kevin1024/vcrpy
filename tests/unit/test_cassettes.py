@@ -1,6 +1,7 @@
 import copy
 import inspect
 import os
+import sys
 
 from six.moves import http_client as httplib
 import pytest
@@ -8,6 +9,7 @@ import yaml
 
 from vcr.compat import mock, contextlib
 from vcr.cassette import Cassette
+from vcr.persisters.filesystem import FilesystemPersister
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset
 from vcr.stubs import VCRHTTPSConnection
@@ -83,7 +85,8 @@ def make_get_request():
 
 
 @mock.patch('vcr.cassette.requests_match', return_value=True)
-@mock.patch('vcr.cassette.load_cassette', lambda *args, **kwargs: (('foo',), (mock.MagicMock(),)))
+@mock.patch('vcr.cassette.FilesystemPersister.load_cassette',
+            lambda *args, **kwargs: (('foo',), (mock.MagicMock(),)))
 @mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
 @mock.patch('vcr.stubs.VCRHTTPResponse')
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):

@@ -10,41 +10,31 @@ import vcr
 from vcr.persisters.filesystem import FilesystemPersister
 
 
-def test_overriding_save_cassette_with_callback(tmpdir, httpbin):
+def test_save_cassette_with_custom_persister(tmpdir, httpbin):
     '''Ensure you can save a cassette using save_callback'''
-
-    def save_callback(cassette_path, data):
-        FilesystemPersister.write(cassette_path, data)
+    my_vcr = vcr.VCR()
+    my_vcr.register_persister(FilesystemPersister)
 
     # Check to make sure directory doesnt exist
     assert not os.path.exists(str(tmpdir.join('nonexistent')))
 
     # Run VCR to create dir and cassette file using new save_cassette callback
-    with vcr.use_cassette(
-            str(tmpdir.join('nonexistent', 'cassette.yml')),
-            save_callback=save_callback
-    ):
+    with my_vcr.use_cassette(str(tmpdir.join('nonexistent', 'cassette.yml'))):
         urlopen(httpbin.url).read()
 
     # Callback should have made the file and the directory
     assert os.path.exists(str(tmpdir.join('nonexistent', 'cassette.yml')))
 
 
-def test_overriding_load_cassette_with_callback(tmpdir, httpbin):
+def test_load_cassette_with_custom_persister(tmpdir, httpbin):
     '''
     Ensure you can load a cassette using load_callback
     '''
+    my_vcr = vcr.VCR()
+    my_vcr.register_persister(FilesystemPersister)
+
     test_fixture = str(tmpdir.join('synopsis.json'))
 
-    def load_callback(cassette_path):
-        with open(cassette_path) as f:
-            cassette_content = f.read()
-        return cassette_content
-
-    with vcr.use_cassette(
-            test_fixture,
-            serializer='json',
-            load_callback=load_callback
-    ):
+    with my_vcr.use_cassette(test_fixture, serializer='json'):
         response = urlopen(httpbin.url).read()
         assert b'difficult sometimes' in response
