@@ -1,7 +1,6 @@
 import copy
 import inspect
 import os
-import sys
 
 from six.moves import http_client as httplib
 import pytest
@@ -9,7 +8,6 @@ import yaml
 
 from vcr.compat import mock, contextlib
 from vcr.cassette import Cassette
-from vcr.persisters.filesystem import FilesystemPersister
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset
 from vcr.stubs import VCRHTTPSConnection
