@@ -122,6 +122,27 @@ Finally, register your method with VCR to use your new request matcher.
     with my_vcr.use_cassette('test.yml'):
         # your http here
 
+Register your own cassette persister
+------------------------------------
+
+Create your own persistence class, see the :ref:`persister_example`.
+
+Your custom persister must implement both ``load_cassette`` and ``save_cassette``
+methods.  The ``load_cassette`` method must return a deserialized cassette or raise
+ ``ValueError`` if no cassette is found.
+
+Once the persister class is defined, register with VCR like so...
+
+.. code:: python
+
+    import vcr
+    my_vcr = vcr.VCR()
+
+    class CustomerPersister(object):
+        # implement Persister methods...
+
+    my_vcr.register_persister(CustomPersister)
+
 Filter sensitive data from the request
 --------------------------------------
 
