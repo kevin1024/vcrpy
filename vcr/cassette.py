@@ -288,7 +288,7 @@ class Cassette(object):
                 self.append(request, response)
             self.dirty = False
             self.rewound = True
-        except IOError:
+        except ValueError:
             pass
 
     def __str__(self):

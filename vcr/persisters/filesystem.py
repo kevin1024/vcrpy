@@ -1,3 +1,5 @@
+# .. _persister_example:
+
 import os
 from ..serialize import serialize, deserialize
 
@@ -6,8 +8,11 @@ class FilesystemPersister(object):
 
     @classmethod
     def load_cassette(cls, cassette_path, serializer):
-        with open(cassette_path) as f:
-            cassette_content = f.read()
+        try:
+            with open(cassette_path) as f:
+                cassette_content = f.read()
+        except IOError:
+            raise ValueError('Cassette not found.')
         cassette = deserialize(cassette_content, serializer)
         return cassette
 

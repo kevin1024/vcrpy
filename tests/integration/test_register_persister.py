@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Tests for cassettes with overriden persistence'''
+'''Tests for cassettes with custom persistence'''
 
 # External imports
 import os
@@ -11,7 +11,7 @@ from vcr.persisters.filesystem import FilesystemPersister
 
 
 def test_save_cassette_with_custom_persister(tmpdir, httpbin):
-    '''Ensure you can save a cassette using save_callback'''
+    '''Ensure you can save a cassette using custom persister'''
     my_vcr = vcr.VCR()
     my_vcr.register_persister(FilesystemPersister)
 
@@ -28,7 +28,7 @@ def test_save_cassette_with_custom_persister(tmpdir, httpbin):
 
 def test_load_cassette_with_custom_persister(tmpdir, httpbin):
     '''
-    Ensure you can load a cassette using load_callback
+    Ensure you can load a cassette using custom persister
     '''
     my_vcr = vcr.VCR()
     my_vcr.register_persister(FilesystemPersister)
