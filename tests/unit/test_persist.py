@@ -1,6 +1,6 @@
 import pytest
 
-import vcr.persist
+from vcr.persisters.filesystem import FilesystemPersister
 from vcr.serializers import jsonserializer, yamlserializer
 
 
@@ -10,7 +10,7 @@ from vcr.serializers import jsonserializer, yamlserializer
 ])
 def test_load_cassette_with_old_cassettes(cassette_path, serializer):
     with pytest.raises(ValueError) as excinfo:
-        vcr.persist.load_cassette(cassette_path, serializer)
+        FilesystemPersister.load_cassette(cassette_path, serializer)
     assert "run the migration script" in excinfo.exconly()
 
 
@@ -20,5 +20,5 @@ def test_load_cassette_with_old_cassettes(cassette_path, serializer):
 ])
 def test_load_cassette_with_invalid_cassettes(cassette_path, serializer):
     with pytest.raises(Exception) as excinfo:
-        vcr.persist.load_cassette(cassette_path, serializer)
+        FilesystemPersister.load_cassette(cassette_path, serializer)
     assert "run the migration script" not in excinfo.exconly()

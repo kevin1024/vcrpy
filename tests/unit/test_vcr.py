@@ -94,7 +94,7 @@ def test_vcr_before_record_response_iterable():
     response = object()  # just can't be None
 
     # Prevent actually saving the cassette
-    with mock.patch('vcr.cassette.save_cassette'):
+    with mock.patch('vcr.cassette.FilesystemPersister.save_cassette'):
 
         # Baseline: non-iterable before_record_response should work
         mock_filter = mock.Mock()
@@ -118,7 +118,7 @@ def test_before_record_response_as_filter():
     response = object()  # just can't be None
 
     # Prevent actually saving the cassette
-    with mock.patch('vcr.cassette.save_cassette'):
+    with mock.patch('vcr.cassette.FilesystemPersister.save_cassette'):
 
         filter_all = mock.Mock(return_value=None)
         vcr = VCR(before_record_response=filter_all)
@@ -132,7 +132,7 @@ def test_vcr_path_transformer():
     # Regression test for #199
 
     # Prevent actually saving the cassette
-    with mock.patch('vcr.cassette.save_cassette'):
+    with mock.patch('vcr.cassette.FilesystemPersister.save_cassette'):
 
         # Baseline: path should be unchanged
         vcr = VCR()

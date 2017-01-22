@@ -9,6 +9,7 @@ import six
 from .compat import collections
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
+from .persisters.filesystem import FilesystemPersister
 from .util import compose, auto_decorate
 from . import matchers
 from . import filters
@@ -57,6 +58,7 @@ class VCR(object):
             'raw_body': matchers.raw_body,
             'body': matchers.body,
         }
+        self.persister = FilesystemPersister
         self.record_mode = record_mode
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
@@ -269,6 +271,10 @@ class VCR(object):
 
     def register_matcher(self, name, matcher):
         self.matchers[name] = matcher
+
+    def register_persister(self, persister):
+        # Singleton, no name required
+        self.persister = persister
 
     def test_case(self, predicate=None):
         predicate = predicate or self.is_test_method

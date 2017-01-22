@@ -8,8 +8,8 @@ from .compat import contextlib, collections
 from .errors import UnhandledHTTPRequestError
 from .matchers import requests_match, uri, method
 from .patch import CassettePatcherBuilder
-from .persist import load_cassette, save_cassette
 from .serializers import yamlserializer
+from .persisters.filesystem import FilesystemPersister
 from .util import partition_dict
 
 
@@ -163,11 +163,11 @@ class Cassette(object):
     def use(cls, **kwargs):
         return CassetteContextDecorator.from_args(cls, **kwargs)
 
-    def __init__(self, path, serializer=yamlserializer, record_mode='once',
+    def __init__(self, path, serializer=yamlserializer, persister=FilesystemPersister, record_mode='once',
                  match_on=(uri, method), before_record_request=None,
                  before_record_response=None, custom_patches=(),
                  inject=False):
-
+        self._persister = persister
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
@@ -271,24 +271,24 @@ class Cassette(object):
 
     def _save(self, force=False):
         if force or self.dirty:
-            save_cassette(
+            self._persister.save_cassette(
                 self._path,
                 self._as_dict(),
-                serializer=self._serializer
+                serializer=self._serializer,
             )
             self.dirty = False
 
     def _load(self):
         try:
-            requests, responses = load_cassette(
+            requests, responses = self._persister.load_cassette(
                 self._path,
-                serializer=self._serializer
+                serializer=self._serializer,
             )
             for request, response in zip(requests, responses):
                 self.append(request, response)
             self.dirty = False
             self.rewound = True
-        except IOError:
+        except ValueError:
             pass
 
     def __str__(self):

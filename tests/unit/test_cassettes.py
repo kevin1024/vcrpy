@@ -83,7 +83,8 @@ def make_get_request():
 
 
 @mock.patch('vcr.cassette.requests_match', return_value=True)
-@mock.patch('vcr.cassette.load_cassette', lambda *args, **kwargs: (('foo',), (mock.MagicMock(),)))
+@mock.patch('vcr.cassette.FilesystemPersister.load_cassette',
+            classmethod(lambda *args, **kwargs: (('foo',), (mock.MagicMock(),))))
 @mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
 @mock.patch('vcr.stubs.VCRHTTPResponse')
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
