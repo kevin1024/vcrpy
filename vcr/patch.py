@@ -1,6 +1,7 @@
 '''Utilities for patching in cassettes'''
 import functools
 import itertools
+import threading
 
 from .compat import contextlib, mock
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
@@ -447,9 +448,13 @@ def reset_patchers():
         )
 
 
+_force_reset_lock = threading.RLock()
+
+
 @contextlib.contextmanager
 def force_reset():
     with contextlib.ExitStack() as exit_stack:
+        exit_stack.enter_context(_force_reset_lock)
         for patcher in reset_patchers():
             exit_stack.enter_context(patcher)
         yield
