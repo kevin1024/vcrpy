@@ -222,7 +222,7 @@ Custom Request filtering
 
 If none of these covers your request filtering needs, you can register a
 callback that will manipulate the HTTP request before adding it to the
-cassette. Use the ``before_record`` configuration option to so this.
+cassette. Use the ``before_record_request`` configuration option to so this.
 Here is an example that will never record requests to the /login
 endpoint.
 
@@ -233,7 +233,7 @@ endpoint.
             return request
 
     my_vcr = vcr.VCR(
-        before_record = before_record_cb,
+        before_record_request = before_record_cb,
     )
     with my_vcr.use_cassette('test.yml'):
         # your http code here
@@ -250,7 +250,7 @@ path.
         return request
 
     my_vcr = vcr.VCR(
-        before_record=scrub_login_request,
+        before_record_request=scrub_login_request,
     )
     with my_vcr.use_cassette('test.yml'):
         # your http code here
