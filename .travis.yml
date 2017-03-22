@@ -34,10 +34,14 @@ matrix:
       python: 3.3
     - env: TOX_SUFFIX="boto"
       python: 3.4
+    - env: TOX_SUFFIX="boto"
+      python: 3.6
     - env: TOX_SUFFIX="requests1"
       python: 3.4
     - env: TOX_SUFFIX="requests1"
       python: 3.5
+    - env: TOX_SUFFIX="requests1"
+      python: 3.6
     - env: TOX_SUFFIX="aiohttp"
       python: 2.6
     - env: TOX_SUFFIX="aiohttp"
@@ -54,6 +58,7 @@ python:
 - 3.3
 - 3.4
 - 3.5
+- 3.6
 - pypy
 - pypy3
 install:
