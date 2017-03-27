@@ -18,8 +18,8 @@ class MockClientResponse(ClientResponse):
         return loads(self.content.decode(encoding))
 
     @asyncio.coroutine
-    def text(self, encoding='utf-8'):
-        return self.content.decode(encoding)
+    def text(self, encoding='utf-8', errors='strict'):
+        return self.content.decode(encoding, errors=errors)
 
     @asyncio.coroutine
     def release(self):
