@@ -153,7 +153,7 @@ class VCRConnection(object):
         )
         return uri.replace(prefix, '', 1)
 
-    def request(self, method, url, body=None, headers=None):
+    def request(self, method, url, body=None, headers=None, *args, **kwargs):
         '''Persist the request metadata in self._vcr_request'''
         self._vcr_request = Request(
             method=method,
