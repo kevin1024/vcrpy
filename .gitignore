@@ -1,5 +1,6 @@
 *.pyc
 .tox
+.cache
 build/
 dist/
 *.egg/
