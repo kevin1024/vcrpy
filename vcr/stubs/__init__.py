@@ -335,6 +335,11 @@ class VCRConnection(object):
         super(VCRConnection, self).__setattr__(name, value)
 
 
+for k, v in HTTPConnection.__dict__.items():
+    if isinstance(v, staticmethod):
+        setattr(VCRConnection, k, v)
+
+
 class VCRHTTPConnection(VCRConnection):
     '''A Mocked class for HTTP requests'''
     _baseclass = HTTPConnection
