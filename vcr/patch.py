@@ -176,7 +176,7 @@ class CassettePatcherBuilder(object):
 
     def _requests(self):
         try:
-            import requests.packages.urllib3.connectionpool as cpool
+            from requests.packages.urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
         except ImportError:  # pragma: no cover
             return ()
         from .stubs import requests_stubs
