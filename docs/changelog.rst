@@ -1,5 +1,8 @@
 Changelog
 ---------
+-  1.11.0 Allow injection of persistence methods + bugfixes (thanks @j-funk and @IvanMalison),
+   Support python 3.6 + CI tests (thanks @derekbekoe and @graingert),
+   Support pytest-asyncio coroutines (thanks @graingert)
 -  1.10.5 Added a fix to httplib2 (thanks @carlosds730), Fix an issue with
    aiohttp (thanks @madninja), Add missing requirement yarl (thanks @lamenezes),
    Remove duplicate mock triple (thanks @FooBarQuaxx)
