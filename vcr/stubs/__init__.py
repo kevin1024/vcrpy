@@ -153,7 +153,7 @@ class VCRConnection(object):
         )
         return uri.replace(prefix, '', 1)
 
-    def request(self, method, url, body=None, headers=None):
+    def request(self, method, url, body=None, headers=None, *args, **kwargs):
         '''Persist the request metadata in self._vcr_request'''
         self._vcr_request = Request(
             method=method,
@@ -333,6 +333,11 @@ class VCRConnection(object):
             pass
 
         super(VCRConnection, self).__setattr__(name, value)
+
+
+for k, v in HTTPConnection.__dict__.items():
+    if isinstance(v, staticmethod):
+        setattr(VCRConnection, k, v)
 
 
 class VCRHTTPConnection(VCRConnection):

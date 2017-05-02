@@ -4,8 +4,8 @@ import pytest
 import vcr
 from assertions import assert_cassette_empty, assert_is_json
 
-
 requests = pytest.importorskip("requests")
+from requests.exceptions import ConnectionError  # noqa E402
 
 
 def test_status_code(httpbin_both, tmpdir):
@@ -100,11 +100,26 @@ def test_post(tmpdir, httpbin_both):
     assert req1 == req2
 
 
-def test_post_chunked_binary(tmpdir, httpbin_both):
+def test_post_chunked_binary(tmpdir, httpbin):
     '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str.'''
     data1 = iter([b'data', b'to', b'send'])
     data2 = iter([b'data', b'to', b'send'])
-    url = httpbin_both.url + '/post'
+    url = httpbin.url + '/post'
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
+        req1 = requests.post(url, data1).content
+
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
+        req2 = requests.post(url, data2).content
+
+    assert req1 == req2
+
+
+@pytest.mark.xfail('sys.version_info >= (3, 6)', strict=True, raises=ConnectionError)
+def test_post_chunked_binary_secure(tmpdir, httpbin_secure):
+    '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str.'''
+    data1 = iter([b'data', b'to', b'send'])
+    data2 = iter([b'data', b'to', b'send'])
+    url = httpbin_secure.url + '/post'
     with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
         req1 = requests.post(url, data1).content
         print(req1)
