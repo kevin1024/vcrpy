@@ -12,6 +12,16 @@ from .serializers import yamlserializer
 from .persisters.filesystem import FilesystemPersister
 from .util import partition_dict
 
+try:
+    from asyncio import iscoroutinefunction
+    from ._handle_coroutine import handle_coroutine
+except ImportError:
+    def iscoroutinefunction(*args, **kwargs):
+        return False
+
+    def handle_coroutine(*args, **kwags):
+        raise NotImplementedError('Not implemented on Python 2')
+
 
 log = logging.getLogger(__name__)
 
@@ -96,18 +106,25 @@ class CassetteContextDecorator(object):
         )
 
     def _execute_function(self, function, args, kwargs):
-        if inspect.isgeneratorfunction(function):
-            handler = self._handle_coroutine
-        else:
-            handler = self._handle_function
-        return handler(function, args, kwargs)
+        def handle_function(cassette):
+            if cassette.inject:
+                return function(cassette, *args, **kwargs)
+            else:
+                return function(*args, **kwargs)
 
-    def _handle_coroutine(self, function, args, kwargs):
-        """Wraps a coroutine so that we're inside the cassette context for the
-        duration of the coroutine.
+        if iscoroutinefunction(function):
+            return handle_coroutine(vcr=self, fn=handle_function)
+        if inspect.isgeneratorfunction(function):
+            return self._handle_generator(fn=handle_function)
+
+        return self._handle_function(fn=handle_function)
+
+    def _handle_generator(self, fn):
+        """Wraps a generator so that we're inside the cassette context for the
+        duration of the generator.
         """
         with self as cassette:
-            coroutine = self.__handle_function(cassette, function, args, kwargs)
+            coroutine = fn(cassette)
             # We don't need to catch StopIteration. The caller (Tornado's
             # gen.coroutine, for example) will handle that.
             to_yield = next(coroutine)
@@ -119,15 +136,9 @@ class CassetteContextDecorator(object):
                 else:
                     to_yield = coroutine.send(to_send)
 
-    def __handle_function(self, cassette, function, args, kwargs):
-        if cassette.inject:
-            return function(cassette, *args, **kwargs)
-        else:
-            return function(*args, **kwargs)
-
-    def _handle_function(self, function, args, kwargs):
+    def _handle_function(self, fn):
         with self as cassette:
-            return self.__handle_function(cassette, function, args, kwargs)
+            return fn(cassette)
 
     @staticmethod
     def get_function_name(function):

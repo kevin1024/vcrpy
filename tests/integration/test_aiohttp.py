@@ -1,28 +1,40 @@
 import pytest
 aiohttp = pytest.importorskip("aiohttp")
 
-import asyncio  # NOQA
-import sys  # NOQA
+import asyncio  # noqa: E402
+import contextlib  # noqa: E402
 
-import aiohttp  # NOQA
-import pytest  # NOQA
-import vcr  # NOQA
+import pytest  # noqa: E402
+import vcr  # noqa: E402
 
-from .aiohttp_utils import aiohttp_request  # NOQA
+from .aiohttp_utils import aiohttp_request  # noqa: E402
+
+try:
+    from .async_def import test_http  # noqa: F401
+except SyntaxError:
+    pass
+
+
+def run_in_loop(fn):
+    with contextlib.closing(asyncio.new_event_loop()) as loop:
+        asyncio.set_event_loop(loop)
+        task = loop.create_task(fn(loop))
+        return loop.run_until_complete(task)
+
+
+def request(method, url, as_text=True, **kwargs):
+    def run(loop):
+        return aiohttp_request(loop, method, url, as_text, **kwargs)
+
+    return run_in_loop(run)
 
 
 def get(url, as_text=True, **kwargs):
-    loop = asyncio.get_event_loop()
-    with aiohttp.ClientSession() as session:
-        task = loop.create_task(aiohttp_request(session, 'GET', url, as_text, **kwargs))
-        return loop.run_until_complete(task)
+    return request('GET', url, as_text, **kwargs)
 
 
 def post(url, as_text=True, **kwargs):
-    loop = asyncio.get_event_loop()
-    with aiohttp.ClientSession() as session:
-        task = loop.create_task(aiohttp_request(session, 'POST', url, as_text, **kwargs))
-        return loop.run_until_complete(task)
+    return request('POST', url, as_text, **kwargs)
 
 
 @pytest.fixture(params=["https", "http"])
