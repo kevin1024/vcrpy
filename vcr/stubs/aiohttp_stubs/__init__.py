@@ -35,8 +35,12 @@ def vcr_request(cassette, real_request):
         data = kwargs.get('data')
         params = kwargs.get('params')
         if params:
-            for k, v in params.items():
-                params[k] = str(v)
+            # aiohttp supports multidict (dict or list of 2-item tuples)
+            if isinstance(params, dict):
+                for k, v in params.items():
+                    params[k] = str(v)
+            else:
+                kwargs['params'] = params = [(k, str(v)) for k, v in params]
 
         request_url = URL(url).with_query(params)
         vcr_request = Request(method, str(request_url), data, headers)

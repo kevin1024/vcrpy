@@ -111,6 +111,19 @@ def test_params(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
+def test_params_with_duplicate_keys(tmpdir, scheme):
+    url = scheme + '://httpbin.org/get'
+    # the param 'a' has multiple values: 1, 2, and 3
+    params = [('a', 1), ('b', False), ('a', '2'), ('a', '3')]
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, response_json = get(url, as_text=False, params=params)
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, cassette_response_json = get(url, as_text=False, params=params)
+        assert cassette_response_json == response_json
+        assert cassette.play_count == 1
+
+
 def test_params_same_url_distinct_params(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
     params = {'a': 1, 'b': False, 'c': 'c'}
