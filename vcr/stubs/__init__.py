@@ -240,16 +240,12 @@ class VCRConnection(object):
                     self._vcr_request
                 )
             )
-            # This is imported here to avoid circular import.
-            # TODO(@IvanMalison): Refactor to allow normal import.
-            from vcr.patch import force_reset
-            with force_reset():
-                self.real_connection.request(
-                    method=self._vcr_request.method,
-                    url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body,
-                    headers=self._vcr_request.headers,
-                )
+            self.real_connection.request(
+                method=self._vcr_request.method,
+                url=self._url(self._vcr_request.uri),
+                body=self._vcr_request.body,
+                headers=self._vcr_request.headers,
+            )
 
             # get the response
             response = self.real_connection.getresponse()
@@ -306,12 +302,7 @@ class VCRConnection(object):
         if six.PY3:
             kwargs.pop('strict', None)  # apparently this is gone in py3
 
-        # need to temporarily reset here because the real connection
-        # inherits from the thing that we are mocking out.  Take out
-        # the reset if you want to see what I mean :)
-        from vcr.patch import force_reset
-        with force_reset():
-            self.real_connection = self._baseclass(*args, **kwargs)
+        self.real_connection = self._baseclass(*args, **kwargs)
 
     def __setattr__(self, name, value):
         """
