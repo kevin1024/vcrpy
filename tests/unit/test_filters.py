@@ -10,6 +10,7 @@ from vcr.request import Request
 import gzip
 import json
 import zlib
+import pytest
 
 
 def test_replace_headers():
@@ -164,7 +165,21 @@ def test_remove_all_post_data_parameters():
     assert request.body == b''
 
 
-def test_replace_json_post_data_parameters():
+# Map a ContentType to an expected json post data detection
+JSON_POST_DATA_MATRIX = [
+    ('application/json', True),
+    ('application/json;charset=UTF-8', True),
+    ('application/json; charset=UTF-8', True),
+
+    ("application/json-but-not-really", False),
+    (None, False),
+    ('', False),
+    ('application/octet-steam', False),
+]
+
+
+@pytest.mark.parametrize("contenttype,expected_result", JSON_POST_DATA_MATRIX)
+def test_replace_json_post_data_parameters(contenttype, expected_result):
     # This tests all of:
     #   1. keeping a parameter
     #   2. removing a parameter
@@ -174,7 +189,7 @@ def test_replace_json_post_data_parameters():
     #   6. replacing a parameter that doesn't exist
     body = b'{"one": "keep", "two": "lose", "three": "change", "four": "shout", "five": "whisper"}'
     request = Request('POST', 'http://google.com', body, {})
-    request.headers['Content-Type'] = 'application/json'
+    request.headers['Content-Type'] = contenttype
     replace_post_data_parameters(request, [
         ('two', None),
         ('three', 'tada'),
@@ -184,26 +199,28 @@ def test_replace_json_post_data_parameters():
     ])
     request_data = json.loads(request.body.decode('utf-8'))
     expected_data = json.loads('{"one": "keep", "three": "tada", "four": "SHOUT"}')
-    assert request_data == expected_data
+    assert (request_data == expected_data) is expected_result
 
 
-def test_remove_json_post_data_parameters():
+@pytest.mark.parametrize("contenttype,expected_result", JSON_POST_DATA_MATRIX)
+def test_remove_json_post_data_parameters(contenttype, expected_result):
     # Test the backward-compatible API wrapper.
     body = b'{"id": "secret", "foo": "bar", "baz": "qux"}'
     request = Request('POST', 'http://google.com', body, {})
-    request.headers['Content-Type'] = 'application/json'
+    request.headers['Content-Type'] = contenttype
     remove_post_data_parameters(request, ['id'])
     request_body_json = json.loads(request.body.decode('utf-8'))
     expected_json = json.loads(b'{"foo": "bar", "baz": "qux"}'.decode('utf-8'))
-    assert request_body_json == expected_json
+    assert (request_body_json == expected_json) is expected_result
 
 
-def test_remove_all_json_post_data_parameters():
+@pytest.mark.parametrize("contenttype,expected_result", JSON_POST_DATA_MATRIX)
+def test_remove_all_json_post_data_parameters(contenttype, expected_result):
     body = b'{"id": "secret", "foo": "bar"}'
     request = Request('POST', 'http://google.com', body, {})
-    request.headers['Content-Type'] = 'application/json'
+    request.headers['Content-Type'] = contenttype
     replace_post_data_parameters(request, [('id', None), ('foo', None)])
-    assert request.body == b'{}'
+    assert (request.body == b'{}') is expected_result
 
 
 def test_decode_response_uncompressed():
