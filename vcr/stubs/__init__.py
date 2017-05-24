@@ -228,7 +228,7 @@ class VCRConnection(object):
                     "No match for the request (%r) was found. "
                     "Can't overwrite existing cassette (%r) in "
                     "your current record mode (%r)."
-                    % (self._vcr_request, self.cassette._path,
+                    % (self._vcr_request._to_dict(), self.cassette._path,
                        self.cassette.record_mode)
                 )
 
