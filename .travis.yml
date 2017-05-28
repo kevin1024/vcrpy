@@ -32,6 +32,16 @@ matrix:
   exclude:
     - env: TOX_SUFFIX="flakes"
       python: 2.6
+    - env: TOX_SUFFIX="flakes"
+      python: 2.7
+    - env: TOX_SUFFIX="flakes"
+      python: 3.4
+    - env: TOX_SUFFIX="flakes"
+      python: 3.5
+    - env: TOX_SUFFIX="flakes"
+      python: pypy
+    - env: TOX_SUFFIX="flakes"
+      python: pypy3
     - env: TOX_SUFFIX="boto"
       python: 3.6
     - env: TOX_SUFFIX="requests1"
