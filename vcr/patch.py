@@ -45,9 +45,6 @@ else:
     _cpoolHTTPSConnection = cpool.HTTPSConnection
 
 
-
-
-
 # Try to save the original types for httplib2
 try:
     import httplib2
@@ -183,7 +180,7 @@ class CassettePatcherBuilder(object):
     def _requests(self):
         try:
             from .stubs import requests_stubs
-        except ImportError: # pragma: no cover
+        except ImportError:  # pragma: no cover
             return ()
         return self._urllib3_patchers(cpool, requests_stubs)
 
