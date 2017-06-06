@@ -12,16 +12,6 @@ _HTTPConnection = httplib.HTTPConnection
 _HTTPSConnection = httplib.HTTPSConnection
 
 
-# Try to save the original types for requests
-try:
-    import requests.packages.urllib3.connectionpool as cpool
-except ImportError:  # pragma: no cover
-    pass
-else:
-    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _cpoolHTTPConnection = cpool.HTTPConnection
-    _cpoolHTTPSConnection = cpool.HTTPSConnection
-
 # Try to save the original types for boto3
 try:
     import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
@@ -32,14 +22,27 @@ else:
     _cpoolBoto3HTTPConnection = cpool.HTTPConnection
     _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
 
-
+cpool = None
 # Try to save the original types for urllib3
 try:
-    import urllib3
+    import urllib3.connectionpool as cpool
 except ImportError:  # pragma: no cover
     pass
 else:
-    _VerifiedHTTPSConnection = urllib3.connectionpool.VerifiedHTTPSConnection
+    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+    _cpoolHTTPConnection = cpool.HTTPConnection
+    _cpoolHTTPSConnection = cpool.HTTPSConnection
+
+# Try to save the original types for requests
+try:
+    if not cpool:
+        import requests.packages.urllib3.connectionpool as cpool
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+    _cpoolHTTPConnection = cpool.HTTPConnection
+    _cpoolHTTPSConnection = cpool.HTTPSConnection
 
 
 # Try to save the original types for httplib2
@@ -176,10 +179,9 @@ class CassettePatcherBuilder(object):
 
     def _requests(self):
         try:
-            import requests.packages.urllib3.connectionpool as cpool
+            from .stubs import requests_stubs
         except ImportError:  # pragma: no cover
             return ()
-        from .stubs import requests_stubs
         return self._urllib3_patchers(cpool, requests_stubs)
 
     def _boto3(self):

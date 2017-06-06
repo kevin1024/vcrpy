@@ -1,5 +1,6 @@
 Changelog
 ---------
+-  1.11.1 Fix compatibility with newest requests and urllib3 releases
 -  1.11.0 Allow injection of persistence methods + bugfixes (thanks @j-funk and @IvanMalison),
    Support python 3.6 + CI tests (thanks @derekbekoe and @graingert),
    Support pytest-asyncio coroutines (thanks @graingert)
