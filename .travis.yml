@@ -13,6 +13,7 @@ env:
     - TOX_SUFFIX="requests25"
     - TOX_SUFFIX="requests26"
     - TOX_SUFFIX="requests27"
+    - TOX_SUFFIX="requests211"
     - TOX_SUFFIX="requests213"
     - TOX_SUFFIX="requests216"
     - TOX_SUFFIX="requests1"
