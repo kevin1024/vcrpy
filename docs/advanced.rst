@@ -260,7 +260,7 @@ Custom Response Filtering
 
 VCR.py also suports response filtering with the
 ``before_record_response`` keyword argument. It's usage is similar to
-that of ``before_record``:
+that of ``before_record`` and overrules that configuration option:
 
 .. code:: python
 
