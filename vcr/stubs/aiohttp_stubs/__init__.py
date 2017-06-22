@@ -22,6 +22,10 @@ class MockClientResponse(ClientResponse):
         return self.content.decode(encoding)
 
     @asyncio.coroutine
+    def read(self):
+        return self.content
+
+    @asyncio.coroutine
     def release(self):
         pass
 
@@ -71,7 +75,7 @@ def vcr_request(cassette, real_request):
                 'message': response.reason,
             },
             'headers': dict(response.headers),
-            'body': {'string': (yield from response.text())},  # NOQA: E999
+            'body': {'string': (yield from response.read())},  # NOQA: E999
             'url': response.url,
         }
         cassette.append(vcr_request, vcr_response)
