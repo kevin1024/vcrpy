@@ -171,6 +171,8 @@ class VCRConnection(object):
         # allows me to compare the entire length of the response to see if it
         # exists in the cassette.
 
+        self._sock = VCRFakeSocket()
+
     def putrequest(self, method, url, *args, **kwargs):
         """
         httplib gives you more than one way to do it.  This is a way
@@ -294,11 +296,13 @@ class VCRConnection(object):
         with force_reset():
             return self.real_connection.connect(*args, **kwargs)
 
+        self._sock = VCRFakeSocket()
+
     @property
     def sock(self):
         if self.real_connection.sock:
             return self.real_connection.sock
-        return VCRFakeSocket()
+        return self._sock
 
     @sock.setter
     def sock(self, value):
@@ -315,6 +319,8 @@ class VCRConnection(object):
         from vcr.patch import force_reset
         with force_reset():
             self.real_connection = self._baseclass(*args, **kwargs)
+
+        self._sock = None
 
     def __setattr__(self, name, value):
         """
