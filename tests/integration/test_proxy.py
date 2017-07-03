@@ -3,11 +3,10 @@
 
 # External imports
 import multiprocessing
-import SocketServer
-import SimpleHTTPServer
 import pytest
 requests = pytest.importorskip("requests")
 
+from six.moves import socketserver, SimpleHTTPServer
 from six.moves.urllib.request import urlopen
 
 # Internal imports
@@ -26,7 +25,7 @@ class Proxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 @pytest.yield_fixture(scope='session')
 def proxy_server(httpbin):
-    httpd = SocketServer.ForkingTCPServer(('', 0), Proxy)
+    httpd = socketserver.ForkingTCPServer(('', 0), Proxy)
     proxy_process = multiprocessing.Process(
         target=httpd.serve_forever,
     )
