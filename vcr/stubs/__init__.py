@@ -36,16 +36,6 @@ class VCRFakeSocket(object):
         """
         return 0  # wonder how bad this is....
 
-    def __nonzero__(self):
-        """This is hacky too.
-
-        urllib3 checks if sock is truthy before calling
-        set_tunnel (urllib3/connectionpool.py#L592).
-        If it is true, it never sets the tunnel and this
-        breaks proxy requests.
-        """
-        return False
-
 
 def parse_headers(header_list):
     """
@@ -140,15 +130,18 @@ class VCRConnection(object):
         """
         Returns empty string for the default port and ':port' otherwise
         """
-        port = self._tunnel_port or self.real_connection.port
+        port = self.real_connection.port
         default_port = {'https': 443, 'http': 80}[self._protocol]
         return ':{}'.format(port) if port != default_port else ''
 
     def _uri(self, url):
         """Returns request absolute URI"""
-        uri = "{}://{}{}{}".format(
+        if not url.startswith('/'):
+            # Then this must be a proxy request.
+            return url
+        uri = "{0}://{1}{2}{3}".format(
             self._protocol,
-            self._tunnel_host or self.real_connection.host,
+            self.real_connection.host,
             self._port_postfix(),
             url,
         )
@@ -158,7 +151,7 @@ class VCRConnection(object):
         """Returns request selector url from absolute URI"""
         prefix = "{}://{}{}".format(
             self._protocol,
-            self._tunnel_host or self.real_connection.host,
+            self.real_connection.host,
             self._port_postfix(),
         )
         return uri.replace(prefix, '', 1)
@@ -322,9 +315,6 @@ class VCRConnection(object):
         from vcr.patch import force_reset
         with force_reset():
             self.real_connection = self._baseclass(*args, **kwargs)
-
-        self._tunnel_host = None
-        self._tunnel_port = None
 
     def __setattr__(self, name, value):
         """
