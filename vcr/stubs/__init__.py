@@ -136,7 +136,7 @@ class VCRConnection(object):
 
     def _uri(self, url):
         """Returns request absolute URI"""
-        if not url.startswith('/'):
+        if url and not url.startswith('/'):
             # Then this must be a proxy request.
             return url
         uri = "{0}://{1}{2}{3}".format(

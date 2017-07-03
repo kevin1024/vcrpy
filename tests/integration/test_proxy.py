@@ -37,6 +37,6 @@ def proxy_server(httpbin):
 
 def test_use_proxy(tmpdir, httpbin, proxy_server):
     '''Ensure that it works with a proxy.'''
-    with vcr.use_cassette(str(tmpdir.join('proxy.yaml'))) as cass:
+    with vcr.use_cassette(str(tmpdir.join('proxy.yaml'))):
         requests.get(httpbin.url, proxies={'http': proxy_server})
         requests.get(httpbin.url, proxies={'http': proxy_server})
