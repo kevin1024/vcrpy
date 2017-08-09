@@ -145,6 +145,7 @@ class VCR(object):
 
         merged_config = {
             'serializer': self._get_serializer(serializer_name),
+            'persister': self.persister,
             'match_on': self._get_matchers(
                 tuple(matcher_names) + tuple(additional_matchers)
             ),
