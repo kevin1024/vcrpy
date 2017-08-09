@@ -16,7 +16,7 @@ class CustomFilesystemPersister(object):
     @staticmethod
     def load_cassette(cassette_path, serializer):
         cassette_path += '.test'
-        return FilesystemPersister().load_cassette(cassette_path, serializer)
+        return FilesystemPersister.load_cassette(cassette_path, serializer)
 
     @staticmethod
     def save_cassette(cassette_path, cassette_dict, serializer):
