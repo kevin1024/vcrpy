@@ -11,8 +11,8 @@ from vcr.persisters.filesystem import FilesystemPersister
 
 
 class CustomFilesystemPersister(object):
-    '''Behaves just like DefaultFilePersister but adds .test extension to the
-       cassette file'''
+    '''Behaves just like default FilesystemPersister but adds .test extension
+       to the cassette file'''
     @staticmethod
     def load_cassette(cassette_path, serializer):
         cassette_path += '.test'
@@ -27,6 +27,7 @@ class CustomFilesystemPersister(object):
 
 def test_save_cassette_with_custom_persister(tmpdir, httpbin):
     '''Ensure you can save a cassette using custom persister'''
+    import ipdb; ipdb.set_trace()
     my_vcr = vcr.VCR()
     my_vcr.register_persister(CustomFilesystemPersister)
 
@@ -45,6 +46,7 @@ def test_load_cassette_with_custom_persister(tmpdir, httpbin):
     '''
     Ensure you can load a cassette using custom persister
     '''
+    import ipdb; ipdb.set_trace()
     my_vcr = vcr.VCR()
     my_vcr.register_persister(CustomFilesystemPersister)
 
