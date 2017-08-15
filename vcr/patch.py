@@ -386,11 +386,11 @@ def reset_patchers():
         pass
     else:
         yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, 'HTTPConnection', _HTTPConnection)
-        yield mock.patch.object(cpool, 'HTTPSConnection', _HTTPSConnection)
+        yield mock.patch.object(cpool, 'HTTPConnection', _cpoolHTTPConnection)
+        yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolHTTPSConnection)
         if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
-            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _HTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _HTTPSConnection)
+            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _cpoolHTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _cpoolHTTPSConnection)
 
     try:
         import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
