@@ -8,7 +8,6 @@ import vcr
 from vcr.patch import force_reset
 from assertions import assert_cassette_empty, assert_is_json
 urllib3 = pytest.importorskip("urllib3")
-cpool = pytest.importorskip("urllib3.connectionpool")
 
 
 @pytest.fixture(scope='module')
@@ -143,6 +142,7 @@ def test_https_with_cert_validation_disabled(tmpdir, httpbin_secure, pool_mgr):
 
 
 def test_urllib3_force_reset():
+    cpool = urllib3.connectionpool
     http_original = cpool.HTTPConnection
     https_original = cpool.HTTPSConnection
     verified_https_original = cpool.VerifiedHTTPSConnection
