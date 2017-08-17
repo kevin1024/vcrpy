@@ -362,8 +362,22 @@ class ConnectionRemover(object):
 def reset_patchers():
     yield mock.patch.object(httplib, 'HTTPConnection', _HTTPConnection)
     yield mock.patch.object(httplib, 'HTTPSConnection', _HTTPSConnection)
+
     try:
-        import requests.packages.urllib3.connectionpool as cpool
+        import requests
+        if requests.__build__ < 0x021603:
+            # Avoid double unmock if requests 2.16.3
+            # First, this is pointless, requests.packages.urllib3 *IS* urllib3 (see packages.py)
+            # Second, this is unmocking twice the same classes with different namespaces
+            # and is creating weird issues and bugs:
+            # > AssertionError: assert <class 'urllib3.connection.HTTPConnection'>
+            # >   is <class 'requests.packages.urllib3.connection.HTTPConnection'>
+            # This assert should work!!!
+            # Note that this also means that now, requests.packages is never imported
+            # if requests 2.16.3 or greater is used with VCRPy.
+            import requests.packages.urllib3.connectionpool as cpool
+        else:
+            raise ImportError("Skip requests not vendored anymore")
     except ImportError:  # pragma: no cover
         pass
     else:
@@ -386,11 +400,11 @@ def reset_patchers():
         pass
     else:
         yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, 'HTTPConnection', _HTTPConnection)
-        yield mock.patch.object(cpool, 'HTTPSConnection', _HTTPSConnection)
+        yield mock.patch.object(cpool, 'HTTPConnection', _cpoolHTTPConnection)
+        yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolHTTPSConnection)
         if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
-            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _HTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _HTTPSConnection)
+            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _cpoolHTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _cpoolHTTPSConnection)
 
     try:
         import botocore.vendored.requests.packages.urllib3.connectionpool as cpool

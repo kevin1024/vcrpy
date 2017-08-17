@@ -16,6 +16,7 @@ env:
     - TOX_SUFFIX="requests211"
     - TOX_SUFFIX="requests213"
     - TOX_SUFFIX="requests216"
+    - TOX_SUFFIX="requests218"
     - TOX_SUFFIX="requests1"
     - TOX_SUFFIX="httplib2"
     - TOX_SUFFIX="boto"
