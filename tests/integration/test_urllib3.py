@@ -5,6 +5,7 @@
 import pytest
 import pytest_httpbin
 import vcr
+from vcr.patch import force_reset
 from assertions import assert_cassette_empty, assert_is_json
 urllib3 = pytest.importorskip("urllib3")
 
@@ -138,3 +139,21 @@ def test_gzip(tmpdir, httpbin_both, verify_pool_mgr):
 def test_https_with_cert_validation_disabled(tmpdir, httpbin_secure, pool_mgr):
     with vcr.use_cassette(str(tmpdir.join('cert_validation_disabled.yaml'))):
         pool_mgr.request('GET', httpbin_secure.url)
+
+
+def test_urllib3_force_reset():
+    cpool = urllib3.connectionpool
+    http_original = cpool.HTTPConnection
+    https_original = cpool.HTTPSConnection
+    verified_https_original = cpool.VerifiedHTTPSConnection
+    with vcr.use_cassette(path='test'):
+        first_cassette_HTTPConnection = cpool.HTTPConnection
+        first_cassette_HTTPSConnection = cpool.HTTPSConnection
+        first_cassette_VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+        with force_reset():
+            assert cpool.HTTPConnection is http_original
+            assert cpool.HTTPSConnection is https_original
+            assert cpool.VerifiedHTTPSConnection is verified_https_original
+        assert cpool.HTTPConnection is first_cassette_HTTPConnection
+        assert cpool.HTTPSConnection is first_cassette_HTTPSConnection
+        assert cpool.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection

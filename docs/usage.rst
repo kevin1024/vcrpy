@@ -57,7 +57,7 @@ once
    file.
 
 It is similar to the new\_episodes record mode, but will prevent new,
-unexpected requests from being made (i.e. because the request URI
+unexpected requests from being made (e.g. because the request URI
 changed).
 
 once is the default record mode, used when you do not set one.
