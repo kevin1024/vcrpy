@@ -87,7 +87,7 @@ def headers(r1, r2):
 
 
 def _log_matches(r1, r2, matches):
-    differences = [m for m in matches if not m[0]]
+    differences = [m[1].__name__ for m in matches if not m[0]]
     if differences:
         log.debug(
             "Requests {0} and {1} differ according to "
