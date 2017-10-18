@@ -4,13 +4,15 @@
 # External imports
 import multiprocessing
 import pytest
-requests = pytest.importorskip("requests")
 
 from six.moves import socketserver, SimpleHTTPServer
 from six.moves.urllib.request import urlopen
 
 # Internal imports
 import vcr
+
+# Conditional imports
+requests = pytest.importorskip("requests")
 
 
 class Proxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
@@ -24,13 +26,13 @@ class Proxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 @pytest.yield_fixture(scope='session')
-def proxy_server(httpbin):
-    httpd = socketserver.ForkingTCPServer(('', 0), Proxy)
+def proxy_server():
+    httpd = socketserver.ThreadingTCPServer(('', 0), Proxy)
     proxy_process = multiprocessing.Process(
         target=httpd.serve_forever,
     )
     proxy_process.start()
-    yield 'http://{}:{}'.format(*httpd.server_address)
+    yield 'http://{0}:{1}'.format(*httpd.server_address)
     proxy_process.terminate()
 
 
