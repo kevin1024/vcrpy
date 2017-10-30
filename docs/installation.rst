@@ -40,7 +40,7 @@ rebuilding pyyaml.
 
      brew install libyaml         # Mac with Homebrew
      apt-get install libyaml-dev  # Ubuntu
-     dnf install libyaml-dev      # Fedora
+     dnf install libyaml-devel      # Fedora
 
 3. Rebuild pyyaml with libyaml::
 
