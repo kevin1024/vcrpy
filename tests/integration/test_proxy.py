@@ -19,10 +19,15 @@ class Proxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
     '''
     Simple proxy server.
 
-    (from: http://effbot.org/librarybook/simplehttpserver.htm).
+    (Inspired by: http://effbot.org/librarybook/simplehttpserver.htm).
     '''
     def do_GET(self):
-        self.copyfile(urlopen(self.path), self.wfile)
+        upstream_response = urlopen(self.path)
+        self.send_response(upstream_response.status, upstream_response.msg)
+        for header in upstream_response.headers.items():
+            self.send_header(*header)
+        self.end_headers()
+        self.copyfile(upstream_response, self.wfile)
 
 
 @pytest.yield_fixture(scope='session')
