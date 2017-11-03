@@ -23,8 +23,15 @@ class Proxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
     '''
     def do_GET(self):
         upstream_response = urlopen(self.path)
-        self.send_response(upstream_response.status, upstream_response.msg)
-        for header in upstream_response.headers.items():
+        try:
+            status = upstream_response.status
+            headers = upstream_response.headers.items()
+        except AttributeError:
+            # In Python 2 the response is an addinfourl instance.
+            status = upstream_response.code
+            headers = upstream_response.info().items()
+        self.send_response(status, upstream_response.msg)
+        for header in headers:
             self.send_header(*header)
         self.end_headers()
         self.copyfile(upstream_response, self.wfile)
