@@ -22,7 +22,7 @@ def assert_matcher(matcher_name):
     matcher = getattr(matchers, matcher_name)
     for k1, k2 in itertools.permutations(REQUESTS, 2):
         matched = matcher(REQUESTS[k1], REQUESTS[k2])
-        if matcher_name in set((k1, k2)):
+        if matcher_name in {k1, k2}:
             assert not matched
         else:
             assert matched
@@ -31,7 +31,7 @@ def assert_matcher(matcher_name):
 def test_uri_matcher():
     for k1, k2 in itertools.permutations(REQUESTS, 2):
         matched = matchers.uri(REQUESTS[k1], REQUESTS[k2])
-        if set((k1, k2)) != set(('base', 'method')):
+        if {k1, k2} != {'base', 'method'}:
             assert not matched
         else:
             assert matched
