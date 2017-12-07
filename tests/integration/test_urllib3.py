@@ -56,7 +56,7 @@ def test_body(tmpdir, httpbin_both, verify_pool_mgr):
 def test_auth(tmpdir, httpbin_both, verify_pool_mgr):
     '''Ensure that we can handle basic auth'''
     auth = ('user', 'passwd')
-    headers = urllib3.util.make_headers(basic_auth='{0}:{1}'.format(*auth))
+    headers = urllib3.util.make_headers(basic_auth='{}:{}'.format(*auth))
     url = httpbin_both.url + '/basic-auth/user/passwd'
     with vcr.use_cassette(str(tmpdir.join('auth.yaml'))):
         one = verify_pool_mgr.request('GET', url, headers=headers)
@@ -70,7 +70,7 @@ def test_auth(tmpdir, httpbin_both, verify_pool_mgr):
 def test_auth_failed(tmpdir, httpbin_both, verify_pool_mgr):
     '''Ensure that we can save failed auth statuses'''
     auth = ('user', 'wrongwrongwrong')
-    headers = urllib3.util.make_headers(basic_auth='{0}:{1}'.format(*auth))
+    headers = urllib3.util.make_headers(basic_auth='{}:{}'.format(*auth))
     url = httpbin_both.url + '/basic-auth/user/passwd'
     with vcr.use_cassette(str(tmpdir.join('auth-failed.yaml'))) as cass:
         # Ensure that this is empty to begin with

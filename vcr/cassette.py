@@ -304,7 +304,7 @@ class Cassette(object):
             pass
 
     def __str__(self):
-        return "<Cassette containing {0} recorded response(s)>".format(
+        return "<Cassette containing {} recorded response(s)>".format(
             len(self)
         )
 

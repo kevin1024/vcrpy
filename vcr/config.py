@@ -78,7 +78,7 @@ class VCR(object):
             serializer = self.serializers[serializer_name]
         except KeyError:
             raise KeyError(
-                "Serializer {0} doesn't exist or isn't registered".format(
+                "Serializer {} doesn't exist or isn't registered".format(
                     serializer_name
                 )
             )
@@ -91,7 +91,7 @@ class VCR(object):
                 matchers.append(self.matchers[m])
         except KeyError:
             raise KeyError(
-                "Matcher {0} doesn't exist or isn't registered".format(m)
+                "Matcher {} doesn't exist or isn't registered".format(m)
             )
         return matchers
 

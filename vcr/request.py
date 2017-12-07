@@ -81,7 +81,7 @@ class Request(object):
         return self.scheme
 
     def __str__(self):
-        return "<Request ({0}) {1}>".format(self.method, self.uri)
+        return "<Request ({}) {}>".format(self.method, self.uri)
 
     def __repr__(self):
         return self.__str__()
