@@ -1,4 +1,5 @@
 import copy
+import collections
 import functools
 import inspect
 import os
@@ -6,7 +7,6 @@ import types
 
 import six
 
-from .compat import collections
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
 from .persisters.filesystem import FilesystemPersister

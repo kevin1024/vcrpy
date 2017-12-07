@@ -28,9 +28,7 @@ install_requires = ['PyYAML', 'wrapt', 'six>=1.5']
 
 
 extras_require = {
-    ':python_version in "2.4, 2.5, 2.6"':
-        ['contextlib2', 'backport_collections', 'mock'],
-    ':python_version in "2.7, 3.1, 3.2"': ['contextlib2', 'mock'],
+    ':python_version in "2.7"': ['contextlib2', 'mock'],
     ':python_version in "3.4, 3.5, 3.6"': ['yarl'],
 }
 

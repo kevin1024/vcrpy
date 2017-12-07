@@ -1,10 +1,11 @@
+import collections
 import sys
 import inspect
 import logging
 
 import wrapt
 
-from .compat import contextlib, collections
+from .compat import contextlib
 from .errors import UnhandledHTTPRequestError
 from .matchers import requests_match, uri, method
 from .patch import CassettePatcherBuilder
