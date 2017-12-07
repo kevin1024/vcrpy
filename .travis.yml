@@ -33,8 +33,6 @@ matrix:
     - env: TOX_SUFFIX="boto3"
   exclude:
     - env: TOX_SUFFIX="flakes"
-      python: 2.6
-    - env: TOX_SUFFIX="flakes"
       python: 2.7
     - env: TOX_SUFFIX="flakes"
       python: 3.4
@@ -53,15 +51,12 @@ matrix:
     - env: TOX_SUFFIX="requests1"
       python: 3.6
     - env: TOX_SUFFIX="aiohttp"
-      python: 2.6
-    - env: TOX_SUFFIX="aiohttp"
       python: 2.7
     - env: TOX_SUFFIX="aiohttp"
       python: pypy
     - env: TOX_SUFFIX="aiohttp"
       python: pypy3
 python:
-- 2.6
 - 2.7
 - 3.5
 - 3.6
