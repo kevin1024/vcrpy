@@ -40,8 +40,6 @@ matrix:
       python: 3.5
     - env: TOX_SUFFIX="flakes"
       python: pypy
-    - env: TOX_SUFFIX="flakes"
-      python: pypy3
     - env: TOX_SUFFIX="boto"
       python: 3.6
     - env: TOX_SUFFIX="requests1"
@@ -54,14 +52,11 @@ matrix:
       python: 2.7
     - env: TOX_SUFFIX="aiohttp"
       python: pypy
-    - env: TOX_SUFFIX="aiohttp"
-      python: pypy3
 python:
 - 2.7
 - 3.5
 - 3.6
 - pypy
-- pypy3
 install:
 - pip install tox-travis
 - if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
