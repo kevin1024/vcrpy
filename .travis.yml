@@ -57,6 +57,7 @@ python:
 - 3.5
 - 3.6
 - pypy
+- "pypy3.5-5.9.0"
 install:
 - pip install tox-travis
 - if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
