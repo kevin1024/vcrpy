@@ -90,12 +90,12 @@ def _log_matches(r1, r2, matches):
     differences = [m for m in matches if not m[0]]
     if differences:
         log.debug(
-            "Requests {0} and {1} differ according to "
-            "the following matchers: {2}".format(r1, r2, differences)
+            "Requests {} and {} differ according to "
+            "the following matchers: {}".format(r1, r2, differences)
         )
 
 
 def requests_match(r1, r2, matchers):
     matches = [(m(r1, r2), m) for m in matchers]
     _log_matches(r1, r2, matches)
-    return all([m[0] for m in matches])
+    return all(m[0] for m in matches)

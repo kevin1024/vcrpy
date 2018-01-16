@@ -132,11 +132,11 @@ class VCRConnection(object):
         """
         port = self.real_connection.port
         default_port = {'https': 443, 'http': 80}[self._protocol]
-        return ':{0}'.format(port) if port != default_port else ''
+        return ':{}'.format(port) if port != default_port else ''
 
     def _uri(self, url):
         """Returns request absolute URI"""
-        uri = "{0}://{1}{2}{3}".format(
+        uri = "{}://{}{}{}".format(
             self._protocol,
             self.real_connection.host,
             self._port_postfix(),
@@ -146,7 +146,7 @@ class VCRConnection(object):
 
     def _url(self, uri):
         """Returns request selector url from absolute URI"""
-        prefix = "{0}://{1}{2}".format(
+        prefix = "{}://{}{}".format(
             self._protocol,
             self.real_connection.host,
             self._port_postfix(),
@@ -161,7 +161,7 @@ class VCRConnection(object):
             body=body,
             headers=headers or {}
         )
-        log.debug('Got {0}'.format(self._vcr_request))
+        log.debug('Got {}'.format(self._vcr_request))
 
         # Note: The request may not actually be finished at this point, so
         # I'm not sending the actual request until getresponse().  This
@@ -180,7 +180,7 @@ class VCRConnection(object):
             body="",
             headers={}
         )
-        log.debug('Got {0}'.format(self._vcr_request))
+        log.debug('Got {}'.format(self._vcr_request))
 
     def putheader(self, header, *values):
         self._vcr_request.headers[header] = values
@@ -214,7 +214,7 @@ class VCRConnection(object):
         # then return it
         if self.cassette.can_play_response_for(self._vcr_request):
             log.info(
-                "Playing response for {0} from cassette".format(
+                "Playing response for {} from cassette".format(
                     self._vcr_request
                 )
             )
@@ -236,7 +236,7 @@ class VCRConnection(object):
             # and return it.
 
             log.info(
-                "{0} not in cassette, sending to real server".format(
+                "{} not in cassette, sending to real server".format(
                     self._vcr_request
                 )
             )

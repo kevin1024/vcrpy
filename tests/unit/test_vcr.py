@@ -319,11 +319,11 @@ def test_additional_matchers():
 
     @vcr.use_cassette
     def function_defaults(cassette):
-        assert set(cassette._match_on) == set([vcr.matchers['uri']])
+        assert set(cassette._match_on) == {vcr.matchers['uri']}
 
     @vcr.use_cassette(additional_matchers=('body',))
     def function_additional(cassette):
-        assert set(cassette._match_on) == set([vcr.matchers['uri'], vcr.matchers['body']])
+        assert set(cassette._match_on) == {vcr.matchers['uri'], vcr.matchers['body']}
 
     function_defaults()
     function_additional()

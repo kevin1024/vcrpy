@@ -28,9 +28,7 @@ install_requires = ['PyYAML', 'wrapt', 'six>=1.5']
 
 
 extras_require = {
-    ':python_version in "2.4, 2.5, 2.6"':
-        ['contextlib2', 'backport_collections', 'mock'],
-    ':python_version in "2.7, 3.1, 3.2"': ['contextlib2', 'mock'],
+    ':python_version in "2.7"': ['contextlib2', 'mock'],
     ':python_version in "3.4, 3.5, 3.6"': ['yarl'],
 }
 
@@ -66,6 +64,7 @@ setup(
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
     packages=find_packages(exclude=excluded_packages),
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     install_requires=install_requires,
     extras_require=extras_require,
     license='MIT',
@@ -75,7 +74,14 @@ setup(
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: Testing',
         'Topic :: Internet :: WWW/HTTP',
         'License :: OSI Approved :: MIT License',

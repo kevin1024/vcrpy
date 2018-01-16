@@ -11,8 +11,4 @@ else:
     if not hasattr(contextlib, 'ExitStack'):
         import contextlib2 as contextlib
 
-import collections
-if not hasattr(collections, 'Counter'):
-    import backport_collections as collections
-
-__all__ = ['mock', 'contextlib', 'collections']
+__all__ = ['mock', 'contextlib']
