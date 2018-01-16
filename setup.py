@@ -31,8 +31,7 @@ extras_require = {
     ':python_version in "2.4, 2.5, 2.6"':
         ['contextlib2', 'backport_collections', 'mock'],
     ':python_version in "2.7, 3.1, 3.2"': ['contextlib2', 'mock'],
-    ':python_version in "3.5, 3.6" or python_full_version >= "3.4.1"':
-        ['yarl'],
+    ':python_full_version >= "3.4.1"': ['yarl'],
     ':python_version == "3.4" and python_full_version < "3.4.1"':
         ['yarl<1.0.0', 'multidict<4.0.0,>=2.0'],
 }
