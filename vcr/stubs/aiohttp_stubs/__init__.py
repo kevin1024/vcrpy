@@ -5,10 +5,10 @@ import asyncio
 import functools
 import json
 
+import multidict
 from aiohttp import ClientResponse, streams
-from yarl import URL
-
 from vcr.request import Request
+from yarl import URL
 
 
 class MockStream(asyncio.StreamReader, streams.AsyncStreamReaderMixin):
@@ -29,7 +29,8 @@ class MockClientResponse(ClientResponse):
             session=None,
         )
 
-    async def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
+    async def json(self, *, encoding='utf-8', loads=json.loads,
+                   **kwargs):  # NOQA: E999
         stripped = self._body.strip()
         if not stripped:
             return None
@@ -63,9 +64,10 @@ def vcr_request(cassette, real_request):
 
         request_url = URL(url)
         if params:
+            new_params = multidict.MultiDict()
             for k, v in params.items():
-                params[k] = str(v)
-            request_url = URL(url).with_query(params)
+                new_params.add(k, str(v))
+            request_url = URL(url).with_query(new_params)
 
         vcr_request = Request(method, str(request_url), data, headers)
 
@@ -91,7 +93,8 @@ def vcr_request(cassette, real_request):
             response.close()
             return response
 
-        response = await real_request(self, method, url, **kwargs)  # NOQA: E999
+        response = await real_request(self, method, url,
+                                      **kwargs)  # NOQA: E999
 
         vcr_response = {
             'status': {
@@ -99,7 +102,9 @@ def vcr_request(cassette, real_request):
                 'message': response.reason,
             },
             'headers': dict(response.headers),
-            'body': {'string': (await response.read())},  # NOQA: E999
+            'body': {
+                'string': (await response.read())
+            },  # NOQA: E999
             'url': response.url,
         }
         cassette.append(vcr_request, vcr_response)
