@@ -1,4 +1,4 @@
-|PyPI| |Build Status| |Waffle Ready| |Gitter|
+|PyPI| |Python versions| |Build Status| |Waffle Ready| |Gitter|
 
 VCR.py
 ======
@@ -62,6 +62,8 @@ This library uses the MIT license. See `LICENSE.txt <LICENSE.txt>`__ for
 more details
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/vcrpy.svg
+   :target: https://pypi.python.org/pypi/vcrpy-unittest
+.. |Python versions| image:: https://img.shields.io/pypi/pyversions/vcrpy-unittest.svg
    :target: https://pypi.python.org/pypi/vcrpy-unittest
 .. |Build Status| image:: https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master
    :target: http://travis-ci.org/kevin1024/vcrpy

@@ -32,10 +32,7 @@ matrix:
     - env: TOX_SUFFIX="boto"
     - env: TOX_SUFFIX="boto3"
   exclude:
-    - env: TOX_SUFFIX="flakes"
-      python: 2.6
-    - env: TOX_SUFFIX="flakes"
-      python: 2.7
+    # Only run flakes on a single Python 2.x and a single 3.x
     - env: TOX_SUFFIX="flakes"
       python: 3.4
     - env: TOX_SUFFIX="flakes"
@@ -43,30 +40,28 @@ matrix:
     - env: TOX_SUFFIX="flakes"
       python: pypy
     - env: TOX_SUFFIX="flakes"
-      python: pypy3
+      python: "pypy3.5-5.9.0"
     - env: TOX_SUFFIX="boto"
       python: 3.6
+    # Requests 1.x only supports Python <= 3.3
     - env: TOX_SUFFIX="requests1"
       python: 3.4
     - env: TOX_SUFFIX="requests1"
       python: 3.5
     - env: TOX_SUFFIX="requests1"
       python: 3.6
-    - env: TOX_SUFFIX="aiohttp"
-      python: 2.6
+    - env: TOX_SUFFIX="requests1"
+      python: "pypy3.5-5.9.0"
     - env: TOX_SUFFIX="aiohttp"
       python: 2.7
     - env: TOX_SUFFIX="aiohttp"
       python: pypy
-    - env: TOX_SUFFIX="aiohttp"
-      python: pypy3
 python:
-- 2.6
 - 2.7
 - 3.5
 - 3.6
 - pypy
-- pypy3
+- "pypy3.5-5.9.0"
 install:
 - pip install tox-travis
 - if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi

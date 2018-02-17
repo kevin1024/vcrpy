@@ -1,5 +1,6 @@
+import multiprocessing
 import pytest
-from six.moves import xmlrpc_client
+from six.moves import xmlrpc_client, xmlrpc_server
 
 requests = pytest.importorskip("requests")
 
@@ -80,13 +81,27 @@ def test_amazon_doctype(tmpdir):
     assert 'html' in r.text
 
 
-def test_xmlrpclib(tmpdir):
+@pytest.yield_fixture(scope='session')
+def rpc_server():
+    httpd = xmlrpc_server.SimpleXMLRPCServer(('', 0))
+    httpd.register_function(pow)
+    proxy_process = multiprocessing.Process(
+        target=httpd.serve_forever,
+    )
+    try:
+        proxy_process.start()
+        yield 'http://{}:{}'.format(*httpd.server_address)
+    finally:
+        proxy_process.terminate()
+
+
+def test_xmlrpclib(tmpdir, rpc_server):
     with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))):
-        roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
-        original_schema = roundup_server.schema()
+        roundup_server = xmlrpc_client.ServerProxy(rpc_server, allow_none=True)
+        original_schema = roundup_server.pow(2, 4)
 
     with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))):
-        roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
-        second_schema = roundup_server.schema()
+        roundup_server = xmlrpc_client.ServerProxy(rpc_server, allow_none=True)
+        second_schema = roundup_server.pow(2, 4)
 
     assert original_schema == second_schema

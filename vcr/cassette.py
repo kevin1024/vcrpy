@@ -1,10 +1,11 @@
+import collections
 import sys
 import inspect
 import logging
 
 import wrapt
 
-from .compat import contextlib, collections
+from .compat import contextlib
 from .errors import UnhandledHTTPRequestError
 from .matchers import requests_match, uri, method
 from .patch import CassettePatcherBuilder
@@ -303,7 +304,7 @@ class Cassette(object):
             pass
 
     def __str__(self):
-        return "<Cassette containing {0} recorded response(s)>".format(
+        return "<Cassette containing {} recorded response(s)>".format(
             len(self)
         )
 

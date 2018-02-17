@@ -9,7 +9,7 @@ with pip::
 Compatibility
 -------------
 
-VCR.py supports Python 2.6 and 2.7, 3.3, 3.4, and
+VCR.py supports Python 2.7 and 3.4+, and
 `pypy <http://pypy.org>`__.
 
 The following http libraries are supported:
@@ -40,7 +40,7 @@ rebuilding pyyaml.
 
      brew install libyaml         # Mac with Homebrew
      apt-get install libyaml-dev  # Ubuntu
-     dnf install libyaml-dev      # Fedora
+     dnf install libyaml-devel      # Fedora
 
 3. Rebuild pyyaml with libyaml::
 

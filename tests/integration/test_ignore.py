@@ -26,9 +26,9 @@ def test_ignore_localhost(tmpdir, httpbin):
     with overridden_dns({'httpbin.org': '127.0.0.1'}):
         cass_file = str(tmpdir.join('filter_qs.yaml'))
         with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
-            urlopen('http://localhost:{0}/'.format(httpbin.port))
+            urlopen('http://localhost:{}/'.format(httpbin.port))
             assert len(cass) == 0
-            urlopen('http://httpbin.org:{0}/'.format(httpbin.port))
+            urlopen('http://httpbin.org:{}/'.format(httpbin.port))
             assert len(cass) == 1
 
 
@@ -39,9 +39,9 @@ def test_ignore_httpbin(tmpdir, httpbin):
             cass_file,
             ignore_hosts=['httpbin.org']
         ) as cass:
-            urlopen('http://httpbin.org:{0}/'.format(httpbin.port))
+            urlopen('http://httpbin.org:{}/'.format(httpbin.port))
             assert len(cass) == 0
-            urlopen('http://localhost:{0}/'.format(httpbin.port))
+            urlopen('http://localhost:{}/'.format(httpbin.port))
             assert len(cass) == 1
 
 
@@ -53,8 +53,8 @@ def test_ignore_localhost_and_httpbin(tmpdir, httpbin):
             ignore_hosts=['httpbin.org'],
             ignore_localhost=True
         ) as cass:
-            urlopen('http://httpbin.org:{0}'.format(httpbin.port))
-            urlopen('http://localhost:{0}'.format(httpbin.port))
+            urlopen('http://httpbin.org:{}'.format(httpbin.port))
+            urlopen('http://localhost:{}'.format(httpbin.port))
             assert len(cass) == 0
 
 
@@ -62,12 +62,12 @@ def test_ignore_localhost_twice(tmpdir, httpbin):
     with overridden_dns({'httpbin.org': '127.0.0.1'}):
         cass_file = str(tmpdir.join('filter_qs.yaml'))
         with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
-            urlopen('http://localhost:{0}'.format(httpbin.port))
+            urlopen('http://localhost:{}'.format(httpbin.port))
             assert len(cass) == 0
-            urlopen('http://httpbin.org:{0}'.format(httpbin.port))
+            urlopen('http://httpbin.org:{}'.format(httpbin.port))
             assert len(cass) == 1
         with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
             assert len(cass) == 1
-            urlopen('http://localhost:{0}'.format(httpbin.port))
-            urlopen('http://httpbin.org:{0}'.format(httpbin.port))
+            urlopen('http://localhost:{}'.format(httpbin.port))
+            urlopen('http://httpbin.org:{}'.format(httpbin.port))
             assert len(cass) == 1
