@@ -24,29 +24,14 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-install_requires = ['PyYAML', 'wrapt', 'six>=1.5']
-
-
-extras_require = {
-    ':python_version in "2.7"': ['contextlib2', 'mock'],
-    ':python_version in "3.4, 3.5, 3.6"': ['yarl'],
-}
-
-
-try:
-    if 'bdist_wheel' not in sys.argv:
-        for key, value in extras_require.items():
-            if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
-                install_requires.extend(value)
-except Exception:
-    logging.getLogger(__name__).exception(
-        'Something went wrong calculating platform specific dependencies, so '
-        "you're getting them all!"
-    )
-    for key, value in extras_require.items():
-        if key.startswith(':'):
-            install_requires.extend(value)
-
+install_requires = [
+    'PyYAML', 
+    'wrapt', 
+    'six>=1.5',
+    'contextlib2; python_version=="2.7"',
+    'mock; python_version=="2.7"',
+    'yarl; python_version>="3.4"',
+]
 
 excluded_packages = ["tests*"]
 if sys.version_info[0] == 2:
@@ -66,7 +51,6 @@ setup(
     packages=find_packages(exclude=excluded_packages),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     install_requires=install_requires,
-    extras_require=extras_require,
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-httpbin'],
     classifiers=[
