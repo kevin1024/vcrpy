@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
 import sys
-import logging
 
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-import pkg_resources
 
 long_description = open('README.rst', 'r').read()
 
@@ -25,8 +23,8 @@ class PyTest(TestCommand):
 
 
 install_requires = [
-    'PyYAML', 
-    'wrapt', 
+    'PyYAML',
+    'wrapt',
     'six>=1.5',
     'contextlib2; python_version=="2.7"',
     'mock; python_version=="2.7"',
