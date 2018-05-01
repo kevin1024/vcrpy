@@ -12,6 +12,20 @@ from vcr.request import Request
 
 
 class MockClientResponse(ClientResponse):
+    def __init__(self, method, url):
+        super().__init__(
+            method=method,
+            url=url,
+            writer=None,
+            continue100=None,
+            timer=None,
+            request_info=None,
+            auto_decompress=None,
+            traces=None,
+            loop=asyncio.get_event_loop(),
+            session=None,
+        )
+
     # TODO: get encoding from header
     @asyncio.coroutine
     def json(self, *, encoding='utf-8', loads=json.loads):  # NOQA: E999

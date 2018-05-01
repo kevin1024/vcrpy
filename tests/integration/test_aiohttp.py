@@ -7,12 +7,11 @@ import contextlib  # noqa: E402
 import pytest  # noqa: E402
 import vcr  # noqa: E402
 
-from .aiohttp_utils import aiohttp_request  # noqa: E402
 
 try:
-    from .async_def import test_http  # noqa: F401
+    from .aiohttp_utils import aiohttp_request  # noqa: E402
 except SyntaxError:
-    pass
+    pytest.skip('python<3.5', allow_module_level=True)
 
 
 def run_in_loop(fn):
