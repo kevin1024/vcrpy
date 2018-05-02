@@ -51,7 +51,6 @@ VCR.py works great with the following HTTP clients:
 -  urllib3
 -  tornado
 -  urllib2
--  boto
 -  boto3
 
 
