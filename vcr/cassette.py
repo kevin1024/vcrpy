@@ -175,13 +175,13 @@ class Cassette(object):
     def use(cls, **kwargs):
         return CassetteContextDecorator.from_args(cls, **kwargs)
 
-    def __init__(self, path, serializer=yamlserializer, persister=FilesystemPersister, record_mode='once',
+    def __init__(self, path, serializer=None, persister=None, record_mode='once',
                  match_on=(uri, method), before_record_request=None,
                  before_record_response=None, custom_patches=(),
                  inject=False):
-        self._persister = persister
+        self._persister = persister or FilesystemPersister
         self._path = path
-        self._serializer = serializer
+        self._serializer = serializer or yamlserializer
         self._match_on = match_on
         self._before_record_request = before_record_request or (lambda x: x)
         self._before_record_response = before_record_response or (lambda x: x)
