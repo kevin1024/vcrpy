@@ -1,17 +1,11 @@
+import contextlib
+
 import pytest
+asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")
 
-import asyncio  # noqa: E402
-import contextlib  # noqa: E402
-
-import pytest  # noqa: E402
 import vcr  # noqa: E402
-
-
-try:
-    from .aiohttp_utils import aiohttp_request  # noqa: E402
-except SyntaxError:
-    pytest.skip('python<3.5', allow_module_level=True)
+from .aiohttp_utils import aiohttp_request  # noqa: E402
 
 
 def run_in_loop(fn):
