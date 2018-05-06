@@ -22,19 +22,19 @@ def run_in_loop(fn):
         return loop.run_until_complete(task)
 
 
-def request(method, url, as_text=True, **kwargs):
+def request(method, url, output='text', **kwargs):
     def run(loop):
-        return aiohttp_request(loop, method, url, as_text, **kwargs)
+        return aiohttp_request(loop, method, url, output=output, **kwargs)
 
     return run_in_loop(run)
 
 
-def get(url, as_text=True, **kwargs):
-    return request('GET', url, as_text, **kwargs)
+def get(url, output='text', **kwargs):
+    return request('GET', url, output=output, **kwargs)
 
 
-def post(url, as_text=True, **kwargs):
-    return request('POST', url, as_text, **kwargs)
+def post(url, output='text', **kwargs):
+    return request('POST', url, output='text', **kwargs)
 
 
 @pytest.fixture(params=["https", "http"])
@@ -79,11 +79,22 @@ def test_text(tmpdir, scheme):
 def test_json(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
     with vcr.use_cassette(str(tmpdir.join('json.yaml'))):
-        _, response_json = get(url, as_text=False)
+        _, response_json = get(url, output='json')
 
     with vcr.use_cassette(str(tmpdir.join('json.yaml'))) as cassette:
-        _, cassette_response_json = get(url, as_text=False)
+        _, cassette_response_json = get(url, output='json')
         assert cassette_response_json == response_json
+        assert cassette.play_count == 1
+
+
+def test_binary(tmpdir, scheme):
+    url = scheme + '://httpbin.org/image/png'
+    with vcr.use_cassette(str(tmpdir.join('binary.yaml'))):
+        _, response_binary = get(url, output='raw')
+
+    with vcr.use_cassette(str(tmpdir.join('binary.yaml'))) as cassette:
+        _, cassette_response_binary = get(url, output='raw')
+        assert cassette_response_binary == response_binary
         assert cassette.play_count == 1
 
 
@@ -103,10 +114,10 @@ def test_params(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
     params = {'a': 1, 'b': False, 'c': 'c'}
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, response_json = get(url, as_text=False, params=params)
+        _, response_json = get(url, output='json', params=params)
 
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, cassette_response_json = get(url, as_text=False, params=params)
+        _, cassette_response_json = get(url, output='json', params=params)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
@@ -115,15 +126,15 @@ def test_params_same_url_distinct_params(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
     params = {'a': 1, 'b': False, 'c': 'c'}
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, response_json = get(url, as_text=False, params=params)
+        _, response_json = get(url, output='json', params=params)
 
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, cassette_response_json = get(url, as_text=False, params=params)
+        _, cassette_response_json = get(url, output='json', params=params)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
     other_params = {'other': 'params'}
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        response, cassette_response_text = get(url, as_text=True, params=other_params)
+        response, cassette_response_text = get(url, output='text', params=other_params)
         assert 'No match for the request' in cassette_response_text
         assert response.status == 599
