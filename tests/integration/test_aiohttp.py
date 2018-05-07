@@ -71,11 +71,13 @@ def test_text(tmpdir, scheme):
 
 def test_json(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
+    headers = {'Content-Type': 'application/json'}
+
     with vcr.use_cassette(str(tmpdir.join('json.yaml'))):
-        _, response_json = get(url, output='json')
+        _, response_json = get(url, output='json', headers=headers)
 
     with vcr.use_cassette(str(tmpdir.join('json.yaml'))) as cassette:
-        _, cassette_response_json = get(url, output='json')
+        _, cassette_response_json = get(url, output='json', headers=headers)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
@@ -105,24 +107,28 @@ def test_post(tmpdir, scheme):
 
 def test_params(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
+    headers = {'Content-Type': 'application/json'}
     params = {'a': 1, 'b': False, 'c': 'c'}
-    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, response_json = get(url, output='json', params=params)
 
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, cassette_response_json = get(url, output='json', params=params)
+        _, response_json = get(url, output='json', params=params, headers=headers)
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, cassette_response_json = get(url, output='json', params=params, headers=headers)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
 
 def test_params_same_url_distinct_params(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
+    headers = {'Content-Type': 'application/json'}
     params = {'a': 1, 'b': False, 'c': 'c'}
-    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, response_json = get(url, output='json', params=params)
 
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
-        _, cassette_response_json = get(url, output='json', params=params)
+        _, response_json = get(url, output='json', params=params, headers=headers)
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        _, cassette_response_json = get(url, output='json', params=params, headers=headers)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
