@@ -19,3 +19,5 @@ def aiohttp_request(loop, method, url, output='text', encoding='utf-8', **kwargs
 
     response_ctx._resp.close()
     yield from session.close()
+
+    return response, content
