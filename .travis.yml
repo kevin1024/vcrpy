@@ -16,6 +16,8 @@ env:
 matrix:
   allow_failures:
     - env: TOX_SUFFIX="boto3"
+    - env: TOX_SUFFIX="aiohttp"
+      python: "pypy3.5-5.9.0"
   exclude:
     # Only run flakes on a single Python 2.x and a single 3.x
     - env: TOX_SUFFIX="flakes"
