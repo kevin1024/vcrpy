@@ -20,7 +20,6 @@ class MockClientResponse(ClientResponse):
             continue100=None,
             timer=None,
             request_info=None,
-            auto_decompress=None,
             traces=None,
             loop=asyncio.get_event_loop(),
             session=None,
@@ -29,15 +28,15 @@ class MockClientResponse(ClientResponse):
     # TODO: get encoding from header
     @asyncio.coroutine
     def json(self, *, encoding='utf-8', loads=json.loads):  # NOQA: E999
-        return loads(self.content.decode(encoding))
+        return loads(self._body.decode(encoding))
 
     @asyncio.coroutine
     def text(self, encoding='utf-8'):
-        return self.content.decode(encoding)
+        return self._body.decode(encoding)
 
     @asyncio.coroutine
     def read(self):
-        return self.content
+        return self._body
 
     @asyncio.coroutine
     def release(self):
@@ -64,9 +63,9 @@ def vcr_request(cassette, real_request):
 
             response = MockClientResponse(method, URL(vcr_response.get('url')))
             response.status = vcr_response['status']['code']
-            response.content = vcr_response['body']['string']
+            response._body = vcr_response['body']['string']
             response.reason = vcr_response['status']['message']
-            response.headers = vcr_response['headers']
+            response._headers = vcr_response['headers']
 
             response.close()
             return response
@@ -77,7 +76,7 @@ def vcr_request(cassette, real_request):
             msg = ("No match for the request {!r} was found. Can't overwrite "
                    "existing cassette {!r} in your current record mode {!r}.")
             msg = msg.format(vcr_request, cassette._path, cassette.record_mode)
-            response.content = msg.encode()
+            response._body = msg.encode()
             response.close()
             return response
 
