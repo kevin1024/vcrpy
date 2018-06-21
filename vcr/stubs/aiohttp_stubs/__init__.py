@@ -52,7 +52,7 @@ def vcr_request(cassette, real_request):
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
         params = kwargs.get('params')
-        query_params = URL(url).query
+        query_params = URL(url).query.copy()
         if params:
             for k, v in params.items():
                 query_params[k] = str(v)
