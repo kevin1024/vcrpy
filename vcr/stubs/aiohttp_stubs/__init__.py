@@ -51,11 +51,14 @@ def vcr_request(cassette, real_request):
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
         params = kwargs.get('params')
+
         if params:
             for k, v in params.items():
                 params[k] = str(v)
+            request_url = URL(url).with_query(params)
+        else:
+            request_url = URL(url)
 
-        request_url = URL(url).with_query(params)
         vcr_request = Request(method, str(request_url), data, headers)
 
         if cassette.can_play_response_for(vcr_request):
