@@ -27,7 +27,7 @@ class MockClientResponse(ClientResponse):
 
     # TODO: get encoding from header
     @asyncio.coroutine
-    def json(self, *, encoding='utf-8', loads=json.loads):  # NOQA: E999
+    def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
         return loads(self._body.decode(encoding))
 
     @asyncio.coroutine
