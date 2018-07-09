@@ -2,6 +2,8 @@ import itertools
 
 import pytest
 
+from testfixtures import LogCapture
+
 from vcr import matchers
 from vcr import request
 
@@ -135,7 +137,13 @@ def test_body_matcher_does_match(r1, r2):
     )
 ])
 def test_body_match_does_not_match(r1, r2):
-    assert not matchers.body(r1, r2)
+    with LogCapture() as captured_log:
+        assert not matchers.requests_match(r1, r2, [matchers.body])
+
+    message = "Requests <Request ({}) {}> and <Request ({}) {}>"\
+              " differ according to the following matchers: [(False, 'body')]"
+    captured_log.check(('vcr.matchers', 'DEBUG',
+                        message.format(r1.method, r1.url, r2.method, r2.url)))
 
 
 def test_query_matcher():
@@ -150,7 +158,7 @@ def test_query_matcher():
     assert matchers.query(req1, req3)
 
 
-def test_metchers():
+def test_matchers():
     assert_matcher('method')
     assert_matcher('scheme')
     assert_matcher('host')

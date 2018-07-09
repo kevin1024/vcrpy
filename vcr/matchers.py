@@ -96,6 +96,6 @@ def _log_matches(r1, r2, matches):
 
 
 def requests_match(r1, r2, matchers):
-    matches = [(m(r1, r2), m) for m in matchers]
+    matches = [(m(r1, r2), m.__name__) for m in matchers]
     _log_matches(r1, r2, matches)
     return all(m[0] for m in matches)

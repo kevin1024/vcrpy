@@ -24,6 +24,7 @@ class PyTest(TestCommand):
 
 install_requires = [
     'PyYAML',
+    'testfixtures',
     'wrapt',
     'six>=1.5',
     'contextlib2; python_version=="2.7"',
