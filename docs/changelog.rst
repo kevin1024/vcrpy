@@ -1,5 +1,6 @@
 Changelog
 ---------
+-  1.13.0 - Fix support to latest aiohttp version (3.3.2). Fix content-type bug in aiohttp stub. Save URL with query params properly when using aiohttp.
 -  1.12.0 - Fix support to latest aiohttp version (3.2.1), Adapted setup to PEP508, Support binary responses on aiohttp, Dropped support for EOL python versions (2.6 and 3.3)
 -  1.11.1 Fix compatibility with newest requests and urllib3 releases
 -  1.11.0 Allow injection of persistence methods + bugfixes (thanks @j-funk and @IvanMalison),
