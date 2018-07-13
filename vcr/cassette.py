@@ -1,4 +1,5 @@
 import collections
+import copy
 import sys
 import inspect
 import logging
@@ -222,6 +223,9 @@ class Cassette(object):
         request = self._before_record_request(request)
         if not request:
             return
+        # Deepcopy is here because mutation of `response` will corrupt the
+        # real response.
+        response = copy.deepcopy(response)
         response = self._before_record_response(response)
         if response is None:
             return

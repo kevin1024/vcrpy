@@ -1,5 +1,6 @@
 import vcr
 import zlib
+import json
 import six.moves.http_client as httplib
 
 from assertions import assert_is_json
@@ -83,3 +84,50 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
 
         assert 'content-encoding' not in inside.headers
         assert_is_json(inside.read())
+
+
+def _make_before_record_response(fields, replacement='[REDACTED]'):
+    def before_record_response(response):
+        string_body = response['body']['string'].decode('utf8')
+        body = json.loads(string_body)
+
+        for field in fields:
+            if field in body:
+                body[field] = replacement
+
+        response['body']['string'] = json.dumps(body).encode()
+        return response
+    return before_record_response
+
+
+def test_original_response_is_not_modified_by_before_filter(tmpdir, httpbin):
+    testfile = str(tmpdir.join('sensitive_data_scrubbed_response.yml'))
+    host, port = httpbin.host, httpbin.port
+    field_to_scrub = 'url'
+    replacement = '[YOU_CANT_HAVE_THE_MANGO]'
+
+    conn = httplib.HTTPConnection(host, port)
+    conn.request('GET', '/get')
+    outside = conn.getresponse()
+
+    callback = _make_before_record_response([field_to_scrub], replacement)
+    with vcr.use_cassette(testfile, before_record_response=callback):
+        conn = httplib.HTTPConnection(host, port)
+        conn.request('GET', '/get')
+        inside = conn.getresponse()
+
+        # The scrubbed field should be the same, because no cassette existed.
+        # Furthermore, the responses should be identical.
+        inside_body = json.loads(inside.read().decode('utf-8'))
+        outside_body = json.loads(outside.read().decode('utf-8'))
+        assert not inside_body[field_to_scrub] == replacement
+        assert inside_body[field_to_scrub] == outside_body[field_to_scrub]
+
+    # Ensure that when a cassette exists, the scrubbed response is returned.
+    with vcr.use_cassette(testfile, before_record_response=callback):
+        conn = httplib.HTTPConnection(host, port)
+        conn.request('GET', '/get')
+        inside = conn.getresponse()
+
+        inside_body = json.loads(inside.read().decode('utf-8'))
+        assert inside_body[field_to_scrub] == replacement
