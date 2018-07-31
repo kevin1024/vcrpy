@@ -20,7 +20,7 @@ The following HTTP libraries are supported:
 -  ``http.client``
 -  ``httplib2``
 -  ``requests`` (both 1.x and 2.x versions)
--  ``tornado``
+-  ``tornado.httpclient``
 -  ``urllib2``
 -  ``urllib3``
 
