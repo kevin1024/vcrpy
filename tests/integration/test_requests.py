@@ -282,3 +282,17 @@ def test_filter_post_params(tmpdir, httpbin_both):
         requests.post(url, data={'key': 'value'})
     with vcr.use_cassette(cass_loc, filter_post_data_parameters=['key']) as cass:
         assert b'key=value' not in cass.requests[0].body
+
+
+def test_post_unicode_match_on_body(tmpdir, httpbin_both):
+    '''Ensure that matching on POST body that contains Unicode characters works.'''
+    data = {'key1': 'value1', '●‿●': '٩(●̮̮̃•̃)۶'}
+    url = httpbin_both + '/post'
+
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml')), additional_matchers=('body',)):
+        req1 = requests.post(url, data).content
+
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml')), additional_matchers=('body',)):
+        req2 = requests.post(url, data).content
+
+    assert req1 == req2
