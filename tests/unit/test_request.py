@@ -5,7 +5,7 @@ from vcr.request import Request, HeadersDict
 
 def test_str():
     req = Request('GET', 'http://www.google.com/', '', {})
-    str(req) == '<Request (GET) http://www.google.com/>'
+    assert str(req) == '<Request (GET) http://www.google.com/>'
 
 
 def test_headers():

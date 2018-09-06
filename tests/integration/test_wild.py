@@ -81,16 +81,23 @@ def test_amazon_doctype(tmpdir):
     assert 'html' in r.text
 
 
+def start_rpc_server(q):
+    httpd = xmlrpc_server.SimpleXMLRPCServer(('127.0.0.1', 0))
+    httpd.register_function(pow)
+    q.put('http://{}:{}'.format(*httpd.server_address))
+    httpd.serve_forever()
+
+
 @pytest.yield_fixture(scope='session')
 def rpc_server():
-    httpd = xmlrpc_server.SimpleXMLRPCServer(('', 0))
-    httpd.register_function(pow)
+    q = multiprocessing.Queue()
     proxy_process = multiprocessing.Process(
-        target=httpd.serve_forever,
+        target=start_rpc_server,
+        args=(q,)
     )
     try:
         proxy_process.start()
-        yield 'http://{}:{}'.format(*httpd.server_address)
+        yield q.get()
     finally:
         proxy_process.terminate()
 
