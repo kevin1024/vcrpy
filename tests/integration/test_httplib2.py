@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 '''Integration tests with httplib2'''
 
-# External imports
+import sys
+
 from six.moves.urllib_parse import urlencode
 import pytest
 import pytest_httpbin.certs
 
-# Internal imports
 import vcr
 
 from assertions import assert_cassette_has_one_response
@@ -19,7 +19,12 @@ def http():
     Returns an httplib2 HTTP instance
     with the certificate replaced by the httpbin one.
     """
-    return httplib2.Http(ca_certs=pytest_httpbin.certs.where())
+    kwargs = {
+        'ca_certs': pytest_httpbin.certs.where()
+    }
+    if sys.version_info[:2] == (3, 7):
+        kwargs['disable_ssl_certificate_validation'] = True
+    return httplib2.Http(**kwargs)
 
 
 def test_response_code(tmpdir, httpbin_both):
