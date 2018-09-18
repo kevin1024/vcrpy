@@ -14,6 +14,31 @@ env:
     - TOX_SUFFIX="tornado4"
     - TOX_SUFFIX="aiohttp"
 matrix:
+  include:
+    - env: TOX_SUFFIX="flakes"
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - env: TOX_SUFFIX="requests27"
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - env: TOX_SUFFIX="httplib2"
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - env: TOX_SUFFIX="urllib3121"
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - env: TOX_SUFFIX="tornado4"
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - env: TOX_SUFFIX="aiohttp"
+      python: 3.7
+      dist: xenial
+      sudo: true
   allow_failures:
     - env: TOX_SUFFIX="boto3"
     - env: TOX_SUFFIX="aiohttp"
