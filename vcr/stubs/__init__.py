@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 class VCRFakeSocket(object):
     """
     A socket that doesn't do anything!
-    Used when playing back casssettes, when there
+    Used when playing back cassettes, when there
     is no actual open socket.
     """
 
@@ -136,7 +136,10 @@ class VCRConnection(object):
 
     def _uri(self, url):
         """Returns request absolute URI"""
-        uri = "{}://{}{}{}".format(
+        if url and not url.startswith('/'):
+            # Then this must be a proxy request.
+            return url
+        uri = "{0}://{1}{2}{3}".format(
             self._protocol,
             self.real_connection.host,
             self._port_postfix(),
@@ -167,6 +170,8 @@ class VCRConnection(object):
         # I'm not sending the actual request until getresponse().  This
         # allows me to compare the entire length of the response to see if it
         # exists in the cassette.
+
+        self._sock = VCRFakeSocket()
 
     def putrequest(self, method, url, *args, **kwargs):
         """
@@ -291,11 +296,13 @@ class VCRConnection(object):
         with force_reset():
             return self.real_connection.connect(*args, **kwargs)
 
+        self._sock = VCRFakeSocket()
+
     @property
     def sock(self):
         if self.real_connection.sock:
             return self.real_connection.sock
-        return VCRFakeSocket()
+        return self._sock
 
     @sock.setter
     def sock(self, value):
@@ -312,6 +319,8 @@ class VCRConnection(object):
         from vcr.patch import force_reset
         with force_reset():
             self.real_connection = self._baseclass(*args, **kwargs)
+
+        self._sock = None
 
     def __setattr__(self, name, value):
         """
