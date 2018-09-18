@@ -40,6 +40,7 @@ class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection,
             'timeout',
             'source_address',
             'ca_certs',
+            'disable_ssl_certificate_validation',
         }
         unknown_keys = set(kwargs.keys()) - safe_keys
         safe_kwargs = kwargs.copy()
