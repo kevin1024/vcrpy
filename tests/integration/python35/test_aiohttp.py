@@ -154,3 +154,15 @@ def test_params_on_url(tmpdir, scheme):
         assert request.url == url
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
+
+
+async def test_aiohttp_client_does_not_break_with_patching_request(aiohttp_client, tmpdir):
+    async def hello(request):
+        return aiohttp.web.Response(text='Hello, world')
+
+    app = aiohttp.web.Application()
+    app.router.add_get('/', hello)
+    client = await aiohttp_client(app)
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))):
+        await client.get('/')

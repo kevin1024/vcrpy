@@ -45,8 +45,7 @@ class MockClientResponse(ClientResponse):
 
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
-    @asyncio.coroutine
-    def new_request(self, method, url, **kwargs):
+    async def new_request(self, method, url, **kwargs):
         headers = kwargs.get('headers')
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
@@ -82,7 +81,7 @@ def vcr_request(cassette, real_request):
             response.close()
             return response
 
-        response = yield from real_request(self, method, url, **kwargs)  # NOQA: E999
+        response = await real_request(self, method, url, **kwargs)  # NOQA: E999
 
         vcr_response = {
             'status': {
@@ -90,7 +89,7 @@ def vcr_request(cassette, real_request):
                 'message': response.reason,
             },
             'headers': dict(response.headers),
-            'body': {'string': (yield from response.read())},  # NOQA: E999
+            'body': {'string': (await response.read())},  # NOQA: E999
             'url': response.url,
         }
         cassette.append(vcr_request, vcr_response)
