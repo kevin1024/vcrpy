@@ -1,7 +1,3 @@
-import asyncio
-
-
-@asyncio.coroutine
-def handle_coroutine(vcr, fn):
+async def handle_coroutine(vcr, fn):  # noqa: E999
     with vcr as cassette:
-        return (yield from fn(cassette))  # noqa: E999
+        return (await fn(cassette))  # noqa: E999
