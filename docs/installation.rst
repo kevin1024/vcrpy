@@ -12,15 +12,17 @@ Compatibility
 VCR.py supports Python 2.7 and 3.4+, and
 `pypy <http://pypy.org>`__.
 
-The following http libraries are supported:
+The following HTTP libraries are supported:
 
--  urllib2
--  urllib3
--  http.client (python3)
--  requests (both 1.x and 2.x versions)
--  httplib2
--  boto
--  Tornado's AsyncHTTPClient
+-  ``aiohttp``
+-  ``boto``
+-  ``boto3``
+-  ``http.client``
+-  ``httplib2``
+-  ``requests`` (both 1.x and 2.x versions)
+-  ``tornado.httpclient``
+-  ``urllib2``
+-  ``urllib3``
 
 Speed
 -----
