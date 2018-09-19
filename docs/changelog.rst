@@ -1,5 +1,12 @@
 Changelog
 ---------
+-  2.0.0 - Support python 3.7 (fix httplib2 and urllib2, thanks @felixonmars)
+   [#356] Fixes `before_record_response` so the original response isn't changed (thanks @kgraves)
+   Fix requests stub when using proxy (thanks @samuelfekete @daneoshiga)
+   (only for aiohttp stub) Drop support to python 3.4 asyncio.coroutine (aiohttp doesn't support python it anymore)
+   Fix aiohttp stub to work with aiohttp client (thanks @stj)
+   Fix aiohttp stub to accept content type passed
+   Improve docs (thanks @adamchainz)
 -  1.13.0 - Fix support to latest aiohttp version (3.3.2). Fix content-type bug in aiohttp stub. Save URL with query params properly when using aiohttp.
 -  1.12.0 - Fix support to latest aiohttp version (3.2.1), Adapted setup to PEP508, Support binary responses on aiohttp, Dropped support for EOL python versions (2.6 and 3.3)
 -  1.11.1 Fix compatibility with newest requests and urllib3 releases
