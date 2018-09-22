@@ -43,6 +43,8 @@ matrix:
     - env: TOX_SUFFIX="boto3"
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy3.5-5.9.0"
+    - env: TOX_SUFFIX="aiohttp"
+      python: 3.4
   exclude:
     # Only run flakes on a single Python 2.x and a single 3.x
     - env: TOX_SUFFIX="flakes"
@@ -59,6 +61,7 @@ matrix:
       python: pypy
 python:
 - 2.7
+- 3.4
 - 3.5
 - 3.6
 - pypy
