@@ -34,7 +34,7 @@ class MockClientResponse(ClientResponse):
     async def read(self):
         return self._body
 
-    async def release(self):
+    def release(self):
         pass
 
 
