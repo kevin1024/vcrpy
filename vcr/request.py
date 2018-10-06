@@ -112,7 +112,7 @@ class HeadersDict(CaseInsensitiveDict):
     In addition, some servers sometimes send the same header more than once,
     and httplib *can* deal with this situation.
 
-    Futhermore, I wanted to keep the request and response cassette format as
+    Furthermore, I wanted to keep the request and response cassette format as
     similar as possible.
 
     For this reason, in cassettes I keep a dict with lists as keys, but once
