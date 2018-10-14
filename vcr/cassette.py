@@ -25,6 +25,10 @@ if sys.version_info[:2] >= (3, 5):
 else:
     def handle_coroutine(*args, **kwags):
         raise NotImplementedError('Not implemented on Python 2')
+if sys.version_info[:2] >= (3, 5):
+    from .cassette_yf import _loc_handle_generator
+else:
+    from .cassette_nyf import _loc_handle_generator
 
 
 log = logging.getLogger(__name__)
@@ -123,25 +127,7 @@ class CassetteContextDecorator(object):
 
         return self._handle_function(fn=handle_function)
 
-    def _handle_generator(self, fn):
-        """Wraps a generator so that we're inside the cassette context for the
-        duration of the generator.
-        """
-        with self as cassette:
-            coroutine = fn(cassette)
-            # We don't need to catch StopIteration. The caller (Tornado's
-            # gen.coroutine, for example) will handle that.
-            to_yield = next(coroutine)
-            while True:
-                try:
-                    to_send = yield to_yield
-                except Exception:
-                    to_yield = coroutine.throw(*sys.exc_info())
-                else:
-                    try:
-                        to_yield = coroutine.send(to_send)
-                    except StopIteration:
-                        break
+    _handle_generator = _loc_handle_generator
 
     def _handle_function(self, fn):
         with self as cassette:
