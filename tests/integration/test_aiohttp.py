@@ -168,6 +168,8 @@ def test_aiohttp_test_client(aiohttp_client, tmpdir):
     assert response.status == 200
     response_text = loop.run_until_complete(response.text())
     assert response_text == 'hello'
+    response_text = loop.run_until_complete(response.text(errors='replace'))
+    assert response_text == 'hello'
 
     with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
         response = loop.run_until_complete(client.get(url))
