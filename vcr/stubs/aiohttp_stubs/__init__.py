@@ -28,8 +28,8 @@ class MockClientResponse(ClientResponse):
     async def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
         return loads(self._body.decode(encoding))
 
-    async def text(self, encoding='utf-8'):
-        return self._body.decode(encoding)
+    async def text(self, encoding='utf-8', errors='strict'):
+        return self._body.decode(encoding, errors=errors)
 
     async def read(self):
         return self._body
