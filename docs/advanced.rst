@@ -221,24 +221,25 @@ Custom Request filtering
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 If none of these covers your request filtering needs, you can register a
-callback that will manipulate the HTTP request before adding it to the
-cassette. Use the ``before_record_request`` configuration option to so this.
-Here is an example that will never record requests to the /login
-endpoint.
+callback with the ``before_record_request`` configuration option to
+manipulate the HTTP request before adding it to the cassette, or return
+``None`` to ignore it entirely. Here is an example that will never record
+requests to the ``'/login'`` path:
 
 .. code:: python
 
     def before_record_cb(request):
-        if request.path != '/login':
-            return request
+        if request.path == '/login':
+            return None
+        return request
 
     my_vcr = vcr.VCR(
-        before_record_request = before_record_cb,
+        before_record_request=before_record_cb,
     )
     with my_vcr.use_cassette('test.yml'):
         # your http code here
 
-You can also mutate the response using this callback. For example, you
+You can also mutate the request using this callback. For example, you
 could remove all query parameters from any requests to the ``'/login'``
 path.
 
@@ -246,7 +247,7 @@ path.
 
     def scrub_login_request(request):
         if request.path == '/login':
-            request.uri, _ =  urllib.splitquery(response.uri)
+            request.uri, _ =  urllib.splitquery(request.uri)
         return request
 
     my_vcr = vcr.VCR(
@@ -258,9 +259,12 @@ path.
 Custom Response Filtering
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-VCR.py also suports response filtering with the
-``before_record_response`` keyword argument. It's usage is similar to
-that of ``before_record``:
+You can also do response filtering with the
+``before_record_response`` configuration option. Its usage is
+similar to the above ``before_record_request`` - you can
+mutate the response, or return ``None`` to avoid recording
+the request and response altogether. For example to hide
+sensitive data from the request body:
 
 .. code:: python
 
@@ -302,8 +306,8 @@ in a few ways:
    or 0.0.0.0.
 -  Set the ``ignore_hosts`` configuration option to a list of hosts to
    ignore
--  Add a ``before_record`` callback that returns None for requests you
-   want to ignore
+-  Add a ``before_record_request`` or ``before_record_response`` callback
+   that returns ``None`` for requests you want to ignore (see above).
 
 Requests that are ignored by VCR will not be saved in a cassette, nor
 played back from a cassette. VCR will completely ignore those requests
