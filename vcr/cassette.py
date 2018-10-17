@@ -132,7 +132,10 @@ class CassetteContextDecorator(object):
                 try:
                     to_send = yield to_yield
                 except Exception:
-                    to_yield = coroutine.throw(*sys.exc_info())
+                    try:
+                        to_yield = coroutine.throw(*sys.exc_info())
+                    except StopIteration:
+                        break
                 else:
                     try:
                         to_yield = coroutine.send(to_send)
