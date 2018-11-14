@@ -25,5 +25,5 @@ def serialize(cassette_dict):
             original.end,
             original.args[-1] + error_message
         )
-    except TypeError as original:  # py3
+    except TypeError:  # py3
         raise TypeError(error_message)
