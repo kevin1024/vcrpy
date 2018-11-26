@@ -191,9 +191,9 @@ class CassettePatcherBuilder(object):
         try:
             import botocore.awsrequest as cpool
         except ImportError:  # pragma: no cover
-            return ()
+            yield ()
         from .stubs import boto3_stubs
-        log.debug(f"Pathcing boto3 cpool {cpool}")
+        log.debug("Patching boto3 cpool with %s", cpool)
         yield cpool.AWSHTTPConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPConnection
         yield cpool.AWSHTTPSConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPSConnection
 

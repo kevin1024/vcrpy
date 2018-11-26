@@ -2,6 +2,9 @@ import warnings
 from six import BytesIO, text_type
 from six.moves.urllib.parse import urlparse, parse_qsl
 from .util import CaseInsensitiveDict
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class Request(object):
@@ -18,6 +21,7 @@ class Request(object):
         else:
             self.body = body
         self.headers = headers
+        log.debug("Invoking Request %s", self.uri)
 
     @property
     def headers(self):

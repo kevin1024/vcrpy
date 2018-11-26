@@ -145,6 +145,7 @@ class VCRConnection(object):
             self._port_postfix(),
             url,
         )
+        log.debug("Uri looks like: %s", uri)
         return uri
 
     def _url(self, uri):
