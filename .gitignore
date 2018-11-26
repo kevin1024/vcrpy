@@ -12,4 +12,4 @@ pytestdebug.log
 fixtures/
 /docs/_build
 
-./idea
+.idea/
