@@ -43,7 +43,7 @@ def vcr_request(cassette, real_request):
     async def new_request(self, method, url, **kwargs):
         headers = kwargs.get('headers')
         headers = self._prepare_headers(headers)
-        data = kwargs.get('data')
+        data = kwargs.get('data', kwargs.get('json'))
         params = kwargs.get('params')
 
         request_url = URL(url)

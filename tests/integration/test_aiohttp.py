@@ -93,14 +93,17 @@ def test_binary(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_post(tmpdir, scheme):
+@pytest.mark.parametrize('body', ['data', 'json'])
+def test_post(tmpdir, scheme, body):
     data = {'key1': 'value1', 'key2': 'value2'}
     url = scheme + '://httpbin.org/post'
     with vcr.use_cassette(str(tmpdir.join('post.yaml'))):
-        _, response_json = post(url, data=data)
+        _, response_json = post(url, **{body: data})
 
     with vcr.use_cassette(str(tmpdir.join('post.yaml'))) as cassette:
-        _, cassette_response_json = post(url, data=data)
+        request = cassette.requests[0]
+        assert request.body == data
+        _, cassette_response_json = post(url, **{body: data})
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
