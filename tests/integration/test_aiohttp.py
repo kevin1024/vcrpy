@@ -47,13 +47,17 @@ def test_status(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_headers(tmpdir, scheme):
+@pytest.mark.parametrize("auth", [None, aiohttp.BasicAuth("vcrpy", "test")])
+def test_headers(tmpdir, scheme, auth):
     url = scheme + '://httpbin.org'
     with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
-        response, _ = get(url)
+        response, _ = get(url, auth=auth)
 
     with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cassette:
-        cassette_response, _ = get(url)
+        if auth is not None:
+            request = cassette.requests[0]
+            assert "AUTHORIZATION" in request.headers
+        cassette_response, _ = get(url, auth=auth)
         assert cassette_response.headers == response.headers
         assert cassette.play_count == 1
 
