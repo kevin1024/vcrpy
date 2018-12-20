@@ -133,6 +133,17 @@ def test_cassette_all_played():
     assert a.all_played
 
 
+@mock.patch('vcr.cassette.requests_match', _mock_requests_match)
+def test_cassette_rewound():
+    a = Cassette('test')
+    a.append('foo', 'bar')
+    a.play_response('foo')
+    assert a.all_played
+
+    a.rewind()
+    assert not a.all_played
+
+
 def test_before_record_response():
     before_record_response = mock.Mock(return_value='mutated')
     cassette = Cassette('test', before_record_response=before_record_response)
