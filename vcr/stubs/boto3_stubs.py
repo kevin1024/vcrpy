@@ -1,4 +1,4 @@
-'''Stubs for boto3'''
+"""Stubs for boto3"""
 
 try:
     # boto using awsrequest
