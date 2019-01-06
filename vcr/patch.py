@@ -13,12 +13,18 @@ log = logging.getLogger(__name__)
 _HTTPConnection = httplib.HTTPConnection
 _HTTPSConnection = httplib.HTTPSConnection
 
-
 # Try to save the original types for boto3
 try:
     from botocore.awsrequest import AWSHTTPSConnection, AWSHTTPConnection
-except ImportError:  # pragma: no cover
-    pass
+except ImportError:
+    try:
+        import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+    except ImportError:  # pragma: no cover
+        pass
+    else:
+        _Boto3VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+        _cpoolBoto3HTTPConnection = cpool.HTTPConnection
+        _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
 else:
     _Boto3VerifiedHTTPSConnection = AWSHTTPSConnection
     _cpoolBoto3HTTPConnection = AWSHTTPConnection
@@ -46,7 +52,6 @@ else:
     _cpoolHTTPConnection = cpool.HTTPConnection
     _cpoolHTTPSConnection = cpool.HTTPSConnection
 
-
 # Try to save the original types for httplib2
 try:
     import httplib2
@@ -57,7 +62,6 @@ else:
     _HTTPSConnectionWithTimeout = httplib2.HTTPSConnectionWithTimeout
     _SCHEME_TO_CONNECTION = httplib2.SCHEME_TO_CONNECTION
 
-
 # Try to save the original types for boto
 try:
     import boto.https_connection
@@ -65,7 +69,6 @@ except ImportError:  # pragma: no cover
     pass
 else:
     _CertValidatingHTTPSConnection = boto.https_connection.CertValidatingHTTPSConnection
-
 
 # Try to save the original types for Tornado
 try:
@@ -75,7 +78,6 @@ except ImportError:  # pragma: no cover
 else:
     _SimpleAsyncHTTPClient_fetch_impl = \
         tornado.simple_httpclient.SimpleAsyncHTTPClient.fetch_impl
-
 
 try:
     import tornado.curl_httpclient
@@ -101,6 +103,7 @@ class CassettePatcherBuilder(object):
             return self._build_patchers_from_mock_triples(
                 function(self, *args, **kwargs)
             )
+
         return wrapped
 
     def __init__(self, cassette):
@@ -188,6 +191,22 @@ class CassettePatcherBuilder(object):
 
     @_build_patchers_from_mock_triples_decorator
     def _boto3(self):
+
+        try:
+            # botocore using awsrequest
+            import botocore.awsrequest as cpool
+        except ImportError:  # pragma: no cover
+            try:
+                # botocore using vendored requests
+                import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+            except ImportError:  # pragma: no cover
+                yield ()
+            else:
+                from .stubs import boto3_stubs
+                yield self._urllib3_patchers(cpool, boto3_stubs)
+        else:
+            yield ()
+
         try:
             import botocore.awsrequest as cpool
         except ImportError:  # pragma: no cover
@@ -196,8 +215,6 @@ class CassettePatcherBuilder(object):
         log.debug("Patching boto3 cpool with %s", cpool)
         yield cpool.AWSHTTPConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPConnection
         yield cpool.AWSHTTPSConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPSConnection
-
-        # return self._urllib3_patchers(cpool, boto3_stubs)
 
     def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
@@ -413,16 +430,31 @@ def reset_patchers():
             yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _cpoolHTTPConnection)
             yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _cpoolHTTPSConnection)
 
-    # FIXME this is not right probably
     try:
+        # unpatch botocore with awsrequest
         import botocore.awsrequest as cpool
+
+        try:
+            # unpatch botocore with vendored requests
+            import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+        except ImportError:  # pragma: no cover
+            pass
+        else:
+            # unpatch requests v1.x
+            yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _Boto3VerifiedHTTPSConnection)
+            yield mock.patch.object(cpool, 'HTTPConnection', _cpoolBoto3HTTPConnection)
+            # unpatch requests v2.x
+            if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
+                yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls',
+                                        _cpoolBoto3HTTPConnection)
+                yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls',
+                                        _cpoolBoto3HTTPSConnection)
+
+            if hasattr(cpool, 'HTTPSConnection'):
+                yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolBoto3HTTPSConnection)
     except ImportError:  # pragma: no cover
         pass
     else:
-        # unpatch requests v1.x
-        # yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _Boto3VerifiedHTTPSConnection)
-        # yield mock.patch.object(cpool, 'HTTPConnection', _cpoolBoto3HTTPConnection)
-        # unpatch requests v2.x
         if hasattr(cpool.AWSHTTPConnectionPool, 'ConnectionCls'):
             yield mock.patch.object(cpool.AWSHTTPConnectionPool, 'ConnectionCls',
                                     _cpoolBoto3HTTPConnection)
