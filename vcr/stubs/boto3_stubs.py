@@ -11,10 +11,8 @@ except ImportError:  # pragma: nocover
     # you're using.  It includes some polyfills for newer features missing in older pythons.
     try:
         from urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
-    except ImportError:
+    except ImportError:  # pragma: nocover
         from requests.packages.urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
-
-    from urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
 
 from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
 
