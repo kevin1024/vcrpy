@@ -205,16 +205,10 @@ class CassettePatcherBuilder(object):
                 from .stubs import boto3_stubs
                 yield self._urllib3_patchers(cpool, boto3_stubs)
         else:
-            yield ()
-
-        try:
-            import botocore.awsrequest as cpool
-        except ImportError:  # pragma: no cover
-            yield ()
-        from .stubs import boto3_stubs
-        log.debug("Patching boto3 cpool with %s", cpool)
-        yield cpool.AWSHTTPConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPConnection
-        yield cpool.AWSHTTPSConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPSConnection
+            from .stubs import boto3_stubs
+            log.debug("Patching boto3 cpool with %s", cpool)
+            yield cpool.AWSHTTPConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPConnection
+            yield cpool.AWSHTTPSConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPSConnection
 
     def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
@@ -433,7 +427,7 @@ def reset_patchers():
     try:
         # unpatch botocore with awsrequest
         import botocore.awsrequest as cpool
-
+    except ImportError:  # pragma: no cover
         try:
             # unpatch botocore with vendored requests
             import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
@@ -452,8 +446,6 @@ def reset_patchers():
 
             if hasattr(cpool, 'HTTPSConnection'):
                 yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolBoto3HTTPSConnection)
-    except ImportError:  # pragma: no cover
-        pass
     else:
         if hasattr(cpool.AWSHTTPConnectionPool, 'ConnectionCls'):
             yield mock.patch.object(cpool.AWSHTTPConnectionPool, 'ConnectionCls',
