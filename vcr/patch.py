@@ -200,13 +200,14 @@ class CassettePatcherBuilder(object):
                 # botocore using vendored requests
                 import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
             except ImportError:  # pragma: no cover
-                yield ()
+                pass
             else:
                 from .stubs import boto3_stubs
                 yield self._urllib3_patchers(cpool, boto3_stubs)
         else:
             from .stubs import boto3_stubs
             log.debug("Patching boto3 cpool with %s", cpool)
+            print('pipip')
             yield cpool.AWSHTTPConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPConnection
             yield cpool.AWSHTTPSConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPSConnection
 

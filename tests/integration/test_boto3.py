@@ -7,7 +7,7 @@ import botocore  # NOQA
 import vcr  # NOQA
 
 try:
-    from botocore import awsrequest
+    from botocore import awsrequest  # NOQA
 
     botocore_awsrequest = True
     botocore_vendored_requests = False
