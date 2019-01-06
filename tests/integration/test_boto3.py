@@ -1,15 +1,39 @@
 import pytest
+
 boto3 = pytest.importorskip("boto3")
 
 import boto3  # NOQA
+import botocore  # NOQA
 import vcr  # NOQA
 
-bucket = 'boto3-demo-1337'              # a bucket you can access
-key = 'test/my_test.txt'                # key with r+w access
-content = 'hello world i am a string'   # content to put in the test file
+try:
+    from botocore import awsrequest
+
+    botocore_awsrequest = True
+    botocore_vendored_requests = False
+except ImportError:
+    botocore_awsrequest = False
+    botocore_vendored_requests = True
+
+# skip tests if boto does not use vendored requests anymore
+# https://github.com/boto/botocore/pull/1495
+boto3_vendored = pytest.mark.skipif(
+    botocore_vendored_requests,
+    reason='botocore version {ver} does not use vendored requests anymore.'.format(
+        ver=botocore.__version__))
+
+boto3_awsrequest = pytest.mark.skipif(
+    botocore_awsrequest,
+    reason='botocore version {ver} still uses vendored requests.'.format(
+        ver=botocore.__version__))
+
+bucket = 'boto3-demo-1337'  # a bucket you can access
+key = 'test/my_test.txt'  # key with r+w access
+content = 'hello world i am a string'  # content to put in the test file
 
 
-def test_boto_stubs(tmpdir):
+@boto3_awsrequest
+def test_boto_vendored_stubs(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('boto3-stubs.yml'))):
         # Perform the imports within the patched context so that
         # HTTPConnection, VerifiedHTTPSConnection refers to the patched version.
@@ -21,6 +45,19 @@ def test_boto_stubs(tmpdir):
         assert issubclass(VerifiedHTTPSConnection, VCRRequestsHTTPSConnection)
         HTTPConnection('hostname.does.not.matter')
         VerifiedHTTPSConnection('hostname.does.not.matter')
+
+
+@boto3_vendored
+def test_boto3_awsrequest_stubs(tmpdir):
+    with vcr.use_cassette(str(tmpdir.join('boto3-stubs.yml'))):
+        from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
+        from vcr.stubs.boto3_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
+        # addopted from test_boto_vendored_stubs, but
+        # Todo this seems to be other way around
+        assert issubclass(AWSHTTPConnection, VCRRequestsHTTPConnection)
+        assert issubclass(AWSHTTPSConnection, VCRRequestsHTTPSConnection)
+        AWSHTTPConnection('hostname.does.not.matter')
+        AWSHTTPSConnection('hostname.does.not.matter')
 
 
 def test_boto3_without_vcr():
