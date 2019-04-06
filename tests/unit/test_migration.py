@@ -22,9 +22,9 @@ def test_try_migrate_with_yaml(tmpdir):
     shutil.copy('tests/fixtures/migration/old_cassette.yaml', cassette)
     assert vcr.migration.try_migrate(cassette)
     with open('tests/fixtures/migration/new_cassette.yaml', 'r') as f:
-        expected_yaml = yaml.load(f)
+        expected_yaml = yaml.load(f, Loader=yaml.FullLoader)
     with open(cassette, 'r') as f:
-        actual_yaml = yaml.load(f)
+        actual_yaml = yaml.load(f, Loader=yaml.FullLoader)
     assert actual_yaml == expected_yaml
 
 

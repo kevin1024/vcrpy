@@ -1,5 +1,4 @@
 import copy
-import collections
 import functools
 import inspect
 import os
@@ -13,6 +12,11 @@ from .persisters.filesystem import FilesystemPersister
 from .util import compose, auto_decorate
 from . import matchers
 from . import filters
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 
 class VCR(object):
@@ -175,7 +179,7 @@ class VCR(object):
         if decode_compressed_response:
             filter_functions.append(filters.decode_response)
         if before_record_response:
-            if not isinstance(before_record_response, collections.Iterable):
+            if not isinstance(before_record_response, Iterable):
                 before_record_response = (before_record_response,)
             filter_functions.extend(before_record_response)
 
@@ -241,7 +245,7 @@ class VCR(object):
             filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
 
         if before_record_request:
-            if not isinstance(before_record_request, collections.Iterable):
+            if not isinstance(before_record_request, Iterable):
                 before_record_request = (before_record_request,)
             filter_functions.extend(before_record_request)
 
