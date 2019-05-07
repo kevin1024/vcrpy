@@ -57,7 +57,7 @@ def vcr_request(cassette, real_request):
         if cassette.can_play_response_for(vcr_request):
             vcr_response = cassette.play_response(vcr_request)
 
-            response = MockClientResponse(method, URL(vcr_response.get('url')))
+            response = MockClientResponse(method, request_url)
             response.status = vcr_response['status']['code']
             response._body = vcr_response['body']['string']
             response.reason = vcr_response['status']['message']
