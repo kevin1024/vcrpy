@@ -207,7 +207,6 @@ class CassettePatcherBuilder(object):
         else:
             from .stubs import boto3_stubs
             log.debug("Patching boto3 cpool with %s", cpool)
-            print('pipip')
             yield cpool.AWSHTTPConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPConnection
             yield cpool.AWSHTTPSConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPSConnection
 
