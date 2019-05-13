@@ -190,6 +190,7 @@ class Cassette(object):
         self._serializer = serializer or yamlserializer
         self._match_on = match_on
         self._before_record_request = before_record_request or (lambda x: x)
+        log.info(self._before_record_request)
         self._before_record_response = before_record_response or (lambda x: x)
         self.inject = inject
         self.record_mode = record_mode
@@ -225,6 +226,7 @@ class Cassette(object):
 
     def append(self, request, response):
         """Add a request, response pair to this cassette"""
+        log.info("Appending request %s and response %s", request, response)
         request = self._before_record_request(request)
         if not request:
             return

@@ -1,15 +1,46 @@
 import pytest
+import os
+
 boto3 = pytest.importorskip("boto3")
 
 import boto3  # NOQA
+import botocore  # NOQA
 import vcr  # NOQA
 
-bucket = 'boto3-demo-1337'              # a bucket you can access
-key = 'test/my_test.txt'                # key with r+w access
-content = 'hello world i am a string'   # content to put in the test file
+ses = boto3.Session(
+    aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+    aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    aws_session_token=None,
+    region_name=os.environ['AWS_DEFAULT_REGION'],
+    # botocore_session=None,
+    # profile_name=None
+)
+
+IAM_CLIENT = ses.client('iam')
+
+try:
+    from botocore import awsrequest  # NOQA
+
+    botocore_awsrequest = True
+except ImportError:
+    botocore_awsrequest = False
 
 
-def test_boto_stubs(tmpdir):
+# skip tests if boto does not use vendored requests anymore
+# https://github.com/boto/botocore/pull/1495
+boto3_skip_vendored_requests = pytest.mark.skipif(
+    botocore_awsrequest,
+    reason='botocore version {ver} does not use vendored requests anymore.'.format(
+        ver=botocore.__version__))
+
+boto3_skip_awsrequest = pytest.mark.skipif(
+    not botocore_awsrequest,
+    reason='botocore version {ver} still uses vendored requests.'.format(
+        ver=botocore.__version__))
+
+
+@boto3_skip_vendored_requests
+def test_boto_vendored_stubs(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('boto3-stubs.yml'))):
         # Perform the imports within the patched context so that
         # HTTPConnection, VerifiedHTTPSConnection refers to the patched version.
@@ -23,45 +54,59 @@ def test_boto_stubs(tmpdir):
         VerifiedHTTPSConnection('hostname.does.not.matter')
 
 
+@boto3_skip_awsrequest
+def test_boto3_awsrequest_stubs(tmpdir):
+    with vcr.use_cassette(str(tmpdir.join('boto3-stubs.yml'))):
+        from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
+        from vcr.stubs.boto3_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
+        assert issubclass(VCRRequestsHTTPConnection, AWSHTTPConnection)
+        assert issubclass(VCRRequestsHTTPSConnection, AWSHTTPSConnection)
+        AWSHTTPConnection('hostname.does.not.matter')
+        AWSHTTPSConnection('hostname.does.not.matter')
+
+
 def test_boto3_without_vcr():
-    s3_resource = boto3.resource('s3')
-    b = s3_resource.Bucket(bucket)
-    b.put_object(Key=key, Body=content)
+    username = 'user'
+    response = IAM_CLIENT.get_user(UserName=username)
 
-    # retrieve content to check it
-    o = s3_resource.Object(bucket, key).get()
-
-    # decode for python3
-    assert content == o['Body'].read().decode('utf-8')
+    assert response['User']['UserName'] == username
 
 
 def test_boto_medium_difficulty(tmpdir):
-    s3_resource = boto3.resource('s3')
-    b = s3_resource.Bucket(bucket)
+    username = 'user'
+
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))):
-        b.put_object(Key=key, Body=content)
-        o = s3_resource.Object(bucket, key).get()
-        assert content == o['Body'].read().decode('utf-8')
+        response = IAM_CLIENT.get_user(UserName=username)
+        assert response['User']['UserName'] == username
 
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))) as cass:
-        b.put_object(Key=key, Body=content)
-        o = s3_resource.Object(bucket, key).get()
-        assert content == o['Body'].read().decode('utf-8')
+        response = IAM_CLIENT.get_user(UserName=username)
+        assert response['User']['UserName'] == username
         assert cass.all_played
 
 
 def test_boto_hardcore_mode(tmpdir):
+    username = 'user'
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))):
-        s3_resource = boto3.resource('s3')
-        b = s3_resource.Bucket(bucket)
-        b.put_object(Key=key, Body=content)
-        o = s3_resource.Object(bucket, key).get()
-        assert content == o['Body'].read().decode('utf-8')
+        ses = boto3.Session(
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            region_name=os.environ['AWS_DEFAULT_REGION'],
+        )
+
+        iam_client = ses.client('iam')
+        response = iam_client.get_user(UserName=username)
+        assert response['User']['UserName'] == username
 
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))) as cass:
-        s3_resource = boto3.resource('s3')
-        b = s3_resource.Bucket(bucket)
-        b.put_object(Key=key, Body=content)
-        o = s3_resource.Object(bucket, key).get()
-        assert content == o['Body'].read().decode('utf-8')
+        ses = boto3.Session(
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            aws_session_token=None,
+            region_name=os.environ['AWS_DEFAULT_REGION'],
+        )
+
+        iam_client = ses.client('iam')
+        response = iam_client.get_user(UserName=username)
+        assert response['User']['UserName'] == username
         assert cass.all_played
