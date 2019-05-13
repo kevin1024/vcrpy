@@ -10,6 +10,7 @@ env:
     - TOX_SUFFIX="httplib2"
     - TOX_SUFFIX="boto3"
     - TOX_SUFFIX="urllib3121"
+    - TOX_SUFFIX="urllib3"
     - TOX_SUFFIX="tornado4"
     - TOX_SUFFIX="aiohttp"
 matrix:
@@ -45,9 +46,9 @@ matrix:
     - env: TOX_SUFFIX="flakes"
       python: "pypy3.5-5.9.0"
     - env: TOX_SUFFIX="aiohttp"
-      python: 2.7
+      python: "2.7"
     - env: TOX_SUFFIX="aiohttp"
-      python: pypy
+      python: "pypy2.7-7.0"
 python:
 - 2.7
 - 3.5

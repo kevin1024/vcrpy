@@ -9,7 +9,7 @@ interactions:
     method: GET
     uri: http://httpbin.org/ip
   response:
-    body: {string: !!python/unicode "{\n  \"origin\": \"217.122.164.194\"\n}"}
+    body: {string: "{\n  \"origin\": \"217.122.164.194\"\n}"}
     headers:
       access-control-allow-origin: ['*']
       content-type: [application/json]
