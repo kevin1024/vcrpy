@@ -44,7 +44,7 @@ def proxy_server():
         target=httpd.serve_forever,
     )
     proxy_process.start()
-    yield 'http://{0}:{1}'.format(*httpd.server_address)
+    yield 'http://{}:{}'.format(*httpd.server_address)
     proxy_process.terminate()
 
 

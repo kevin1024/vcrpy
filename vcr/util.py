@@ -118,10 +118,10 @@ def auto_decorate(
             )
 
         def __new__(cls, name, bases, attributes_dict):
-            new_attributes_dict = dict(
-                (attribute, maybe_decorate(attribute, value))
+            new_attributes_dict = {
+                attribute: maybe_decorate(attribute, value)
                 for attribute, value in attributes_dict.items()
-            )
+            }
             return super(DecorateAll, cls).__new__(
                 cls, name, bases, new_attributes_dict
             )

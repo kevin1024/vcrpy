@@ -91,7 +91,7 @@ class Request(object):
             'method': self.method,
             'uri': self.uri,
             'body': self.body,
-            'headers': dict(((k, [v]) for k, v in self.headers.items())),
+            'headers': {k: [v] for k, v in self.headers.items()},
         }
 
     @classmethod
