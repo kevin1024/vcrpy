@@ -159,9 +159,9 @@ def main():
                  for (root, dirs, files) in os.walk(path)
                  for name in files)
     for file_path in files:
-            migrated = try_migrate(file_path)
-            status = 'OK' if migrated else 'FAIL'
-            sys.stderr.write("[{}] {}\n".format(status, file_path))
+        migrated = try_migrate(file_path)
+        status = 'OK' if migrated else 'FAIL'
+        sys.stderr.write("[{}] {}\n".format(status, file_path))
     sys.stderr.write("Done.\n")
 
 
