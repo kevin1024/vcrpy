@@ -53,9 +53,18 @@ def _transform_json(body):
         return json.loads(body.decode('utf-8'))
 
 
+def _transform_multipart_form_data(body):
+    hardcoded_boundary = "--ad8bdc022fa24a86a8a45730c69df640"
+    if body:
+        boundary = body.split("\r\n")[0]
+        return body.replace(boundary, hardcoded_boundary)
+    return body
+
+
 _xml_header_checker = _header_checker('text/xml')
 _xmlrpc_header_checker = _header_checker('xmlrpc', header='User-Agent')
 _checker_transformer_pairs = (
+    (_header_checker('multipart/form-data'), _transform_multipart_form_data),
     (_header_checker('application/x-www-form-urlencoded'), urllib.parse.parse_qs),
     (_header_checker('application/json'), _transform_json),
     (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc_client.loads),
@@ -79,7 +88,11 @@ def body(r1, r2):
     r2_transformer = _get_transformer(r2)
     if transformer != r2_transformer:
         transformer = _identity
-    return transformer(read_body(r1)) == transformer(read_body(r2))
+    a = transformer(read_body(r1))
+    b = transformer(read_body(r2))
+    print "a", a
+    print "b", b
+    return a == b
 
 
 def headers(r1, r2):
