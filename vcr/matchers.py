@@ -88,11 +88,7 @@ def body(r1, r2):
     r2_transformer = _get_transformer(r2)
     if transformer != r2_transformer:
         transformer = _identity
-    a = transformer(read_body(r1))
-    b = transformer(read_body(r2))
-    print "a", a
-    print "b", b
-    return a == b
+    return transformer(read_body(r1)) == transformer(read_body(r2))
 
 
 def headers(r1, r2):
