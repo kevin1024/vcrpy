@@ -89,6 +89,11 @@ def vcr_request(cassette, real_request):
 
         response = await real_request(self, method, url, **kwargs)  # NOQA: E999
 
+        for k, v in response["headers"].items():
+            if "accept-encoding" == k.lower():
+                if not isinstance(v, list):
+                    response["headers"][k] = [x.strip() for x in v.split(",")]
+        
         vcr_response = {
             'status': {
                 'code': response.status,
