@@ -3,12 +3,15 @@ from __future__ import absolute_import
 
 import asyncio
 import functools
+import logging
 import json
 
 from aiohttp import ClientResponse
 from yarl import URL
 
 from vcr.request import Request
+
+log = logging.getLogger(__name__)
 
 
 class MockClientResponse(ClientResponse):
@@ -42,9 +45,13 @@ def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
         headers = kwargs.get('headers')
+        auth = kwargs.get('auth')
         headers = self._prepare_headers(headers)
-        data = kwargs.get('data')
+        data = kwargs.get('data', kwargs.get('json'))
         params = kwargs.get('params')
+
+        if auth is not None:
+            headers['AUTHORIZATION'] = auth.encode()
 
         request_url = URL(url)
         if params:
@@ -75,6 +82,10 @@ def vcr_request(cassette, real_request):
             response._body = msg.encode()
             response.close()
             return response
+
+        log.info(
+            "{} not in cassette, sending to real server".format(vcr_request)
+        )
 
         response = await real_request(self, method, url, **kwargs)  # NOQA: E999
 
