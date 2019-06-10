@@ -139,7 +139,7 @@ class VCRConnection(object):
         if url and not url.startswith('/'):
             # Then this must be a proxy request.
             return url
-        uri = "{0}://{1}{2}{3}".format(
+        uri = "{}://{}{}{}".format(
             self._protocol,
             self.real_connection.host,
             self._port_postfix(),

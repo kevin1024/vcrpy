@@ -28,9 +28,7 @@ install_requires = [
     'six>=1.5',
     'contextlib2; python_version=="2.7"',
     'mock; python_version=="2.7"',
-    'yarl; python_version>"3.4"',
-    'yarl<1.0.0; python_version=="3.4"',
-    'multidict<4.0.0,>=2.0; python_version=="3.4"'
+    'yarl; python_version>"3.5"',
 ]
 
 excluded_packages = ["tests*"]
@@ -49,7 +47,7 @@ setup(
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
     packages=find_packages(exclude=excluded_packages),
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     install_requires=install_requires,
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-httpbin'],
@@ -61,7 +59,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
