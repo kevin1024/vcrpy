@@ -1,5 +1,7 @@
 Changelog
 ---------
+-  2.0.2 (UNRELEASED) - Drop support to python 3.4
+   Fix build problems on requests tests (thanks to @dunossauro)
 -  2.0.1 - Fix bug when using vcrpy with python 3.4
 -  2.0.0 - Support python 3.7 (fix httplib2 and urllib2, thanks @felixonmars)
    [#356] Fixes `before_record_response` so the original response isn't changed (thanks @kgraves)
