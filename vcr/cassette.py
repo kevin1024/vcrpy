@@ -287,6 +287,9 @@ class Cassette(object):
             % (self._path, request)
         )
 
+    def rewind(self):
+        self.play_counts = collections.Counter()
+
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}
 
