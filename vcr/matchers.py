@@ -101,6 +101,23 @@ def requests_match(r1, r2, matchers):
     return all(m[0] for m in matches)
 
 
+def _evaluate_matcher(matcher_function, *args):
+    """
+    Evaluate the result of a given matcher as a boolean with an assertion error message if any.
+    It handles two types of matcher :
+    - a matcher returning a boolean value.
+    - a matcher that only makes an assert, returning None or raises an assertion error.
+    """
+    assertion_message = None
+    try:
+        match = matcher_function(*args)
+        match = True if match is None else match
+    except AssertionError as e:
+        match = False
+        assertion_message = str(e)
+    return match, assertion_message
+
+
 def get_assertion_message(assertion_details, **format_options):
     """
     Get a detailed message about the failing matcher.

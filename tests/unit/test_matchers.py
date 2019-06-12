@@ -143,20 +143,44 @@ def test_query_matcher():
     req2 = request.Request('GET', 'http://host.com/?c=d&a=b', '', {})
     assert matchers.query(req1, req2)
 
-    req1 = request.Request('GET', 'http://host.com/?a=b&a=b&c=d', '', {})
-    req2 = request.Request('GET', 'http://host.com/?a=b&c=d&a=b', '', {})
-    req3 = request.Request('GET', 'http://host.com/?c=d&a=b&a=b', '', {})
-    assert matchers.query(req1, req2)
-    assert matchers.query(req1, req3)
+def test_evaluate_matcher_does_match():
+    def bool_matcher(r1, r2):
+        return True
+
+    def assertion_matcher(r1, r2):
+        assert 1 == 1
+
+    r1, r2 = None, None
+    for matcher in [bool_matcher, assertion_matcher]:
+        match, assertion_msg = matchers._evaluate_matcher(matcher, r1, r2)
+        assert match is True
+        assert assertion_msg is None
 
 
-def test_metchers():
-    assert_matcher('method')
-    assert_matcher('scheme')
-    assert_matcher('host')
-    assert_matcher('port')
-    assert_matcher('path')
-    assert_matcher('query')
+def test_evaluate_matcher_does_not_match():
+    def bool_matcher(r1, r2):
+        return False
+
+    def assertion_matcher(r1, r2):
+        # This is like the "assert" statement preventing pytest to recompile it
+        raise AssertionError()
+
+    r1, r2 = None, None
+    for matcher in [bool_matcher, assertion_matcher]:
+        match, assertion_msg = matchers._evaluate_matcher(matcher, r1, r2)
+        assert match is False
+        assert not assertion_msg
+
+
+def test_evaluate_matcher_does_not_match_with_assert_message():
+    def assertion_matcher(r1, r2):
+        # This is like the "assert" statement preventing pytest to recompile it
+        raise AssertionError("Failing matcher")
+
+    r1, r2 = None, None
+    match, assertion_msg = matchers._evaluate_matcher(assertion_matcher, r1, r2)
+    assert match is False
+    assert assertion_msg == "Failing matcher"
 
 
 def test_get_assertion_message():
