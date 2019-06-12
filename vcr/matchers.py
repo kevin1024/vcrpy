@@ -118,6 +118,24 @@ def _evaluate_matcher(matcher_function, *args):
     return match, assertion_message
 
 
+def get_matchers_results(r1, r2, matchers):
+    """
+    Get the comparison results of two requests as two list.
+    The first returned list represents the matchers names that passed.
+    The second list is the failed matchers as a string with failed assertion details if any.
+    """
+    matches_success, matches_fails = [], []
+    for m in matchers:
+        matcher_name = m.__name__
+        match, assertion_message = _evaluate_matcher(m, r1, r2)
+        if match:
+            matches_success.append(matcher_name)
+        else:
+            assertion_message = get_assertion_message(assertion_message)
+            matches_fails.append((matcher_name, assertion_message))
+    return matches_success, matches_fails
+
+
 def get_assertion_message(assertion_details, **format_options):
     """
     Get a detailed message about the failing matcher.

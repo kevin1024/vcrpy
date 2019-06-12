@@ -196,3 +196,37 @@ def test_get_assertion_message_with_details():
         "----------------------------------------\n".format(assertion_msg)
     )
     assert matchers.get_assertion_message(assertion_msg) == expected
+
+
+@pytest.mark.parametrize(
+    "r1, r2, expected_successes, expected_failures",
+    [
+        (
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            ["method", "path"],
+            [],
+        ),
+        (
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            request.Request("POST", "http://host.com/p?a=b", "", {}),
+            ["path"],
+            ["method"],
+        ),
+        (
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            request.Request("POST", "http://host.com/path?a=b", "", {}),
+            [],
+            ["method", "path"],
+        ),
+    ],
+)
+def test_get_matchers_results(r1, r2, expected_successes, expected_failures):
+    successes, failures = matchers.get_matchers_results(
+        r1, r2, [matchers.method, matchers.path]
+    )
+    assert successes == expected_successes
+    assert len(failures) == len(expected_failures)
+    for i, expected_failure in enumerate(expected_failures):
+        assert failures[i][0] == expected_failure
+        assert failures[i][1] is not None
