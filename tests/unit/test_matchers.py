@@ -1,4 +1,5 @@
 import itertools
+from vcr.compat import mock
 
 import pytest
 
@@ -21,20 +22,22 @@ REQUESTS = {
 def assert_matcher(matcher_name):
     matcher = getattr(matchers, matcher_name)
     for k1, k2 in itertools.permutations(REQUESTS, 2):
-        matched = matcher(REQUESTS[k1], REQUESTS[k2])
-        if matcher_name in {k1, k2}:
-            assert not matched
+        expecting_assertion_error = matcher_name in {k1, k2}
+        if expecting_assertion_error:
+            with pytest.raises(AssertionError):
+                matcher(REQUESTS[k1], REQUESTS[k2])
         else:
-            assert matched
+            assert matcher(REQUESTS[k1], REQUESTS[k2]) is None
 
 
 def test_uri_matcher():
     for k1, k2 in itertools.permutations(REQUESTS, 2):
-        matched = matchers.uri(REQUESTS[k1], REQUESTS[k2])
-        if {k1, k2} != {'base', 'method'}:
-            assert not matched
+        expecting_assertion_error = {k1, k2} != {"base", "method"}
+        if expecting_assertion_error:
+            with pytest.raises(AssertionError):
+                matchers.uri(REQUESTS[k1], REQUESTS[k2])
         else:
-            assert matched
+            assert matchers.uri(REQUESTS[k1], REQUESTS[k2]) is None
 
 
 req1_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
@@ -107,7 +110,7 @@ req2_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
     )
 ])
 def test_body_matcher_does_match(r1, r2):
-    assert matchers.body(r1, r2)
+    assert matchers.body(r1, r2) is None
 
 
 @pytest.mark.parametrize("r1, r2", [
@@ -135,13 +138,30 @@ def test_body_matcher_does_match(r1, r2):
     )
 ])
 def test_body_match_does_not_match(r1, r2):
-    assert not matchers.body(r1, r2)
+    with pytest.raises(AssertionError):
+        matchers.body(r1, r2)
 
 
 def test_query_matcher():
-    req1 = request.Request('GET', 'http://host.com/?a=b&c=d', '', {})
-    req2 = request.Request('GET', 'http://host.com/?c=d&a=b', '', {})
-    assert matchers.query(req1, req2)
+    req1 = request.Request("GET", "http://host.com/?a=b&c=d", "", {})
+    req2 = request.Request("GET", "http://host.com/?c=d&a=b", "", {})
+    assert matchers.query(req1, req2) is None
+
+    req1 = request.Request("GET", "http://host.com/?a=b&a=b&c=d", "", {})
+    req2 = request.Request("GET", "http://host.com/?a=b&c=d&a=b", "", {})
+    req3 = request.Request("GET", "http://host.com/?c=d&a=b&a=b", "", {})
+    assert matchers.query(req1, req2) is None
+    assert matchers.query(req1, req3) is None
+
+
+def test_matchers():
+    assert_matcher("method")
+    assert_matcher("scheme")
+    assert_matcher("host")
+    assert_matcher("port")
+    assert_matcher("path")
+    assert_matcher("query")
+
 
 def test_evaluate_matcher_does_match():
     def bool_matcher(r1, r2):
@@ -230,3 +250,20 @@ def test_get_matchers_results(r1, r2, expected_successes, expected_failures):
     for i, expected_failure in enumerate(expected_failures):
         assert failures[i][0] == expected_failure
         assert failures[i][1] is not None
+
+
+@mock.patch("vcr.matchers.get_matchers_results")
+@pytest.mark.parametrize(
+    "successes, failures, expected_match",
+    [
+        (["method", "path"], [], True),
+        (["method"], ["path"], False),
+        ([], ["method", "path"], False),
+    ],
+)
+def test_requests_match(mock_get_matchers_results, successes, failures, expected_match):
+    mock_get_matchers_results.return_value = (successes, failures)
+    r1 = request.Request("GET", "http://host.com/p?a=b", "", {})
+    r2 = request.Request("GET", "http://host.com/p?a=b", "", {})
+    match = matchers.requests_match(r1, r2, [matchers.method, matchers.path])
+    assert match is expected_match
