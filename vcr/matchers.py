@@ -99,3 +99,23 @@ def requests_match(r1, r2, matchers):
     matches = [(m(r1, r2), m) for m in matchers]
     _log_matches(r1, r2, matches)
     return all(m[0] for m in matches)
+
+
+def get_assertion_message(assertion_details, **format_options):
+    """
+    Get a detailed message about the failing matcher.
+    """
+    msg = ""
+    if assertion_details:
+        separator = format_options.get("separator", "-")
+        title = format_options.get("title", " DETAILS ")
+        nb_separator = format_options.get("nb_separator", 40)
+        first_title_line = (
+            separator * ((nb_separator - len(title)) // 2)
+            + title
+            + separator * ((nb_separator - len(title)) // 2)
+        )
+        msg += "{}\n{}\n{}\n".format(
+            first_title_line, str(assertion_details), separator * nb_separator
+        )
+    return msg
