@@ -1,5 +1,8 @@
 import copy
-import collections
+try:
+    from collections import abc as collections_abc  # only works on python 3.3+
+except ImportError:
+    import collections as collections_abc
 import functools
 import inspect
 import os
@@ -175,7 +178,7 @@ class VCR(object):
         if decode_compressed_response:
             filter_functions.append(filters.decode_response)
         if before_record_response:
-            if not isinstance(before_record_response, collections.Iterable):
+            if not isinstance(before_record_response, collections_abc.Iterable):
                 before_record_response = (before_record_response,)
             filter_functions.extend(before_record_response)
 
@@ -241,7 +244,7 @@ class VCR(object):
             filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
 
         if before_record_request:
-            if not isinstance(before_record_request, collections.Iterable):
+            if not isinstance(before_record_request, collections_abc.Iterable):
                 before_record_request = (before_record_request,)
             filter_functions.extend(before_record_request)
 
