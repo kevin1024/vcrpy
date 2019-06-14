@@ -5,6 +5,12 @@ import yaml
 
 import vcr.migration
 
+# Use the libYAML versions if possible
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+
 
 def test_try_migrate_with_json(tmpdir):
     cassette = tmpdir.join('cassette.json').strpath
@@ -22,9 +28,9 @@ def test_try_migrate_with_yaml(tmpdir):
     shutil.copy('tests/fixtures/migration/old_cassette.yaml', cassette)
     assert vcr.migration.try_migrate(cassette)
     with open('tests/fixtures/migration/new_cassette.yaml', 'r') as f:
-        expected_yaml = yaml.load(f)
+        expected_yaml = yaml.load(f, Loader=Loader)
     with open(cassette, 'r') as f:
-        actual_yaml = yaml.load(f)
+        actual_yaml = yaml.load(f, Loader=Loader)
     assert actual_yaml == expected_yaml
 
 
