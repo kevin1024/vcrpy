@@ -46,9 +46,9 @@ matrix:
     - env: TOX_SUFFIX="flakes"
       python: "pypy3.5-5.9.0"
     - env: TOX_SUFFIX="aiohttp"
-      python: "2.7"
+      python: 2.7
     - env: TOX_SUFFIX="aiohttp"
-      python: "pypy2.7-7.0"
+      python: pypy
 python:
 - 2.7
 - 3.5
