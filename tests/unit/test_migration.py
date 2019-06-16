@@ -1,8 +1,12 @@
 import filecmp
 import json
 import shutil
+# Use the libYAML versions if possible
 import yaml
-
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 import vcr.migration
 
 
@@ -22,9 +26,9 @@ def test_try_migrate_with_yaml(tmpdir):
     shutil.copy('tests/fixtures/migration/old_cassette.yaml', cassette)
     assert vcr.migration.try_migrate(cassette)
     with open('tests/fixtures/migration/new_cassette.yaml', 'r') as f:
-        expected_yaml = yaml.safe_load(f)
+        expected_yaml = yaml.load(f, Loader=Loader)
     with open(cassette, 'r') as f:
-        actual_yaml = yaml.safe_load(f)
+        actual_yaml = yaml.load(f, Loader=Loader)
     assert actual_yaml == expected_yaml
 
 
