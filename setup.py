@@ -30,8 +30,6 @@ install_requires = [
     'yarl<1.4; python_version=="3.5"',
 ]
 
-excluded_packages = ["tests*"]
-
 setup(
     name="vcrpy",
     version="4.0.0",
@@ -40,7 +38,7 @@ setup(
     author="Kevin McCarthy",
     author_email="me@kevinmccarthy.org",
     url="https://github.com/kevin1024/vcrpy",
-    packages=find_packages(exclude=excluded_packages),
+    packages=find_packages(exclude=["tests*"]),
     python_requires=">=3.5",
     install_requires=install_requires,
     license="MIT",
@@ -55,6 +53,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Testing",
