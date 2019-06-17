@@ -170,7 +170,7 @@ def test_fixtures_with_use_cassette(random_fixture):
 
 
 def test_custom_patchers():
-    class Test(object):
+    class Test:
         attribute = None
         attribute2 = None
     test_vcr = VCR(custom_patches=((Test, 'attribute', VCRHTTPSConnection),))

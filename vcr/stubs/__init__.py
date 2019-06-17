@@ -15,7 +15,7 @@ from . import compat
 log = logging.getLogger(__name__)
 
 
-class VCRFakeSocket(object):
+class VCRFakeSocket:
     """
     A socket that doesn't do anything!
     Used when playing back cassettes, when there
@@ -147,7 +147,7 @@ class VCRHTTPResponse(HTTPResponse):
         return self._content.readable()
 
 
-class VCRConnection(object):
+class VCRConnection:
     # A reference to the cassette that's currently being patched in
     cassette = None
 
@@ -364,7 +364,7 @@ class VCRConnection(object):
             # we're setting the real_connection itself for the first time
             pass
 
-        super(VCRConnection, self).__setattr__(name, value)
+        super().__setattr__(name, value)
 
     def __getattr__(self, name):
         """
@@ -376,7 +376,7 @@ class VCRConnection(object):
             # we're setting the real_connection itself for the first time
             return getattr(self.real_connection, name)
 
-        return super(VCRConnection, self).__getattr__(name)
+        return super().__getattr__(name)
 
 
 for k, v in HTTPConnection.__dict__.items():

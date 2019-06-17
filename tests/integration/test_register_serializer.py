@@ -1,7 +1,7 @@
 import vcr
 
 
-class MockSerializer(object):
+class MockSerializer:
     def __init__(self):
         self.serialize_count = 0
         self.deserialize_count = 0

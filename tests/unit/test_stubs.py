@@ -3,7 +3,7 @@ from vcr.compat import mock
 from vcr.cassette import Cassette
 
 
-class TestVCRConnection(object):
+class TestVCRConnection:
 
     def test_setting_of_attributes_get_propogated_to_real_connection(self):
         vcr_connection = VCRHTTPSConnection('www.examplehost.com')

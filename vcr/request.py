@@ -7,7 +7,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class Request(object):
+class Request:
     """
     VCR's representation of a request.
     """
@@ -39,7 +39,7 @@ class Request(object):
 
     @body.setter
     def body(self, value):
-        if isinstance(value, text_type):
+        if isinstance(value, str):
             value = value.encode('utf-8')
         self._body = value
 
@@ -135,4 +135,4 @@ class HeadersDict(CaseInsensitiveDict):
         if old:
             key = old[0]
 
-        super(HeadersDict, self).__setitem__(key, value)
+        super().__setitem__(key, value)

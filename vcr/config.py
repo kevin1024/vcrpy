@@ -18,7 +18,7 @@ from . import matchers
 from . import filters
 
 
-class VCR(object):
+class VCR:
 
     @staticmethod
     def is_test_method(method_name, function):
@@ -99,7 +99,7 @@ class VCR(object):
         return matchers
 
     def use_cassette(self, path=None, **kwargs):
-        if path is not None and not isinstance(path, six.string_types):
+        if path is not None and not isinstance(path, str):
             function = path
             # Assume this is an attempt to decorate a function
             return self._use_cassette(**kwargs)(function)

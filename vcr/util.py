@@ -113,7 +113,7 @@ def auto_decorate(
     class DecorateAll(type):
 
         def __setattr__(cls, attribute, value):
-            return super(DecorateAll, cls).__setattr__(
+            return super().__setattr__(
                 attribute, maybe_decorate(attribute, value)
             )
 
@@ -122,7 +122,7 @@ def auto_decorate(
                 attribute: maybe_decorate(attribute, value)
                 for attribute, value in attributes_dict.items()
             }
-            return super(DecorateAll, cls).__new__(
+            return super().__new__(
                 cls, name, bases, new_attributes_dict
             )
     return DecorateAll

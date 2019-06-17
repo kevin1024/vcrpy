@@ -200,7 +200,7 @@ def test_nesting_context_managers_by_checking_references_of_http_connection():
 
 
 def test_custom_patchers():
-    class Test(object):
+    class Test:
         attribute = None
     with Cassette.use(path='custom_patches',
                       custom_patches=((Test, 'attribute', VCRHTTPSConnection),)):
