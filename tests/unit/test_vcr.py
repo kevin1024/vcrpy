@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from six.moves import http_client as httplib
+import http.client as httplib
 
 from vcr import VCR, use_cassette
 from vcr.compat import mock

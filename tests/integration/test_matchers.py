@@ -1,6 +1,6 @@
 import vcr
 import pytest
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 
 
 DEFAULT_URI = 'http://httpbin.org/get?p1=q1&p2=q2'  # base uri for testing

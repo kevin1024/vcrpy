@@ -1,7 +1,7 @@
 import vcr
 import zlib
 import json
-import six.moves.http_client as httplib
+import http.client as httplib
 
 from assertions import assert_is_json
 

@@ -3,7 +3,7 @@
 
 # External imports
 import os
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 
 # Internal imports
 import vcr

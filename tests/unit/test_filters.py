@@ -1,4 +1,4 @@
-from six import BytesIO
+from io import BytesIO
 from vcr.filters import (
     remove_headers, replace_headers,
     remove_query_parameters, replace_query_parameters,

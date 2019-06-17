@@ -1,8 +1,8 @@
 import base64
 import pytest
-from six.moves.urllib.request import urlopen, Request
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.error import HTTPError
+from urllib.request import urlopen, Request
+from urllib.parse import urlencode
+from urllib.error import HTTPError
 import vcr
 import json
 from assertions import assert_cassette_has_one_response, assert_is_json

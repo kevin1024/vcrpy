@@ -1,6 +1,3 @@
-import six
-
-
 def convert_to_bytes(resp):
     resp = convert_body_to_bytes(resp)
     return resp

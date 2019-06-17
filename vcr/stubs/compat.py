@@ -1,6 +1,4 @@
-import six
-from six import BytesIO
-from six.moves.http_client import HTTPMessage
+from io import BytesIO
 try:
     import http.client
 except ImportError:
@@ -29,9 +27,4 @@ def get_headers(message):
 
 
 def get_httpmessage(headers):
-    if six.PY3:
-        return http.client.parse_headers(BytesIO(headers))
-    msg = HTTPMessage(BytesIO(headers))
-    msg.fp.seek(0)
-    msg.readheaders()
-    return msg
+    return http.client.parse_headers(BytesIO(headers))

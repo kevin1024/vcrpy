@@ -3,7 +3,7 @@
 
 import sys
 
-from six.moves.urllib_parse import urlencode
+from urllib.parse import urlencode
 import pytest
 import pytest_httpbin.certs
 

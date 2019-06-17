@@ -1,5 +1,5 @@
-from six import BytesIO, text_type
-from six.moves.urllib.parse import urlparse, urlencode, urlunparse
+from io import BytesIO
+from urllib.parse import urlparse, urlencode, urlunparse
 import copy
 import json
 import zlib
