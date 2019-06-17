@@ -1,9 +1,12 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
 import logging
-import six
-from six.moves.http_client import HTTPConnection, HTTPSConnection, HTTPResponse
-from six import BytesIO
+from http.client import (
+    HTTPConnection,
+    HTTPSConnection,
+    HTTPResponse,
+)
+from io import BytesIO
 from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
 from . import compat
@@ -296,8 +299,7 @@ class VCRConnection:
             self.real_connection.sock = value
 
     def __init__(self, *args, **kwargs):
-        if six.PY3:
-            kwargs.pop("strict", None)  # apparently this is gone in py3
+        kwargs.pop('strict', None)  # apparently this is gone in py3
 
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out

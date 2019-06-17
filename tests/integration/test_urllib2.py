@@ -2,8 +2,8 @@
 """Integration tests with urllib2"""
 
 import ssl
-from six.moves.urllib.request import urlopen
-from six.moves.urllib_parse import urlencode
+from urllib.request import urlopen
+from urllib.parse import urlencode
 import pytest_httpbin.certs
 
 # Internal imports

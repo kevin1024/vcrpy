@@ -1,6 +1,7 @@
 import multiprocessing
 import pytest
-from six.moves import xmlrpc_client, xmlrpc_server
+import xmlrpc.client
+import xmlrpc.server
 
 requests = pytest.importorskip("requests")
 

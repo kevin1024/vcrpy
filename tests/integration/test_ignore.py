@@ -1,4 +1,4 @@
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 import socket
 from contextlib import contextmanager
 import vcr

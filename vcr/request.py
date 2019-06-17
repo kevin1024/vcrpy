@@ -1,6 +1,6 @@
 import warnings
-from six import BytesIO, text_type
-from six.moves.urllib.parse import urlparse, parse_qsl
+from io import BytesIO
+from urllib.parse import urlparse, parse_qsl
 from .util import CaseInsensitiveDict
 import logging
 

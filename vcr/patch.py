@@ -4,7 +4,7 @@ import itertools
 
 from .compat import contextlib, mock
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
-from six.moves import http_client as httplib
+import http.client as httplib
 
 import logging
 

@@ -1,5 +1,6 @@
 import json
-from six.moves import urllib, xmlrpc_client
+import urllib
+import xmlrpc.client
 from .util import read_body
 import logging
 
@@ -72,12 +73,12 @@ def _transform_json(body):
 _xml_header_checker = _header_checker("text/xml")
 _xmlrpc_header_checker = _header_checker("xmlrpc", header="User-Agent")
 _checker_transformer_pairs = (
-    (
-        _header_checker("application/x-www-form-urlencoded"),
-        lambda body: urllib.parse.parse_qs(body.decode("ascii")),
-    ),
-    (_header_checker("application/json"), _transform_json),
-    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc_client.loads),
+    (_header_checker('application/x-www-form-urlencoded'),
+        lambda body: urllib.parse.parse_qs(body.decode('ascii'))),
+    (_header_checker('application/json'),
+        _transform_json),
+    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request),
+        xmlrpc.client.loads),
 )
 
 

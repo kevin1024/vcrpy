@@ -1,8 +1,5 @@
 # coding: UTF-8
 import io
-import unittest
-
-import six
 
 from vcr.stubs import VCRHTTPResponse
 
@@ -58,7 +55,6 @@ def test_response_headers_should_have_correct_values():
     assert response.headers.get("date") == "Fri, 24 Oct 2014 18:35:37 GMT"
 
 
-@unittest.skipIf(six.PY2, "Regression test for Python3 only")
 def test_response_parses_correctly_and_fp_attribute_error_is_not_thrown():
     """
     Regression test for https://github.com/kevin1024/vcrpy/issues/440

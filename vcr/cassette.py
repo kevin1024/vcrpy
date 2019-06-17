@@ -23,7 +23,6 @@ except ImportError:
         return False
 
 
-
 log = logging.getLogger(__name__)
 
 

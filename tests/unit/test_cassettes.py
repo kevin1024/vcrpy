@@ -2,7 +2,7 @@ import copy
 import inspect
 import os
 
-from six.moves import http_client as httplib
+import http.client as httplib
 import pytest
 import yaml
 
