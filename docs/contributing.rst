@@ -13,11 +13,10 @@ but you can tell tox to only run specific tests like this::
 
     tox -e {pyNN}-{HTTP_LIBRARY} -- <pytest flags passed through>
 
-    tox -e py27-requests -- -v -k "'test_status_code or test_gzip'"
     tox -e py37-requests -- -v --last-failed
 
 This will run only tests that look like ``test_status_code`` or
-``test_gzip`` in the test suite, and only in the python 2.7 environment
+``test_gzip`` in the test suite, and only in the Python 3.7 environment
 that has ``requests`` installed.
 
 Also, in order for the boto tests to run, you will need an AWS key.

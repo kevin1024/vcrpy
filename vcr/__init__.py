@@ -2,14 +2,7 @@ import logging
 import warnings
 import sys
 from .config import VCR
-
-# Set default logging handler to avoid "No handler found" warnings.
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
+from logging import NullHandler
 
 if sys.version_info[0] == 2:
     warnings.warn(
