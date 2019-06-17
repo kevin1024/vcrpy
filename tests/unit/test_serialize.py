@@ -29,7 +29,7 @@ def test_deserialize_new_json_cassette():
         deserialize(f.read(), jsonserializer)
 
 
-REQBODY_TEMPLATE = u"""\
+REQBODY_TEMPLATE = """\
 interactions:
 - request:
     body: {req_body}

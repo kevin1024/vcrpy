@@ -103,10 +103,10 @@ def test_post_data(httpbin_both, tmpdir):
 
 
 def test_post_unicode_data(httpbin_both, tmpdir):
-    """Ensure that it works when posting unicode data"""
-    data = urlencode({"snowman": u"☃".encode("utf-8")}).encode("utf-8")
-    url = httpbin_both.url + "/post"
-    with vcr.use_cassette(str(tmpdir.join("post_data.yaml"))):
+    '''Ensure that it works when posting unicode data'''
+    data = urlencode({'snowman': '☃'.encode()}).encode('utf-8')
+    url = httpbin_both.url + '/post'
+    with vcr.use_cassette(str(tmpdir.join('post_data.yaml'))):
         res1 = urlopen_with_cafile(url, data).read()
 
     with vcr.use_cassette(str(tmpdir.join("post_data.yaml"))) as cass:

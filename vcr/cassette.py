@@ -27,7 +27,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-class CassetteContextDecorator(object):
+class CassetteContextDecorator:
     """Context manager/decorator that handles installing the cassette and
     removing cassettes.
 
@@ -153,7 +153,7 @@ class CassetteContextDecorator(object):
         return new_args_getter
 
 
-class Cassette(object):
+class Cassette:
     """A container for recorded requests and responses"""
 
     @classmethod

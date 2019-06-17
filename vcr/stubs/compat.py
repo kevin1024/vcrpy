@@ -15,10 +15,7 @@ layer that tries to cope with this move.
 
 
 def get_header(message, name):
-    if six.PY3:
-        return message.getallmatchingheaders(name)
-    else:
-        return message.getheader(name)
+    return message.getallmatchingheaders(name)
 
 
 def get_header_items(message):
@@ -29,10 +26,7 @@ def get_header_items(message):
 
 def get_headers(message):
     for key in set(message.keys()):
-        if six.PY3:
-            yield key, message.get_all(key)
-        else:
-            yield key, message.getheaders(key)
+        yield key, message.get_all(key)
 
 
 def get_httpmessage(headers):

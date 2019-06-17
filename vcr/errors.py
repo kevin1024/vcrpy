@@ -3,7 +3,7 @@ class CannotOverwriteExistingCassetteException(Exception):
         self.cassette = kwargs["cassette"]
         self.failed_request = kwargs["failed_request"]
         message = self._get_message(kwargs["cassette"], kwargs["failed_request"])
-        super(CannotOverwriteExistingCassetteException, self).__init__(message)
+        super().__init__(message)
 
     @staticmethod
     def _get_message(cassette, failed_request):

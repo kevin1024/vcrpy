@@ -93,7 +93,8 @@ else:
     _AiohttpClientSessionRequest = aiohttp.client.ClientSession._request
 
 
-class CassettePatcherBuilder(object):
+class CassettePatcherBuilder:
+
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
         def wrapped(self, *args, **kwargs):
@@ -357,8 +358,7 @@ class CassettePatcherBuilder(object):
             (http_connection_remover, https_connection_remover),
         )
 
-
-class ConnectionRemover(object):
+class ConnectionRemover:
     def __init__(self, connection_class):
         self._connection_class = connection_class
         self._connection_pool_to_connections = {}

@@ -99,9 +99,9 @@ def replace_post_data_parameters(request, replacements):
                         json_data[k] = rv
             request.body = json.dumps(json_data).encode("utf-8")
         else:
-            if isinstance(request.body, text_type):
-                request.body = request.body.encode("utf-8")
-            splits = [p.partition(b"=") for p in request.body.split(b"&")]
+            if isinstance(request.body, str):
+                request.body = request.body.encode('utf-8')
+            splits = [p.partition(b'=') for p in request.body.split(b'&')]
             new_splits = []
             for k, sep, ov in splits:
                 if sep is None:
