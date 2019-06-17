@@ -1,8 +1,5 @@
 from io import BytesIO
-try:
-    import http.client
-except ImportError:
-    pass
+import http.client
 
 
 """
