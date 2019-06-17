@@ -1,3 +1,4 @@
+import http.client as httplib
 import multiprocessing
 import pytest
 import xmlrpc.client
@@ -6,11 +7,6 @@ import xmlrpc.server
 requests = pytest.importorskip("requests")
 
 import vcr  # NOQA
-
-try:
-    import httplib
-except ImportError:
-    import http.client as httplib
 
 
 def test_domain_redirect():
