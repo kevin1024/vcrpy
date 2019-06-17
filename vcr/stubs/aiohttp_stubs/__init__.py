@@ -1,6 +1,4 @@
-"""Stubs for aiohttp HTTP clients"""
-from __future__ import absolute_import
-
+'''Stubs for aiohttp HTTP clients'''
 import asyncio
 import functools
 import logging

@@ -1,6 +1,4 @@
-"""Stubs for tornado HTTP clients"""
-from __future__ import absolute_import
-
+'''Stubs for tornado HTTP clients'''
 import functools
 from io import BytesIO
 
