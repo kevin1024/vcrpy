@@ -11,7 +11,7 @@ yourself using `py.test <http://pytest.org/>`__ and
 all environments VCR.py supports. The test suite is pretty big and slow,
 but you can tell tox to only run specific tests like this::
 
-    tox -e py27requests -- -v -k "'test_status_code or test_gzip'"
+    tox -e py27-requests -- -v -k "'test_status_code or test_gzip'"
 
 This will run only tests that look like ``test_status_code`` or
 ``test_gzip`` in the test suite, and only in the python 2.7 environment
