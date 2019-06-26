@@ -235,8 +235,8 @@ class VCRConnection(object):
                     "your current record mode (%r)."
                     % (self._vcr_request, self.cassette._path,
                        self.cassette.record_mode),
-                    vcr_request=self._vcr_request,
-                    cassette=self.cassette
+                    self.cassette,
+                    self.cassette.filtered_request(self._vcr_request)
                 )
 
             # Otherwise, we should send the request, then get the response
