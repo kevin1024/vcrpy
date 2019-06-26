@@ -234,7 +234,9 @@ class VCRConnection(object):
                     "Can't overwrite existing cassette (%r) in "
                     "your current record mode (%r)."
                     % (self._vcr_request, self.cassette._path,
-                       self.cassette.record_mode)
+                       self.cassette.record_mode),
+                    vcr_request=self._vcr_request,
+                    cassette=self.cassette
                 )
 
             # Otherwise, we should send the request, then get the response
