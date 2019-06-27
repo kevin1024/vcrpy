@@ -236,7 +236,7 @@ class VCRConnection(object):
                     % (self._vcr_request, self.cassette._path,
                        self.cassette.record_mode),
                     self.cassette,
-                    self.cassette.filtered_request(self._vcr_request)
+                    self.cassette.filter_request(self._vcr_request)
                 )
 
             # Otherwise, we should send the request, then get the response
