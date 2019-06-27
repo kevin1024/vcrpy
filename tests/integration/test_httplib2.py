@@ -22,7 +22,7 @@ def http():
     kwargs = {
         'ca_certs': pytest_httpbin.certs.where()
     }
-    if sys.version_info[:2] == (3, 7):
+    if sys.version_info[:2] in [(2, 7), (3, 7)]:
         kwargs['disable_ssl_certificate_validation'] = True
     return httplib2.Http(**kwargs)
 
