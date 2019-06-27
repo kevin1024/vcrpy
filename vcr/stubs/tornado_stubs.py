@@ -75,10 +75,8 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                     request,
                     599,
                     error=CannotOverwriteExistingCassetteException(
-                        "No match for the request (%r) was found. "
-                        "Can't overwrite existing cassette (%r) in "
-                        "your current record mode (%r)."
-                        % (vcr_request, cassette._path, cassette.record_mode)
+                        cassette=cassette,
+                        failed_request=vcr_request
                     ),
                     request_time=self.io_loop.time() - request.start_time,
                 )

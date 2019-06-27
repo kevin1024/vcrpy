@@ -23,3 +23,24 @@ documentation <https://boto.readthedocs.io/en/latest/getting_started.html>`__
 for how to set this up. I have marked the boto tests as optional in
 Travis so you don't have to worry about them failing if you submit a
 pull request.
+
+
+Troubleshooting on MacOSX
+-------------------------
+
+If you have this kind of error when running tox :
+
+.. code:: python
+
+    __main__.ConfigurationError: Curl is configured to use SSL, but we have
+    not been able to determine which SSL backend it is using. Please see PycURL documentation for how to specify the SSL backend manually.
+
+Then you need to define some environment variables:
+
+.. code:: bash
+
+    export PYCURL_SSL_LIBRARY=openssl
+    export LDFLAGS=-L/usr/local/opt/openssl/lib
+    export CPPFLAGS=-I/usr/local/opt/openssl/include
+
+Reference : `stackoverflow issue <https://stackoverflow.com/questions/51019622/curl-is-configured-to-use-ssl-but-we-have-not-been-able-to-determine-which-ssl>`__

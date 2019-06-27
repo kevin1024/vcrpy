@@ -6,7 +6,7 @@ env:
     - secure: LBSEg/gMj4u4Hrpo3zs6Y/1mTpd2RtcN49mZIFgTdbJ9IhpiNPqcEt647Lz94F9Eses2x2WbNuKqZKZZReY7QLbEzU1m0nN5jlaKrjcG5NR5clNABfFFyhgc0jBikyS4abAG8jc2efeaTrFuQwdoF4sE8YiVrkiVj2X5Xoi6sBk=
   matrix:
     - TOX_SUFFIX="flakes"
-    - TOX_SUFFIX="requests27"
+    - TOX_SUFFIX="requests"
     - TOX_SUFFIX="httplib2"
     - TOX_SUFFIX="boto3"
     - TOX_SUFFIX="urllib3121"
@@ -17,7 +17,7 @@ matrix:
     - env: TOX_SUFFIX="flakes"
       python: 3.7
       dist: xenial
-    - env: TOX_SUFFIX="requests27"
+    - env: TOX_SUFFIX="requests"
       python: 3.7
       dist: xenial
     - env: TOX_SUFFIX="httplib2"
