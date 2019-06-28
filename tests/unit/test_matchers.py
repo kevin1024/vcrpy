@@ -1,4 +1,5 @@
 import itertools
+from vcr.compat import mock
 
 import pytest
 
@@ -21,20 +22,22 @@ REQUESTS = {
 def assert_matcher(matcher_name):
     matcher = getattr(matchers, matcher_name)
     for k1, k2 in itertools.permutations(REQUESTS, 2):
-        matched = matcher(REQUESTS[k1], REQUESTS[k2])
-        if matcher_name in {k1, k2}:
-            assert not matched
+        expecting_assertion_error = matcher_name in {k1, k2}
+        if expecting_assertion_error:
+            with pytest.raises(AssertionError):
+                matcher(REQUESTS[k1], REQUESTS[k2])
         else:
-            assert matched
+            assert matcher(REQUESTS[k1], REQUESTS[k2]) is None
 
 
 def test_uri_matcher():
     for k1, k2 in itertools.permutations(REQUESTS, 2):
-        matched = matchers.uri(REQUESTS[k1], REQUESTS[k2])
-        if {k1, k2} != {'base', 'method'}:
-            assert not matched
+        expecting_assertion_error = {k1, k2} != {"base", "method"}
+        if expecting_assertion_error:
+            with pytest.raises(AssertionError):
+                matchers.uri(REQUESTS[k1], REQUESTS[k2])
         else:
-            assert matched
+            assert matchers.uri(REQUESTS[k1], REQUESTS[k2]) is None
 
 
 req1_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
@@ -107,7 +110,7 @@ req2_body = (b"<?xml version='1.0'?><methodCall><methodName>test</methodName>"
     )
 ])
 def test_body_matcher_does_match(r1, r2):
-    assert matchers.body(r1, r2)
+    assert matchers.body(r1, r2) is None
 
 
 @pytest.mark.parametrize("r1, r2", [
@@ -135,25 +138,132 @@ def test_body_matcher_does_match(r1, r2):
     )
 ])
 def test_body_match_does_not_match(r1, r2):
-    assert not matchers.body(r1, r2)
+    with pytest.raises(AssertionError):
+        matchers.body(r1, r2)
 
 
 def test_query_matcher():
-    req1 = request.Request('GET', 'http://host.com/?a=b&c=d', '', {})
-    req2 = request.Request('GET', 'http://host.com/?c=d&a=b', '', {})
-    assert matchers.query(req1, req2)
+    req1 = request.Request("GET", "http://host.com/?a=b&c=d", "", {})
+    req2 = request.Request("GET", "http://host.com/?c=d&a=b", "", {})
+    assert matchers.query(req1, req2) is None
 
-    req1 = request.Request('GET', 'http://host.com/?a=b&a=b&c=d', '', {})
-    req2 = request.Request('GET', 'http://host.com/?a=b&c=d&a=b', '', {})
-    req3 = request.Request('GET', 'http://host.com/?c=d&a=b&a=b', '', {})
-    assert matchers.query(req1, req2)
-    assert matchers.query(req1, req3)
+    req1 = request.Request("GET", "http://host.com/?a=b&a=b&c=d", "", {})
+    req2 = request.Request("GET", "http://host.com/?a=b&c=d&a=b", "", {})
+    req3 = request.Request("GET", "http://host.com/?c=d&a=b&a=b", "", {})
+    assert matchers.query(req1, req2) is None
+    assert matchers.query(req1, req3) is None
 
 
-def test_metchers():
-    assert_matcher('method')
-    assert_matcher('scheme')
-    assert_matcher('host')
-    assert_matcher('port')
-    assert_matcher('path')
-    assert_matcher('query')
+def test_matchers():
+    assert_matcher("method")
+    assert_matcher("scheme")
+    assert_matcher("host")
+    assert_matcher("port")
+    assert_matcher("path")
+    assert_matcher("query")
+
+
+def test_evaluate_matcher_does_match():
+    def bool_matcher(r1, r2):
+        return True
+
+    def assertion_matcher(r1, r2):
+        assert 1 == 1
+
+    r1, r2 = None, None
+    for matcher in [bool_matcher, assertion_matcher]:
+        match, assertion_msg = matchers._evaluate_matcher(matcher, r1, r2)
+        assert match is True
+        assert assertion_msg is None
+
+
+def test_evaluate_matcher_does_not_match():
+    def bool_matcher(r1, r2):
+        return False
+
+    def assertion_matcher(r1, r2):
+        # This is like the "assert" statement preventing pytest to recompile it
+        raise AssertionError()
+
+    r1, r2 = None, None
+    for matcher in [bool_matcher, assertion_matcher]:
+        match, assertion_msg = matchers._evaluate_matcher(matcher, r1, r2)
+        assert match is False
+        assert not assertion_msg
+
+
+def test_evaluate_matcher_does_not_match_with_assert_message():
+    def assertion_matcher(r1, r2):
+        # This is like the "assert" statement preventing pytest to recompile it
+        raise AssertionError("Failing matcher")
+
+    r1, r2 = None, None
+    match, assertion_msg = matchers._evaluate_matcher(assertion_matcher, r1, r2)
+    assert match is False
+    assert assertion_msg == "Failing matcher"
+
+
+def test_get_assertion_message():
+    assert matchers.get_assertion_message(None) == ""
+    assert matchers.get_assertion_message("") == ""
+
+
+def test_get_assertion_message_with_details():
+    assertion_msg = "q1=1 != q2=1"
+    expected = (
+        "--------------- DETAILS ---------------\n"
+        "{}\n"
+        "----------------------------------------\n".format(assertion_msg)
+    )
+    assert matchers.get_assertion_message(assertion_msg) == expected
+
+
+@pytest.mark.parametrize(
+    "r1, r2, expected_successes, expected_failures",
+    [
+        (
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            ["method", "path"],
+            [],
+        ),
+        (
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            request.Request("POST", "http://host.com/p?a=b", "", {}),
+            ["path"],
+            ["method"],
+        ),
+        (
+            request.Request("GET", "http://host.com/p?a=b", "", {}),
+            request.Request("POST", "http://host.com/path?a=b", "", {}),
+            [],
+            ["method", "path"],
+        ),
+    ],
+)
+def test_get_matchers_results(r1, r2, expected_successes, expected_failures):
+    successes, failures = matchers.get_matchers_results(
+        r1, r2, [matchers.method, matchers.path]
+    )
+    assert successes == expected_successes
+    assert len(failures) == len(expected_failures)
+    for i, expected_failure in enumerate(expected_failures):
+        assert failures[i][0] == expected_failure
+        assert failures[i][1] is not None
+
+
+@mock.patch("vcr.matchers.get_matchers_results")
+@pytest.mark.parametrize(
+    "successes, failures, expected_match",
+    [
+        (["method", "path"], [], True),
+        (["method"], ["path"], False),
+        ([], ["method", "path"], False),
+    ],
+)
+def test_requests_match(mock_get_matchers_results, successes, failures, expected_match):
+    mock_get_matchers_results.return_value = (successes, failures)
+    r1 = request.Request("GET", "http://host.com/p?a=b", "", {})
+    r2 = request.Request("GET", "http://host.com/p?a=b", "", {})
+    match = matchers.requests_match(r1, r2, [matchers.method, matchers.path])
+    assert match is expected_match

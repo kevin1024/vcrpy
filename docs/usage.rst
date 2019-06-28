@@ -95,3 +95,9 @@ Unittest Integration
 While it's possible to use the context manager or decorator forms with unittest,
 there's also a ``VCRTestCase`` provided separately by `vcrpy-unittest
 <https://github.com/agriffis/vcrpy-unittest>`__.
+
+Pytest Integration
+------------------
+
+A Pytest plugin is available here : `pytest-vcr
+<https://github.com/ktosiek/pytest-vcr>`__.
