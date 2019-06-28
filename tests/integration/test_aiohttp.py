@@ -93,20 +93,15 @@ def test_binary(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-@pytest.mark.asyncio
-async def test_stream(tmpdir, scheme):
+def test_stream(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
     headers = {'Content-Type': 'application/json'}
 
     with vcr.use_cassette(str(tmpdir.join('stream.yaml'))):
-        async with aiohttp.ClientSession() as session:
-            resp = await session.get(url, headers=headers)
-            body = await resp.read()  # do not use stream interface here, the stream seems exhausted by vcr
+        resp, body = get(url, output='raw')  # XXX: headers?
 
     with vcr.use_cassette(str(tmpdir.join('stream.yaml'))) as cassette:
-        async with aiohttp.ClientSession() as session:
-            cassette_resp = await session.get(url, headers=headers)
-            cassette_body = await cassette_resp.content.read()
+        cassette_resp, cassette_body = get(url, output='raw')
         assert cassette_body == body
         assert cassette.play_count == 1
 
