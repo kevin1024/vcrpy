@@ -95,13 +95,12 @@ def test_binary(tmpdir, scheme):
 
 def test_stream(tmpdir, scheme):
     url = scheme + '://httpbin.org/get'
-    headers = {'Content-Type': 'application/json'}
 
     with vcr.use_cassette(str(tmpdir.join('stream.yaml'))):
-        resp, body = get(url, output='raw')  # XXX: headers?
+        resp, body = get(url, output='raw')  # Do not use stream here, as the stream is exhausted by vcr
 
     with vcr.use_cassette(str(tmpdir.join('stream.yaml'))) as cassette:
-        cassette_resp, cassette_body = get(url, output='raw')
+        cassette_resp, cassette_body = get(url, output='stream')
         assert cassette_body == body
         assert cassette.play_count == 1
 
