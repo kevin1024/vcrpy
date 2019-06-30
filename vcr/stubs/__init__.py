@@ -60,9 +60,10 @@ def serialize_headers(response):
 
 class VCRHTTPResponse(HTTPResponse):
     """
-    Stub reponse class that gets returned instead of a HTTPResponse
+    Stub response class that gets returned instead of a HTTPResponse
     """
     def __init__(self, recorded_response):
+        self.fp = None
         self.recorded_response = recorded_response
         self.reason = recorded_response['status']['message']
         self.status = self.code = recorded_response['status']['code']
@@ -93,8 +94,29 @@ class VCRHTTPResponse(HTTPResponse):
     def read(self, *args, **kwargs):
         return self._content.read(*args, **kwargs)
 
+    def readall(self):
+        return self._content.readall()
+
+    def readinto(self, *args, **kwargs):
+        return self._content.readinto(*args, **kwargs)
+
     def readline(self, *args, **kwargs):
         return self._content.readline(*args, **kwargs)
+
+    def readlines(self, *args, **kwargs):
+        return self._content.readlines(*args, **kwargs)
+
+    def seekable(self):
+        return self._content.seekable()
+
+    def tell(self):
+        return self._content.tell()
+
+    def isatty(self):
+        return self._content.isatty()
+
+    def seek(self, *args, **kwargs):
+        return self._content.seek(*args, **kwargs)
 
     def close(self):
         self._closed = True
@@ -120,6 +142,9 @@ class VCRHTTPResponse(HTTPResponse):
             return ', '.join(values)
         else:
             return default
+
+    def readable(self):
+        return self._content.readable()
 
 
 class VCRConnection(object):
