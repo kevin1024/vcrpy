@@ -116,10 +116,10 @@ def test_post_chunked_binary(tmpdir, httpbin):
     assert req1 == req2
 
 
-@pytest.mark.xskip('sys.version_info >= (3, 6)', strict=True, raises=ConnectionError)
-@pytest.mark.xskip((3, 5) < sys.version_info < (3, 6) and
-                   platform.python_implementation() == 'CPython',
-                   reason='Fails on CPython 3.5')
+@pytest.mark.skipif('sys.version_info >= (3, 6)', strict=True, raises=ConnectionError)
+@pytest.mark.skipif((3, 5) < sys.version_info < (3, 6) and
+                    platform.python_implementation() == 'CPython',
+                    reason='Fails on CPython 3.5')
 def test_post_chunked_binary_secure(tmpdir, httpbin_secure):
     '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str.'''
     data1 = iter([b'data', b'to', b'send'])
@@ -254,7 +254,7 @@ def test_nested_cassettes_with_session_created_before_nesting(httpbin_both, tmpd
 def test_post_file(tmpdir, httpbin_both):
     '''Ensure that we handle posting a file.'''
     url = httpbin_both + '/post'
-    with vcr.use_cassette(str(tmpdir.join('post_file.yaml'))) as cass, open('tox.ini') as f:
+    with vcr.use_cassette(str(tmpdir.join('post_file.yaml'))) as cass, open('tox.ini', 'rb') as f:
         original_response = requests.post(url, f).content
 
     # This also tests that we do the right thing with matching the body when they are files.
