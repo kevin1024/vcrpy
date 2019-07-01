@@ -17,6 +17,8 @@ async def aiohttp_request(loop, method, url, output='text', encoding='utf-8', co
         content = await response.json(encoding=encoding, content_type=content_type)
     elif output == 'raw':
         content = await response.read()
+    elif output == 'stream':
+        content = await response.content.read()
 
     response_ctx._resp.close()
     await session.close()

@@ -5,10 +5,14 @@ import asyncio
 import functools
 import json
 
-from aiohttp import ClientResponse
+from aiohttp import ClientResponse, streams
 from yarl import URL
 
 from vcr.request import Request
+
+
+class MockStream(asyncio.StreamReader, streams.AsyncStreamReaderMixin):
+    pass
 
 
 class MockClientResponse(ClientResponse):
@@ -36,6 +40,13 @@ class MockClientResponse(ClientResponse):
 
     def release(self):
         pass
+
+    @property
+    def content(self):
+        s = MockStream()
+        s.feed_data(self._body)
+        s.feed_eof()
+        return s
 
 
 def vcr_request(cassette, real_request):

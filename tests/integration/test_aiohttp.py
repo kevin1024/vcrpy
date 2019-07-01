@@ -93,6 +93,18 @@ def test_binary(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
+def test_stream(tmpdir, scheme):
+    url = scheme + '://httpbin.org/get'
+
+    with vcr.use_cassette(str(tmpdir.join('stream.yaml'))):
+        resp, body = get(url, output='raw')  # Do not use stream here, as the stream is exhausted by vcr
+
+    with vcr.use_cassette(str(tmpdir.join('stream.yaml'))) as cassette:
+        cassette_resp, cassette_body = get(url, output='stream')
+        assert cassette_body == body
+        assert cassette.play_count == 1
+
+
 def test_post(tmpdir, scheme):
     data = {'key1': 'value1', 'key2': 'value2'}
     url = scheme + '://httpbin.org/post'
