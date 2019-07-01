@@ -1,13 +1,17 @@
-import collections
 import types
+
+try:
+    from collections.abc import Mapping, MutableMapping
+except ImportError:
+    from collections import Mapping, MutableMapping
 
 
 # Shamelessly stolen from https://github.com/kennethreitz/requests/blob/master/requests/structures.py
-class CaseInsensitiveDict(collections.MutableMapping):
+class CaseInsensitiveDict(MutableMapping):
     """
     A case-insensitive ``dict``-like object.
     Implements all methods and operations of
-    ``collections.MutableMapping`` as well as dict's ``copy``. Also
+    ``collections.abc.MutableMapping`` as well as dict's ``copy``. Also
     provides ``lower_items``.
     All keys are expected to be strings. The structure remembers the
     case of the last key to be set, and ``iter(instance)``,
@@ -57,7 +61,7 @@ class CaseInsensitiveDict(collections.MutableMapping):
         )
 
     def __eq__(self, other):
-        if isinstance(other, collections.Mapping):
+        if isinstance(other, Mapping):
             other = CaseInsensitiveDict(other)
         else:
             return NotImplemented
@@ -114,10 +118,10 @@ def auto_decorate(
             )
 
         def __new__(cls, name, bases, attributes_dict):
-            new_attributes_dict = dict(
-                (attribute, maybe_decorate(attribute, value))
+            new_attributes_dict = {
+                attribute: maybe_decorate(attribute, value)
                 for attribute, value in attributes_dict.items()
-            )
+            }
             return super(DecorateAll, cls).__new__(
                 cls, name, bases, new_attributes_dict
             )

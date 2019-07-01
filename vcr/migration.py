@@ -68,7 +68,7 @@ def _migrate(data):
     for item in data:
         req = item['request']
         res = item['response']
-        uri = dict((k, req.pop(k)) for k in PARTS)
+        uri = {k: req.pop(k) for k in PARTS}
         req['uri'] = build_uri(**uri)
         # convert headers to dict of lists
         headers = req['headers']
@@ -100,7 +100,7 @@ def migrate_json(in_fp, out_fp):
 
 
 def _list_of_tuples_to_dict(fs):
-    return dict((k, v) for k, v in fs[0])
+    return {k: v for k, v in fs[0]}
 
 
 def _already_migrated(data):
@@ -159,9 +159,9 @@ def main():
                  for (root, dirs, files) in os.walk(path)
                  for name in files)
     for file_path in files:
-            migrated = try_migrate(file_path)
-            status = 'OK' if migrated else 'FAIL'
-            sys.stderr.write("[{}] {}\n".format(status, file_path))
+        migrated = try_migrate(file_path)
+        status = 'OK' if migrated else 'FAIL'
+        sys.stderr.write("[{}] {}\n".format(status, file_path))
     sys.stderr.write("Done.\n")
 
 

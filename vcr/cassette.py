@@ -8,7 +8,7 @@ import wrapt
 
 from .compat import contextlib
 from .errors import UnhandledHTTPRequestError
-from .matchers import requests_match, uri, method
+from .matchers import requests_match, uri, method, get_matchers_results
 from .patch import CassettePatcherBuilder
 from .serializers import yamlserializer
 from .persisters.filesystem import FilesystemPersister
@@ -16,11 +16,13 @@ from .util import partition_dict
 
 try:
     from asyncio import iscoroutinefunction
-    from ._handle_coroutine import handle_coroutine
 except ImportError:
     def iscoroutinefunction(*args, **kwargs):
         return False
 
+if sys.version_info[:2] >= (3, 5):
+    from ._handle_coroutine import handle_coroutine
+else:
     def handle_coroutine(*args, **kwags):
         raise NotImplementedError('Not implemented on Python 2')
 
@@ -136,7 +138,10 @@ class CassetteContextDecorator(object):
                 except Exception:
                     to_yield = coroutine.throw(*sys.exc_info())
                 else:
-                    to_yield = coroutine.send(to_send)
+                    try:
+                        to_yield = coroutine.send(to_send)
+                    except StopIteration:
+                        break
 
     def _handle_function(self, fn):
         with self as cassette:
@@ -281,6 +286,41 @@ class Cassette(object):
             "The cassette (%r) doesn't contain the request (%r) asked for"
             % (self._path, request)
         )
+
+    def rewind(self):
+        self.play_counts = collections.Counter()
+
+    def find_requests_with_most_matches(self, request):
+        """
+        Get the most similar request(s) stored in the cassette
+        of a given request as a list of tuples like this:
+        - the request object
+        - the successful matchers as string
+        - the failed matchers and the related assertion message with the difference details as strings tuple
+
+        This is useful when a request failed to be found,
+        we can get the similar request(s) in order to know what have changed in the request parts.
+        """
+        best_matches = []
+        request = self._before_record_request(request)
+        for index, (stored_request, response) in enumerate(self.data):
+            successes, fails = get_matchers_results(request, stored_request, self._match_on)
+            best_matches.append((len(successes), stored_request, successes, fails))
+        best_matches.sort(key=lambda t: t[0], reverse=True)
+        # Get the first best matches (multiple if equal matches)
+        final_best_matches = []
+        previous_nb_success = best_matches[0][0]
+        for best_match in best_matches:
+            nb_success = best_match[0]
+            # Do not keep matches that have 0 successes,
+            # it means that the request is totally different from
+            # the ones stored in the cassette
+            if nb_success < 1 or previous_nb_success != nb_success:
+                break
+            previous_nb_success = nb_success
+            final_best_matches.append(best_match[1:])
+
+        return final_best_matches
 
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}

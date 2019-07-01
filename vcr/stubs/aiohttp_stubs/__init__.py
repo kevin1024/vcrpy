@@ -5,10 +5,14 @@ import asyncio
 import functools
 import json
 
-from aiohttp import ClientResponse
+from aiohttp import ClientResponse, streams
 from yarl import URL
 
 from vcr.request import Request
+
+
+class MockStream(asyncio.StreamReader, streams.AsyncStreamReaderMixin):
+    pass
 
 
 class MockClientResponse(ClientResponse):
@@ -25,28 +29,33 @@ class MockClientResponse(ClientResponse):
             session=None,
         )
 
-    # TODO: get encoding from header
-    @asyncio.coroutine
-    def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
-        return loads(self._body.decode(encoding))
+    async def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
+        stripped = self._body.strip()
+        if not stripped:
+            return None
 
-    @asyncio.coroutine
-    def text(self, encoding='utf-8'):
-        return self._body.decode(encoding)
+        return loads(stripped.decode(encoding))
 
-    @asyncio.coroutine
-    def read(self):
+    async def text(self, encoding='utf-8', errors='strict'):
+        return self._body.decode(encoding, errors=errors)
+
+    async def read(self):
         return self._body
 
-    @asyncio.coroutine
     def release(self):
         pass
+
+    @property
+    def content(self):
+        s = MockStream()
+        s.feed_data(self._body)
+        s.feed_eof()
+        return s
 
 
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
-    @asyncio.coroutine
-    def new_request(self, method, url, **kwargs):
+    async def new_request(self, method, url, **kwargs):
         headers = kwargs.get('headers')
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
@@ -82,7 +91,7 @@ def vcr_request(cassette, real_request):
             response.close()
             return response
 
-        response = yield from real_request(self, method, url, **kwargs)  # NOQA: E999
+        response = await real_request(self, method, url, **kwargs)  # NOQA: E999
 
         vcr_response = {
             'status': {
@@ -90,7 +99,7 @@ def vcr_request(cassette, real_request):
                 'message': response.reason,
             },
             'headers': dict(response.headers),
-            'body': {'string': (yield from response.read())},  # NOQA: E999
+            'body': {'string': (await response.read())},  # NOQA: E999
             'url': response.url,
         }
         cassette.append(vcr_request, vcr_response)

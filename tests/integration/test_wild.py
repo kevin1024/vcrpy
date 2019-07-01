@@ -59,7 +59,7 @@ def test_flickr_multipart_upload(httpbin, tmpdir):
 def test_flickr_should_respond_with_200(tmpdir):
     testfile = str(tmpdir.join('flickr.yml'))
     with vcr.use_cassette(testfile):
-        r = requests.post("http://api.flickr.com/services/upload")
+        r = requests.post("https://api.flickr.com/services/upload", verify=False)
         assert r.status_code == 200
 
 

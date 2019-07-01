@@ -1,4 +1,4 @@
-|PyPI| |Python versions| |Build Status| |Waffle Ready| |Gitter|
+|PyPI| |Python versions| |Build Status| |Gitter|
 
 VCR.py
 ======
@@ -41,19 +41,6 @@ VCR.py will detect the absence of a cassette file and once again record
 all HTTP interactions, which will update them to correspond to the new
 API.
 
-Support
--------
-
-VCR.py works great with the following HTTP clients:
-
--  requests
--  aiohttp
--  urllib3
--  tornado
--  urllib2
--  boto3
-
-
 License
 =======
 
@@ -61,13 +48,11 @@ This library uses the MIT license. See `LICENSE.txt <LICENSE.txt>`__ for
 more details
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/vcrpy.svg
-   :target: https://pypi.python.org/pypi/vcrpy-unittest
-.. |Python versions| image:: https://img.shields.io/pypi/pyversions/vcrpy-unittest.svg
-   :target: https://pypi.python.org/pypi/vcrpy-unittest
-.. |Build Status| image:: https://secure.travis-ci.org/kevin1024/vcrpy.png?branch=master
+   :target: https://pypi.python.org/pypi/vcrpy
+.. |Python versions| image:: https://img.shields.io/pypi/pyversions/vcrpy.svg
+   :target: https://pypi.python.org/pypi/vcrpy
+.. |Build Status| image:: https://secure.travis-ci.org/kevin1024/vcrpy.svg?branch=master
    :target: http://travis-ci.org/kevin1024/vcrpy
-.. |Waffle Ready| image:: https://badge.waffle.io/kevin1024/vcrpy.png?label=ready&title=waffle
-   :target: https://waffle.io/kevin1024/vcrpy
 .. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
    :target: https://gitter.im/kevin1024/vcrpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge

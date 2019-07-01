@@ -116,10 +116,10 @@ def test_post_chunked_binary(tmpdir, httpbin):
     assert req1 == req2
 
 
-@pytest.mark.xskip('sys.version_info >= (3, 6)', strict=True, raises=ConnectionError)
-@pytest.mark.xskip((3, 5) < sys.version_info < (3, 6) and
-                   platform.python_implementation() == 'CPython',
-                   reason='Fails on CPython 3.5')
+@pytest.mark.skipif('sys.version_info >= (3, 6)', strict=True, raises=ConnectionError)
+@pytest.mark.skipif((3, 5) < sys.version_info < (3, 6) and
+                    platform.python_implementation() == 'CPython',
+                    reason='Fails on CPython 3.5')
 def test_post_chunked_binary_secure(tmpdir, httpbin_secure):
     '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str.'''
     data1 = iter([b'data', b'to', b'send'])

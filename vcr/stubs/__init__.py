@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 class VCRFakeSocket(object):
     """
     A socket that doesn't do anything!
-    Used when playing back casssettes, when there
+    Used when playing back cassettes, when there
     is no actual open socket.
     """
 
@@ -60,9 +60,10 @@ def serialize_headers(response):
 
 class VCRHTTPResponse(HTTPResponse):
     """
-    Stub reponse class that gets returned instead of a HTTPResponse
+    Stub response class that gets returned instead of a HTTPResponse
     """
     def __init__(self, recorded_response):
+        self.fp = None
         self.recorded_response = recorded_response
         self.reason = recorded_response['status']['message']
         self.status = self.code = recorded_response['status']['code']
@@ -93,8 +94,29 @@ class VCRHTTPResponse(HTTPResponse):
     def read(self, *args, **kwargs):
         return self._content.read(*args, **kwargs)
 
+    def readall(self):
+        return self._content.readall()
+
+    def readinto(self, *args, **kwargs):
+        return self._content.readinto(*args, **kwargs)
+
     def readline(self, *args, **kwargs):
         return self._content.readline(*args, **kwargs)
+
+    def readlines(self, *args, **kwargs):
+        return self._content.readlines(*args, **kwargs)
+
+    def seekable(self):
+        return self._content.seekable()
+
+    def tell(self):
+        return self._content.tell()
+
+    def isatty(self):
+        return self._content.isatty()
+
+    def seek(self, *args, **kwargs):
+        return self._content.seek(*args, **kwargs)
 
     def close(self):
         self._closed = True
@@ -121,6 +143,9 @@ class VCRHTTPResponse(HTTPResponse):
         else:
             return default
 
+    def readable(self):
+        return self._content.readable()
+
 
 class VCRConnection(object):
     # A reference to the cassette that's currently being patched in
@@ -136,6 +161,9 @@ class VCRConnection(object):
 
     def _uri(self, url):
         """Returns request absolute URI"""
+        if url and not url.startswith('/'):
+            # Then this must be a proxy request.
+            return url
         uri = "{}://{}{}{}".format(
             self._protocol,
             self.real_connection.host,
@@ -167,6 +195,8 @@ class VCRConnection(object):
         # I'm not sending the actual request until getresponse().  This
         # allows me to compare the entire length of the response to see if it
         # exists in the cassette.
+
+        self._sock = VCRFakeSocket()
 
     def putrequest(self, method, url, *args, **kwargs):
         """
@@ -225,11 +255,8 @@ class VCRConnection(object):
                 self._vcr_request
             ):
                 raise CannotOverwriteExistingCassetteException(
-                    "No match for the request (%r) was found. "
-                    "Can't overwrite existing cassette (%r) in "
-                    "your current record mode (%r)."
-                    % (self._vcr_request, self.cassette._path,
-                       self.cassette.record_mode)
+                    cassette=self.cassette,
+                    failed_request=self._vcr_request
                 )
 
             # Otherwise, we should send the request, then get the response
@@ -291,11 +318,13 @@ class VCRConnection(object):
         with force_reset():
             return self.real_connection.connect(*args, **kwargs)
 
+        self._sock = VCRFakeSocket()
+
     @property
     def sock(self):
         if self.real_connection.sock:
             return self.real_connection.sock
-        return VCRFakeSocket()
+        return self._sock
 
     @sock.setter
     def sock(self, value):
@@ -312,6 +341,8 @@ class VCRConnection(object):
         from vcr.patch import force_reset
         with force_reset():
             self.real_connection = self._baseclass(*args, **kwargs)
+
+        self._sock = None
 
     def __setattr__(self, name, value):
         """
