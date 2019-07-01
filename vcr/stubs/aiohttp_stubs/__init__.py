@@ -30,7 +30,11 @@ class MockClientResponse(ClientResponse):
         )
 
     async def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
-        return loads(self._body.decode(encoding))
+        stripped = self._body.strip()
+        if not stripped:
+            return None
+
+        return loads(stripped.decode(encoding))
 
     async def text(self, encoding='utf-8', errors='strict'):
         return self._body.decode(encoding, errors=errors)

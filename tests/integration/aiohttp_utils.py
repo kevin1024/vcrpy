@@ -30,6 +30,14 @@ def aiohttp_app():
     async def hello(request):
         return aiohttp.web.Response(text='hello')
 
+    async def json(request):
+        return aiohttp.web.json_response({})
+
+    async def json_empty_body(request):
+        return aiohttp.web.json_response()
+
     app = aiohttp.web.Application()
     app.router.add_get('/', hello)
+    app.router.add_get('/json', json)
+    app.router.add_get('/json/empty', json_empty_body)
     return app

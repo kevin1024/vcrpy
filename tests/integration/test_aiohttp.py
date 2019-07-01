@@ -191,3 +191,26 @@ def test_aiohttp_test_client(aiohttp_client, tmpdir):
     response_text = loop.run_until_complete(response.text())
     assert response_text == 'hello'
     assert cassette.play_count == 1
+
+
+def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
+    loop = asyncio.get_event_loop()
+    app = aiohttp_app()
+    url = '/json/empty'
+    client = loop.run_until_complete(aiohttp_client(app))
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))):
+        response = loop.run_until_complete(client.get(url))
+
+    assert response.status == 200
+    response_json = loop.run_until_complete(response.json())
+    assert response_json is None
+
+    with vcr.use_cassette(str(tmpdir.join('get.yaml'))) as cassette:
+        response = loop.run_until_complete(client.get(url))
+
+    request = cassette.requests[0]
+    assert request.url == str(client.make_url(url))
+    response_json = loop.run_until_complete(response.json())
+    assert response_json is None
+    assert cassette.play_count == 1
