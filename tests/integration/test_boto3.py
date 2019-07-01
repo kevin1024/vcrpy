@@ -17,6 +17,7 @@ ses = boto3.Session(
 )
 
 IAM_CLIENT = ses.client('iam')
+IAM_USER_NAME = 'vcrpy'
 
 try:
     from botocore import awsrequest  # NOQA
@@ -66,27 +67,24 @@ def test_boto3_awsrequest_stubs(tmpdir):
 
 
 def test_boto3_without_vcr():
-    username = 'user'
-    response = IAM_CLIENT.get_user(UserName=username)
+    response = IAM_CLIENT.get_user(UserName=IAM_USER_NAME)
 
-    assert response['User']['UserName'] == username
+    assert response['User']['UserName'] == IAM_USER_NAME
 
 
 def test_boto_medium_difficulty(tmpdir):
-    username = 'user'
 
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))):
-        response = IAM_CLIENT.get_user(UserName=username)
-        assert response['User']['UserName'] == username
+        response = IAM_CLIENT.get_user(UserName=IAM_USER_NAME)
+        assert response['User']['UserName'] == IAM_USER_NAME
 
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))) as cass:
-        response = IAM_CLIENT.get_user(UserName=username)
-        assert response['User']['UserName'] == username
+        response = IAM_CLIENT.get_user(UserName=IAM_USER_NAME)
+        assert response['User']['UserName'] == IAM_USER_NAME
         assert cass.all_played
 
 
 def test_boto_hardcore_mode(tmpdir):
-    username = 'user'
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))):
         ses = boto3.Session(
             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
@@ -95,8 +93,8 @@ def test_boto_hardcore_mode(tmpdir):
         )
 
         iam_client = ses.client('iam')
-        response = iam_client.get_user(UserName=username)
-        assert response['User']['UserName'] == username
+        response = iam_client.get_user(UserName=IAM_USER_NAME)
+        assert response['User']['UserName'] == IAM_USER_NAME
 
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))) as cass:
         ses = boto3.Session(
@@ -107,6 +105,6 @@ def test_boto_hardcore_mode(tmpdir):
         )
 
         iam_client = ses.client('iam')
-        response = iam_client.get_user(UserName=username)
-        assert response['User']['UserName'] == username
+        response = iam_client.get_user(UserName=IAM_USER_NAME)
+        assert response['User']['UserName'] == IAM_USER_NAME
         assert cass.all_played
