@@ -147,7 +147,7 @@ def test_vcr_path_transformer():
         # and it should still work with cassette_library_dir
         vcr = VCR(cassette_library_dir='/foo')
         with vcr.use_cassette('test') as cassette:
-            assert cassette._path == '/foo/test'
+            assert os.path.abspath(cassette._path) == os.path.abspath('/foo/test')
 
 
 @pytest.fixture
