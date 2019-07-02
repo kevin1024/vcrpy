@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 '''Test requests' interaction with vcr'''
+import platform
 import pytest
+import sys
 import vcr
 from assertions import assert_cassette_empty, assert_is_json
 
-
 requests = pytest.importorskip("requests")
+from requests.exceptions import ConnectionError  # noqa E402
 
 
 def test_status_code(httpbin_both, tmpdir):
@@ -100,11 +102,29 @@ def test_post(tmpdir, httpbin_both):
     assert req1 == req2
 
 
-def test_post_chunked_binary(tmpdir, httpbin_both):
+def test_post_chunked_binary(tmpdir, httpbin):
     '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str.'''
     data1 = iter([b'data', b'to', b'send'])
     data2 = iter([b'data', b'to', b'send'])
-    url = httpbin_both.url + '/post'
+    url = httpbin.url + '/post'
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
+        req1 = requests.post(url, data1).content
+
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
+        req2 = requests.post(url, data2).content
+
+    assert req1 == req2
+
+
+@pytest.mark.skipif('sys.version_info >= (3, 6)', strict=True, raises=ConnectionError)
+@pytest.mark.skipif((3, 5) < sys.version_info < (3, 6) and
+                    platform.python_implementation() == 'CPython',
+                    reason='Fails on CPython 3.5')
+def test_post_chunked_binary_secure(tmpdir, httpbin_secure):
+    '''Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str.'''
+    data1 = iter([b'data', b'to', b'send'])
+    data2 = iter([b'data', b'to', b'send'])
+    url = httpbin_secure.url + '/post'
     with vcr.use_cassette(str(tmpdir.join('requests.yaml'))):
         req1 = requests.post(url, data1).content
         print(req1)
@@ -234,10 +254,8 @@ def test_nested_cassettes_with_session_created_before_nesting(httpbin_both, tmpd
 def test_post_file(tmpdir, httpbin_both):
     '''Ensure that we handle posting a file.'''
     url = httpbin_both + '/post'
-    with vcr.use_cassette(str(tmpdir.join('post_file.yaml'))) as cass:
-        # Don't use 2.7+ only style ',' separated with here because we support python 2.6
-        with open('tox.ini') as f:
-            original_response = requests.post(url, f).content
+    with vcr.use_cassette(str(tmpdir.join('post_file.yaml'))) as cass, open('tox.ini', 'rb') as f:
+        original_response = requests.post(url, f).content
 
     # This also tests that we do the right thing with matching the body when they are files.
     with vcr.use_cassette(str(tmpdir.join('post_file.yaml')),
@@ -264,3 +282,17 @@ def test_filter_post_params(tmpdir, httpbin_both):
         requests.post(url, data={'key': 'value'})
     with vcr.use_cassette(cass_loc, filter_post_data_parameters=['key']) as cass:
         assert b'key=value' not in cass.requests[0].body
+
+
+def test_post_unicode_match_on_body(tmpdir, httpbin_both):
+    '''Ensure that matching on POST body that contains Unicode characters works.'''
+    data = {'key1': 'value1', '●‿●': '٩(●̮̮̃•̃)۶'}
+    url = httpbin_both + '/post'
+
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml')), additional_matchers=('body',)):
+        req1 = requests.post(url, data).content
+
+    with vcr.use_cassette(str(tmpdir.join('requests.yaml')), additional_matchers=('body',)):
+        req2 = requests.post(url, data).content
+
+    assert req1 == req2

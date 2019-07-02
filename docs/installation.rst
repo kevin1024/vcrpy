@@ -9,18 +9,20 @@ with pip::
 Compatibility
 -------------
 
-VCR.py supports Python 2.6 and 2.7, 3.3, 3.4, and
+VCR.py supports Python 2.7 and 3.5+, and
 `pypy <http://pypy.org>`__.
 
-The following http libraries are supported:
+The following HTTP libraries are supported:
 
--  urllib2
--  urllib3
--  http.client (python3)
--  requests (both 1.x and 2.x versions)
--  httplib2
--  boto
--  Tornado's AsyncHTTPClient
+-  ``aiohttp``
+-  ``boto``
+-  ``boto3``
+-  ``http.client``
+-  ``httplib2``
+-  ``requests`` (both 1.x and 2.x versions)
+-  ``tornado.httpclient``
+-  ``urllib2``
+-  ``urllib3``
 
 Speed
 -----
@@ -40,7 +42,7 @@ rebuilding pyyaml.
 
      brew install libyaml         # Mac with Homebrew
      apt-get install libyaml-dev  # Ubuntu
-     dnf install libyaml-dev      # Fedora
+     dnf install libyaml-devel      # Fedora
 
 3. Rebuild pyyaml with libyaml::
 

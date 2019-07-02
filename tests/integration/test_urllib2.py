@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 '''Integration tests with urllib2'''
 
+import ssl
 from six.moves.urllib.request import urlopen
 from six.moves.urllib_parse import urlencode
 import pytest_httpbin.certs
@@ -12,7 +13,9 @@ from assertions import assert_cassette_has_one_response
 
 
 def urlopen_with_cafile(*args, **kwargs):
-    kwargs['cafile'] = pytest_httpbin.certs.where()
+    context = ssl.create_default_context(cafile=pytest_httpbin.certs.where())
+    context.check_hostname = False
+    kwargs['context'] = context
     try:
         return urlopen(*args, **kwargs)
     except TypeError:

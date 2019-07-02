@@ -5,40 +5,68 @@ import asyncio
 import functools
 import json
 
-from aiohttp import ClientResponse
+from aiohttp import ClientResponse, streams
 from yarl import URL
 
 from vcr.request import Request
 
 
+class MockStream(asyncio.StreamReader, streams.AsyncStreamReaderMixin):
+    pass
+
+
 class MockClientResponse(ClientResponse):
-    # TODO: get encoding from header
-    @asyncio.coroutine
-    def json(self, *, encoding='utf-8', loads=json.loads):  # NOQA: E999
-        return loads(self.content.decode(encoding))
+    def __init__(self, method, url):
+        super().__init__(
+            method=method,
+            url=url,
+            writer=None,
+            continue100=None,
+            timer=None,
+            request_info=None,
+            traces=None,
+            loop=asyncio.get_event_loop(),
+            session=None,
+        )
 
-    @asyncio.coroutine
-    def text(self, encoding='utf-8'):
-        return self.content.decode(encoding)
+    async def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
+        stripped = self._body.strip()
+        if not stripped:
+            return None
 
-    @asyncio.coroutine
+        return loads(stripped.decode(encoding))
+
+    async def text(self, encoding='utf-8', errors='strict'):
+        return self._body.decode(encoding, errors=errors)
+
+    async def read(self):
+        return self._body
+
     def release(self):
         pass
+
+    @property
+    def content(self):
+        s = MockStream()
+        s.feed_data(self._body)
+        s.feed_eof()
+        return s
 
 
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
-    @asyncio.coroutine
-    def new_request(self, method, url, **kwargs):
+    async def new_request(self, method, url, **kwargs):
         headers = kwargs.get('headers')
         headers = self._prepare_headers(headers)
         data = kwargs.get('data')
         params = kwargs.get('params')
+
+        request_url = URL(url)
         if params:
             for k, v in params.items():
                 params[k] = str(v)
+            request_url = URL(url).with_query(params)
 
-        request_url = URL(url).with_query(params)
         vcr_request = Request(method, str(request_url), data, headers)
 
         if cassette.can_play_response_for(vcr_request):
@@ -46,9 +74,9 @@ def vcr_request(cassette, real_request):
 
             response = MockClientResponse(method, URL(vcr_response.get('url')))
             response.status = vcr_response['status']['code']
-            response.content = vcr_response['body']['string']
+            response._body = vcr_response['body']['string']
             response.reason = vcr_response['status']['message']
-            response.headers = vcr_response['headers']
+            response._headers = vcr_response['headers']
 
             response.close()
             return response
@@ -59,11 +87,11 @@ def vcr_request(cassette, real_request):
             msg = ("No match for the request {!r} was found. Can't overwrite "
                    "existing cassette {!r} in your current record mode {!r}.")
             msg = msg.format(vcr_request, cassette._path, cassette.record_mode)
-            response.content = msg.encode()
+            response._body = msg.encode()
             response.close()
             return response
 
-        response = yield from real_request(self, method, url, **kwargs)  # NOQA: E999
+        response = await real_request(self, method, url, **kwargs)  # NOQA: E999
 
         vcr_response = {
             'status': {
@@ -71,7 +99,7 @@ def vcr_request(cassette, real_request):
                 'message': response.reason,
             },
             'headers': dict(response.headers),
-            'body': {'string': (yield from response.text())},  # NOQA: E999
+            'body': {'string': (await response.read())},  # NOQA: E999
             'url': response.url,
         }
         cassette.append(vcr_request, vcr_response)

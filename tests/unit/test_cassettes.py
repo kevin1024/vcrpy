@@ -83,7 +83,8 @@ def make_get_request():
 
 
 @mock.patch('vcr.cassette.requests_match', return_value=True)
-@mock.patch('vcr.cassette.load_cassette', lambda *args, **kwargs: (('foo',), (mock.MagicMock(),)))
+@mock.patch('vcr.cassette.FilesystemPersister.load_cassette',
+            classmethod(lambda *args, **kwargs: (('foo',), (mock.MagicMock(),))))
 @mock.patch('vcr.cassette.Cassette.can_play_response_for', return_value=True)
 @mock.patch('vcr.stubs.VCRHTTPResponse')
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
@@ -130,6 +131,17 @@ def test_cassette_all_played():
     a.append('foo', 'bar')
     a.play_response('foo')
     assert a.all_played
+
+
+@mock.patch('vcr.cassette.requests_match', _mock_requests_match)
+def test_cassette_rewound():
+    a = Cassette('test')
+    a.append('foo', 'bar')
+    a.play_response('foo')
+    assert a.all_played
+
+    a.rewind()
+    assert not a.all_played
 
 
 def test_before_record_response():
@@ -305,3 +317,51 @@ def test_use_as_decorator_on_generator():
         yield 2
 
     assert list(test_function()) == [1, 2]
+
+
+@mock.patch("vcr.cassette.get_matchers_results")
+def test_find_requests_with_most_matches_one_similar_request(mock_get_matchers_results):
+    mock_get_matchers_results.side_effect = [
+        (["method"], [("path", "failed : path"), ("query", "failed : query")]),
+        (["method", "path"], [("query", "failed : query")]),
+        ([], [("method", "failed : method"), ("path", "failed : path"), ("query", "failed : query")]),
+    ]
+
+    cassette = Cassette("test")
+    for request in range(1, 4):
+        cassette.append(request, 'response')
+    result = cassette.find_requests_with_most_matches("fake request")
+    assert result == [(2, ["method", "path"], [("query", "failed : query")])]
+
+
+@mock.patch("vcr.cassette.get_matchers_results")
+def test_find_requests_with_most_matches_no_similar_requests(mock_get_matchers_results):
+    mock_get_matchers_results.side_effect = [
+        ([], [("path", "failed : path"), ("query", "failed : query")]),
+        ([], [("path", "failed : path"), ("query", "failed : query")]),
+        ([], [("path", "failed : path"), ("query", "failed : query")]),
+    ]
+
+    cassette = Cassette("test")
+    for request in range(1, 4):
+        cassette.append(request, 'response')
+    result = cassette.find_requests_with_most_matches("fake request")
+    assert result == []
+
+
+@mock.patch("vcr.cassette.get_matchers_results")
+def test_find_requests_with_most_matches_many_similar_requests(mock_get_matchers_results):
+    mock_get_matchers_results.side_effect = [
+        (["method", "path"], [("query", "failed : query")]),
+        (["method"], [("path", "failed : path"), ("query", "failed : query")]),
+        (["method", "path"], [("query", "failed : query")]),
+    ]
+
+    cassette = Cassette("test")
+    for request in range(1, 4):
+        cassette.append(request, 'response')
+    result = cassette.find_requests_with_most_matches("fake request")
+    assert result == [
+        (1, ["method", "path"], [("query", "failed : query")]),
+        (3, ["method", "path"], [("query", "failed : query")])
+    ]

@@ -1,5 +1,6 @@
+import multiprocessing
 import pytest
-from six.moves import xmlrpc_client
+from six.moves import xmlrpc_client, xmlrpc_server
 
 requests = pytest.importorskip("requests")
 
@@ -58,7 +59,7 @@ def test_flickr_multipart_upload(httpbin, tmpdir):
 def test_flickr_should_respond_with_200(tmpdir):
     testfile = str(tmpdir.join('flickr.yml'))
     with vcr.use_cassette(testfile):
-        r = requests.post("http://api.flickr.com/services/upload")
+        r = requests.post("https://api.flickr.com/services/upload", verify=False)
         assert r.status_code == 200
 
 
@@ -80,13 +81,34 @@ def test_amazon_doctype(tmpdir):
     assert 'html' in r.text
 
 
-def test_xmlrpclib(tmpdir):
+def start_rpc_server(q):
+    httpd = xmlrpc_server.SimpleXMLRPCServer(('127.0.0.1', 0))
+    httpd.register_function(pow)
+    q.put('http://{}:{}'.format(*httpd.server_address))
+    httpd.serve_forever()
+
+
+@pytest.yield_fixture(scope='session')
+def rpc_server():
+    q = multiprocessing.Queue()
+    proxy_process = multiprocessing.Process(
+        target=start_rpc_server,
+        args=(q,)
+    )
+    try:
+        proxy_process.start()
+        yield q.get()
+    finally:
+        proxy_process.terminate()
+
+
+def test_xmlrpclib(tmpdir, rpc_server):
     with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))):
-        roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
-        original_schema = roundup_server.schema()
+        roundup_server = xmlrpc_client.ServerProxy(rpc_server, allow_none=True)
+        original_schema = roundup_server.pow(2, 4)
 
     with vcr.use_cassette(str(tmpdir.join('xmlrpcvideo.yaml'))):
-        roundup_server = xmlrpc_client.ServerProxy('http://bugs.python.org/xmlrpc', allow_none=True)
-        second_schema = roundup_server.schema()
+        roundup_server = xmlrpc_client.ServerProxy(rpc_server, allow_none=True)
+        second_schema = roundup_server.pow(2, 4)
 
     assert original_schema == second_schema

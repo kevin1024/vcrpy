@@ -13,9 +13,7 @@ class VCRHTTPConnectionWithTimeout(VCRHTTPConnection,
         HTTPConnection.__init__.'''
 
         # Delete the keyword arguments that HTTPConnection would not recognize
-        safe_keys = set(
-            ('host', 'port', 'strict', 'timeout', 'source_address')
-        )
+        safe_keys = {'host', 'port', 'strict', 'timeout', 'source_address'}
         unknown_keys = set(kwargs.keys()) - safe_keys
         safe_kwargs = kwargs.copy()
         for kw in unknown_keys:
@@ -33,7 +31,7 @@ class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection,
     def __init__(self, *args, **kwargs):
 
         # Delete the keyword arguments that HTTPSConnection would not recognize
-        safe_keys = set((
+        safe_keys = {
             'host',
             'port',
             'key_file',
@@ -42,7 +40,8 @@ class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection,
             'timeout',
             'source_address',
             'ca_certs',
-        ))
+            'disable_ssl_certificate_validation',
+        }
         unknown_keys = set(kwargs.keys()) - safe_keys
         safe_kwargs = kwargs.copy()
         for kw in unknown_keys:

@@ -94,7 +94,7 @@ def test_vcr_before_record_response_iterable():
     response = object()  # just can't be None
 
     # Prevent actually saving the cassette
-    with mock.patch('vcr.cassette.save_cassette'):
+    with mock.patch('vcr.cassette.FilesystemPersister.save_cassette'):
 
         # Baseline: non-iterable before_record_response should work
         mock_filter = mock.Mock()
@@ -118,7 +118,7 @@ def test_before_record_response_as_filter():
     response = object()  # just can't be None
 
     # Prevent actually saving the cassette
-    with mock.patch('vcr.cassette.save_cassette'):
+    with mock.patch('vcr.cassette.FilesystemPersister.save_cassette'):
 
         filter_all = mock.Mock(return_value=None)
         vcr = VCR(before_record_response=filter_all)
@@ -132,7 +132,7 @@ def test_vcr_path_transformer():
     # Regression test for #199
 
     # Prevent actually saving the cassette
-    with mock.patch('vcr.cassette.save_cassette'):
+    with mock.patch('vcr.cassette.FilesystemPersister.save_cassette'):
 
         # Baseline: path should be unchanged
         vcr = VCR()
@@ -147,7 +147,7 @@ def test_vcr_path_transformer():
         # and it should still work with cassette_library_dir
         vcr = VCR(cassette_library_dir='/foo')
         with vcr.use_cassette('test') as cassette:
-            assert cassette._path == '/foo/test'
+            assert os.path.abspath(cassette._path) == os.path.abspath('/foo/test')
 
 
 @pytest.fixture
@@ -319,11 +319,11 @@ def test_additional_matchers():
 
     @vcr.use_cassette
     def function_defaults(cassette):
-        assert set(cassette._match_on) == set([vcr.matchers['uri']])
+        assert set(cassette._match_on) == {vcr.matchers['uri']}
 
     @vcr.use_cassette(additional_matchers=('body',))
     def function_additional(cassette):
-        assert set(cassette._match_on) == set([vcr.matchers['uri'], vcr.matchers['body']])
+        assert set(cassette._match_on) == {vcr.matchers['uri'], vcr.matchers['body']}
 
     function_defaults()
     function_additional()

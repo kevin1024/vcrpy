@@ -3,9 +3,13 @@ import pytest
 from vcr.request import Request, HeadersDict
 
 
-def test_str():
-    req = Request('GET', 'http://www.google.com/', '', {})
-    str(req) == '<Request (GET) http://www.google.com/>'
+@pytest.mark.parametrize("method, uri, expected_str", [
+    ('GET', 'http://www.google.com/', '<Request (GET) http://www.google.com/>'),
+    ('OPTIONS', '*', '<Request (OPTIONS) *>'),
+    ('CONNECT', 'host.some.where:1234', '<Request (CONNECT) host.some.where:1234>')
+])
+def test_str(method, uri, expected_str):
+    assert str(Request(method, uri, '', {})) == expected_str
 
 
 def test_headers():
@@ -29,18 +33,21 @@ def test_add_header_deprecated():
     ('https://go.com/', 443),
     ('https://go.com:443/', 443),
     ('https://go.com:3000/', 3000),
+    ('*', None)
 ])
 def test_port(uri, expected_port):
     req = Request('GET', uri, '', {})
     assert req.port == expected_port
 
 
-def test_uri():
-    req = Request('GET', 'http://go.com/', '', {})
-    assert req.uri == 'http://go.com/'
-
-    req = Request('GET', 'http://go.com:80/', '', {})
-    assert req.uri == 'http://go.com:80/'
+@pytest.mark.parametrize("method, uri", [
+    ('GET', 'http://go.com/'),
+    ('GET', 'http://go.com:80/'),
+    ('CONNECT', 'localhost:1234'),
+    ('OPTIONS', '*')
+])
+def test_uri(method, uri):
+    assert Request(method, uri, '', {}).uri == uri
 
 
 def test_HeadersDict():

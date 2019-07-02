@@ -1,4 +1,8 @@
 import copy
+try:
+    from collections import abc as collections_abc  # only works on python 3.3+
+except ImportError:
+    import collections as collections_abc
 import functools
 import inspect
 import os
@@ -6,9 +10,9 @@ import types
 
 import six
 
-from .compat import collections
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
+from .persisters.filesystem import FilesystemPersister
 from .util import compose, auto_decorate
 from . import matchers
 from . import filters
@@ -57,6 +61,7 @@ class VCR(object):
             'raw_body': matchers.raw_body,
             'body': matchers.body,
         }
+        self.persister = FilesystemPersister
         self.record_mode = record_mode
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
@@ -76,7 +81,7 @@ class VCR(object):
             serializer = self.serializers[serializer_name]
         except KeyError:
             raise KeyError(
-                "Serializer {0} doesn't exist or isn't registered".format(
+                "Serializer {} doesn't exist or isn't registered".format(
                     serializer_name
                 )
             )
@@ -89,7 +94,7 @@ class VCR(object):
                 matchers.append(self.matchers[m])
         except KeyError:
             raise KeyError(
-                "Matcher {0} doesn't exist or isn't registered".format(m)
+                "Matcher {} doesn't exist or isn't registered".format(m)
             )
         return matchers
 
@@ -143,6 +148,7 @@ class VCR(object):
 
         merged_config = {
             'serializer': self._get_serializer(serializer_name),
+            'persister': self.persister,
             'match_on': self._get_matchers(
                 tuple(matcher_names) + tuple(additional_matchers)
             ),
@@ -172,7 +178,7 @@ class VCR(object):
         if decode_compressed_response:
             filter_functions.append(filters.decode_response)
         if before_record_response:
-            if not isinstance(before_record_response, collections.Iterable):
+            if not isinstance(before_record_response, collections_abc.Iterable):
                 before_record_response = (before_record_response,)
             filter_functions.extend(before_record_response)
 
@@ -238,7 +244,7 @@ class VCR(object):
             filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
 
         if before_record_request:
-            if not isinstance(before_record_request, collections.Iterable):
+            if not isinstance(before_record_request, collections_abc.Iterable):
                 before_record_request = (before_record_request,)
             filter_functions.extend(before_record_request)
 
@@ -269,6 +275,10 @@ class VCR(object):
 
     def register_matcher(self, name, matcher):
         self.matchers[name] = matcher
+
+    def register_persister(self, persister):
+        # Singleton, no name required
+        self.persister = persister
 
     def test_case(self, predicate=None):
         predicate = predicate or self.is_test_method

@@ -1,5 +1,4 @@
 language: python
-sudo: false
 before_install: openssl version
 env:
   global:
@@ -7,55 +6,54 @@ env:
     - secure: LBSEg/gMj4u4Hrpo3zs6Y/1mTpd2RtcN49mZIFgTdbJ9IhpiNPqcEt647Lz94F9Eses2x2WbNuKqZKZZReY7QLbEzU1m0nN5jlaKrjcG5NR5clNABfFFyhgc0jBikyS4abAG8jc2efeaTrFuQwdoF4sE8YiVrkiVj2X5Xoi6sBk=
   matrix:
     - TOX_SUFFIX="flakes"
-    - TOX_SUFFIX="requests22"
-    - TOX_SUFFIX="requests23"
-    - TOX_SUFFIX="requests24"
-    - TOX_SUFFIX="requests25"
-    - TOX_SUFFIX="requests26"
-    - TOX_SUFFIX="requests27"
-    - TOX_SUFFIX="requests1"
+    - TOX_SUFFIX="requests"
     - TOX_SUFFIX="httplib2"
-    - TOX_SUFFIX="boto"
     - TOX_SUFFIX="boto3"
-    - TOX_SUFFIX="urllib317"
-    - TOX_SUFFIX="urllib319"
-    - TOX_SUFFIX="urllib3110"
-    - TOX_SUFFIX="tornado3"
+    - TOX_SUFFIX="urllib3121"
     - TOX_SUFFIX="tornado4"
     - TOX_SUFFIX="aiohttp"
 matrix:
-  allow_failures:
-    - env: TOX_SUFFIX="boto"
-    - env: TOX_SUFFIX="boto3"
-  exclude:
+  include:
     - env: TOX_SUFFIX="flakes"
-      python: 2.6
-    - env: TOX_SUFFIX="boto"
-      python: 3.3
-    - env: TOX_SUFFIX="boto"
-      python: 3.4
-    - env: TOX_SUFFIX="requests1"
-      python: 3.4
-    - env: TOX_SUFFIX="requests1"
-      python: 3.5
+      python: 3.7
+      dist: xenial
+    - env: TOX_SUFFIX="requests"
+      python: 3.7
+      dist: xenial
+    - env: TOX_SUFFIX="httplib2"
+      python: 3.7
+      dist: xenial
+    - env: TOX_SUFFIX="urllib3121"
+      python: 3.7
+      dist: xenial
+    - env: TOX_SUFFIX="tornado4"
+      python: 3.7
+      dist: xenial
     - env: TOX_SUFFIX="aiohttp"
-      python: 2.6
+      python: 3.7
+      dist: xenial
+  allow_failures:
+    - env: TOX_SUFFIX="boto3"
+    - env: TOX_SUFFIX="aiohttp"
+      python: "pypy3.5-5.9.0"
+  exclude:
+    # Only run flakes on a single Python 2.x and a single 3.x
+    - env: TOX_SUFFIX="flakes"
+      python: 3.5
+    - env: TOX_SUFFIX="flakes"
+      python: pypy
+    - env: TOX_SUFFIX="flakes"
+      python: "pypy3.5-5.9.0"
     - env: TOX_SUFFIX="aiohttp"
       python: 2.7
     - env: TOX_SUFFIX="aiohttp"
-      python: 3.3
-    - env: TOX_SUFFIX="aiohttp"
       python: pypy
-    - env: TOX_SUFFIX="aiohttp"
-      python: pypy3
 python:
-- 2.6
 - 2.7
-- 3.3
-- 3.4
 - 3.5
+- 3.6
 - pypy
-- pypy3
+- "pypy3.5-5.9.0"
 install:
 - pip install tox-travis
 - if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi

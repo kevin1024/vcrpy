@@ -1,9 +1,9 @@
 '''Stubs for requests'''
 
 try:
-    from requests.packages.urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
-except ImportError:
     from urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
+except ImportError:
+    from requests.packages.urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
 
 from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
 

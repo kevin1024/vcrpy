@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
 import sys
-import logging
 
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-import pkg_resources
 
 long_description = open('README.rst', 'r').read()
 
@@ -24,30 +22,14 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-install_requires = ['PyYAML', 'wrapt', 'six>=1.5']
-
-
-extras_require = {
-    ':python_version in "2.4, 2.5, 2.6"':
-        ['contextlib2', 'backport_collections', 'mock'],
-    ':python_version in "2.7, 3.1, 3.2"': ['contextlib2', 'mock'],
-}
-
-
-try:
-    if 'bdist_wheel' not in sys.argv:
-        for key, value in extras_require.items():
-            if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
-                install_requires.extend(value)
-except Exception:
-    logging.getLogger(__name__).exception(
-        'Something went wrong calculating platform specific dependencies, so '
-        "you're getting them all!"
-    )
-    for key, value in extras_require.items():
-        if key.startswith(':'):
-            install_requires.extend(value)
-
+install_requires = [
+    'PyYAML',
+    'wrapt',
+    'six>=1.5',
+    'contextlib2; python_version=="2.7"',
+    'mock; python_version=="2.7"',
+    'yarl; python_version>"3.5"',
+]
 
 excluded_packages = ["tests*"]
 if sys.version_info[0] == 2:
@@ -55,7 +37,7 @@ if sys.version_info[0] == 2:
 
 setup(
     name='vcrpy',
-    version='1.10.4',
+    version='2.0.1',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
@@ -65,8 +47,8 @@ setup(
     author_email='me@kevinmccarthy.org',
     url='https://github.com/kevin1024/vcrpy',
     packages=find_packages(exclude=excluded_packages),
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     install_requires=install_requires,
-    extras_require=extras_require,
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-mock', 'pytest-httpbin'],
     entry_points={
@@ -79,7 +61,14 @@ setup(
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: Testing',
         'Topic :: Internet :: WWW/HTTP',
         'License :: OSI Approved :: MIT License',

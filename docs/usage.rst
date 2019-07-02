@@ -11,7 +11,7 @@ Usage
         assert 'Example domains' in response
 
 Run this test once, and VCR.py will record the HTTP request to
-``fixtures/vcr_cassettes/synopsis.yml``. Run it again, and VCR.py will
+``fixtures/vcr_cassettes/synopsis.yaml``. Run it again, and VCR.py will
 replay the response from iana.org when the http request is made. This
 test is now fast (no real HTTP requests are made anymore), deterministic
 (the test will continue to pass, even if you are offline, or iana.org
@@ -57,7 +57,7 @@ once
    file.
 
 It is similar to the new\_episodes record mode, but will prevent new,
-unexpected requests from being made (i.e. because the request URI
+unexpected requests from being made (e.g. because the request URI
 changed).
 
 once is the default record mode, used when you do not set one.
@@ -95,3 +95,9 @@ Unittest Integration
 While it's possible to use the context manager or decorator forms with unittest,
 there's also a ``VCRTestCase`` provided separately by `vcrpy-unittest
 <https://github.com/agriffis/vcrpy-unittest>`__.
+
+Pytest Integration
+------------------
+
+A Pytest plugin is available here : `pytest-vcr
+<https://github.com/ktosiek/pytest-vcr>`__.
