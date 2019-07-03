@@ -13,6 +13,7 @@ but you can tell tox to only run specific tests like this::
 
     tox -e {pyNN}-{HTTP_LIBRARY} -- <pytest flags passed through>
 
+    tox -e py36-requests -- -v -k "'test_status_code or test_gzip'"
     tox -e py37-requests -- -v --last-failed
 
 This will run only tests that look like ``test_status_code`` or
