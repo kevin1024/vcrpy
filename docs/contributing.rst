@@ -92,11 +92,11 @@ The test suite is pretty big and slow, but you can tell tox to only run specific
 
     tox -e {pyNN}-{HTTP_LIBRARY} -- <pytest flags passed through>
 
-    tox -e py35-requests -- -v -k "'test_status_code or test_gzip'"
+    tox -e py36-requests -- -v -k "'test_status_code or test_gzip'"
     tox -e py37-requests -- -v --last-failed
 
 This will run only tests that look like ``test_status_code`` or
-``test_gzip`` in the test suite, and only in the python 3.5 environment
+``test_gzip`` in the test suite, and only in the python 3.6 environment
 that has ``requests`` installed.
 
 Also, in order for the boto tests to run, you will need an AWS key.
