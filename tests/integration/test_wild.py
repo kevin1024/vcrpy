@@ -79,7 +79,7 @@ def test_amazon_doctype(tmpdir):
 
 
 def start_rpc_server(q):
-    httpd = xmlrpc_server.SimpleXMLRPCServer(('127.0.0.1', 0))
+    httpd = xmlrpc.server.SimpleXMLRPCServer(('127.0.0.1', 0))
     httpd.register_function(pow)
     q.put('http://{}:{}'.format(*httpd.server_address))
     httpd.serve_forever()
