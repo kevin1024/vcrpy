@@ -56,6 +56,8 @@ def test_headers(tmpdir, scheme):
         cassette_response, _ = get(url)
         assert cassette_response.headers == response.headers
         assert cassette.play_count == 1
+        assert 'istr' not in cassette.data[0]
+        assert 'yarl.URL' not in cassette.data[0]
 
 
 def test_text(tmpdir, scheme):
