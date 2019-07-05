@@ -47,13 +47,17 @@ def test_status(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_headers(tmpdir, scheme):
+@pytest.mark.parametrize("auth", [None, aiohttp.BasicAuth("vcrpy", "test")])
+def test_headers(tmpdir, scheme, auth):
     url = scheme + '://httpbin.org'
     with vcr.use_cassette(str(tmpdir.join('headers.yaml'))):
-        response, _ = get(url)
+        response, _ = get(url, auth=auth)
 
     with vcr.use_cassette(str(tmpdir.join('headers.yaml'))) as cassette:
-        cassette_response, _ = get(url)
+        if auth is not None:
+            request = cassette.requests[0]
+            assert "AUTHORIZATION" in request.headers
+        cassette_response, _ = get(url, auth=auth)
         assert cassette_response.headers == response.headers
         assert cassette.play_count == 1
         assert 'istr' not in cassette.data[0]
@@ -107,14 +111,17 @@ def test_stream(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_post(tmpdir, scheme):
+@pytest.mark.parametrize('body', ['data', 'json'])
+def test_post(tmpdir, scheme, body):
     data = {'key1': 'value1', 'key2': 'value2'}
     url = scheme + '://httpbin.org/post'
     with vcr.use_cassette(str(tmpdir.join('post.yaml'))):
-        _, response_json = post(url, data=data)
+        _, response_json = post(url, **{body: data})
 
     with vcr.use_cassette(str(tmpdir.join('post.yaml'))) as cassette:
-        _, cassette_response_json = post(url, data=data)
+        request = cassette.requests[0]
+        assert request.body == data
+        _, cassette_response_json = post(url, **{body: data})
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
