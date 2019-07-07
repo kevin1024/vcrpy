@@ -8,10 +8,10 @@ import botocore  # NOQA
 import vcr  # NOQA
 
 ses = boto3.Session(
-    aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-    aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', "default"),
+    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', "default"),
     aws_session_token=None,
-    region_name=os.environ['AWS_DEFAULT_REGION'],
+    region_name=os.environ.get('AWS_DEFAULT_REGION', "default"),
     # botocore_session=None,
     # profile_name=None
 )
@@ -87,9 +87,9 @@ def test_boto_medium_difficulty(tmpdir):
 def test_boto_hardcore_mode(tmpdir):
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))):
         ses = boto3.Session(
-            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-            region_name=os.environ['AWS_DEFAULT_REGION'],
+            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+            region_name=os.environ.get('AWS_DEFAULT_REGION'),
         )
 
         iam_client = ses.client('iam')
@@ -98,10 +98,10 @@ def test_boto_hardcore_mode(tmpdir):
 
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))) as cass:
         ses = boto3.Session(
-            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
             aws_session_token=None,
-            region_name=os.environ['AWS_DEFAULT_REGION'],
+            region_name=os.environ.get('AWS_DEFAULT_REGION'),
         )
 
         iam_client = ses.client('iam')
