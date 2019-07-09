@@ -223,3 +223,18 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     response_json = loop.run_until_complete(response.json())
     assert response_json is None
     assert cassette.play_count == 1
+
+
+def test_redirect(aiohttp_client, tmpdir):
+    url = 'https://httpbin.org/redirect/2'
+
+    with vcr.use_cassette(str(tmpdir.join('redirect.yaml'))):
+        response, _ = get(url)
+
+    with vcr.use_cassette(str(tmpdir.join('redirect.yaml'))) as cassette:
+        cassette_response, _ = get(url)
+
+        assert cassette_response.status == response.status
+        assert len(cassette_response.history) == len(response.history)
+        assert len(cassette) == 3
+        assert cassette.play_count == 3
