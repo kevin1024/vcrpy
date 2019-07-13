@@ -69,11 +69,6 @@ def test_boto_vendored_stubs(tmpdir):
         VerifiedHTTPSConnection('hostname.does.not.matter')
 
 
-def test_boto3_without_vcr(get_user):
-    response = get_user()
-    assert response['User']['UserName'] == IAM_USER_NAME
-
-
 def test_boto_medium_difficulty(tmpdir, get_user):
 
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))):
