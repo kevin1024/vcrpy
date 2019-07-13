@@ -7,25 +7,12 @@ import boto3  # NOQA
 import botocore  # NOQA
 import vcr  # NOQA
 
-ses = boto3.Session(
-    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', "default"),
-    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', "default"),
-    aws_session_token=None,
-    region_name=os.environ.get('AWS_DEFAULT_REGION', "default"),
-    # botocore_session=None,
-    # profile_name=None
-)
-
-IAM_CLIENT = ses.client('iam')
-IAM_USER_NAME = 'vcrpy'
-
 try:
     from botocore import awsrequest  # NOQA
 
     botocore_awsrequest = True
 except ImportError:
     botocore_awsrequest = False
-
 
 # skip tests if boto does not use vendored requests anymore
 # https://github.com/boto/botocore/pull/1495
@@ -38,6 +25,33 @@ boto3_skip_awsrequest = pytest.mark.skipif(
     not botocore_awsrequest,
     reason='botocore version {ver} still uses vendored requests.'.format(
         ver=botocore.__version__))
+
+
+IAM_USER_NAME = "vcrpy"
+
+
+@pytest.fixture
+def iam_client():
+    def _iam_client(boto3_session=None):
+        if boto3_session is None:
+            boto3_session = boto3.Session(
+                aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', "default"),
+                aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', "default"),
+                aws_session_token=None,
+                region_name=os.environ.get('AWS_DEFAULT_REGION', "default"),
+            )
+        return boto3_session.client('iam')
+    return _iam_client
+
+
+@pytest.fixture
+def get_user(iam_client):
+    def _get_user(client=None, user_name=IAM_USER_NAME):
+        if client is None:
+            # Default client set with fixture `iam_client`
+            client = iam_client()
+        return client.get_user(UserName=user_name)
+    return _get_user
 
 
 @boto3_skip_vendored_requests
@@ -55,45 +69,32 @@ def test_boto_vendored_stubs(tmpdir):
         VerifiedHTTPSConnection('hostname.does.not.matter')
 
 
-@boto3_skip_awsrequest
-def test_boto3_awsrequest_stubs(tmpdir):
-    with vcr.use_cassette(str(tmpdir.join('boto3-stubs.yml'))):
-        from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
-        from vcr.stubs.boto3_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
-        assert issubclass(VCRRequestsHTTPConnection, AWSHTTPConnection)
-        assert issubclass(VCRRequestsHTTPSConnection, AWSHTTPSConnection)
-        AWSHTTPConnection('hostname.does.not.matter')
-        AWSHTTPSConnection('hostname.does.not.matter')
-
-
-def test_boto3_without_vcr():
-    response = IAM_CLIENT.get_user(UserName=IAM_USER_NAME)
-
+def test_boto3_without_vcr(get_user):
+    response = get_user()
     assert response['User']['UserName'] == IAM_USER_NAME
 
 
-def test_boto_medium_difficulty(tmpdir):
+def test_boto_medium_difficulty(tmpdir, get_user):
 
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))):
-        response = IAM_CLIENT.get_user(UserName=IAM_USER_NAME)
+        response = get_user()
         assert response['User']['UserName'] == IAM_USER_NAME
 
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))) as cass:
-        response = IAM_CLIENT.get_user(UserName=IAM_USER_NAME)
+        response = get_user()
         assert response['User']['UserName'] == IAM_USER_NAME
         assert cass.all_played
 
 
-def test_boto_hardcore_mode(tmpdir):
+def test_boto_hardcore_mode(tmpdir, iam_client, get_user):
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))):
         ses = boto3.Session(
             aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
             aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
             region_name=os.environ.get('AWS_DEFAULT_REGION'),
         )
-
-        iam_client = ses.client('iam')
-        response = iam_client.get_user(UserName=IAM_USER_NAME)
+        client = iam_client(ses)
+        response = get_user(client=client)
         assert response['User']['UserName'] == IAM_USER_NAME
 
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))) as cass:
@@ -104,7 +105,7 @@ def test_boto_hardcore_mode(tmpdir):
             region_name=os.environ.get('AWS_DEFAULT_REGION'),
         )
 
-        iam_client = ses.client('iam')
-        response = iam_client.get_user(UserName=IAM_USER_NAME)
+        client = iam_client(ses)
+        response = get_user(client=client)
         assert response['User']['UserName'] == IAM_USER_NAME
         assert cass.all_played

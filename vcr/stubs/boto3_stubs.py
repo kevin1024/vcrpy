@@ -41,4 +41,3 @@ class VCRRequestsHTTPSConnection(VCRHTTPSConnection, VerifiedHTTPSConnection):
             self.real_connection.cert_reqs = kwargs.get("cert_reqs", 'CERT_NONE')
 
         self._sock = None
-
