@@ -56,6 +56,54 @@ class MockClientResponse(ClientResponse):
         return s
 
 
+def build_response(vcr_request, vcr_response, history):
+    response = MockClientResponse(vcr_request.method, URL(vcr_response.get('url')))
+    response.status = vcr_response['status']['code']
+    response._body = vcr_response['body'].get('string', b'')
+    response.reason = vcr_response['status']['message']
+    response._headers = vcr_response['headers']
+    response._history = tuple(history)
+
+    response.close()
+    return response
+
+
+def play_responses(cassette, vcr_request):
+    history = []
+    vcr_response = cassette.play_response(vcr_request)
+    response = build_response(vcr_request, vcr_response, history)
+
+    while cassette.can_play_response_for(vcr_request):
+        history.append(response)
+        vcr_response = cassette.play_response(vcr_request)
+        response = build_response(vcr_request, vcr_response, history)
+
+    return response
+
+
+async def record_response(cassette, vcr_request, response, past=False):
+    body = {} if past else {'string': (await response.read())}
+    headers = {str(key): value for key, value in response.headers.items()}
+
+    vcr_response = {
+        'status': {
+            'code': response.status,
+            'message': response.reason,
+        },
+        'headers': headers,
+        'body': body,  # NOQA: E999
+        'url': str(response.url),
+    }
+    cassette.append(vcr_request, vcr_response)
+
+
+async def record_responses(cassette, vcr_request, response):
+    for past_response in response.history:
+        await record_response(cassette, vcr_request, past_response, past=True)
+
+    await record_response(cassette, vcr_request, response)
+
+
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
@@ -77,16 +125,7 @@ def vcr_request(cassette, real_request):
         vcr_request = Request(method, str(request_url), data, headers)
 
         if cassette.can_play_response_for(vcr_request):
-            vcr_response = cassette.play_response(vcr_request)
-
-            response = MockClientResponse(method, URL(vcr_response.get('url')))
-            response.status = vcr_response['status']['code']
-            response._body = vcr_response['body']['string']
-            response.reason = vcr_response['status']['message']
-            response._headers = vcr_response['headers']
-
-            response.close()
-            return response
+            return play_responses(cassette, vcr_request)
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
             response = MockClientResponse(method, URL(url))
@@ -101,18 +140,7 @@ def vcr_request(cassette, real_request):
         log.info("{} not in cassette, sending to real server", vcr_request)
 
         response = await real_request(self, method, url, **kwargs)  # NOQA: E999
-
-        vcr_response = {
-            'status': {
-                'code': response.status,
-                'message': response.reason,
-            },
-            'headers': {str(key): value for key, value in response.headers.items()},
-            'body': {'string': (await response.read())},  # NOQA: E999
-            'url': str(response.url),
-        }
-        cassette.append(vcr_request, vcr_response)
-
+        await record_responses(cassette, vcr_request, response)
         return response
 
     return new_request
