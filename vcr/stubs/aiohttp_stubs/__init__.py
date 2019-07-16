@@ -137,7 +137,7 @@ def vcr_request(cassette, real_request):
             response.close()
             return response
 
-        log.info("{} not in cassette, sending to real server", vcr_request)
+        log.info('%s not in cassette, sending to real server', vcr_request)
 
         response = await real_request(self, method, url, **kwargs)  # NOQA: E999
         await record_responses(cassette, vcr_request, response)
