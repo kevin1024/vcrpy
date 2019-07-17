@@ -204,17 +204,13 @@ def test_evaluate_matcher_does_not_match_with_assert_message():
 
 
 def test_get_assertion_message():
-    assert matchers.get_assertion_message(None) == ""
+    assert matchers.get_assertion_message(None) is None
     assert matchers.get_assertion_message("") == ""
 
 
 def test_get_assertion_message_with_details():
     assertion_msg = "q1=1 != q2=1"
-    expected = (
-        "--------------- DETAILS ---------------\n"
-        "{}\n"
-        "----------------------------------------\n".format(assertion_msg)
-    )
+    expected = assertion_msg
     assert matchers.get_assertion_message(assertion_msg) == expected
 
 

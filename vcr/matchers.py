@@ -135,21 +135,8 @@ def get_matchers_results(r1, r2, matchers):
     return matches_success, matches_fails
 
 
-def get_assertion_message(assertion_details, **format_options):
+def get_assertion_message(assertion_details):
     """
     Get a detailed message about the failing matcher.
     """
-    msg = ""
-    if assertion_details:
-        separator = format_options.get("separator", "-")
-        title = format_options.get("title", " DETAILS ")
-        nb_separator = format_options.get("nb_separator", 40)
-        first_title_line = (
-            separator * ((nb_separator - len(title)) // 2)
-            + title
-            + separator * ((nb_separator - len(title)) // 2)
-        )
-        msg += "{}\n{}\n{}\n".format(
-            first_title_line, str(assertion_details), separator * nb_separator
-        )
-    return msg
+    return assertion_details
