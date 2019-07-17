@@ -1,4 +1,5 @@
 import contextlib
+import logging
 
 import pytest
 asyncio = pytest.importorskip("asyncio")
@@ -112,7 +113,8 @@ def test_stream(tmpdir, scheme):
 
 
 @pytest.mark.parametrize('body', ['data', 'json'])
-def test_post(tmpdir, scheme, body):
+def test_post(tmpdir, scheme, body, caplog):
+    caplog.set_level(logging.INFO)
     data = {'key1': 'value1', 'key2': 'value2'}
     url = scheme + '://httpbin.org/post'
     with vcr.use_cassette(str(tmpdir.join('post.yaml'))):
@@ -124,6 +126,16 @@ def test_post(tmpdir, scheme, body):
         _, cassette_response_json = post(url, **{body: data})
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
+
+    assert next(
+        (
+            log
+            for log in caplog.records
+            if log.getMessage()
+            == '<Request (POST) {}> not in cassette, sending to real server'.format(url)
+        ),
+        None,
+    ), 'Log message not found.'
 
 
 def test_params(tmpdir, scheme):
