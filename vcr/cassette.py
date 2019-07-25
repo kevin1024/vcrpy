@@ -311,6 +311,10 @@ class Cassette(object):
         best_matches.sort(key=lambda t: t[0], reverse=True)
         # Get the first best matches (multiple if equal matches)
         final_best_matches = []
+
+        if not best_matches:
+            return final_best_matches
+
         previous_nb_success = best_matches[0][0]
         for best_match in best_matches:
             nb_success = best_match[0]
