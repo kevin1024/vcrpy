@@ -58,6 +58,6 @@ install:
 - pip install tox-travis codecov
 - if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
 script:
-- tox -e "${TOX_SUFFIX}"
+- tox -r -e "${TOX_SUFFIX}"
 after_success:
   - codecov
