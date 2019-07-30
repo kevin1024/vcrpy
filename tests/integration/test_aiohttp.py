@@ -59,11 +59,22 @@ def test_headers(tmpdir, scheme, auth):
             request = cassette.requests[0]
             assert "AUTHORIZATION" in request.headers
         cassette_response, _ = get(url, auth=auth)
-        assert cassette_response.headers == response.headers
+        assert dict(cassette_response.headers) == dict(response.headers)
         assert cassette.play_count == 1
         assert 'istr' not in cassette.data[0]
         assert 'yarl.URL' not in cassette.data[0]
 
+
+def test_case_insensitive_headers(tmpdir, scheme):
+    url = scheme + '://httpbin.org'
+    with vcr.use_cassette(str(tmpdir.join('whatever.yaml'))):
+        _, _ = get(url)
+
+    with vcr.use_cassette(str(tmpdir.join('whatever.yaml'))) as cassette:
+        cassette_response, _ = get(url)
+        assert "Content-Type" in cassette_response.headers
+        assert "content-type" in cassette_response.headers
+        assert cassette.play_count == 1
 
 def test_text(tmpdir, scheme):
     url = scheme + '://httpbin.org'

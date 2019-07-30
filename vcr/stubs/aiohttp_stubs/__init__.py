@@ -7,6 +7,7 @@ import logging
 import json
 
 from aiohttp import ClientResponse, streams
+from multidict import CIMultiDict, CIMultiDictProxy
 from yarl import URL
 
 from vcr.request import Request
@@ -61,7 +62,7 @@ def build_response(vcr_request, vcr_response, history):
     response.status = vcr_response['status']['code']
     response._body = vcr_response['body'].get('string', b'')
     response.reason = vcr_response['status']['message']
-    response._headers = vcr_response['headers']
+    response._headers = CIMultiDictProxy(CIMultiDict(vcr_response['headers']))
     response._history = tuple(history)
 
     response.close()
