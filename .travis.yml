@@ -33,7 +33,6 @@ matrix:
       python: 3.7
       dist: xenial
   allow_failures:
-    - env: TOX_SUFFIX="boto3"
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy3.5-5.9.0"
   exclude:
@@ -58,6 +57,6 @@ install:
 - pip install tox-travis codecov
 - if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
 script:
-- tox -r -e "${TOX_SUFFIX}"
+- tox -e "${TOX_SUFFIX}"
 after_success:
   - codecov
