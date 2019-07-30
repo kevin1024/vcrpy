@@ -76,6 +76,7 @@ def test_case_insensitive_headers(tmpdir, scheme):
         assert "content-type" in cassette_response.headers
         assert cassette.play_count == 1
 
+
 def test_text(tmpdir, scheme):
     url = scheme + '://httpbin.org'
     with vcr.use_cassette(str(tmpdir.join('text.yaml'))):
