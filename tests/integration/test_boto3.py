@@ -26,13 +26,6 @@ boto3_skip_awsrequest = pytest.mark.skipif(
     reason='botocore version {ver} still uses vendored requests.'.format(
         ver=botocore.__version__))
 
-boto3_skip_travis_pullrequest = pytest.mark.skipif(
-    os.environ.get("TRAVIS_PULL_REQUEST") != "false",
-    reason="Encrypted Environment Variables from Travis Repository Settings"
-    " are disabled on PRs from forks. "
-    "https://docs.travis-ci.com/user/pull-requests/#pull-requests-and-security-restrictions"
-)
-
 IAM_USER_NAME = "vcrpy"
 
 
