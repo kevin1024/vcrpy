@@ -1,4 +1,4 @@
-|PyPI| |Python versions| |Build Status| |Gitter|
+|PyPI| |Python versions| |Build Status| |CodeCov| |Gitter| 
 
 VCR.py
 ======
@@ -56,3 +56,7 @@ more details
 .. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
    :target: https://gitter.im/kevin1024/vcrpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+.. |CodeCov| image:: https://codecov.io/gh/kevin1024/vcrpy/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/kevin1024/vcrpy
+   :alt: Code Coverage Status
+   

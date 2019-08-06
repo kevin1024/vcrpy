@@ -1,0 +1,7 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 75
+        # Allow 0% coverage regression
+        threshold: 0

@@ -26,7 +26,6 @@ boto3_skip_awsrequest = pytest.mark.skipif(
     reason='botocore version {ver} still uses vendored requests.'.format(
         ver=botocore.__version__))
 
-
 IAM_USER_NAME = "vcrpy"
 
 
@@ -69,6 +68,12 @@ def test_boto_vendored_stubs(tmpdir):
         VerifiedHTTPSConnection('hostname.does.not.matter')
 
 
+@pytest.mark.skipif(
+    os.environ.get("TRAVIS_PULL_REQUEST") != "false",
+    reason="Encrypted Environment Variables from Travis Repository Settings"
+    " are disabled on PRs from forks. "
+    "https://docs.travis-ci.com/user/pull-requests/#pull-requests-and-security-restrictions"
+)
 def test_boto_medium_difficulty(tmpdir, get_user):
 
     with vcr.use_cassette(str(tmpdir.join('boto3-medium.yml'))):
@@ -81,6 +86,12 @@ def test_boto_medium_difficulty(tmpdir, get_user):
         assert cass.all_played
 
 
+@pytest.mark.skipif(
+    os.environ.get("TRAVIS_PULL_REQUEST") != "false",
+    reason="Encrypted Environment Variables from Travis Repository Settings"
+    " are disabled on PRs from forks. "
+    "https://docs.travis-ci.com/user/pull-requests/#pull-requests-and-security-restrictions"
+)
 def test_boto_hardcore_mode(tmpdir, iam_client, get_user):
     with vcr.use_cassette(str(tmpdir.join('boto3-hardcore.yml'))):
         ses = boto3.Session(
