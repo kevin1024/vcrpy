@@ -3,6 +3,7 @@ from six.moves.urllib.parse import urlparse, urlencode, urlunparse
 import copy
 import json
 import zlib
+import cgi
 
 from .util import CaseInsensitiveDict
 
@@ -84,7 +85,7 @@ def replace_post_data_parameters(request, replacements):
     """
     replacements = dict(replacements)
     if request.method == 'POST' and not isinstance(request.body, BytesIO):
-        if request.headers.get('Content-Type') == 'application/json':
+        if 'application/json' in cgi.parse_header(request.headers.get('Content-Type') or ''):
             json_data = json.loads(request.body.decode('utf-8'))
             for k, rv in replacements.items():
                 if k in json_data:
