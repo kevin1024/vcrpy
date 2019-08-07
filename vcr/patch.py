@@ -1,4 +1,4 @@
-'''Utilities for patching in cassettes'''
+"""Utilities for patching in cassettes"""
 import functools
 import itertools
 
@@ -76,16 +76,14 @@ try:
 except ImportError:  # pragma: no cover
     pass
 else:
-    _SimpleAsyncHTTPClient_fetch_impl = \
-        tornado.simple_httpclient.SimpleAsyncHTTPClient.fetch_impl
+    _SimpleAsyncHTTPClient_fetch_impl = tornado.simple_httpclient.SimpleAsyncHTTPClient.fetch_impl
 
 try:
     import tornado.curl_httpclient
 except ImportError:  # pragma: no cover
     pass
 else:
-    _CurlAsyncHTTPClient_fetch_impl = \
-        tornado.curl_httpclient.CurlAsyncHTTPClient.fetch_impl
+    _CurlAsyncHTTPClient_fetch_impl = tornado.curl_httpclient.CurlAsyncHTTPClient.fetch_impl
 
 try:
     import aiohttp.client
@@ -96,13 +94,10 @@ else:
 
 
 class CassettePatcherBuilder(object):
-
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
         def wrapped(self, *args, **kwargs):
-            return self._build_patchers_from_mock_triples(
-                function(self, *args, **kwargs)
-            )
+            return self._build_patchers_from_mock_triples(function(self, *args, **kwargs))
 
         return wrapped
 
@@ -112,11 +107,15 @@ class CassettePatcherBuilder(object):
 
     def build(self):
         return itertools.chain(
-            self._httplib(), self._requests(), self._boto3(), self._urllib3(),
-            self._httplib2(), self._boto(), self._tornado(), self._aiohttp(),
-            self._build_patchers_from_mock_triples(
-                self._cassette.custom_patches
-            ),
+            self._httplib(),
+            self._requests(),
+            self._boto3(),
+            self._urllib3(),
+            self._httplib2(),
+            self._boto(),
+            self._tornado(),
+            self._aiohttp(),
+            self._build_patchers_from_mock_triples(self._cassette.custom_patches),
         )
 
     def _build_patchers_from_mock_triples(self, mock_triples):
@@ -129,9 +128,9 @@ class CassettePatcherBuilder(object):
         if not hasattr(obj, patched_attribute):
             return
 
-        return mock.patch.object(obj, patched_attribute,
-                                 self._recursively_apply_get_cassette_subclass(
-                                     replacement_class))
+        return mock.patch.object(
+            obj, patched_attribute, self._recursively_apply_get_cassette_subclass(replacement_class)
+        )
 
     def _recursively_apply_get_cassette_subclass(self, replacement_dict_or_obj):
         """One of the subtleties of this class is that it does not directly
@@ -153,13 +152,11 @@ class CassettePatcherBuilder(object):
         """
         if isinstance(replacement_dict_or_obj, dict):
             for key, replacement_obj in replacement_dict_or_obj.items():
-                replacement_obj = self._recursively_apply_get_cassette_subclass(
-                    replacement_obj)
+                replacement_obj = self._recursively_apply_get_cassette_subclass(replacement_obj)
                 replacement_dict_or_obj[key] = replacement_obj
             return replacement_dict_or_obj
-        if hasattr(replacement_dict_or_obj, 'cassette'):
-            replacement_dict_or_obj = self._get_cassette_subclass(
-                replacement_dict_or_obj)
+        if hasattr(replacement_dict_or_obj, "cassette"):
+            replacement_dict_or_obj = self._get_cassette_subclass(replacement_dict_or_obj)
         return replacement_dict_or_obj
 
     def _get_cassette_subclass(self, klass):
@@ -174,13 +171,14 @@ class CassettePatcherBuilder(object):
         bases = (base_class,)
         if not issubclass(base_class, object):  # Check for old style class
             bases += (object,)
-        return type('{}{}'.format(base_class.__name__, self._cassette._path),
-                    bases, dict(cassette=self._cassette))
+        return type(
+            "{}{}".format(base_class.__name__, self._cassette._path), bases, dict(cassette=self._cassette)
+        )
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib(self):
-        yield httplib, 'HTTPConnection', VCRHTTPConnection
-        yield httplib, 'HTTPSConnection', VCRHTTPSConnection
+        yield httplib, "HTTPConnection", VCRHTTPConnection
+        yield httplib, "HTTPSConnection", VCRHTTPSConnection
 
     def _requests(self):
         try:
@@ -203,12 +201,14 @@ class CassettePatcherBuilder(object):
                 pass
             else:
                 from .stubs import boto3_stubs
+
                 yield self._urllib3_patchers(cpool, boto3_stubs)
         else:
             from .stubs import boto3_stubs
+
             log.debug("Patching boto3 cpool with %s", cpool)
-            yield cpool.AWSHTTPConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPConnection
-            yield cpool.AWSHTTPSConnectionPool, 'ConnectionCls', boto3_stubs.VCRRequestsHTTPSConnection
+            yield cpool.AWSHTTPConnectionPool, "ConnectionCls", boto3_stubs.VCRRequestsHTTPConnection
+            yield cpool.AWSHTTPSConnectionPool, "ConnectionCls", boto3_stubs.VCRRequestsHTTPSConnection
 
     def _patched_get_conn(self, connection_pool_class, connection_class_getter):
         get_conn = connection_pool_class._get_conn
@@ -217,8 +217,8 @@ class CassettePatcherBuilder(object):
         def patched_get_conn(pool, timeout=None):
             connection = get_conn(pool, timeout)
             connection_class = (
-                pool.ConnectionCls if hasattr(pool, 'ConnectionCls')
-                else connection_class_getter())
+                pool.ConnectionCls if hasattr(pool, "ConnectionCls") else connection_class_getter()
+            )
             # We need to make sure that we are actually providing a
             # patched version of the connection class. This might not
             # always be the case because the pool keeps previously
@@ -248,6 +248,7 @@ class CassettePatcherBuilder(object):
         except ImportError:  # pragma: no cover
             return ()
         from .stubs import urllib3_stubs
+
         return self._urllib3_patchers(cpool, urllib3_stubs)
 
     @_build_patchers_from_mock_triples_decorator
@@ -260,10 +261,12 @@ class CassettePatcherBuilder(object):
             from .stubs.httplib2_stubs import VCRHTTPConnectionWithTimeout
             from .stubs.httplib2_stubs import VCRHTTPSConnectionWithTimeout
 
-            yield cpool, 'HTTPConnectionWithTimeout', VCRHTTPConnectionWithTimeout
-            yield cpool, 'HTTPSConnectionWithTimeout', VCRHTTPSConnectionWithTimeout
-            yield cpool, 'SCHEME_TO_CONNECTION', {'http': VCRHTTPConnectionWithTimeout,
-                                                  'https': VCRHTTPSConnectionWithTimeout}
+            yield cpool, "HTTPConnectionWithTimeout", VCRHTTPConnectionWithTimeout
+            yield cpool, "HTTPSConnectionWithTimeout", VCRHTTPSConnectionWithTimeout
+            yield cpool, "SCHEME_TO_CONNECTION", {
+                "http": VCRHTTPConnectionWithTimeout,
+                "https": VCRHTTPSConnectionWithTimeout,
+            }
 
     @_build_patchers_from_mock_triples_decorator
     def _boto(self):
@@ -273,7 +276,8 @@ class CassettePatcherBuilder(object):
             pass
         else:
             from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
-            yield cpool, 'CertValidatingHTTPSConnection', VCRCertValidatingHTTPSConnection
+
+            yield cpool, "CertValidatingHTTPSConnection", VCRCertValidatingHTTPSConnection
 
     @_build_patchers_from_mock_triples_decorator
     def _tornado(self):
@@ -284,10 +288,8 @@ class CassettePatcherBuilder(object):
         else:
             from .stubs.tornado_stubs import vcr_fetch_impl
 
-            new_fetch_impl = vcr_fetch_impl(
-                self._cassette, _SimpleAsyncHTTPClient_fetch_impl
-            )
-            yield simple.SimpleAsyncHTTPClient, 'fetch_impl', new_fetch_impl
+            new_fetch_impl = vcr_fetch_impl(self._cassette, _SimpleAsyncHTTPClient_fetch_impl)
+            yield simple.SimpleAsyncHTTPClient, "fetch_impl", new_fetch_impl
         try:
             import tornado.curl_httpclient as curl
         except ImportError:  # pragma: no cover
@@ -295,10 +297,8 @@ class CassettePatcherBuilder(object):
         else:
             from .stubs.tornado_stubs import vcr_fetch_impl
 
-            new_fetch_impl = vcr_fetch_impl(
-                self._cassette, _CurlAsyncHTTPClient_fetch_impl
-            )
-            yield curl.CurlAsyncHTTPClient, 'fetch_impl', new_fetch_impl
+            new_fetch_impl = vcr_fetch_impl(self._cassette, _CurlAsyncHTTPClient_fetch_impl)
+            yield curl.CurlAsyncHTTPClient, "fetch_impl", new_fetch_impl
 
     @_build_patchers_from_mock_triples_decorator
     def _aiohttp(self):
@@ -308,10 +308,9 @@ class CassettePatcherBuilder(object):
             pass
         else:
             from .stubs.aiohttp_stubs import vcr_request
-            new_request = vcr_request(
-                self._cassette, _AiohttpClientSessionRequest
-            )
-            yield client.ClientSession, '_request', new_request
+
+            new_request = vcr_request(self._cassette, _AiohttpClientSessionRequest)
+            yield client.ClientSession, "_request", new_request
 
     def _urllib3_patchers(self, cpool, stubs):
         http_connection_remover = ConnectionRemover(
@@ -321,34 +320,45 @@ class CassettePatcherBuilder(object):
             self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection)
         )
         mock_triples = (
-            (cpool, 'VerifiedHTTPSConnection', stubs.VCRRequestsHTTPSConnection),
-            (cpool, 'HTTPConnection', stubs.VCRRequestsHTTPConnection),
-            (cpool, 'HTTPSConnection', stubs.VCRRequestsHTTPSConnection),
-            (cpool, 'is_connection_dropped', mock.Mock(return_value=False)),  # Needed on Windows only
-            (cpool.HTTPConnectionPool, 'ConnectionCls', stubs.VCRRequestsHTTPConnection),
-            (cpool.HTTPSConnectionPool, 'ConnectionCls', stubs.VCRRequestsHTTPSConnection),
+            (cpool, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
+            (cpool, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
+            (cpool, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
+            (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
+            (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
+            (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
         )
         # These handle making sure that sessions only use the
         # connections of the appropriate type.
-        mock_triples += ((cpool.HTTPConnectionPool, '_get_conn',
-                          self._patched_get_conn(cpool.HTTPConnectionPool,
-                                                 lambda: cpool.HTTPConnection)),
-                         (cpool.HTTPSConnectionPool, '_get_conn',
-                          self._patched_get_conn(cpool.HTTPSConnectionPool,
-                                                 lambda: cpool.HTTPSConnection)),
-                         (cpool.HTTPConnectionPool, '_new_conn',
-                          self._patched_new_conn(cpool.HTTPConnectionPool,
-                                                 http_connection_remover)),
-                         (cpool.HTTPSConnectionPool, '_new_conn',
-                          self._patched_new_conn(cpool.HTTPSConnectionPool,
-                                                 https_connection_remover)))
+        mock_triples += (
+            (
+                cpool.HTTPConnectionPool,
+                "_get_conn",
+                self._patched_get_conn(cpool.HTTPConnectionPool, lambda: cpool.HTTPConnection),
+            ),
+            (
+                cpool.HTTPSConnectionPool,
+                "_get_conn",
+                self._patched_get_conn(cpool.HTTPSConnectionPool, lambda: cpool.HTTPSConnection),
+            ),
+            (
+                cpool.HTTPConnectionPool,
+                "_new_conn",
+                self._patched_new_conn(cpool.HTTPConnectionPool, http_connection_remover),
+            ),
+            (
+                cpool.HTTPSConnectionPool,
+                "_new_conn",
+                self._patched_new_conn(cpool.HTTPSConnectionPool, https_connection_remover),
+            ),
+        )
 
-        return itertools.chain(self._build_patchers_from_mock_triples(mock_triples),
-                               (http_connection_remover, https_connection_remover))
+        return itertools.chain(
+            self._build_patchers_from_mock_triples(mock_triples),
+            (http_connection_remover, https_connection_remover),
+        )
 
 
 class ConnectionRemover(object):
-
     def __init__(self, connection_class):
         self._connection_class = connection_class
         self._connection_pool_to_connections = {}
@@ -378,11 +388,12 @@ class ConnectionRemover(object):
 
 
 def reset_patchers():
-    yield mock.patch.object(httplib, 'HTTPConnection', _HTTPConnection)
-    yield mock.patch.object(httplib, 'HTTPSConnection', _HTTPSConnection)
+    yield mock.patch.object(httplib, "HTTPConnection", _HTTPConnection)
+    yield mock.patch.object(httplib, "HTTPSConnection", _HTTPSConnection)
 
     try:
         import requests
+
         if requests.__build__ < 0x021603:
             # Avoid double unmock if requests 2.16.3
             # First, this is pointless, requests.packages.urllib3 *IS* urllib3 (see packages.py)
@@ -400,29 +411,27 @@ def reset_patchers():
         pass
     else:
         # unpatch requests v1.x
-        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, 'HTTPConnection', _cpoolHTTPConnection)
+        yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
+        yield mock.patch.object(cpool, "HTTPConnection", _cpoolHTTPConnection)
         # unpatch requests v2.x
-        if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
-            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls',
-                                    _cpoolHTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls',
-                                    _cpoolHTTPSConnection)
+        if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
+            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolHTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolHTTPSConnection)
 
-        if hasattr(cpool, 'HTTPSConnection'):
-            yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolHTTPSConnection)
+        if hasattr(cpool, "HTTPSConnection"):
+            yield mock.patch.object(cpool, "HTTPSConnection", _cpoolHTTPSConnection)
 
     try:
         import urllib3.connectionpool as cpool
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, 'HTTPConnection', _cpoolHTTPConnection)
-        yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolHTTPSConnection)
-        if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
-            yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls', _cpoolHTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls', _cpoolHTTPSConnection)
+        yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
+        yield mock.patch.object(cpool, "HTTPConnection", _cpoolHTTPConnection)
+        yield mock.patch.object(cpool, "HTTPSConnection", _cpoolHTTPSConnection)
+        if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
+            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolHTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolHTTPSConnection)
 
     try:
         # unpatch botocore with awsrequest
@@ -435,64 +444,53 @@ def reset_patchers():
             pass
         else:
             # unpatch requests v1.x
-            yield mock.patch.object(cpool, 'VerifiedHTTPSConnection', _Boto3VerifiedHTTPSConnection)
-            yield mock.patch.object(cpool, 'HTTPConnection', _cpoolBoto3HTTPConnection)
+            yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _Boto3VerifiedHTTPSConnection)
+            yield mock.patch.object(cpool, "HTTPConnection", _cpoolBoto3HTTPConnection)
             # unpatch requests v2.x
-            if hasattr(cpool.HTTPConnectionPool, 'ConnectionCls'):
-                yield mock.patch.object(cpool.HTTPConnectionPool, 'ConnectionCls',
-                                        _cpoolBoto3HTTPConnection)
-                yield mock.patch.object(cpool.HTTPSConnectionPool, 'ConnectionCls',
-                                        _cpoolBoto3HTTPSConnection)
+            if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
+                yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
+                yield mock.patch.object(
+                    cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolBoto3HTTPSConnection
+                )
 
-            if hasattr(cpool, 'HTTPSConnection'):
-                yield mock.patch.object(cpool, 'HTTPSConnection', _cpoolBoto3HTTPSConnection)
+            if hasattr(cpool, "HTTPSConnection"):
+                yield mock.patch.object(cpool, "HTTPSConnection", _cpoolBoto3HTTPSConnection)
     else:
-        if hasattr(cpool.AWSHTTPConnectionPool, 'ConnectionCls'):
-            yield mock.patch.object(cpool.AWSHTTPConnectionPool, 'ConnectionCls',
-                                    _cpoolBoto3HTTPConnection)
-            yield mock.patch.object(cpool.AWSHTTPSConnectionPool, 'ConnectionCls',
-                                    _cpoolBoto3HTTPSConnection)
+        if hasattr(cpool.AWSHTTPConnectionPool, "ConnectionCls"):
+            yield mock.patch.object(cpool.AWSHTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
+            yield mock.patch.object(cpool.AWSHTTPSConnectionPool, "ConnectionCls", _cpoolBoto3HTTPSConnection)
 
-        if hasattr(cpool, 'AWSHTTPSConnection'):
-            yield mock.patch.object(cpool, 'AWSHTTPSConnection', _cpoolBoto3HTTPSConnection)
+        if hasattr(cpool, "AWSHTTPSConnection"):
+            yield mock.patch.object(cpool, "AWSHTTPSConnection", _cpoolBoto3HTTPSConnection)
 
     try:
         import httplib2 as cpool
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(cpool, 'HTTPConnectionWithTimeout', _HTTPConnectionWithTimeout)
-        yield mock.patch.object(cpool, 'HTTPSConnectionWithTimeout', _HTTPSConnectionWithTimeout)
-        yield mock.patch.object(cpool, 'SCHEME_TO_CONNECTION', _SCHEME_TO_CONNECTION)
+        yield mock.patch.object(cpool, "HTTPConnectionWithTimeout", _HTTPConnectionWithTimeout)
+        yield mock.patch.object(cpool, "HTTPSConnectionWithTimeout", _HTTPSConnectionWithTimeout)
+        yield mock.patch.object(cpool, "SCHEME_TO_CONNECTION", _SCHEME_TO_CONNECTION)
 
     try:
         import boto.https_connection as cpool
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(cpool, 'CertValidatingHTTPSConnection',
-                                _CertValidatingHTTPSConnection)
+        yield mock.patch.object(cpool, "CertValidatingHTTPSConnection", _CertValidatingHTTPSConnection)
 
     try:
         import tornado.simple_httpclient as simple
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(
-            simple.SimpleAsyncHTTPClient,
-            'fetch_impl',
-            _SimpleAsyncHTTPClient_fetch_impl,
-        )
+        yield mock.patch.object(simple.SimpleAsyncHTTPClient, "fetch_impl", _SimpleAsyncHTTPClient_fetch_impl)
     try:
         import tornado.curl_httpclient as curl
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(
-            curl.CurlAsyncHTTPClient,
-            'fetch_impl',
-            _CurlAsyncHTTPClient_fetch_impl,
-        )
+        yield mock.patch.object(curl.CurlAsyncHTTPClient, "fetch_impl", _CurlAsyncHTTPClient_fetch_impl)
 
 
 @contextlib.contextmanager

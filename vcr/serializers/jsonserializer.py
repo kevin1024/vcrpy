@@ -23,7 +23,7 @@ def serialize(cassette_dict):
             b"Error serializing cassette to JSON",
             original.start,
             original.end,
-            original.args[-1] + error_message
+            original.args[-1] + error_message,
         )
     except TypeError:  # py3
         raise TypeError(error_message)

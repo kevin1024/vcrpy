@@ -1,4 +1,4 @@
-'''Stubs for aiohttp HTTP clients'''
+"""Stubs for aiohttp HTTP clients"""
 from __future__ import absolute_import
 
 import asyncio
@@ -33,14 +33,14 @@ class MockClientResponse(ClientResponse):
             session=None,
         )
 
-    async def json(self, *, encoding='utf-8', loads=json.loads, **kwargs):  # NOQA: E999
+    async def json(self, *, encoding="utf-8", loads=json.loads, **kwargs):  # NOQA: E999
         stripped = self._body.strip()
         if not stripped:
             return None
 
         return loads(stripped.decode(encoding))
 
-    async def text(self, encoding='utf-8', errors='strict'):
+    async def text(self, encoding="utf-8", errors="strict"):
         return self._body.decode(encoding, errors=errors)
 
     async def read(self):
@@ -58,11 +58,11 @@ class MockClientResponse(ClientResponse):
 
 
 def build_response(vcr_request, vcr_response, history):
-    response = MockClientResponse(vcr_request.method, URL(vcr_response.get('url')))
-    response.status = vcr_response['status']['code']
-    response._body = vcr_response['body'].get('string', b'')
-    response.reason = vcr_response['status']['message']
-    response._headers = CIMultiDictProxy(CIMultiDict(vcr_response['headers']))
+    response = MockClientResponse(vcr_request.method, URL(vcr_response.get("url")))
+    response.status = vcr_response["status"]["code"]
+    response._body = vcr_response["body"].get("string", b"")
+    response.reason = vcr_response["status"]["message"]
+    response._headers = CIMultiDictProxy(CIMultiDict(vcr_response["headers"]))
     response._history = tuple(history)
 
     response.close()
@@ -83,17 +83,14 @@ def play_responses(cassette, vcr_request):
 
 
 async def record_response(cassette, vcr_request, response, past=False):
-    body = {} if past else {'string': (await response.read())}
+    body = {} if past else {"string": (await response.read())}
     headers = {str(key): value for key, value in response.headers.items()}
 
     vcr_response = {
-        'status': {
-            'code': response.status,
-            'message': response.reason,
-        },
-        'headers': headers,
-        'body': body,  # NOQA: E999
-        'url': str(response.url),
+        "status": {"code": response.status, "message": response.reason},
+        "headers": headers,
+        "body": body,  # NOQA: E999
+        "url": str(response.url),
     }
     cassette.append(vcr_request, vcr_response)
 
@@ -108,14 +105,14 @@ async def record_responses(cassette, vcr_request, response):
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
-        headers = kwargs.get('headers')
-        auth = kwargs.get('auth')
+        headers = kwargs.get("headers")
+        auth = kwargs.get("auth")
         headers = self._prepare_headers(headers)
-        data = kwargs.get('data', kwargs.get('json'))
-        params = kwargs.get('params')
+        data = kwargs.get("data", kwargs.get("json"))
+        params = kwargs.get("params")
 
         if auth is not None:
-            headers['AUTHORIZATION'] = auth.encode()
+            headers["AUTHORIZATION"] = auth.encode()
 
         request_url = URL(url)
         if params:
@@ -131,14 +128,16 @@ def vcr_request(cassette, real_request):
         if cassette.write_protected and cassette.filter_request(vcr_request):
             response = MockClientResponse(method, URL(url))
             response.status = 599
-            msg = ("No match for the request {!r} was found. Can't overwrite "
-                   "existing cassette {!r} in your current record mode {!r}.")
+            msg = (
+                "No match for the request {!r} was found. Can't overwrite "
+                "existing cassette {!r} in your current record mode {!r}."
+            )
             msg = msg.format(vcr_request, cassette._path, cassette.record_mode)
             response._body = msg.encode()
             response.close()
             return response
 
-        log.info('%s not in cassette, sending to real server', vcr_request)
+        log.info("%s not in cassette, sending to real server", vcr_request)
 
         response = await real_request(self, method, url, **kwargs)  # NOQA: E999
         await record_responses(cassette, vcr_request, response)

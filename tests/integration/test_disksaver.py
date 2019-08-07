@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Basic tests about save behavior'''
+"""Basic tests about save behavior"""
 
 # External imports
 import os
@@ -11,11 +11,11 @@ import vcr
 
 
 def test_disk_saver_nowrite(tmpdir, httpbin):
-    '''
+    """
     Ensure that when you close a cassette without changing it it doesn't
     rewrite the file
-    '''
-    fname = str(tmpdir.join('synopsis.yaml'))
+    """
+    fname = str(tmpdir.join("synopsis.yaml"))
     with vcr.use_cassette(fname) as cass:
         urlopen(httpbin.url).read()
         assert cass.play_count == 0
@@ -31,11 +31,11 @@ def test_disk_saver_nowrite(tmpdir, httpbin):
 
 
 def test_disk_saver_write(tmpdir, httpbin):
-    '''
+    """
     Ensure that when you close a cassette after changing it it does
     rewrite the file
-    '''
-    fname = str(tmpdir.join('synopsis.yaml'))
+    """
+    fname = str(tmpdir.join("synopsis.yaml"))
     with vcr.use_cassette(fname) as cass:
         urlopen(httpbin.url).read()
         assert cass.play_count == 0
@@ -45,9 +45,9 @@ def test_disk_saver_write(tmpdir, httpbin):
     # the mtime doesn't change
     time.sleep(1)
 
-    with vcr.use_cassette(fname, record_mode='any') as cass:
+    with vcr.use_cassette(fname, record_mode="any") as cass:
         urlopen(httpbin.url).read()
-        urlopen(httpbin.url + '/get').read()
+        urlopen(httpbin.url + "/get").read()
         assert cass.play_count == 1
         assert cass.dirty
     last_mod2 = os.path.getmtime(fname)

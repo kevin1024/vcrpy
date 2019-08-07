@@ -5,7 +5,6 @@ env:
     # - secure: AifoKzwhjV94cmcQZrdQmqRu/9rkZZvWpwBv1daeAQpLOKFPGsOm3D+x2cSw9+iCfkgDZDfqQVv1kCaFVxTll8v8jTq5SJdqEY0NmGWbj/UkNtShh609oRDsuzLxAEwtVKYjf/h8K2BRea+bl1tGkwZ2vtmYS6dxNlAijjWOfds=
     # - secure: LBSEg/gMj4u4Hrpo3zs6Y/1mTpd2RtcN49mZIFgTdbJ9IhpiNPqcEt647Lz94F9Eses2x2WbNuKqZKZZReY7QLbEzU1m0nN5jlaKrjcG5NR5clNABfFFyhgc0jBikyS4abAG8jc2efeaTrFuQwdoF4sE8YiVrkiVj2X5Xoi6sBk=
   matrix:
-    - TOX_SUFFIX="flakes"
     - TOX_SUFFIX="requests"
     - TOX_SUFFIX="httplib2"
     - TOX_SUFFIX="boto3"
@@ -14,13 +13,16 @@ env:
     - TOX_SUFFIX="aiohttp"
 matrix:
   include:
-    - env: TOX_SUFFIX="flakes"
+    - env: TOX_SUFFIX="lint"
       python: 3.7
       dist: xenial
     - env: TOX_SUFFIX="requests"
       python: 3.7
       dist: xenial
     - env: TOX_SUFFIX="httplib2"
+      python: 3.7
+      dist: xenial
+    - env: TOX_SUFFIX="boto3"
       python: 3.7
       dist: xenial
     - env: TOX_SUFFIX="urllib3"
@@ -36,13 +38,16 @@ matrix:
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy3"
   exclude:
-    # Only run flakes on a single Python 2.x and a single 3.x
-    - env: TOX_SUFFIX="flakes"
+    # Only run lint on a single 3.x
+    - env: TOX_SUFFIX="lint"
+      python: 2.7
+    - env: TOX_SUFFIX="lint"
       python: 3.5
-    - env: TOX_SUFFIX="flakes"
+    - env: TOX_SUFFIX="lint"
       python: pypy
-    - env: TOX_SUFFIX="flakes"
+    - env: TOX_SUFFIX="lint"
       python: "pypy3"
+    # Exclude aiohttp support
     - env: TOX_SUFFIX="aiohttp"
       python: 2.7
     - env: TOX_SUFFIX="aiohttp"
@@ -55,7 +60,7 @@ python:
 - "pypy3"
 install:
 - pip install tox-travis codecov
-- if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
+- if [[ $TOX_SUFFIX != 'lint' ]]; then python setup.py install ; fi
 script:
 - tox -e "${TOX_SUFFIX}"
 after_success:

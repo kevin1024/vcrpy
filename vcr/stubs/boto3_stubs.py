@@ -27,17 +27,18 @@ class VCRRequestsHTTPSConnection(VCRHTTPSConnection, VerifiedHTTPSConnection):
 
     def __init__(self, *args, **kwargs):
         if six.PY3:
-            kwargs.pop('strict', None)  # apparently this is gone in py3
+            kwargs.pop("strict", None)  # apparently this is gone in py3
 
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out
         # the reset if you want to see what I mean :)
         from vcr.patch import force_reset
+
         with force_reset():
             self.real_connection = self._baseclass(*args, **kwargs)
             # Make sure to set those attributes as it seems `AWSHTTPConnection` does not
             # set them, making the connection to fail !
             self.real_connection.assert_hostname = kwargs.get("assert_hostname", False)
-            self.real_connection.cert_reqs = kwargs.get("cert_reqs", 'CERT_NONE')
+            self.real_connection.cert_reqs = kwargs.get("cert_reqs", "CERT_NONE")
 
         self._sock = None

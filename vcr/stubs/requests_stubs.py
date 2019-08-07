@@ -1,4 +1,4 @@
-'''Stubs for requests'''
+"""Stubs for requests"""
 
 try:
     from urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection

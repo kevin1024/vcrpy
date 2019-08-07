@@ -13,7 +13,7 @@ def assert_cassette_has_one_response(cass):
 
 def assert_is_json(a_string):
     try:
-        json.loads(a_string.decode('utf-8'))
+        json.loads(a_string.decode("utf-8"))
     except Exception:
         assert False
     assert True

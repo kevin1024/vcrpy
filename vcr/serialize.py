@@ -20,7 +20,7 @@ Deserializing: string (yaml converts from utf-8) -> bytestring
 
 
 def _looks_like_an_old_cassette(data):
-    return isinstance(data, list) and len(data) and 'request' in data[0]
+    return isinstance(data, list) and len(data) and "request" in data[0]
 
 
 def _warn_about_old_cassette_format():
@@ -41,23 +41,18 @@ def deserialize(cassette_string, serializer):
     if _looks_like_an_old_cassette(data):
         _warn_about_old_cassette_format()
 
-    requests = [Request._from_dict(r['request']) for r in data['interactions']]
-    responses = [
-        compat.convert_to_bytes(r['response']) for r in data['interactions']
-    ]
+    requests = [Request._from_dict(r["request"]) for r in data["interactions"]]
+    responses = [compat.convert_to_bytes(r["response"]) for r in data["interactions"]]
     return requests, responses
 
 
 def serialize(cassette_dict, serializer):
-    interactions = ([{
-        'request': compat.convert_to_unicode(request._to_dict()),
-        'response': compat.convert_to_unicode(response),
-    } for request, response in zip(
-        cassette_dict['requests'],
-        cassette_dict['responses'],
-    )])
-    data = {
-        'version': CASSETTE_FORMAT_VERSION,
-        'interactions': interactions,
-    }
+    interactions = [
+        {
+            "request": compat.convert_to_unicode(request._to_dict()),
+            "response": compat.convert_to_unicode(response),
+        }
+        for request, response in zip(cassette_dict["requests"], cassette_dict["responses"])
+    ]
+    data = {"version": CASSETTE_FORMAT_VERSION, "interactions": interactions}
     return serializer.serialize(data)

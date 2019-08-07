@@ -15,7 +15,7 @@ class Request(object):
     def __init__(self, method, uri, body, headers):
         self.method = method
         self.uri = uri
-        self._was_file = hasattr(body, 'read')
+        self._was_file = hasattr(body, "read")
         if self._was_file:
             self.body = body.read()
         else:
@@ -40,13 +40,14 @@ class Request(object):
     @body.setter
     def body(self, value):
         if isinstance(value, text_type):
-            value = value.encode('utf-8')
+            value = value.encode("utf-8")
         self._body = value
 
     def add_header(self, key, value):
-        warnings.warn("Request.add_header is deprecated. "
-                      "Please assign to request.headers instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Request.add_header is deprecated. " "Please assign to request.headers instead.",
+            DeprecationWarning,
+        )
         self.headers[key] = value
 
     @property
@@ -63,7 +64,7 @@ class Request(object):
         port = parse_uri.port
         if port is None:
             try:
-                port = {'https': 443, 'http': 80}[parse_uri.scheme]
+                port = {"https": 443, "http": 80}[parse_uri.scheme]
             except KeyError:
                 pass
         return port
@@ -95,10 +96,10 @@ class Request(object):
 
     def _to_dict(self):
         return {
-            'method': self.method,
-            'uri': self.uri,
-            'body': self.body,
-            'headers': {k: [v] for k, v in self.headers.items()},
+            "method": self.method,
+            "uri": self.uri,
+            "body": self.body,
+            "headers": {k: [v] for k, v in self.headers.items()},
         }
 
     @classmethod

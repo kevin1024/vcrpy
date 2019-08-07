@@ -24,8 +24,8 @@ def convert_body_to_bytes(resp):
     http://pyyaml.org/wiki/PyYAMLDocumentation#Python3support
     """
     try:
-        if resp['body']['string'] is not None and not isinstance(resp['body']['string'], six.binary_type):
-            resp['body']['string'] = resp['body']['string'].encode('utf-8')
+        if resp["body"]["string"] is not None and not isinstance(resp["body"]["string"], six.binary_type):
+            resp["body"]["string"] = resp["body"]["string"].encode("utf-8")
     except (KeyError, TypeError, UnicodeEncodeError):
         # The thing we were converting either wasn't a dictionary or didn't
         # have the keys we were expecting.  Some of the tests just serialize
@@ -45,7 +45,7 @@ def _convert_string_to_unicode(string):
 
     try:
         if string is not None and not isinstance(string, six.text_type):
-            result = string.decode('utf-8')
+            result = string.decode("utf-8")
     except (TypeError, UnicodeDecodeError, AttributeError):
         # Sometimes the string actually is binary or StringIO object,
         # so if you can't decode it, just give up.
@@ -63,17 +63,15 @@ def convert_body_to_unicode(resp):
         # Some of the tests just serialize and deserialize a string.
         return _convert_string_to_unicode(resp)
     else:
-        body = resp.get('body')
+        body = resp.get("body")
 
         if body is not None:
             try:
-                body['string'] = _convert_string_to_unicode(
-                    body['string']
-                )
+                body["string"] = _convert_string_to_unicode(body["string"])
             except (KeyError, TypeError, AttributeError):
                 # The thing we were converting either wasn't a dictionary or
                 # didn't have the keys we were expecting.
                 # For example request object has no 'string' key.
-                resp['body'] = _convert_string_to_unicode(body)
+                resp["body"] = _convert_string_to_unicode(body)
 
     return resp

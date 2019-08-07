@@ -7,14 +7,16 @@ from .config import VCR
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
+
     class NullHandler(logging.Handler):
         def emit(self, record):
             pass
 
+
 if sys.version_info[0] == 2:
     warnings.warn(
         "Python 2.x support of vcrpy is deprecated and will be removed in an upcoming major release.",
-        DeprecationWarning
+        DeprecationWarning,
     )
 
 logging.getLogger(__name__).addHandler(NullHandler())
