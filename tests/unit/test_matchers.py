@@ -1,5 +1,5 @@
 import itertools
-from vcr.compat import mock
+import mock
 
 import pytest
 

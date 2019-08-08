@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
+import mock
+
 import pytest
 
-from vcr.compat import mock
 from vcr.request import Request
 from vcr.serialize import deserialize, serialize
 from vcr.serializers import yamlserializer, jsonserializer, compat
