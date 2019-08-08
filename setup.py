@@ -37,7 +37,7 @@ if sys.version_info[0] == 2:
 
 setup(
     name='vcrpy',
-    version='2.0.1',
+    version='2.1.0',
     description=(
         "Automatically mock your HTTP interactions to simplify and "
         "speed up testing"
@@ -52,7 +52,7 @@ setup(
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-httpbin'],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
