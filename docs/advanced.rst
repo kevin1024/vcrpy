@@ -372,3 +372,16 @@ cassette names, use ``VCR.ensure_suffix`` as follows:
 
     @my_vcr.use_cassette
     def my_test_function():
+
+Rewind Cassette
+---------------
+
+VCR.py allows to rewind a cassette in order to replay it inside the same function/test.
+
+.. code:: python
+
+    with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
+        response = urllib2.urlopen('http://www.zombo.com/').read()
+        assert cass.all_played
+        a.rewind()
+        assert not cass.all_played

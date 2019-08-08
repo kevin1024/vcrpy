@@ -1,7 +1,17 @@
 Changelog
 ---------
--  2.0.2 (UNRELEASED) - Drop support to python 3.4
+-  2.1.1 (UNRELEASED)
+-  2.1.0 - Add a `rewind` method to reset a cassette (thanks @khamidou)
+   New error message with more details on why the cassette failed to play a request (thanks @arthurHamon2, @neozenith)
+   Handle connect tunnel URI (thanks @jeking3)
+   Add code coverage to the project (thanks @neozenith)
+   Drop support to python 3.4
+   Add deprecation warning on python 2.7, next major release will drop python 2.7 support
    Fix build problems on requests tests (thanks to @dunossauro)
+   Fix matching on 'body' failing when Unicode symbols are present in them (thanks @valgur)
+   Fix bugs on aiohttp integration (thanks @graingert, @steinnes, @stj, @lamenezes, @lmazuel)
+   Fix Biopython incompatibility (thanks @rishab121)
+   Fix Boto3 integration (thanks @1oglop1, @arthurHamon2)
 -  2.0.1 - Fix bug when using vcrpy with python 3.4
 -  2.0.0 - Support python 3.7 (fix httplib2 and urllib2, thanks @felixonmars)
    [#356] Fixes `before_record_response` so the original response isn't changed (thanks @kgraves)
