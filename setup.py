@@ -52,7 +52,7 @@ setup(
     license='MIT',
     tests_require=['pytest', 'mock', 'pytest-httpbin'],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
