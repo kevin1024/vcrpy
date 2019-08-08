@@ -1,10 +1,10 @@
+import mock
 import os
 
 import pytest
 import http.client as httplib
 
 from vcr import VCR, use_cassette
-from vcr.compat import mock
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 from vcr.patch import _HTTPConnection, force_reset

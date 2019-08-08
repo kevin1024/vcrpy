@@ -1,8 +1,9 @@
-"""Utilities for patching in cassettes"""
+'''Utilities for patching in cassettes'''
+import contextlib
 import functools
 import itertools
+import mock
 
-from .compat import contextlib, mock
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
 import http.client as httplib
 

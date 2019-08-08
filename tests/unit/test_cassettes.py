@@ -1,12 +1,13 @@
+import contextlib
 import copy
 import inspect
+import mock
 import os
 
 import http.client as httplib
 import pytest
 import yaml
 
-from vcr.compat import mock, contextlib
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset

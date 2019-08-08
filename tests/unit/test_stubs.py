@@ -1,5 +1,6 @@
+import mock
+
 from vcr.stubs import VCRHTTPSConnection
-from vcr.compat import mock
 from vcr.cassette import Cassette
 
 
