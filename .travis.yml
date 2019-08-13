@@ -34,7 +34,7 @@ matrix:
       dist: xenial
   allow_failures:
     - env: TOX_SUFFIX="aiohttp"
-      python: "pypy3.5-5.9.0"
+      python: "pypy3"
   exclude:
     # Only run flakes on a single Python 2.x and a single 3.x
     - env: TOX_SUFFIX="flakes"
@@ -42,7 +42,7 @@ matrix:
     - env: TOX_SUFFIX="flakes"
       python: pypy
     - env: TOX_SUFFIX="flakes"
-      python: "pypy3.5-5.9.0"
+      python: "pypy3"
     - env: TOX_SUFFIX="aiohttp"
       python: 2.7
     - env: TOX_SUFFIX="aiohttp"
@@ -52,7 +52,7 @@ python:
 - 3.5
 - 3.6
 - pypy
-- "pypy3.5-5.9.0"
+- "pypy3"
 install:
 - pip install tox-travis codecov
 - if [[ $TOX_SUFFIX != 'flakes' ]]; then python setup.py install ; fi
