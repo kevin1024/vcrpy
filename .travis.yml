@@ -1,3 +1,4 @@
+dist: xenial
 language: python
 before_install: openssl version
 env:
@@ -15,46 +16,32 @@ matrix:
   include:
     - env: TOX_SUFFIX="lint"
       python: 3.7
-      dist: xenial
     - env: TOX_SUFFIX="requests"
       python: 3.7
-      dist: xenial
     - env: TOX_SUFFIX="httplib2"
       python: 3.7
-      dist: xenial
     - env: TOX_SUFFIX="boto3"
       python: 3.7
-      dist: xenial
     - env: TOX_SUFFIX="urllib3"
       python: 3.7
-      dist: xenial
     - env: TOX_SUFFIX="tornado4"
       python: 3.7
-      dist: xenial
     - env: TOX_SUFFIX="aiohttp"
       python: 3.7
-      dist: xenial
     - env: TOX_SUFFIX="lint"
       python: 3.8-dev
-      dist: xenial
     - env: TOX_SUFFIX="requests"
       python: 3.8-dev
-      dist: xenial
     - env: TOX_SUFFIX="httplib2"
       python: 3.8-dev
-      dist: xenial
     - env: TOX_SUFFIX="boto3"
       python: 3.8-dev
-      dist: xenial
     - env: TOX_SUFFIX="urllib3"
       python: 3.8-dev
-      dist: xenial
     - env: TOX_SUFFIX="tornado4"
       python: 3.8-dev
-      dist: xenial
     - env: TOX_SUFFIX="aiohttp"
       python: 3.8-dev
-      dist: xenial
   allow_failures:
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy3"
