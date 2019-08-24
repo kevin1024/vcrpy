@@ -1,3 +1,4 @@
+dist: xenial
 language: python
 before_install: openssl version
 env:
@@ -13,76 +14,30 @@ env:
     - TOX_SUFFIX="aiohttp"
 matrix:
   include:
+    # Only run lint on a single 3.x
     - env: TOX_SUFFIX="lint"
-      python: 3.7
-      dist: xenial
-    - env: TOX_SUFFIX="requests"
-      python: 3.7
-      dist: xenial
-    - env: TOX_SUFFIX="httplib2"
-      python: 3.7
-      dist: xenial
-    - env: TOX_SUFFIX="boto3"
-      python: 3.7
-      dist: xenial
-    - env: TOX_SUFFIX="urllib3"
-      python: 3.7
-      dist: xenial
-    - env: TOX_SUFFIX="tornado4"
-      python: 3.7
-      dist: xenial
-    - env: TOX_SUFFIX="aiohttp"
-      python: 3.7
-      dist: xenial
-    - env: TOX_SUFFIX="lint"
-      python: 3.8-dev
-      dist: xenial
-    - env: TOX_SUFFIX="requests"
-      python: 3.8-dev
-      dist: xenial
-    - env: TOX_SUFFIX="httplib2"
-      python: 3.8-dev
-      dist: xenial
-    - env: TOX_SUFFIX="boto3"
-      python: 3.8-dev
-      dist: xenial
-    - env: TOX_SUFFIX="urllib3"
-      python: 3.8-dev
-      dist: xenial
-    - env: TOX_SUFFIX="tornado4"
-      python: 3.8-dev
-      dist: xenial
-    - env: TOX_SUFFIX="aiohttp"
-      python: 3.8-dev
-      dist: xenial
+      python: "3.7"
   allow_failures:
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy3"
   exclude:
-    # Only run lint on a single 3.x
-    - env: TOX_SUFFIX="lint"
-      python: 2.7
-    - env: TOX_SUFFIX="lint"
-      python: 3.5
-    - env: TOX_SUFFIX="lint"
-      python: pypy
-    - env: TOX_SUFFIX="lint"
-      python: "pypy3"
     # Exclude aiohttp support
     - env: TOX_SUFFIX="aiohttp"
-      python: 2.7
+      python: "2.7"
     - env: TOX_SUFFIX="aiohttp"
-      python: pypy
+      python: "pypy"
 python:
-- 2.7
-- 3.5
-- 3.6
-- pypy
-- "pypy3"
+  - "2.7"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8-dev"
+  - "pypy"
+  - "pypy3"
 install:
-- pip install tox-travis codecov
-- if [[ $TOX_SUFFIX != 'lint' ]]; then python setup.py install ; fi
+  - pip install tox-travis codecov
+  - if [[ $TOX_SUFFIX != 'lint' ]]; then python setup.py install ; fi
 script:
-- tox -e "${TOX_SUFFIX}"
+  - tox -e "${TOX_SUFFIX}"
 after_success:
   - codecov
