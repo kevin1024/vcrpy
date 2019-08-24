@@ -14,57 +14,25 @@ env:
     - TOX_SUFFIX="aiohttp"
 matrix:
   include:
+    # Only run lint on a single 3.x
     - env: TOX_SUFFIX="lint"
-      python: 3.7
-    - env: TOX_SUFFIX="requests"
-      python: 3.7
-    - env: TOX_SUFFIX="httplib2"
-      python: 3.7
-    - env: TOX_SUFFIX="boto3"
-      python: 3.7
-    - env: TOX_SUFFIX="urllib3"
-      python: 3.7
-    - env: TOX_SUFFIX="tornado4"
-      python: 3.7
-    - env: TOX_SUFFIX="aiohttp"
-      python: 3.7
-    - env: TOX_SUFFIX="lint"
-      python: 3.8-dev
-    - env: TOX_SUFFIX="requests"
-      python: 3.8-dev
-    - env: TOX_SUFFIX="httplib2"
-      python: 3.8-dev
-    - env: TOX_SUFFIX="boto3"
-      python: 3.8-dev
-    - env: TOX_SUFFIX="urllib3"
-      python: 3.8-dev
-    - env: TOX_SUFFIX="tornado4"
-      python: 3.8-dev
-    - env: TOX_SUFFIX="aiohttp"
-      python: 3.8-dev
+      python: "3.7"
   allow_failures:
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy3"
   exclude:
-    # Only run lint on a single 3.x
-    - env: TOX_SUFFIX="lint"
-      python: 2.7
-    - env: TOX_SUFFIX="lint"
-      python: 3.5
-    - env: TOX_SUFFIX="lint"
-      python: pypy
-    - env: TOX_SUFFIX="lint"
-      python: "pypy3"
     # Exclude aiohttp support
     - env: TOX_SUFFIX="aiohttp"
-      python: 2.7
+      python: "2.7"
     - env: TOX_SUFFIX="aiohttp"
-      python: pypy
+      python: "pypy"
 python:
-- 2.7
-- 3.5
-- 3.6
-- pypy
+- "2.7"
+- "3.5"
+- "3.6"
+- "3.7"
+- "3.8-dev"
+- "pypy"
 - "pypy3"
 install:
 - pip install tox-travis codecov
