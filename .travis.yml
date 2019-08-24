@@ -27,17 +27,17 @@ matrix:
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy"
 python:
-- "2.7"
-- "3.5"
-- "3.6"
-- "3.7"
-- "3.8-dev"
-- "pypy"
-- "pypy3"
+  - "2.7"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8-dev"
+  - "pypy"
+  - "pypy3"
 install:
-- pip install tox-travis codecov
-- if [[ $TOX_SUFFIX != 'lint' ]]; then python setup.py install ; fi
+  - pip install tox-travis codecov
+  - if [[ $TOX_SUFFIX != 'lint' ]]; then python setup.py install ; fi
 script:
-- tox -e "${TOX_SUFFIX}"
+  - tox -e "${TOX_SUFFIX}"
 after_success:
   - codecov
