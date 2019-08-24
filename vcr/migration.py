@@ -38,55 +38,46 @@ def preprocess_yaml(cassette):
     # versions.  So this just strips the tags before deserializing.
 
     STRINGS_TO_NUKE = [
-        '!!python/object:vcr.request.Request',
-        '!!python/object/apply:__builtin__.frozenset',
-        '!!python/object/apply:builtins.frozenset',
+        "!!python/object:vcr.request.Request",
+        "!!python/object/apply:__builtin__.frozenset",
+        "!!python/object/apply:builtins.frozenset",
     ]
     for s in STRINGS_TO_NUKE:
-        cassette = cassette.replace(s, '')
+        cassette = cassette.replace(s, "")
     return cassette
 
 
-PARTS = [
-    'protocol',
-    'host',
-    'port',
-    'path',
-]
+PARTS = ["protocol", "host", "port", "path"]
 
 
 def build_uri(**parts):
-    port = parts['port']
-    scheme = parts['protocol']
-    default_port = {'https': 443, 'http': 80}[scheme]
-    parts['port'] = ':{}'.format(port) if port != default_port else ''
+    port = parts["port"]
+    scheme = parts["protocol"]
+    default_port = {"https": 443, "http": 80}[scheme]
+    parts["port"] = ":{}".format(port) if port != default_port else ""
     return "{protocol}://{host}{port}{path}".format(**parts)
 
 
 def _migrate(data):
     interactions = []
     for item in data:
-        req = item['request']
-        res = item['response']
+        req = item["request"]
+        res = item["response"]
         uri = {k: req.pop(k) for k in PARTS}
-        req['uri'] = build_uri(**uri)
+        req["uri"] = build_uri(**uri)
         # convert headers to dict of lists
-        headers = req['headers']
+        headers = req["headers"]
         for k in headers:
             headers[k] = [headers[k]]
         response_headers = {}
-        for k, v in get_httpmessage(
-            b"".join(h.encode('utf-8') for h in res['headers'])
-        ).items():
+        for k, v in get_httpmessage(b"".join(h.encode("utf-8") for h in res["headers"])).items():
             response_headers.setdefault(k, [])
             response_headers[k].append(v)
-        res['headers'] = response_headers
-        interactions.append({'request': req, 'response': res})
+        res["headers"] = response_headers
+        interactions.append({"request": req, "response": res})
     return {
-        'requests': [
-            request.Request._from_dict(i['request']) for i in interactions
-        ],
-        'responses': [i['response'] for i in interactions],
+        "requests": [request.Request._from_dict(i["request"]) for i in interactions],
+        "responses": [i["response"] for i in interactions],
     }
 
 
@@ -105,7 +96,7 @@ def _list_of_tuples_to_dict(fs):
 
 def _already_migrated(data):
     try:
-        if data.get('version') == 1:
+        if data.get("version") == 1:
             return True
     except AttributeError:
         return False
@@ -116,9 +107,7 @@ def migrate_yml(in_fp, out_fp):
     if _already_migrated(data):
         return False
     for i in range(len(data)):
-        data[i]['request']['headers'] = _list_of_tuples_to_dict(
-            data[i]['request']['headers']
-        )
+        data[i]["request"]["headers"] = _list_of_tuples_to_dict(data[i]["request"]["headers"])
     interactions = _migrate(data)
     out_fp.write(serialize(interactions, yamlserializer))
     return True
@@ -127,43 +116,42 @@ def migrate_yml(in_fp, out_fp):
 def migrate(file_path, migration_fn):
     # because we assume that original files can be reverted
     # we will try to copy the content. (os.rename not needed)
-    with tempfile.TemporaryFile(mode='w+') as out_fp:
-        with open(file_path, 'r') as in_fp:
+    with tempfile.TemporaryFile(mode="w+") as out_fp:
+        with open(file_path, "r") as in_fp:
             if not migration_fn(in_fp, out_fp):
                 return False
-        with open(file_path, 'w') as in_fp:
+        with open(file_path, "w") as in_fp:
             out_fp.seek(0)
             shutil.copyfileobj(out_fp, in_fp)
         return True
 
 
 def try_migrate(path):
-    if path.endswith('.json'):
+    if path.endswith(".json"):
         return migrate(path, migrate_json)
-    elif path.endswith('.yaml') or path.endswith('.yml'):
+    elif path.endswith(".yaml") or path.endswith(".yml"):
         return migrate(path, migrate_yml)
     return False
 
 
 def main():
     if len(sys.argv) != 2:
-        raise SystemExit("Please provide path to cassettes directory or file. "
-                         "Usage: python -m vcr.migration PATH")
+        raise SystemExit(
+            "Please provide path to cassettes directory or file. " "Usage: python -m vcr.migration PATH"
+        )
 
     path = sys.argv[1]
     if not os.path.isabs(path):
         path = os.path.abspath(path)
     files = [path]
     if os.path.isdir(path):
-        files = (os.path.join(root, name)
-                 for (root, dirs, files) in os.walk(path)
-                 for name in files)
+        files = (os.path.join(root, name) for (root, dirs, files) in os.walk(path) for name in files)
     for file_path in files:
         migrated = try_migrate(file_path)
-        status = 'OK' if migrated else 'FAIL'
+        status = "OK" if migrated else "FAIL"
         sys.stderr.write("[{}] {}\n".format(status, file_path))
     sys.stderr.write("Done.\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

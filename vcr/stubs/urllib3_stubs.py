@@ -1,4 +1,4 @@
-'''Stubs for urllib3'''
+"""Stubs for urllib3"""
 
 from urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
 from ..stubs import VCRHTTPConnection, VCRHTTPSConnection

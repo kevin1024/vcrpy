@@ -51,9 +51,10 @@ def headers(r1, r2):
     assert r1.headers == r2.headers, "{} != {}".format(r1.headers, r2.headers)
 
 
-def _header_checker(value, header='Content-Type'):
+def _header_checker(value, header="Content-Type"):
     def checker(headers):
-        return value in headers.get(header, '').lower()
+        return value in headers.get(header, "").lower()
+
     return checker
 
 
@@ -62,18 +63,18 @@ def _transform_json(body):
     # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
     # and UTF-32 are also allowed: hmmmmm).
     if body:
-        return json.loads(body.decode('utf-8'))
+        return json.loads(body.decode("utf-8"))
 
 
-_xml_header_checker = _header_checker('text/xml')
-_xmlrpc_header_checker = _header_checker('xmlrpc', header='User-Agent')
+_xml_header_checker = _header_checker("text/xml")
+_xmlrpc_header_checker = _header_checker("xmlrpc", header="User-Agent")
 _checker_transformer_pairs = (
-    (_header_checker('application/x-www-form-urlencoded'),
-        lambda body: urllib.parse.parse_qs(body.decode('ascii'))),
-    (_header_checker('application/json'),
-        _transform_json),
-    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request),
-        xmlrpc_client.loads),
+    (
+        _header_checker("application/x-www-form-urlencoded"),
+        lambda body: urllib.parse.parse_qs(body.decode("ascii")),
+    ),
+    (_header_checker("application/json"), _transform_json),
+    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc_client.loads),
 )
 
 
@@ -92,11 +93,7 @@ def _get_transformer(request):
 def requests_match(r1, r2, matchers):
     successes, failures = get_matchers_results(r1, r2, matchers)
     if failures:
-        log.debug(
-            "Requests {} and {} differ.\n"
-            "Failure details:\n"
-            "{}".format(r1, r2, failures)
-        )
+        log.debug("Requests {} and {} differ.\n" "Failure details:\n" "{}".format(r1, r2, failures))
     return len(failures) == 0
 
 

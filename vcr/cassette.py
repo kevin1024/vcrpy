@@ -17,14 +17,17 @@ from .util import partition_dict
 try:
     from asyncio import iscoroutinefunction
 except ImportError:
+
     def iscoroutinefunction(*args, **kwargs):
         return False
+
 
 if sys.version_info[:2] >= (3, 5):
     from ._handle_coroutine import handle_coroutine
 else:
+
     def handle_coroutine(*args, **kwags):
-        raise NotImplementedError('Not implemented on Python 2')
+        raise NotImplementedError("Not implemented on Python 2")
 
 
 log = logging.getLogger(__name__)
@@ -48,7 +51,7 @@ class CassetteContextDecorator(object):
     this class as a context manager in ``__exit__``.
     """
 
-    _non_cassette_arguments = ('path_transformer', 'func_path_generator')
+    _non_cassette_arguments = ("path_transformer", "func_path_generator")
 
     @classmethod
     def from_args(cls, cassette_class, **kwargs):
@@ -63,14 +66,10 @@ class CassetteContextDecorator(object):
         with contextlib.ExitStack() as exit_stack:
             for patcher in CassettePatcherBuilder(cassette).build():
                 exit_stack.enter_context(patcher)
-            log_format = '{action} context for cassette at {path}.'
-            log.debug(log_format.format(
-                action="Entering", path=cassette._path
-            ))
+            log_format = "{action} context for cassette at {path}."
+            log.debug(log_format.format(action="Entering", path=cassette._path))
             yield cassette
-            log.debug(log_format.format(
-                action="Exiting", path=cassette._path
-            ))
+            log.debug(log_format.format(action="Exiting", path=cassette._path))
             # TODO(@IvanMalison): Hmmm. it kind of feels like this should be
             # somewhere else.
             cassette._save()
@@ -86,12 +85,11 @@ class CassetteContextDecorator(object):
         #         pass
         assert self.__finish is None, "Cassette already open."
         other_kwargs, cassette_kwargs = partition_dict(
-            lambda key, _: key in self._non_cassette_arguments,
-            self._args_getter()
+            lambda key, _: key in self._non_cassette_arguments, self._args_getter()
         )
-        if other_kwargs.get('path_transformer'):
-            transformer = other_kwargs['path_transformer']
-            cassette_kwargs['path'] = transformer(cassette_kwargs['path'])
+        if other_kwargs.get("path_transformer"):
+            transformer = other_kwargs["path_transformer"]
+            cassette_kwargs["path"] = transformer(cassette_kwargs["path"])
         self.__finish = self._patch_generator(self.cls.load(**cassette_kwargs))
         return next(self.__finish)
 
@@ -105,9 +103,7 @@ class CassetteContextDecorator(object):
         # functions are reentrant. This is required for thread
         # safety and the correct operation of recursive functions.
         args_getter = self._build_args_getter_for_decorator(function)
-        return type(self)(self.cls, args_getter)._execute_function(
-            function, args, kwargs
-        )
+        return type(self)(self.cls, args_getter)._execute_function(function, args, kwargs)
 
     def _execute_function(self, function, args, kwargs):
         def handle_function(cassette):
@@ -154,12 +150,12 @@ class CassetteContextDecorator(object):
     def _build_args_getter_for_decorator(self, function):
         def new_args_getter():
             kwargs = self._args_getter()
-            if 'path' not in kwargs:
-                name_generator = (kwargs.get('func_path_generator') or
-                                  self.get_function_name)
+            if "path" not in kwargs:
+                name_generator = kwargs.get("func_path_generator") or self.get_function_name
                 path = name_generator(function)
-                kwargs['path'] = path
+                kwargs["path"] = path
             return kwargs
+
         return new_args_getter
 
 
@@ -181,10 +177,18 @@ class Cassette(object):
     def use(cls, **kwargs):
         return CassetteContextDecorator.from_args(cls, **kwargs)
 
-    def __init__(self, path, serializer=None, persister=None, record_mode='once',
-                 match_on=(uri, method), before_record_request=None,
-                 before_record_response=None, custom_patches=(),
-                 inject=False):
+    def __init__(
+        self,
+        path,
+        serializer=None,
+        persister=None,
+        record_mode="once",
+        match_on=(uri, method),
+        before_record_request=None,
+        before_record_response=None,
+        custom_patches=(),
+        inject=False,
+    ):
         self._persister = persister or FilesystemPersister
         self._path = path
         self._serializer = serializer or yamlserializer
@@ -221,8 +225,7 @@ class Cassette(object):
 
     @property
     def write_protected(self):
-        return self.rewound and self.record_mode == 'once' or \
-            self.record_mode == 'none'
+        return self.rewound and self.record_mode == "once" or self.record_mode == "none"
 
     def append(self, request, response):
         """Add a request, response pair to this cassette"""
@@ -254,9 +257,7 @@ class Cassette(object):
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        return request and request in self and \
-            self.record_mode != 'all' and \
-            self.rewound
+        return request and request in self and self.record_mode != "all" and self.rewound
 
     def play_response(self, request):
         """
@@ -269,8 +270,7 @@ class Cassette(object):
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            "The cassette (%r) doesn't contain the request (%r) asked for"
-            % (self._path, request)
+            "The cassette (%r) doesn't contain the request (%r) asked for" % (self._path, request)
         )
 
     def responses_of(self, request):
@@ -285,8 +285,7 @@ class Cassette(object):
             return responses
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            "The cassette (%r) doesn't contain the request (%r) asked for"
-            % (self._path, request)
+            "The cassette (%r) doesn't contain the request (%r) asked for" % (self._path, request)
         )
 
     def rewind(self):
@@ -333,19 +332,12 @@ class Cassette(object):
 
     def _save(self, force=False):
         if force or self.dirty:
-            self._persister.save_cassette(
-                self._path,
-                self._as_dict(),
-                serializer=self._serializer,
-            )
+            self._persister.save_cassette(self._path, self._as_dict(), serializer=self._serializer)
             self.dirty = False
 
     def _load(self):
         try:
-            requests, responses = self._persister.load_cassette(
-                self._path,
-                serializer=self._serializer,
-            )
+            requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
             for request, response in zip(requests, responses):
                 self.append(request, response)
             self.dirty = False
@@ -354,9 +346,7 @@ class Cassette(object):
             pass
 
     def __str__(self):
-        return "<Cassette containing {} recorded response(s)>".format(
-            len(self)
-        )
+        return "<Cassette containing {} recorded response(s)>".format(len(self))
 
     def __len__(self):
         """Return the number of request,response pairs stored in here"""

@@ -1,6 +1,7 @@
 import six
 from six import BytesIO
 from six.moves.http_client import HTTPMessage
+
 try:
     import http.client
 except ImportError:

@@ -10,10 +10,7 @@ from vcr.cassette import Cassette
     "most_matches, expected_message",
     [
         # No request match found
-        (
-            [],
-            "No similar requests, that have not been played, found."
-        ),
+        ([], "No similar requests, that have not been played, found."),
         # One matcher failed
         (
             [("similar request", ["method", "path"], [("query", "failed : query")])],
@@ -22,8 +19,7 @@ from vcr.cassette import Cassette
             "Matchers succeeded : ['method', 'path']\n"
             "Matchers failed :\n"
             "query - assertion failure :\n"
-            "failed : query\n"
-
+            "failed : query\n",
         ),
         # Multiple failed matchers
         (
@@ -35,14 +31,13 @@ from vcr.cassette import Cassette
             "query - assertion failure :\n"
             "failed : query\n"
             "path - assertion failure :\n"
-            "failed : path\n"
-
+            "failed : path\n",
         ),
         # Multiple similar requests
         (
             [
                 ("similar request", ["method"], [("query", "failed : query")]),
-                ("similar request 2", ["method"], [("query", "failed : query 2")])
+                ("similar request 2", ["method"], [("query", "failed : query 2")]),
             ],
             "Found 2 similar requests with 1 different matcher(s) :\n"
             "\n1 - ('similar request').\n"
@@ -54,20 +49,20 @@ from vcr.cassette import Cassette
             "Matchers succeeded : ['method']\n"
             "Matchers failed :\n"
             "query - assertion failure :\n"
-            "failed : query 2\n"
-
+            "failed : query 2\n",
         ),
-    ]
+    ],
 )
 def test_CannotOverwriteExistingCassetteException_get_message(
-        mock_find_requests_with_most_matches, most_matches, expected_message):
+    mock_find_requests_with_most_matches, most_matches, expected_message
+):
     mock_find_requests_with_most_matches.return_value = most_matches
     cassette = Cassette("path")
     failed_request = "request"
-    exception_message = errors.CannotOverwriteExistingCassetteException._get_message(
-        cassette, "request"
+    exception_message = errors.CannotOverwriteExistingCassetteException._get_message(cassette, "request")
+    expected = (
+        "Can't overwrite existing cassette (%r) in your current record mode (%r).\n"
+        "No match for the request (%r) was found.\n"
+        "%s" % (cassette._path, cassette.record_mode, failed_request, expected_message)
     )
-    expected = "Can't overwrite existing cassette (%r) in your current record mode (%r).\n" \
-               "No match for the request (%r) was found.\n" \
-               "%s" % (cassette._path, cassette.record_mode, failed_request, expected_message)
     assert exception_message == expected
