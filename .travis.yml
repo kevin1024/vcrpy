@@ -20,7 +20,7 @@ matrix:
   allow_failures:
     - env: TOX_SUFFIX="aiohttp"
       python: "pypy3"
-    - python: "py3.8-dev"
+    - python: "3.8-dev"
   exclude:
     # Exclude aiohttp support
     - env: TOX_SUFFIX="aiohttp"
