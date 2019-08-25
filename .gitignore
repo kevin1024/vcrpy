@@ -5,7 +5,7 @@
 build/
 dist/
 *.egg/
-.coverage
+.coverage*
 coverage.xml
 htmlcov/
 *.egg-info/
