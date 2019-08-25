@@ -10,6 +10,8 @@ coverage.xml
 htmlcov/
 *.egg-info/
 pytestdebug.log
+pip-wheel-metadata/
+.python-version
 
 fixtures/
 /docs/_build

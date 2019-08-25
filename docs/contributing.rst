@@ -27,6 +27,38 @@ for how to set this up. I have marked the boto tests as optional in
 Travis so you don't have to worry about them failing if you submit a
 pull request.
 
+Using PyEnv with VCR's test suite
+---------------------------------
+
+PyEnv is a tool for managing multiple installation of python on your system.
+See the full documentation at their `github <https://github.com/pyenv/pyenv>` 
+but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>` 
+in this example::
+
+    git clone https://github.com/pyenv/pyenv ~/.pyenv
+
+    # Add ~/.pyenv/bin to your PATH
+    export PATH="$PATH:~/.pyenv/bin"
+
+    # Setup shim paths
+    eval "$(pyenv init -)"
+
+    # Setup your local system tox tooling
+    pip install tox tox-pyenv
+
+    # Install supported versions (at time of writing), this does not activate them
+    pyenv install 2.7.10 3.5.7 3.6.9 3.7.4 3.8-dev pypy2.6-7.1.1 pypy3.6-7.1.1
+
+    # This activates them
+    pyenv local 2.7.10 3.5.7 3.6.9 3.7.4 3.8-dev pypy2.6-7.1.1 pypy3.6-7.1.1
+
+    # Run the whole test suite
+    tox
+
+    # Run the whole test suite or just part of it
+    tox -e lint
+    tox -e py37-requests
+
 
 Troubleshooting on MacOSX
 -------------------------
