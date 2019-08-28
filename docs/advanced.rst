@@ -97,12 +97,12 @@ Create your own method with the following signature
 
     def my_matcher(r1, r2):
 
-Your method receives the two requests and can return :
+Your method receives the two requests and can either:
 
-- Use an ``assert`` statement in the matcher, then we have ``None`` if they match, raise an `AssertionError`` if they don't.
-- A boolean, ``True`` if they match, ``False`` if they don't.
+- Use an ``assert`` statement: return None if they match and raise ``AssertionError`` if not.
+- Return a boolean: ``True`` if they match, ``False`` if not.
 
-Note : You should use an ``assert`` statement in order to have feedback when a matcher is failing.
+Note: in order to have good feedback when a matcher fails, we recommend using an ``assert`` statement with a clear error message.
 
 Finally, register your method with VCR to use your new request matcher.
 
@@ -111,7 +111,8 @@ Finally, register your method with VCR to use your new request matcher.
     import vcr
 
     def jurassic_matcher(r1, r2):
-        assert r1.uri == r2.uri and 'JURASSIC PARK' in r1.body
+        assert r1.uri == r2.uri and 'JURASSIC PARK' in r1.body, \
+            'required string (JURASSIC PARK) not found in request body'
 
     my_vcr = vcr.VCR()
     my_vcr.register_matcher('jurassic', jurassic_matcher)
