@@ -3,6 +3,7 @@ Changelog
 -  2.1.1 (UNRELEASED)
   - Format code with black (@neozenith)
   - Use latest pypy3 in Travis (@hugovk)
+  - Improve documentation about custom matchers (@gward)
 -  2.1.0 - Add a `rewind` method to reset a cassette (thanks @khamidou)
    New error message with more details on why the cassette failed to play a request (thanks @arthurHamon2, @neozenith)
    Handle connect tunnel URI (thanks @jeking3)
