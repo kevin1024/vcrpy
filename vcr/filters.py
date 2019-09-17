@@ -82,6 +82,10 @@ def replace_post_data_parameters(request, replacements):
       3. A callable which accepts (key, value, request) and returns a string
          value or None.
     """
+    if not request.body:
+        # Nothing to replace
+        return request
+
     replacements = dict(replacements)
     if request.method == "POST" and not isinstance(request.body, BytesIO):
         if request.headers.get("Content-Type") == "application/json":
