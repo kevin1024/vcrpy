@@ -136,6 +136,23 @@ def test_replace_post_data_parameters():
     assert request.body == b"one=keep&three=tada&four=SHOUT"
 
 
+def test_replace_post_data_parameters_empty_body():
+    # This test ensures replace_post_data_parameters doesn't throw exception when body is empty.
+    body = None
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(
+        request,
+        [
+            ("two", None),
+            ("three", "tada"),
+            ("four", lambda key, value, request: value.upper()),
+            ("five", lambda key, value, request: None),
+            ("six", "doesntexist"),
+        ],
+    )
+    assert request.body is None
+
+
 def test_remove_post_data_parameters():
     # Test the backward-compatible API wrapper.
     body = b"id=secret&foo=bar"
