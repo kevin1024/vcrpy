@@ -101,3 +101,6 @@ Pytest Integration
 
 A Pytest plugin is available here : `pytest-vcr
 <https://github.com/ktosiek/pytest-vcr>`__.
+
+Alternative plugin, that also provides network access blocking: `pytest-recording
+<https://github.com/kiwicom/pytest-recording>`__.
