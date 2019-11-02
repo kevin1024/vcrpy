@@ -54,6 +54,16 @@ req2_body = (
     b"<member><name>a</name><value><string>1</string></value></member>"
     b"</struct></value></data></array></value></param></params></methodCall>"
 )
+boto3_bytes_headers = {
+    "X-Amz-Content-SHA256": b"UNSIGNED-PAYLOAD",
+    "Cache-Control": b"max-age=31536000, public",
+    "X-Amz-Date": b"20191102T143910Z",
+    "User-Agent": b"Boto3/1.9.102 Python/3.5.3 Linux/4.15.0-54-generic Botocore/1.12.253 Resource",
+    "Content-MD5": b"GQqjEXsRqrPyxfTl99nkAg==",
+    "Content-Type": b"text/plain",
+    "Expect": b"100-continue",
+    "Content-Length": "21",
+}
 
 
 @pytest.mark.parametrize(
@@ -109,6 +119,11 @@ req2_body = (
             request.Request(
                 "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
             ),
+        ),
+        (
+            # special case for boto3 bytes headers
+            request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
+            request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
         ),
     ],
 )
