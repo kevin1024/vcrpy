@@ -53,7 +53,10 @@ def headers(r1, r2):
 
 def _header_checker(value, header="Content-Type"):
     def checker(headers):
-        return value in headers.get(header, "").lower()
+        _header = headers.get(header, "")
+        if isinstance(_header, bytes):
+            _header = _header.decode("utf-8")
+        return value in _header.lower()
 
     return checker
 
