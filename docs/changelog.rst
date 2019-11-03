@@ -6,6 +6,7 @@ Changelog
   - Improve documentation about custom matchers (@gward)
   - Fix exception when body is empty (@keithprickett)
   - Add `pytest-recording` to the documentation as an alternative Pytest plugin (@Stranger6667)
+  - Fix yarl and python3.5 version issue (@neozenith)
 -  2.1.0 - Add a `rewind` method to reset a cassette (thanks @khamidou)
    New error message with more details on why the cassette failed to play a request (thanks @arthurHamon2, @neozenith)
    Handle connect tunnel URI (thanks @jeking3)
