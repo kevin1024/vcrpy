@@ -1,6 +1,8 @@
 Changelog
 ---------
--  2.1.1 (UNRELEASED)
+-  2.1.x (UNRELEASED)
+  - ....
+-  2.1.1 
   - Format code with black (@neozenith)
   - Use latest pypy3 in Travis (@hugovk)
   - Improve documentation about custom matchers (@gward)
