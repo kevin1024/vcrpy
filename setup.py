@@ -28,7 +28,8 @@ install_requires = [
     "six>=1.5",
     'contextlib2; python_version=="2.7"',
     'mock; python_version=="2.7"',
-    'yarl; python_version>="3.5"',
+    'yarl; python_version>="3.6"',
+    'yarl<1.4; python_version=="3.5"',
 ]
 
 excluded_packages = ["tests*"]
