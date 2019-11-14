@@ -384,5 +384,5 @@ VCR.py allows to rewind a cassette in order to replay it inside the same functio
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
         response = urllib2.urlopen('http://www.zombo.com/').read()
         assert cass.all_played
-        a.rewind()
+        cass.rewind()
         assert not cass.all_played
