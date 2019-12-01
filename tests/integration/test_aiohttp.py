@@ -263,6 +263,15 @@ def test_redirect(aiohttp_client, tmpdir):
         assert len(cassette) == 3
         assert cassette.play_count == 3
 
+    # Assert that the real response and the cassette response have a similar
+    # looking request_info.
+    assert cassette_response.request_info.url == response.request_info.url
+    assert cassette_response.request_info.method == response.request_info.method
+    assert {k: v for k, v in cassette_response.request_info.headers.items()} == {
+        k: v for k, v in response.request_info.headers.items()
+    }
+    assert cassette_response.request_info.real_url == response.request_info.real_url
+
 
 def test_double_requests(tmpdir):
     """We should capture, record, and replay all requests and response chains,
@@ -280,23 +289,16 @@ def test_double_requests(tmpdir):
         resp, cassette_response_text = get(url, output="text")
         assert resp.status == 200
         assert cassette_response_text == response_text1
-        # This check fails because we increment the play_count
-        # to 2 in the while loop!
+
+        # We made only one request, so we should only play 1 recording.
         assert cassette.play_count == 1
 
         # Now make the second test to url
         resp, cassette_response_text = get(url, output="text")
 
-        # This check fails because we have a 599, not a 200 returned.
         assert resp.status == 200
-        # assert resp.status == 599  # <----- sad path check :(
 
-        # This check fails because we get a error message back, not the
-        # actual response text
         assert cassette_response_text == response_text2
 
-        # sad_path_message = 'No match for the request <Request (GET) https://httpbin.org/get> was found'
-        # assert cassette_response_text.startswith(sad_path_message)  # <--- Sad path check :(
-
-        # The final play_count is correct
+        # Now that we made both requests, we should have played both.
         assert cassette.play_count == 2

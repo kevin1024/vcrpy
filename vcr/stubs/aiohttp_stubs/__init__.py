@@ -6,7 +6,7 @@ import functools
 import logging
 import json
 
-from aiohttp import ClientResponse, streams
+from aiohttp import ClientConnectionError, ClientResponse, RequestInfo, streams
 from multidict import CIMultiDict, CIMultiDictProxy
 from yarl import URL
 
@@ -20,14 +20,14 @@ class MockStream(asyncio.StreamReader, streams.AsyncStreamReaderMixin):
 
 
 class MockClientResponse(ClientResponse):
-    def __init__(self, method, url):
+    def __init__(self, method, url, request_info=None):
         super().__init__(
             method=method,
             url=url,
             writer=None,
             continue100=None,
             timer=None,
-            request_info=None,
+            request_info=request_info,
             traces=None,
             loop=asyncio.get_event_loop(),
             session=None,
@@ -58,7 +58,13 @@ class MockClientResponse(ClientResponse):
 
 
 def build_response(vcr_request, vcr_response, history):
-    response = MockClientResponse(vcr_request.method, URL(vcr_response.get("url")))
+    request_info = RequestInfo(
+        url=URL(vcr_request.url),
+        method=vcr_request.method,
+        headers=CIMultiDictProxy(CIMultiDict(vcr_request.headers)),
+        real_url=URL(vcr_request.url),
+    )
+    response = MockClientResponse(vcr_request.method, URL(vcr_response.get("url")), request_info=request_info)
     response.status = vcr_response["status"]["code"]
     response._body = vcr_response["body"].get("string", b"")
     response.reason = vcr_response["status"]["message"]
@@ -69,59 +75,94 @@ def build_response(vcr_request, vcr_response, history):
     return response
 
 
+def _serialize_headers(headers):
+    """Serialize CIMultiDictProxy to a pickle-able dict because proxy
+        objects forbid pickling:
+
+        https://github.com/aio-libs/multidict/issues/340
+    """
+    # Mark strings as keys so 'istr' types don't show up in
+    # the cassettes as comments.
+    return {str(k): v for k, v in headers.items()}
+
+
 def play_responses(cassette, vcr_request):
     history = []
     vcr_response = cassette.play_response(vcr_request)
     response = build_response(vcr_request, vcr_response, history)
 
-    # If we're following redirects, play it and continue playing
-    # until we stop.
-    while str(response.status).startswith('3'):
-        _next_url = URL(response.url).with_path(response.headers['location'])
-        # TODO: This can probably just be response.headeres.items
-        _next_headers = {str(key): value for key, value in response.headers.items()}
-        _next_vcr_request = Request('GET', str(_next_url), None, _next_headers)
+    # If we're following redirects, continue playing until we reach
+    # our final destination.
+    while 300 <= response.status <= 399:
+        next_url = URL(response.url).with_path(response.headers["location"])
 
+        # Make a stub VCR request that we can then use to look up the recorded
+        # VCR request saved to the cassette. This feels a little hacky and
+        # may have edge cases based on the headers we're providing (e.g. if
+        # there's a matcher that is used to filter by headers).
+        vcr_request = Request("GET", str(next_url), None, _serialize_headers(response.request_info.headers))
+        vcr_request = cassette.find_requests_with_most_matches(vcr_request)[0][0]
+
+        # Tack on the response we saw from the redirect into the history
+        # list that is added on to the final response.
         history.append(response)
-        vcr_response = cassette.play_response(_next_vcr_request)
+        vcr_response = cassette.play_response(vcr_request)
         response = build_response(vcr_request, vcr_response, history)
 
     return response
 
 
-# TODO: Build from response.request_info entirely?
-async def record_response(cassette, vcr_request, response, past=False):
-    body = {} if past else {"string": (await response.read())}
-    # TODO: This can probably just be response.headeres.items
-    headers = {str(key): value for key, value in response.headers.items()}
+async def record_response(cassette, vcr_request, response):
+    """Record a VCR request-response chain to the cassette."""
+
+    try:
+        body = {"string": (await response.read())}
+    # aiohttp raises a ClientConnectionError on reads when
+    # there is no body. We can use this to know to not write one.
+    except ClientConnectionError as e:
+        body = {}
 
     vcr_response = {
         "status": {"code": response.status, "message": response.reason},
-        "headers": headers,
+        "headers": _serialize_headers(response.headers),
         "body": body,  # NOQA: E999
         "url": str(response.url),
     }
 
-    # If we followed redirects, then recreate a new VCR
-    # request that we save so we can have a request
-    # per response, even if it's invisible to the
-    # end-user.
-    if past:
-        _request = response.request_info
-        # No data because it's following a redirect.
-        _vcr_request = Request(_request.method, str(_request.url), None, headers)
-
-    cassette.append(_vcr_request if past else vcr_request, vcr_response)
+    cassette.append(vcr_request, vcr_response)
 
 
 async def record_responses(cassette, vcr_request, response):
-    #import pdb; pdb.set_trace()
-    for past_response in response.history:
-        await record_response(cassette, vcr_request, past_response, past=True)
+    """Because aiohttp follows redirects by default, we must support
+        them by default. This method is used to write individual
+        request-response chains that were implicitly followed to get
+        to the final destination.
+    """
 
-    # TODO: We should rename `past` to `followed_redirects` because that's really what
-    # matters here. 
-    await record_response(cassette, vcr_request, response, past=bool(response.history))
+    for past_response in response.history:
+        aiohttp_request = past_response.request_info
+
+        # No data because it's following a redirect.
+        past_request = Request(
+            aiohttp_request.method,
+            str(aiohttp_request.url),
+            None,
+            _serialize_headers(aiohttp_request.headers),
+        )
+        await record_response(cassette, past_request, past_response)
+
+    # If we're following redirects, then the last request-response
+    # we record is the one attached to the `response`.
+    if response.history:
+        aiohttp_request = response.request_info
+        vcr_request = Request(
+            aiohttp_request.method,
+            str(aiohttp_request.url),
+            None,
+            _serialize_headers(aiohttp_request.headers),
+        )
+
+    await record_response(cassette, vcr_request, response)
 
 
 def vcr_request(cassette, real_request):
@@ -144,7 +185,6 @@ def vcr_request(cassette, real_request):
 
         vcr_request = Request(method, str(request_url), data, headers)
 
-        #import pdb; pdb.set_trace()
         if cassette.can_play_response_for(vcr_request):
             return play_responses(cassette, vcr_request)
 
@@ -162,7 +202,6 @@ def vcr_request(cassette, real_request):
 
         log.info("%s not in cassette, sending to real server", vcr_request)
 
-        #import pdb; pdb.set_trace()
         response = await real_request(self, method, url, **kwargs)  # NOQA: E999
         await record_responses(cassette, vcr_request, response)
         return response
