@@ -262,3 +262,41 @@ def test_redirect(aiohttp_client, tmpdir):
         assert len(cassette_response.history) == len(response.history)
         assert len(cassette) == 3
         assert cassette.play_count == 3
+
+
+def test_double_requests(tmpdir):
+    """We should capture, record, and replay all requests and response chains,
+        even if there are duplicate ones.
+
+        We should replay in the order we saw them.
+    """
+    url = "https://httpbin.org/get"
+
+    with vcr.use_cassette(str(tmpdir.join("text.yaml"))):
+        _, response_text1 = get(url, output="text")
+        _, response_text2 = get(url, output="text")
+
+    with vcr.use_cassette(str(tmpdir.join("text.yaml"))) as cassette:
+        resp, cassette_response_text = get(url, output="text")
+        assert resp.status == 200
+        assert cassette_response_text == response_text1
+        # This check fails because we increment the play_count
+        # to 2 in the while loop!
+        assert cassette.play_count == 1
+
+        # Now make the second test to url
+        resp, cassette_response_text = get(url, output="text")
+
+        # This check fails because we have a 599, not a 200 returned.
+        assert resp.status == 200
+        # assert resp.status == 599  # <----- sad path check :(
+
+        # This check fails because we get a error message back, not the
+        # actual response text
+        assert cassette_response_text == response_text2
+
+        # sad_path_message = 'No match for the request <Request (GET) https://httpbin.org/get> was found'
+        # assert cassette_response_text.startswith(sad_path_message)  # <--- Sad path check :(
+
+        # The final play_count is correct
+        assert cassette.play_count == 2
