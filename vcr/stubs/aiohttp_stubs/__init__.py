@@ -119,7 +119,7 @@ async def record_response(cassette, vcr_request, response):
         body = {"string": (await response.read())}
     # aiohttp raises a ClientConnectionError on reads when
     # there is no body. We can use this to know to not write one.
-    except ClientConnectionError as e:
+    except ClientConnectionError:
         body = {}
 
     vcr_response = {
