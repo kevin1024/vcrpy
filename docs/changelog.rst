@@ -1,5 +1,9 @@
 Changelog
 ---------
+-  3.0.0 (UNRELEASED)
+  - Fix multiple requests being replayed per single request in aiohttp stub (@nickdirienzo)
+  - Add support for `request_info` on mocked responses in aiohttp stub (@nickdirienzo)
+  - ...
 -  2.1.x (UNRELEASED)
   - ....
 -  2.1.1 
