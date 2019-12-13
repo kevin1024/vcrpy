@@ -12,8 +12,9 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
   - Add Python 3.8 TravisCI support
 -  3.0.0
   - This release is a breaking change as it changes how aiohttp follows redirects and your cassettes may need to be re-recorded with this update.
-  - Fix multiple requests being replayed per single request in aiohttp stub (@nickdirienzo)
-  - Add support for `request_info` on mocked responses in aiohttp stub (@nickdirienzo)
+  - Fix multiple requests being replayed per single request in aiohttp stub #495 (@nickdirienzo)
+  - Add support for `request_info` on mocked responses in aiohttp stub #495 (@nickdirienzo)
+  - doc: fixed variable name (a -> cass) in an example for rewind #492 (@yarikoptic)
 -  2.1.1 
   - Format code with black (@neozenith)
   - Use latest pypy3 in Travis (@hugovk)
