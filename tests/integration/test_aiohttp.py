@@ -262,3 +262,43 @@ def test_redirect(aiohttp_client, tmpdir):
         assert len(cassette_response.history) == len(response.history)
         assert len(cassette) == 3
         assert cassette.play_count == 3
+
+    # Assert that the real response and the cassette response have a similar
+    # looking request_info.
+    assert cassette_response.request_info.url == response.request_info.url
+    assert cassette_response.request_info.method == response.request_info.method
+    assert {k: v for k, v in cassette_response.request_info.headers.items()} == {
+        k: v for k, v in response.request_info.headers.items()
+    }
+    assert cassette_response.request_info.real_url == response.request_info.real_url
+
+
+def test_double_requests(tmpdir):
+    """We should capture, record, and replay all requests and response chains,
+        even if there are duplicate ones.
+
+        We should replay in the order we saw them.
+    """
+    url = "https://httpbin.org/get"
+
+    with vcr.use_cassette(str(tmpdir.join("text.yaml"))):
+        _, response_text1 = get(url, output="text")
+        _, response_text2 = get(url, output="text")
+
+    with vcr.use_cassette(str(tmpdir.join("text.yaml"))) as cassette:
+        resp, cassette_response_text = get(url, output="text")
+        assert resp.status == 200
+        assert cassette_response_text == response_text1
+
+        # We made only one request, so we should only play 1 recording.
+        assert cassette.play_count == 1
+
+        # Now make the second test to url
+        resp, cassette_response_text = get(url, output="text")
+
+        assert resp.status == 200
+
+        assert cassette_response_text == response_text2
+
+        # Now that we made both requests, we should have played both.
+        assert cassette.play_count == 2
