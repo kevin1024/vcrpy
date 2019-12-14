@@ -3,7 +3,7 @@ Changelog
 
 For a full list of triaged issues, bugs and PRs and what release they are targetted for please see the following link.
 
-`ROADMAP MILESTONES <https://github.com/kevin1024/vcrpy/milestones>`
+`ROADMAP MILESTONES <https://github.com/kevin1024/vcrpy/milestones>`_
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
