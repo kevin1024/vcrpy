@@ -8,8 +8,8 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  4.0.0 (UNRELEASED)
-  - Remove Python2 support
-  - Add Python 3.8 TravisCI support
+  - Remove Python2 support (@hugovk)
+  - Add Python 3.8 TravisCI support (@neozenith)
 -  3.0.0
   - This release is a breaking change as it changes how aiohttp follows redirects and your cassettes may need to be re-recorded with this update.
   - Fix multiple requests being replayed per single request in aiohttp stub #495 (@nickdirienzo)

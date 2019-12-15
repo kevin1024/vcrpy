@@ -27,7 +27,14 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx", "sphinx.ext.coverage", "sphinx.ext.viewcode"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.coverage",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.todo",
+    "sphinx.ext.githubpages",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -106,11 +113,11 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.
 # https://read-the-docs.readthedocs.io/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
-if "READTHEDOCS" not in os.environ:
-    import sphinx_rtd_theme
-
-    html_theme = "sphinx_rtd_theme"
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+#  if "READTHEDOCS" not in os.environ:
+#      import sphinx_rtd_theme
+#
+#      html_theme = "sphinx_rtd_theme"
+#      html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -136,7 +143,7 @@ if "READTHEDOCS" not in os.environ:
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+#  html_static_path = ["_static"]
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -258,15 +265,7 @@ man_pages = [(master_doc, "vcrpy", "vcrpy Documentation", [author], 1)]
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (
-        master_doc,
-        "vcrpy",
-        "vcrpy Documentation",
-        author,
-        "vcrpy",
-        "One line description of project.",
-        "Miscellaneous",
-    ),
+    (master_doc, "vcrpy", "vcrpy Documentation", author, "vcrpy", "One line description of project.", "Miscellaneous",),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -284,3 +283,4 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"https://docs.python.org/": None}
+html_theme = "python_docs_theme"
