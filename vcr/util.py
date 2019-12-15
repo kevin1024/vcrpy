@@ -107,15 +107,12 @@ def auto_decorate(decorator, predicate=lambda name, value: isinstance(value, typ
 
     class DecorateAll(type):
         def __setattr__(cls, attribute, value):
-            return super().__setattr__(
-                attribute, maybe_decorate(attribute, value)
-            )
+            return super().__setattr__(attribute, maybe_decorate(attribute, value))
 
         def __new__(cls, name, bases, attributes_dict):
             new_attributes_dict = {
                 attribute: maybe_decorate(attribute, value) for attribute, value in attributes_dict.items()
             }
-            return super().__new__(
-                cls, name, bases, new_attributes_dict
-            )
+            return super().__new__(cls, name, bases, new_attributes_dict)
+
     return DecorateAll

@@ -299,7 +299,7 @@ class VCRConnection:
             self.real_connection.sock = value
 
     def __init__(self, *args, **kwargs):
-        kwargs.pop('strict', None)  # apparently this is gone in py3
+        kwargs.pop("strict", None)  # apparently this is gone in py3
 
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out

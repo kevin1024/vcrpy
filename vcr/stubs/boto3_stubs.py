@@ -24,7 +24,7 @@ class VCRRequestsHTTPSConnection(VCRHTTPSConnection, VerifiedHTTPSConnection):
     _baseclass = VerifiedHTTPSConnection
 
     def __init__(self, *args, **kwargs):
-        kwargs.pop('strict', None)  
+        kwargs.pop("strict", None)
 
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out

@@ -21,8 +21,8 @@ def convert_body_to_bytes(resp):
     http://pyyaml.org/wiki/PyYAMLDocumentation#Python3support
     """
     try:
-        if resp['body']['string'] is not None and not isinstance(resp['body']['string'], bytes):
-            resp['body']['string'] = resp['body']['string'].encode('utf-8')
+        if resp["body"]["string"] is not None and not isinstance(resp["body"]["string"], bytes):
+            resp["body"]["string"] = resp["body"]["string"].encode("utf-8")
     except (KeyError, TypeError, UnicodeEncodeError):
         # The thing we were converting either wasn't a dictionary or didn't
         # have the keys we were expecting.  Some of the tests just serialize
@@ -42,7 +42,7 @@ def _convert_string_to_unicode(string):
 
     try:
         if string is not None and not isinstance(string, str):
-            result = string.decode('utf-8')
+            result = string.decode("utf-8")
     except (TypeError, UnicodeDecodeError, AttributeError):
         # Sometimes the string actually is binary or StringIO object,
         # so if you can't decode it, just give up.

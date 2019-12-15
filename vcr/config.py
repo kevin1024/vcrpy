@@ -20,7 +20,6 @@ from . import filters
 
 
 class VCR:
-
     @staticmethod
     def is_test_method(method_name, function):
         return method_name.startswith("test") and isinstance(function, types.FunctionType)

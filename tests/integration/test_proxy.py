@@ -17,7 +17,7 @@ requests = pytest.importorskip("requests")
 
 
 class Proxy(http.server.SimpleHTTPRequestHandler):
-    '''
+    """
     Simple proxy server.
 
     (Inspired by: http://effbot.org/librarybook/simplehttpserver.htm).

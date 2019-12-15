@@ -1,4 +1,4 @@
-'''Utilities for patching in cassettes'''
+"""Utilities for patching in cassettes"""
 import contextlib
 import functools
 import itertools
@@ -95,7 +95,6 @@ else:
 
 
 class CassettePatcherBuilder:
-
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
         def wrapped(self, *args, **kwargs):
@@ -358,6 +357,7 @@ class CassettePatcherBuilder:
             self._build_patchers_from_mock_triples(mock_triples),
             (http_connection_remover, https_connection_remover),
         )
+
 
 class ConnectionRemover:
     def __init__(self, connection_class):

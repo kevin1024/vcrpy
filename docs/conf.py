@@ -44,9 +44,9 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = 'vcrpy'
-copyright = '2015, Kevin McCarthy'
-author = 'Kevin McCarthy'
+project = "vcrpy"
+copyright = "2015, Kevin McCarthy"
+author = "Kevin McCarthy"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -218,8 +218,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'vcrpy.tex', 'vcrpy Documentation',
-   'Kevin McCarthy', 'manual'),
+    (master_doc, "vcrpy.tex", "vcrpy Documentation", "Kevin McCarthy", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -247,10 +246,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'vcrpy', 'vcrpy Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, "vcrpy", "vcrpy Documentation", [author], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -262,9 +258,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'vcrpy', 'vcrpy Documentation',
-   author, 'vcrpy', 'One line description of project.',
-   'Miscellaneous'),
+    (
+        master_doc,
+        "vcrpy",
+        "vcrpy Documentation",
+        author,
+        "vcrpy",
+        "One line description of project.",
+        "Miscellaneous",
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.
