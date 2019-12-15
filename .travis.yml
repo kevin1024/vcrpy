@@ -17,10 +17,6 @@ matrix:
     # Only run lint on a single 3.x
     - env: TOX_SUFFIX="lint"
       python: "3.7"
-  allow_failures:
-    - env: TOX_SUFFIX="aiohttp"
-      python: "pypy3"
-    - python: "3.8"
 python:
   - "3.5"
   - "3.6"
