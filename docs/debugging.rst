@@ -44,7 +44,7 @@ It can return multiple similar requests with :
 
 CannotOverwriteExistingCassetteException message example :
 
-.. code:: python
+.. code::
 
     CannotOverwriteExistingCassetteException: Can't overwrite existing cassette ('cassette.yaml') in your current record mode ('once').
     No match for the request (<Request (GET) https://www.googleapis.com/?alt=json&maxResults=200>) was found.

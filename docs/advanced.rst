@@ -130,7 +130,7 @@ Finally, register your method with VCR to use your new request matcher.
 Register your own cassette persister
 ------------------------------------
 
-Create your own persistence class, see the :ref:`persister_example`.
+Create your own persistence class, see the example below:
 
 Your custom persister must implement both ``load_cassette`` and ``save_cassette``
 methods.  The ``load_cassette`` method must return a deserialized cassette or raise

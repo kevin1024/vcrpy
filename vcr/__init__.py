@@ -1,9 +1,8 @@
 import logging
-import warnings
-import sys
 from .config import VCR
 from logging import NullHandler
 
+__version__ = "4.0.0"
 
 logging.getLogger(__name__).addHandler(NullHandler())
 

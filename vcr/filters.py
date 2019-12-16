@@ -8,13 +8,11 @@ from .util import CaseInsensitiveDict
 
 
 def replace_headers(request, replacements):
-    """
-    Replace headers in request according to replacements. The replacements
-    should be a list of (key, value) pairs where the value can be any of:
-      1. A simple replacement string value.
-      2. None to remove the given header.
-      3. A callable which accepts (key, value, request) and returns a string
-         value or None.
+    """Replace headers in request according to replacements.
+    The replacements should be a list of (key, value) pairs where the value can be any of:
+    1. A simple replacement string value.
+    2. None to remove the given header.
+    3. A callable which accepts (key, value, request) and returns a string value or None.
     """
     new_headers = request.headers.copy()
     for k, rv in replacements:
@@ -37,10 +35,9 @@ def remove_headers(request, headers_to_remove):
 
 
 def replace_query_parameters(request, replacements):
-    """
-    Replace query parameters in request according to replacements. The
-    replacements should be a list of (key, value) pairs where the value can be
-    any of:
+    """Replace query parameters in request according to replacements.
+
+    The replacements should be a list of (key, value) pairs where the value can be any of:
       1. A simple replacement string value.
       2. None to remove the given header.
       3. A callable which accepts (key, value, request) and returns a string
@@ -73,10 +70,9 @@ def remove_query_parameters(request, query_parameters_to_remove):
 
 
 def replace_post_data_parameters(request, replacements):
-    """
-    Replace post data in request--either form data or json--according to
-    replacements. The replacements should be a list of (key, value) pairs where
-    the value can be any of:
+    """Replace post data in request--either form data or json--according to replacements.
+
+    The replacements should be a list of (key, value) pairs where the value can be any of:
       1. A simple replacement string value.
       2. None to remove the given header.
       3. A callable which accepts (key, value, request) and returns a string
