@@ -35,6 +35,10 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
+autodoc_default_options = {
+    "members": None,
+    "undoc-members": None,
+}
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -286,15 +290,7 @@ man_pages = [(master_doc, "vcrpy", "vcrpy Documentation", [author], 1)]
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (
-        master_doc,
-        "vcrpy",
-        "vcrpy Documentation",
-        author,
-        "vcrpy",
-        "One line description of project.",
-        "Miscellaneous",
-    ),
+    (master_doc, "vcrpy", "vcrpy Documentation", author, "vcrpy", "One line description of project.", "Miscellaneous",),
 ]
 
 # Documents to append as an appendix to all manuals.
