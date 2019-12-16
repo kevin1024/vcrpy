@@ -110,8 +110,8 @@ Using PyEnv with VCR's test suite
 ---------------------------------
 
 PyEnv is a tool for managing multiple installation of python on your system.
-See the full documentation at their `github <https://github.com/pyenv/pyenv>` 
-but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>` 
+See the full documentation at their `github <https://github.com/pyenv/pyenv>`_ 
+but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ 
 in this example::
 
     git clone https://github.com/pyenv/pyenv ~/.pyenv
