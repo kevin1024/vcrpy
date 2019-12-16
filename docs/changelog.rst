@@ -7,7 +7,11 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  4.0.0 (UNRELEASED)
+-  UNRELEASED
+    - ...
+
+
+-  4.0.0
     - Remove Python2 support (@hugovk)
     - Add Python 3.8 TravisCI support (@neozenith)
 
@@ -141,11 +145,13 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Move all request filtering into the ``before_record_callable``.
 -  1.1.0 
     - Add ``before_record_response``. Fix several bugs related to the context management of cassettes.
--  1.0.3: 
+-  1.0.3 
     - Fix an issue with requests 2.4 and make sure case sensitivity is consistent across python versions
--  1.0.2: Fix an issue with requests 2.3
--  1.0.1: Fix a bug with the new ignore requests feature and the once record mode
--  1.0.0: 
+-  1.0.2
+    - Fix an issue with requests 2.3
+-  1.0.1
+    - Fix a bug with the new ignore requests feature and the once record mode
+-  1.0.0 
     - *BACKWARDS INCOMPATIBLE*: Please see the 'upgrade' section in the README. Take a look at the matcher section as well, you might want to update your ``match_on`` settings. 
     - Add support for filtering sensitive data from requests, matching query strings after the order changes and improving the built-in matchers, (thanks to @mshytikov)
     - Support for ignoring requests to certain hosts, bump supported Python3 version to 3.4, fix some bugs with Boto support (thanks @marusich)
@@ -153,80 +159,69 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Added some log messages to help with debugging
     - Added ``all_played`` property on cassette (thanks @mshytikov)
 
--  0.7.0: VCR.py now supports Python 3! (thanks @asundg) Also I
-   refactored the stub connections quite a bit to add support for the
-   putrequest and putheader calls. This version also adds support for
-   httplib2 (thanks @nilp0inter). I have added a couple tests for boto
-   since it is an http client in its own right. Finally, this version
-   includes a fix for a bug where requests wasn't being patched properly
-   (thanks @msabramo).
--  0.6.0: Store response headers as a list since a HTTP response can
-   have the same header twice (happens with set-cookie sometimes). This
-   has the added benefit of preserving the order of headers. Thanks
-   @smallcode for the bug report leading to this change. I have made an
-   effort to ensure backwards compatibility with the old cassettes'
-   header storage mechanism, but if you want to upgrade to the new
-   header storage, you should delete your cassettes and re-record them.
-   Also this release adds better error messages (thanks @msabramo) and
-   adds support for using VCR as a decorator (thanks @smallcode for the
-   motivation)
--  0.5.0: Change the ``response_of`` method to ``responses_of`` since
-   cassettes can now contain more than one response for a request. Since
-   this changes the API, I'm bumping the version. Also includes 2
-   bugfixes: a better error message when attempting to overwrite a
-   cassette file, and a fix for a bug with requests sessions (thanks
-   @msabramo)
--  0.4.0: Change default request recording behavior for multiple
-   requests. If you make the same request multiple times to the same
-   URL, the response might be different each time (maybe the response
-   has a timestamp in it or something), so this will make the same
-   request multiple times and save them all. Then, when you are
-   replaying the cassette, the responses will be played back in the same
-   order in which they were received. If you were making multiple
-   requests to the same URL in a cassette before version 0.4.0, you
-   might need to regenerate your cassette files. Also, removes support
-   for the cassette.play\_count counter API, since individual requests
-   aren't unique anymore. A cassette might contain the same request
-   several times. Also removes secure overwrite feature since that was
-   breaking overwriting files in Windows, and fixes a bug preventing
-   request's automatic body decompression from working.
--  0.3.5: Fix compatibility with requests 2.x
--  0.3.4: Bugfix: close file before renaming it. This fixes an issue on
-   Windows. Thanks @smallcode for the fix.
--  0.3.3: Bugfix for error message when an unreigstered custom matcher
-   was used
--  0.3.2: Fix issue with new config syntax and the ``match_on``
-   parameter. Thanks, @chromy!
--  0.3.1: Fix issue causing full paths to be sent on the HTTP request
-   line.
--  0.3.0: *Backwards incompatible release* - Added support for record
-   modes, and changed the default recording behavior to the "once"
-   record mode. Please see the documentation on record modes for more.
-   Added support for custom request matching, and changed the default
-   request matching behavior to match only on the URL and method. Also,
-   improved the httplib mocking to add support for the
-   ``HTTPConnection.send()`` method. This means that requests won't
-   actually be sent until the response is read, since I need to record
-   the entire request in order to match up the appropriate response. I
-   don't think this should cause any issues unless you are sending
-   requests without ever loading the response (which none of the
-   standard httplib wrappers do, as far as I know. Thanks to @fatuhoku
-   for some of the ideas and the motivation behind this release.
--  0.2.1: Fixed missing modules in setup.py
--  0.2.0: Added configuration API, which lets you configure some
-   settings on VCR (see the README). Also, VCR no longer saves cassettes
-   if they haven't changed at all and supports JSON as well as YAML
-   (thanks @sirpengi). Added amazing new skeumorphic logo, thanks
-   @hairarrow.
--  0.1.0: *backwards incompatible release - delete your old cassette
-   files*: This release adds the ability to access the cassette to make
-   assertions on it, as well as a major code refactor thanks to
-   @dlecocq. It also fixes a couple longstanding bugs with redirects and
-   HTTPS. [#3 and #4]
--  0.0.4: If you have libyaml installed, vcrpy will use the c bindings
-   instead. Speed up your tests! Thanks @dlecocq
--  0.0.3: Add support for requests 1.2.3. Support for older versions of
-   requests dropped (thanks @vitormazzi and @bryanhelmig)
--  0.0.2: Add support for requests / urllib3
--  0.0.1: Initial Release
+-  0.7.0
+    - VCR.py now supports Python 3! (thanks @asundg) 
+    - Also I refactored the stub connections quite a bit to add support for the putrequest and putheader calls.
+    - This version also adds support for httplib2 (thanks @nilp0inter). 
+    - I have added a couple tests for boto since it is an http client in its own right.
+    - Finally, this version includes a fix for a bug where requests wasn't being patched properly (thanks @msabramo).
+-  0.6.0
+    - Store response headers as a list since a HTTP response can have the same header twice (happens with set-cookie sometimes).
+        - This has the added benefit of preserving the order of headers. 
+        - Thanks @smallcode for the bug report leading to this change. 
+    - I have made an effort to ensure backwards compatibility with the old cassettes' header storage mechanism, but if you want to upgrade to the new header storage, you should delete your cassettes and re-record them.
+    - Also this release adds better error messages (thanks @msabramo) 
+    - and adds support for using VCR as a decorator (thanks @smallcode for the motivation)
+-  0.5.0
+    - Change the ``response_of`` method to ``responses_of`` since cassettes can now contain more than one response for a request. 
+        - Since this changes the API, I'm bumping the version. 
+    - Also includes 2 bugfixes: 
+        - a better error message when attempting to overwrite a cassette file, 
+        - and a fix for a bug with requests sessions (thanks @msabramo)
+-  0.4.0
+    - Change default request recording behavior for multiple requests.
+        - If you make the same request multiple times to the same URL, the response might be different each time (maybe the response has a timestamp in it or something), so this will make the same request multiple times and save them all. 
+        - Then, when you are replaying the cassette, the responses will be played back in the same order in which they were received.
+        - If you were making multiple requests to the same URL in a cassette before version 0.4.0, you might need to regenerate your cassette files.
+        - Also, removes support for the cassette.play\_count counter API, since individual requests aren't unique anymore.
+        - A cassette might contain the same request several times.
+    - Also removes secure overwrite feature since that was breaking overwriting files in Windows
+    - And fixes a bug preventing request's automatic body decompression from working.
+-  0.3.5
+    - Fix compatibility with requests 2.x
+-  0.3.4
+    - Bugfix: close file before renaming it. This fixes an issue on Windows. Thanks @smallcode for the fix.
+-  0.3.3
+    - Bugfix for error message when an unreigstered custom matcher was used
+-  0.3.2
+    - Fix issue with new config syntax and the ``match_on`` parameter. Thanks, @chromy!
+-  0.3.1
+    - Fix issue causing full paths to be sent on the HTTP request line.
+-  0.3.0
+    - *Backwards incompatible release*
+    - Added support for record modes, and changed the default recording behavior to the "once" record mode. Please see the documentation on record modes for more.
+    - Added support for custom request matching, and changed the default request matching behavior to match only on the URL and method. 
+    - Also, improved the httplib mocking to add support for the ``HTTPConnection.send()`` method.
+        - This means that requests won't actually be sent until the response is read, since I need to record the entire request in order to match up the appropriate response.
+        - I don't think this should cause any issues unless you are sending requests without ever loading the response (which none of the standard httplib wrappers do, as far as I know).
+    - Thanks to @fatuhoku for some of the ideas and the motivation behind this release.
+-  0.2.1
+    - Fixed missing modules in setup.py
+-  0.2.0
+    - Added configuration API, which lets you configure some settings on VCR (see the README). 
+    - Also, VCR no longer saves cassettes if they haven't changed at all and supports JSON as well as YAML (thanks @sirpengi).
+    - Added amazing new skeumorphic logo, thanks @hairarrow.
+-  0.1.0
+    - *backwards incompatible release - delete your old cassette files*
+    - This release adds the ability to access the cassette to make assertions on it
+    - as well as a major code refactor thanks to @dlecocq. 
+    - It also fixes a couple longstanding bugs with redirects and HTTPS. [#3 and #4]
+-  0.0.4
+    - If you have libyaml installed, vcrpy will use the c bindings instead. Speed up your tests! Thanks @dlecocq
+-  0.0.3
+    - Add support for requests 1.2.3. Support for older versions of requests dropped (thanks @vitormazzi and @bryanhelmig)
+-  0.0.2
+    - Add support for requests / urllib3
+-  0.0.1
+    - Initial Release
 
