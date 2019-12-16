@@ -1,9 +1,6 @@
 import copy
 
-try:
-    from collections import abc as collections_abc  # only works on python 3.3+
-except ImportError:
-    import collections as collections_abc
+from collections import abc as collections_abc
 import functools
 import inspect
 import os
@@ -251,4 +248,5 @@ class VCR:
 
     def test_case(self, predicate=None):
         predicate = predicate or self.is_test_method
+        # TODO: Remove this reference to `six` in favor of the Python3 equivalent
         return six.with_metaclass(auto_decorate(self.use_cassette, predicate))
