@@ -185,6 +185,8 @@ todo_include_todos = False
 
 # Custom sidebar templates, maps document names to template names.
 # html_sidebars = {}
+html_sidebars = {"**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]}
+
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -290,7 +292,15 @@ man_pages = [(master_doc, "vcrpy", "vcrpy Documentation", [author], 1)]
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, "vcrpy", "vcrpy Documentation", author, "vcrpy", "One line description of project.", "Miscellaneous",),
+    (
+        master_doc,
+        "vcrpy",
+        "vcrpy Documentation",
+        author,
+        "vcrpy",
+        "One line description of project.",
+        "Miscellaneous",
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -308,4 +318,4 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"https://docs.python.org/": None}
-html_theme = "python_docs_theme"
+html_theme = "nature"
