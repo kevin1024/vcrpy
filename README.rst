@@ -1,10 +1,16 @@
-|PyPI| |Python versions| |Build Status| |CodeCov| |Gitter| |CodeStyleBlack|
 
-VCR.py
-======
+#########
+VCR.py 📼
+#########
+
+----
+|PyPI| |Python versions| |Build Status| |CodeCov| |Gitter| |CodeStyleBlack|
+----
 
 .. image:: https://raw.github.com/kevin1024/vcrpy/master/vcr.png
-   :alt: vcr.py
+   :alt: vcr.py logo
+   :align: right
+
 
 This is a Python version of `Ruby's VCR
 library <https://github.com/vcr/vcr>`__.
@@ -42,7 +48,7 @@ all HTTP interactions, which will update them to correspond to the new
 API.
 
 License
-=======
+-------
 
 This library uses the MIT license. See `LICENSE.txt <LICENSE.txt>`__ for
 more details
