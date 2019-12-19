@@ -1,6 +1,81 @@
 Contributing
 ============
 
+🚀 Milestones
+--------------
+For anyone interested in the roadmap and projected release milestones please see the following link:
+
+`MILESTONES <https://github.com/kevin1024/vcrpy/milestones>`_
+
+----
+
+🎁 Contributing Issues and PRs
+-------------------------------
+
+ - Issues and PRs will get triaged and assigned to the appropriate milestone.
+ - PRs get priority over issues.
+ - The maintainers have limited bandwidth and do so **voluntarily**.
+
+So whilst reporting issues are valuable, please consider:
+ - contributing an issue with a toy repo that replicates the issue.
+ - contributing PRs is a more valuable donation of your time and effort.
+
+Thanks again for your interest and support in VCRpy. 
+
+We really appreciate it.
+
+----
+
+👥 Collaborators
+-----------------
+
+We also have a large test matrix to cover and would like members to volunteer covering these roles.
+
+============ ==================== ================= ================== ======================
+**Library**  **Issue Triager(s)** **Maintainer(s)** **PR Reviewer(s)** **Release Manager(s)**
+------------ -------------------- ----------------- ------------------ ----------------------
+``core``     Needs support        Needs support     Needs support      @neozenith
+``requests`` @neozenith           Needs support     @neozenith         @neozenith
+``aiohttp``  Needs support        Needs support     Needs support      @neozenith
+``urllib3``  Needs support        Needs support     Needs support      @neozenith
+``httplib2`` Needs support        Needs support     Needs support      @neozenith
+``tornado4`` Needs support        Needs support     Needs support      @neozenith
+``boto3``    Needs support        Needs support     Needs support      @neozenith
+============ ==================== ================= ================== ======================
+
+Role Descriptions
+~~~~~~~~~~~~~~~~~
+
+**Issue Triager:**
+
+Simply adding these three labels for incoming issues means a lot for maintaining this project:
+ -  ``bug`` or ``enhancement``
+ - Which library does it affect? ``core``, ``aiohttp``, ``requests``, ``urllib3``, ``tornado4``, ``httplib2``
+ - If it is a bug, is it ``Verified Can Replicate`` or ``Requires Help Replicating``
+ - Thanking people for raising issues. Feedback is always appreciated.
+ - Politely asking if they are able to link to an example repo that replicates the issue if they haven't already. Being able to _clone and go_ helps the next person and we like that. 😃 
+
+**Maintainer:**
+
+This involves creating PRs to address bugs and enhancement requests. It also means maintaining the test suite, docstrings and documentation .
+
+**PR Reviewer:**
+
+The PR reviewer is a second set of eyes to see if:
+ - Are there tests covering the code paths added/modified?
+ - Do the tests and modifications make sense seem appropriate?
+ - Add specific feedback, even on approvals, why it is accepted. eg "I like how you use a context manager there. 😄 " 
+ - Also make sure they add a line to `docs/changelog.rst` to claim credit for their contribution.
+
+**Release Manager:**
+ - Ensure CI is passing.
+ - Create a release on github and tag it with the changelog release notes.
+ - ``python setup.py build sdist bdist_wheel``
+ - ``twine upload dist/*``
+ - Go to ReadTheDocs build page and trigger a build https://readthedocs.org/projects/vcrpy/builds/
+
+----
+
 Running VCR's test suite
 ------------------------
 
