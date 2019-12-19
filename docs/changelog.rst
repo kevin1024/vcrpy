@@ -14,6 +14,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 -  4.0.0
     - Remove Python2 support (@hugovk)
     - Add Python 3.8 TravisCI support (@neozenith)
+    - Updated the logo to a modern material design (@sean0x42)
 
 -  3.0.0
     - This release is a breaking change as it changes how aiohttp follows redirects and your cassettes may need to be re-recorded with this update.
