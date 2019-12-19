@@ -2,40 +2,35 @@
   xmlns="http://www.w3.org/2000/svg"
   xmlns:xlink="http://www.w3.org/1999/xlink"
   version="1.1" 
-  width="350px" height="200px"
+  viewBox="0 0 350 200"
 >
-  <!-- 
-    Colour Palette
-    
-    Cassette dark grey: #333
-    light green: #93bc54
-    mid green: #77b052
-
-    
-  -->
-  <defs>
-  <g id="reeltape">
-    <title>reeltape</title>
-    
-    <circle cx="250" cy="0" r="50" stroke="#93bc54" stroke-width="20" fill="none" />
-    <circle cx="100" cy="0" r="50" stroke="#77b052" stroke-width="20" fill="none" />
-    
-  </g>
-
-  </defs>
-
   
 <g id="cassette">
-    <rect x="0" y="0" width="350" height="200" rx="15" fill="#333" />
+  <rect x="0" y="0" width="350" height="200" rx="15" fill="#333" />
+  <line x1="15" y1="15" x2="335" y2="15"  stroke-linecap="round" stroke="#444" stroke-width="30" />
+  <line x1="7" y1="15" x2="7" y2="40"  stroke-linecap="round" stroke="#444" stroke-width="15" />
+  <line x1="343" y1="15" x2="343" y2="40"  stroke-linecap="round" stroke="#444" stroke-width="15" />
+  
+  <rect x="20" y="50" width="310" height="130" rx="15" fill="#444" />
+
+  <line x1="75" y1="15" x2="275" y2="15" stroke="#ddd" stroke-width="24" />
+
+  <line x1="100" y1="8" x2="250" y2="8" stroke="#ccc" stroke-width="1" />
+  <line x1="100" y1="15" x2="250" y2="15" stroke="#ccc" stroke-width="1" />
+  <line x1="100" y1="22" x2="250" y2="22" stroke="#ccc" stroke-width="1" />
 </g>
+
 
 <g id="tape">
-    <title>tape</title>
-  <line x1="100" y1="50" x2="250" y2="50" stroke="#77b052" stroke-width="20" />
-
+  <title>tape</title>
+  <line x1="85" y1="65" x2="265" y2="65" stroke="#77b052" stroke-width="20" />
+  <circle cx="265" cy="115" r="50" stroke="#93bc54" stroke-width="20" fill="none" />
+  <circle cx="85" cy="115" r="50" stroke="#77b052" stroke-width="20" fill="none" />
 </g>
 
-<use xlink:href="#reeltape" x="0" y="0" transform="translate(0,100) scale(1.0)" />
-  
+<g id="label">
+  <text x="130" y="0.6em" font-size="2.4em" font-family="monospace" opacity="0.9" fill="#333" font-weight="200" >vcrpy</text>
+
+</g>
 
 </svg>
