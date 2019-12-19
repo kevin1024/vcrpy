@@ -31,7 +31,7 @@ which matchers didn't match. This can help you with debugging custom
 matchers.
 
 CannotOverwriteExistingCassetteException
-========================================
+----------------------------------------
 
 When a request failed to be found in an existing cassette,
 VCR.py tries to get the request(s) that may be similar to the one being searched.
