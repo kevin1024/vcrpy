@@ -53,7 +53,7 @@ Simply adding these three labels for incoming issues means a lot for maintaining
  - Which library does it affect? ``core``, ``aiohttp``, ``requests``, ``urllib3``, ``tornado4``, ``httplib2``
  - If it is a bug, is it ``Verified Can Replicate`` or ``Requires Help Replicating``
  - Thanking people for raising issues. Feedback is always appreciated.
- - Politely asking if they are able to link to an example repo that replicates the issue if they haven't already. Being able to _clone and go_ helps the next person and we like that. 😃 
+ - Politely asking if they are able to link to an example repo that replicates the issue if they haven't already. Being able to *clone and go* helps the next person and we like that. 😃 
 
 **Maintainer:**
 
