@@ -6,12 +6,12 @@
 >
   
 <g id="cassette">
-  <rect x="0" y="0" width="350" height="200" rx="15" fill="#333" />
-  <line x1="15" y1="15" x2="335" y2="15"  stroke-linecap="round" stroke="#444" stroke-width="30" />
-  <line x1="7" y1="15" x2="7" y2="40"  stroke-linecap="round" stroke="#444" stroke-width="15" />
-  <line x1="343" y1="15" x2="343" y2="40"  stroke-linecap="round" stroke="#444" stroke-width="15" />
+  <rect x="0" y="0" width="350" height="200" rx="15" fill="#191B1A" />
+  <line x1="15" y1="15" x2="335" y2="15"  stroke-linecap="round" stroke="#272928" stroke-width="30" />
+  <line x1="7" y1="15" x2="7" y2="40"  stroke-linecap="round" stroke="#272928" stroke-width="15" />
+  <line x1="343" y1="15" x2="343" y2="40"  stroke-linecap="round" stroke="#272928" stroke-width="15" />
   
-  <rect x="20" y="50" width="310" height="130" rx="15" fill="#444" />
+  <rect x="20" y="50" width="310" height="130" rx="15" fill="#272928" />
 
   <line x1="75" y1="15" x2="275" y2="15" stroke="#ddd" stroke-width="24" />
 
@@ -23,13 +23,13 @@
 
 <g id="tape">
   <title>tape</title>
-  <line x1="85" y1="65" x2="265" y2="65" stroke="#77b052" stroke-width="20" />
-  <circle cx="265" cy="115" r="50" stroke="#93bc54" stroke-width="20" fill="none" />
-  <circle cx="85" cy="115" r="50" stroke="#77b052" stroke-width="20" fill="none" />
+  <line x1="85" y1="65" x2="265" y2="65" stroke="#35D97A " stroke-width="20" />
+  <circle cx="265" cy="115" r="50" stroke="#36DFA6" stroke-width="20" fill="none" />
+  <circle cx="85" cy="115" r="50" stroke="#35D97A " stroke-width="20" fill="none" />
 </g>
 
 <g id="label">
-  <text x="130" y="0.6em" font-size="2.4em" font-family="monospace" opacity="0.9" fill="#333" font-weight="200" >vcrpy</text>
+  <text x="130" y="0.6em" font-size="2.4em" font-family="monospace" opacity="0.9" fill="#191B1A" font-weight="200" >vcrpy</text>
 
 </g>
 
