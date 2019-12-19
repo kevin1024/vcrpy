@@ -7,7 +7,7 @@ VCR.py 📼
 |PyPI| |Python versions| |Build Status| |CodeCov| |Gitter| |CodeStyleBlack|
 ----
 
-.. image:: https://raw.github.com/kevin1024/vcrpy/v4.0.x/vcr.svg
+.. image:: https://raw.github.com/kevin1024/vcrpy/v4.0.x/vcr.svg?sanitize=true
    :alt: vcr.py logo
    :align: right
 
