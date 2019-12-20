@@ -1,6 +1,10 @@
 Contributing
 ============
 
+.. image:: _static/vcr.svg
+   :alt: vcr.py logo
+   :align: right
+
 🚀 Milestones
 --------------
 For anyone interested in the roadmap and projected release milestones please see the following link:
