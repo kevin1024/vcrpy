@@ -130,11 +130,11 @@ Finally, register your method with VCR to use your new request matcher.
 Register your own cassette persister
 ------------------------------------
 
-Create your own persistence class, see the :ref:`persister_example`.
+Create your own persistence class, see the example below:
 
 Your custom persister must implement both ``load_cassette`` and ``save_cassette``
 methods.  The ``load_cassette`` method must return a deserialized cassette or raise
- ``ValueError`` if no cassette is found.
+``ValueError`` if no cassette is found.
 
 Once the persister class is defined, register with VCR like so...
 
@@ -143,7 +143,7 @@ Once the persister class is defined, register with VCR like so...
     import vcr
     my_vcr = vcr.VCR()
 
-    class CustomerPersister(object):
+    class CustomerPersister:
         # implement Persister methods...
 
     my_vcr.register_persister(CustomPersister)

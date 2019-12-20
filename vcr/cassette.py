@@ -1,4 +1,5 @@
 import collections
+import contextlib
 import copy
 import sys
 import inspect
@@ -6,13 +7,13 @@ import logging
 
 import wrapt
 
-from .compat import contextlib
 from .errors import UnhandledHTTPRequestError
 from .matchers import requests_match, uri, method, get_matchers_results
 from .patch import CassettePatcherBuilder
 from .serializers import yamlserializer
 from .persisters.filesystem import FilesystemPersister
 from .util import partition_dict
+from ._handle_coroutine import handle_coroutine
 
 try:
     from asyncio import iscoroutinefunction
@@ -22,18 +23,10 @@ except ImportError:
         return False
 
 
-if sys.version_info[:2] >= (3, 5):
-    from ._handle_coroutine import handle_coroutine
-else:
-
-    def handle_coroutine(*args, **kwags):
-        raise NotImplementedError("Not implemented on Python 2")
-
-
 log = logging.getLogger(__name__)
 
 
-class CassetteContextDecorator(object):
+class CassetteContextDecorator:
     """Context manager/decorator that handles installing the cassette and
     removing cassettes.
 
@@ -159,7 +152,7 @@ class CassetteContextDecorator(object):
         return new_args_getter
 
 
-class Cassette(object):
+class Cassette:
     """A container for recorded requests and responses"""
 
     @classmethod

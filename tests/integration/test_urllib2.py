@@ -2,8 +2,8 @@
 """Integration tests with urllib2"""
 
 import ssl
-from six.moves.urllib.request import urlopen
-from six.moves.urllib_parse import urlencode
+from urllib.request import urlopen
+from urllib.parse import urlencode
 import pytest_httpbin.certs
 
 # Internal imports
@@ -104,7 +104,7 @@ def test_post_data(httpbin_both, tmpdir):
 
 def test_post_unicode_data(httpbin_both, tmpdir):
     """Ensure that it works when posting unicode data"""
-    data = urlencode({"snowman": u"☃".encode("utf-8")}).encode("utf-8")
+    data = urlencode({"snowman": "☃".encode()}).encode("utf-8")
     url = httpbin_both.url + "/post"
     with vcr.use_cassette(str(tmpdir.join("post_data.yaml"))):
         res1 = urlopen_with_cafile(url, data).read()

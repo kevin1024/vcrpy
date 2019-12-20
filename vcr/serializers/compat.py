@@ -1,6 +1,3 @@
-import six
-
-
 def convert_to_bytes(resp):
     resp = convert_body_to_bytes(resp)
     return resp
@@ -24,7 +21,7 @@ def convert_body_to_bytes(resp):
     http://pyyaml.org/wiki/PyYAMLDocumentation#Python3support
     """
     try:
-        if resp["body"]["string"] is not None and not isinstance(resp["body"]["string"], six.binary_type):
+        if resp["body"]["string"] is not None and not isinstance(resp["body"]["string"], bytes):
             resp["body"]["string"] = resp["body"]["string"].encode("utf-8")
     except (KeyError, TypeError, UnicodeEncodeError):
         # The thing we were converting either wasn't a dictionary or didn't
@@ -44,7 +41,7 @@ def _convert_string_to_unicode(string):
     result = string
 
     try:
-        if string is not None and not isinstance(string, six.text_type):
+        if string is not None and not isinstance(string, str):
             result = string.decode("utf-8")
     except (TypeError, UnicodeDecodeError, AttributeError):
         # Sometimes the string actually is binary or StringIO object,

@@ -1,6 +1,4 @@
 """Stubs for boto3"""
-import six
-
 try:
     # boto using awsrequest
     from botocore.awsrequest import AWSHTTPConnection as HTTPConnection
@@ -26,8 +24,7 @@ class VCRRequestsHTTPSConnection(VCRHTTPSConnection, VerifiedHTTPSConnection):
     _baseclass = VerifiedHTTPSConnection
 
     def __init__(self, *args, **kwargs):
-        if six.PY3:
-            kwargs.pop("strict", None)  # apparently this is gone in py3
+        kwargs.pop("strict", None)
 
         # need to temporarily reset here because the real connection
         # inherits from the thing that we are mocking out.  Take out

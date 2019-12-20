@@ -1,6 +1,7 @@
+import mock
+
 import pytest
 
-from vcr.compat import mock
 from vcr import errors
 from vcr.cassette import Cassette
 

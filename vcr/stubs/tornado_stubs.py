@@ -1,8 +1,6 @@
 """Stubs for tornado HTTP clients"""
-from __future__ import absolute_import
-
 import functools
-from six import BytesIO
+from io import BytesIO
 
 from tornado import httputil
 from tornado.httpclient import HTTPResponse

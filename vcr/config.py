@@ -1,9 +1,6 @@
 import copy
 
-try:
-    from collections import abc as collections_abc  # only works on python 3.3+
-except ImportError:
-    import collections as collections_abc
+from collections import abc as collections_abc
 import functools
 import inspect
 import os
@@ -19,7 +16,7 @@ from . import matchers
 from . import filters
 
 
-class VCR(object):
+class VCR:
     @staticmethod
     def is_test_method(method_name, function):
         return method_name.startswith("test") and isinstance(function, types.FunctionType)
@@ -102,7 +99,7 @@ class VCR(object):
         return matchers
 
     def use_cassette(self, path=None, **kwargs):
-        if path is not None and not isinstance(path, six.string_types):
+        if path is not None and not isinstance(path, str):
             function = path
             # Assume this is an attempt to decorate a function
             return self._use_cassette(**kwargs)(function)
@@ -251,4 +248,5 @@ class VCR(object):
 
     def test_case(self, predicate=None):
         predicate = predicate or self.is_test_method
+        # TODO: Remove this reference to `six` in favor of the Python3 equivalent
         return six.with_metaclass(auto_decorate(self.use_cassette, predicate))

@@ -1,4 +1,4 @@
-from six import BytesIO
+from io import BytesIO
 from vcr.filters import (
     remove_headers,
     replace_headers,
@@ -8,10 +8,10 @@ from vcr.filters import (
     replace_post_data_parameters,
     decode_response,
 )
-from vcr.compat import mock
 from vcr.request import Request
 import gzip
 import json
+import mock
 import zlib
 
 

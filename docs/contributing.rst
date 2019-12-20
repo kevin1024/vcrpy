@@ -1,6 +1,10 @@
 Contributing
 ============
 
+.. image:: _static/vcr.svg
+   :alt: vcr.py logo
+   :align: right
+
 🚀 Milestones
 --------------
 For anyone interested in the roadmap and projected release milestones please see the following link:
@@ -81,18 +85,22 @@ Running VCR's test suite
 
 The tests are all run automatically on `Travis
 CI <https://travis-ci.org/kevin1024/vcrpy>`__, but you can also run them
-yourself using `py.test <http://pytest.org/>`__ and
-`Tox <http://tox.testrun.org/>`__. Tox will automatically run them in
-all environments VCR.py supports. The test suite is pretty big and slow,
-but you can tell tox to only run specific tests like this::
+yourself using `pytest <http://pytest.org/>`__ and
+`Tox <http://tox.testrun.org/>`__. 
+
+Tox will automatically run them in all environments VCR.py supports if they are available on your `PATH`. Alternatively you can use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ with 
+`pyenv <https://github.com/pyenv/pyenv>`_. 
+We recommend you read the documentation for each and see the section further below.
+
+The test suite is pretty big and slow, but you can tell tox to only run specific tests like this::
 
     tox -e {pyNN}-{HTTP_LIBRARY} -- <pytest flags passed through>
 
-    tox -e py27-requests -- -v -k "'test_status_code or test_gzip'"
+    tox -e py36-requests -- -v -k "'test_status_code or test_gzip'"
     tox -e py37-requests -- -v --last-failed
 
 This will run only tests that look like ``test_status_code`` or
-``test_gzip`` in the test suite, and only in the python 2.7 environment
+``test_gzip`` in the test suite, and only in the python 3.6 environment
 that has ``requests`` installed.
 
 Also, in order for the boto tests to run, you will need an AWS key.
@@ -106,8 +114,8 @@ Using PyEnv with VCR's test suite
 ---------------------------------
 
 PyEnv is a tool for managing multiple installation of python on your system.
-See the full documentation at their `github <https://github.com/pyenv/pyenv>` 
-but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>` 
+See the full documentation at their `github <https://github.com/pyenv/pyenv>`_ 
+but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ 
 in this example::
 
     git clone https://github.com/pyenv/pyenv ~/.pyenv
@@ -122,10 +130,10 @@ in this example::
     pip install tox tox-pyenv
 
     # Install supported versions (at time of writing), this does not activate them
-    pyenv install 2.7.10 3.5.7 3.6.9 3.7.4 3.8-dev pypy2.6-7.1.1 pypy3.6-7.1.1
+    pyenv install 3.5.9 3.6.9 3.7.5 3.8.0 pypy3.6-7.2.0
 
     # This activates them
-    pyenv local 2.7.10 3.5.7 3.6.9 3.7.4 3.8-dev pypy2.6-7.1.1 pypy3.6-7.1.1
+    pyenv local 3.5.9 3.6.9 3.7.5 3.8.0 pypy3.6-7.2.0
 
     # Run the whole test suite
     tox

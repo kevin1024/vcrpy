@@ -1,10 +1,11 @@
 """Utilities for patching in cassettes"""
+import contextlib
 import functools
 import itertools
+import mock
 
-from .compat import contextlib, mock
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
-from six.moves import http_client as httplib
+import http.client as httplib
 
 import logging
 
@@ -93,7 +94,7 @@ else:
     _AiohttpClientSessionRequest = aiohttp.client.ClientSession._request
 
 
-class CassettePatcherBuilder(object):
+class CassettePatcherBuilder:
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
         def wrapped(self, *args, **kwargs):
@@ -358,7 +359,7 @@ class CassettePatcherBuilder(object):
         )
 
 
-class ConnectionRemover(object):
+class ConnectionRemover:
     def __init__(self, connection_class):
         self._connection_class = connection_class
         self._connection_pool_to_connections = {}

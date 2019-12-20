@@ -1,9 +1,10 @@
+import mock
+
 from vcr.stubs import VCRHTTPSConnection
-from vcr.compat import mock
 from vcr.cassette import Cassette
 
 
-class TestVCRConnection(object):
+class TestVCRConnection:
     def test_setting_of_attributes_get_propogated_to_real_connection(self):
         vcr_connection = VCRHTTPSConnection("www.examplehost.com")
         vcr_connection.ssl_version = "example_ssl_version"

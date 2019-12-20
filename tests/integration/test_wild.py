@@ -1,15 +1,12 @@
+import http.client as httplib
 import multiprocessing
 import pytest
-from six.moves import xmlrpc_client, xmlrpc_server
+from xmlrpc.client import ServerProxy
+from xmlrpc.server import SimpleXMLRPCServer
 
 requests = pytest.importorskip("requests")
 
 import vcr  # NOQA
-
-try:
-    import httplib
-except ImportError:
-    import http.client as httplib
 
 
 def test_domain_redirect():
@@ -80,7 +77,7 @@ def test_amazon_doctype(tmpdir):
 
 
 def start_rpc_server(q):
-    httpd = xmlrpc_server.SimpleXMLRPCServer(("127.0.0.1", 0))
+    httpd = SimpleXMLRPCServer(("127.0.0.1", 0))
     httpd.register_function(pow)
     q.put("http://{}:{}".format(*httpd.server_address))
     httpd.serve_forever()
@@ -99,11 +96,11 @@ def rpc_server():
 
 def test_xmlrpclib(tmpdir, rpc_server):
     with vcr.use_cassette(str(tmpdir.join("xmlrpcvideo.yaml"))):
-        roundup_server = xmlrpc_client.ServerProxy(rpc_server, allow_none=True)
+        roundup_server = ServerProxy(rpc_server, allow_none=True)
         original_schema = roundup_server.pow(2, 4)
 
     with vcr.use_cassette(str(tmpdir.join("xmlrpcvideo.yaml"))):
-        roundup_server = xmlrpc_client.ServerProxy(rpc_server, allow_none=True)
+        roundup_server = ServerProxy(rpc_server, allow_none=True)
         second_schema = roundup_server.pow(2, 4)
 
     assert original_schema == second_schema

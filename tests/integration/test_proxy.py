@@ -5,8 +5,9 @@
 import multiprocessing
 import pytest
 
-from six.moves import socketserver, SimpleHTTPServer
-from six.moves.urllib.request import urlopen
+import http.server
+import socketserver
+from urllib.request import urlopen
 
 # Internal imports
 import vcr
@@ -15,7 +16,7 @@ import vcr
 requests = pytest.importorskip("requests")
 
 
-class Proxy(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class Proxy(http.server.SimpleHTTPRequestHandler):
     """
     Simple proxy server.
 

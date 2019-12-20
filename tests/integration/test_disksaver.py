@@ -4,7 +4,7 @@
 # External imports
 import os
 import time
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 
 # Internal imports
 import vcr

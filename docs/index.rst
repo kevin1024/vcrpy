@@ -4,7 +4,7 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    installation
    usage
@@ -14,6 +14,7 @@ Contents
    debugging
    contributing
    changelog
+
 
 ==================
 Indices and tables

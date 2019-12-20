@@ -3,7 +3,7 @@
 
 import sys
 
-from six.moves.urllib_parse import urlencode
+from urllib.parse import urlencode
 import pytest
 import pytest_httpbin.certs
 
@@ -111,7 +111,7 @@ def test_post_data(tmpdir, httpbin_both):
 
 def test_post_unicode_data(tmpdir, httpbin_both):
     """Ensure that it works when posting unicode data"""
-    data = urlencode({"snowman": u"☃".encode("utf-8")})
+    data = urlencode({"snowman": "☃".encode()})
     url = httpbin_both.url + "/post"
     with vcr.use_cassette(str(tmpdir.join("post_data.yaml"))):
         _, res1 = http().request(url, "POST", data)

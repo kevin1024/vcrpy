@@ -1,10 +1,10 @@
+import mock
 import os
 
 import pytest
-from six.moves import http_client as httplib
+import http.client as httplib
 
 from vcr import VCR, use_cassette
-from vcr.compat import mock
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 from vcr.patch import _HTTPConnection, force_reset
@@ -170,7 +170,7 @@ def test_fixtures_with_use_cassette(random_fixture):
 
 
 def test_custom_patchers():
-    class Test(object):
+    class Test:
         attribute = None
         attribute2 = None
 

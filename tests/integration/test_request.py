@@ -1,5 +1,5 @@
 import vcr
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 
 
 def test_recorded_request_uri_with_redirected_request(tmpdir, httpbin):

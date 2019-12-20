@@ -1,12 +1,13 @@
+import contextlib
 import copy
 import inspect
+import mock
 import os
 
-from six.moves import http_client as httplib
+import http.client as httplib
 import pytest
 import yaml
 
-from vcr.compat import mock, contextlib
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset
@@ -208,7 +209,7 @@ def test_nesting_context_managers_by_checking_references_of_http_connection():
 
 
 def test_custom_patchers():
-    class Test(object):
+    class Test:
         attribute = None
 
     with Cassette.use(path="custom_patches", custom_patches=((Test, "attribute", VCRHTTPSConnection),)):

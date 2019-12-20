@@ -1,11 +1,5 @@
-import six
-from six import BytesIO
-from six.moves.http_client import HTTPMessage
-
-try:
-    import http.client
-except ImportError:
-    pass
+from io import BytesIO
+import http.client
 
 
 """
@@ -15,10 +9,7 @@ layer that tries to cope with this move.
 
 
 def get_header(message, name):
-    if six.PY3:
-        return message.getallmatchingheaders(name)
-    else:
-        return message.getheader(name)
+    return message.getallmatchingheaders(name)
 
 
 def get_header_items(message):
@@ -29,16 +20,8 @@ def get_header_items(message):
 
 def get_headers(message):
     for key in set(message.keys()):
-        if six.PY3:
-            yield key, message.get_all(key)
-        else:
-            yield key, message.getheaders(key)
+        yield key, message.get_all(key)
 
 
 def get_httpmessage(headers):
-    if six.PY3:
-        return http.client.parse_headers(BytesIO(headers))
-    msg = HTTPMessage(BytesIO(headers))
-    msg.fp.seek(0)
-    msg.readheaders()
-    return msg
+    return http.client.parse_headers(BytesIO(headers))
