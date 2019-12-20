@@ -2,7 +2,7 @@
 import contextlib
 import functools
 import itertools
-import mock
+from unittest import mock
 
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
 import http.client as httplib
