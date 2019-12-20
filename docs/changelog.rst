@@ -9,8 +9,10 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  UNRELEASED
     - ...
-
-
+-  4.0.2
+    - Fix mock imports as reported in #504 by @llybin. Thank you.
+-  4.0.1 
+    - Fix logo alignment for PyPI 
 -  4.0.0
     - Remove Python2 support (@hugovk)
     - Add Python 3.8 TravisCI support (@neozenith)

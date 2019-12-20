@@ -11,7 +11,7 @@ from vcr.filters import (
 from vcr.request import Request
 import gzip
 import json
-import mock
+from unittest import mock
 import zlib
 
 
