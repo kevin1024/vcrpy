@@ -53,8 +53,9 @@ install_requires = [
 setup(
     name="vcrpy",
     version=find_version("vcr", "__init__.py"),
-    description=("Automatically mock your HTTP interactions to simplify and " "speed up testing"),
+    description=("Automatically mock your HTTP interactions to simplify and speed up testing"),
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Kevin McCarthy",
     author_email="me@kevinmccarthy.org",
     url="https://github.com/kevin1024/vcrpy",

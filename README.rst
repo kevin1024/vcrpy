@@ -1,14 +1,14 @@
 
-#########
+###########
 VCR.py 📼
-#########
+###########
 
 
 |PyPI| |Python versions| |Build Status| |CodeCov| |Gitter| |CodeStyleBlack|
 
 ----
 
-.. image:: https://raw.github.com/kevin1024/vcrpy/master/vcr.png
+.. image:: https://vcrpy.readthedocs.io/en/latest/_images/vcr.svg
    :alt: vcr.py logo
    :align: right
 
