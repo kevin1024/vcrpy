@@ -10,7 +10,6 @@ VCR.py 📼
 
 .. image:: https://vcrpy.readthedocs.io/en/latest/_images/vcr.svg
    :alt: vcr.py logo
-   :align: right
 
 
 This is a Python version of `Ruby's VCR

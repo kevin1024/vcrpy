@@ -2,7 +2,7 @@ import logging
 from .config import VCR
 from logging import NullHandler
 
-__version__ = "4.0.0"
+__version__ = "4.0.1"
 
 logging.getLogger(__name__).addHandler(NullHandler())
 
