@@ -8,7 +8,7 @@ VCR.py 📼
 
 ----
 
-.. image:: https://vcrpy.readthedocs.io/en/latest/_images/vcr.svg
+.. image:: https://raw.github.com/kevin1024/vcrpy/master/vcr.png
    :alt: vcr.py logo
    :align: right
 
