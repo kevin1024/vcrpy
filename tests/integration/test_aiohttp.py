@@ -117,7 +117,8 @@ def test_stream(tmpdir, scheme):
     url = scheme + "://httpbin.org/get"
 
     with vcr.use_cassette(str(tmpdir.join("stream.yaml"))):
-        resp, body = get(url, output="raw")  # Do not use stream here, as the stream is exhausted by vcr
+        resp, body = get(url, output="stream")
+        assert len(body) > 0
 
     with vcr.use_cassette(str(tmpdir.join("stream.yaml"))) as cassette:
         cassette_resp, cassette_body = get(url, output="stream")

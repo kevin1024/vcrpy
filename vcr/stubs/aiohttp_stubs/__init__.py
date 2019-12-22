@@ -109,12 +109,38 @@ def play_responses(cassette, vcr_request):
 
     return response
 
+def _unread_data(response, data):
+    """
+    Ported from aiohttp v3.6.2 as it will be deprecated in a future release (see issue #3260).
+    Modification of this data only impacts subsequent calls to StreamReader (i.e. response.content) as
+    response.read() will return data from response._body.
+    """
+
+    if not data:
+        return response
+
+    try:
+        if response.content._buffer_offset:
+            response.content._buffer[0] = response.content._buffer[0][response.content._buffer_offset:]
+            response.content._buffer_offset = 0
+        response.content._size += len(data)
+        response.content._cursor -= len(data)
+        response.content._buffer.appendleft(data)
+        response.content._eof_counter = 0
+    except Exception as e:  # pragma: no cover
+        log.warning(f"Data unread failed, a subsequent read from response.content may fail: {e}")
+        pass
+
+    return response
 
 async def record_response(cassette, vcr_request, response):
     """Record a VCR request-response chain to the cassette."""
 
     try:
-        body = {"string": (await response.read())}
+        byts = await response.read()
+        body = {"string": (byts)}
+        # read data back in to support subsequent streamreader reads
+        response = _unread_data(response, byts)
     # aiohttp raises a ClientConnectionError on reads when
     # there is no body. We can use this to know to not write one.
     except ClientConnectionError:
