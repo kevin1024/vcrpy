@@ -3,6 +3,7 @@ from unittest import mock
 
 import pytest
 
+from vcr.errors import LegacyCassetteError
 from vcr.request import Request
 from vcr.serialize import deserialize, serialize
 from vcr.serializers import yamlserializer, jsonserializer, compat
@@ -10,13 +11,13 @@ from vcr.serializers import yamlserializer, jsonserializer, compat
 
 def test_deserialize_old_yaml_cassette():
     with open("tests/fixtures/migration/old_cassette.yaml", "r") as f:
-        with pytest.raises(ValueError):
+        with pytest.raises(LegacyCassetteError):
             deserialize(f.read(), yamlserializer)
 
 
 def test_deserialize_old_json_cassette():
     with open("tests/fixtures/migration/old_cassette.json", "r") as f:
-        with pytest.raises(ValueError):
+        with pytest.raises(LegacyCassetteError):
             deserialize(f.read(), jsonserializer)
 
 
