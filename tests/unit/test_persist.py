@@ -1,5 +1,6 @@
 import pytest
 
+from vcr.errors import LegacyCassetteError
 from vcr.persisters.filesystem import FilesystemPersister
 from vcr.serializers import jsonserializer, yamlserializer
 
@@ -12,9 +13,9 @@ from vcr.serializers import jsonserializer, yamlserializer
     ],
 )
 def test_load_cassette_with_old_cassettes(cassette_path, serializer):
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(LegacyCassetteError) as excinfo:
         FilesystemPersister.load_cassette(cassette_path, serializer)
-    assert "run the migration script" in excinfo.exconly()
+    assert "Your cassette files were generated in an older version of VCR" in excinfo.exconly()
 
 
 @pytest.mark.parametrize(
