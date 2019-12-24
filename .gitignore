@@ -15,3 +15,5 @@ pip-wheel-metadata/
 
 fixtures/
 /docs/_build
+
+.idea/
