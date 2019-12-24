@@ -43,7 +43,7 @@ def deserialize(cassette_string, serializer):
     # Old cassettes used to use yaml object thingy so I have to
     # check for some fairly stupid exceptions here
     except (ImportError, yaml.constructor.ConstructorError):
-        log.exception('Error deserializing cassette.')
+        log.exception("Error deserializing cassette.")
         raise _warn_about_old_cassette_format() from None
     if _looks_like_an_old_cassette(data):
         raise _warn_about_old_cassette_format()
