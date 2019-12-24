@@ -1,6 +1,13 @@
+import logging
+
 from vcr.serializers import compat
 from vcr.request import Request
+from vcr.errors import LegacyCassetteError
 import yaml
+
+
+log = logging.getLogger(__name__)
+
 
 # version 1 cassettes started with VCR 1.0.x.
 # Before 1.0.x, there was no versioning.
@@ -24,10 +31,9 @@ def _looks_like_an_old_cassette(data):
 
 
 def _warn_about_old_cassette_format():
-    raise ValueError(
+    return LegacyCassetteError(
         "Your cassette files were generated in an older version "
-        "of VCR. Delete your cassettes or run the migration script."
-        "See http://git.io/mHhLBg for more details."
+        "of VCR. Delete your cassettes and re-record them."
     )
 
 
@@ -37,9 +43,10 @@ def deserialize(cassette_string, serializer):
     # Old cassettes used to use yaml object thingy so I have to
     # check for some fairly stupid exceptions here
     except (ImportError, yaml.constructor.ConstructorError):
-        _warn_about_old_cassette_format()
+        log.exception('Error deserializing cassette.')
+        raise _warn_about_old_cassette_format() from None
     if _looks_like_an_old_cassette(data):
-        _warn_about_old_cassette_format()
+        raise _warn_about_old_cassette_format()
 
     requests = [Request._from_dict(r["request"]) for r in data["interactions"]]
     responses = [compat.convert_to_bytes(r["response"]) for r in data["interactions"]]

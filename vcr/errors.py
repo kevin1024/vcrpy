@@ -40,3 +40,9 @@ class UnhandledHTTPRequestError(KeyError):
     """Raised when a cassette does not contain the request we want."""
 
     pass
+
+
+class LegacyCassetteError(Exception):
+    """Raise when we are unable to open or deserialize a cassette."""
+
+    pass
