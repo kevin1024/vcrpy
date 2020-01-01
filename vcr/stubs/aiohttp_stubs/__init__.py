@@ -109,6 +109,7 @@ def play_responses(cassette, vcr_request):
 
     return response
 
+
 def _unread_data(response, data):
     """
     Ported from aiohttp v3.6.2 as it will be deprecated in a future release (see issue #3260).
@@ -121,17 +122,18 @@ def _unread_data(response, data):
 
     try:
         if response.content._buffer_offset:
-            response.content._buffer[0] = response.content._buffer[0][response.content._buffer_offset:]
+            response.content._buffer[0] = response.content._buffer[0][response.content._buffer_offset :]
             response.content._buffer_offset = 0
         response.content._size += len(data)
         response.content._cursor -= len(data)
         response.content._buffer.appendleft(data)
         response.content._eof_counter = 0
     except Exception as e:  # pragma: no cover
-        log.warning(f"Data unread failed, a subsequent read from response.content may fail: {e}")
+        log.warning("Data unread failed, a subsequent read from response.content may fail: {}".format(e))
         pass
 
     return response
+
 
 async def record_response(cassette, vcr_request, response):
     """Record a VCR request-response chain to the cassette."""
