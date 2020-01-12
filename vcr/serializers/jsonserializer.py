@@ -16,7 +16,7 @@ def serialize(cassette_dict):
     )
 
     try:
-        return json.dumps(cassette_dict, indent=4)
+        return json.dumps(cassette_dict, indent=4) + "\n"
     except UnicodeDecodeError as original:  # py2
         raise UnicodeDecodeError(
             original.encoding,
