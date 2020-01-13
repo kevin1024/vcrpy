@@ -273,6 +273,23 @@ def test_redirect(aiohttp_client, tmpdir):
     assert cassette_response.request_info.real_url == response.request_info.real_url
 
 
+def test_not_modified(aiohttp_client, tmpdir):
+    """It doesn't try to redirect on 304"""
+    url = "https://httpbin.org/status/304"
+
+    with vcr.use_cassette(str(tmpdir.join("not_modified.yaml"))):
+        response, _ = get(url)
+
+    with vcr.use_cassette(str(tmpdir.join("not_modified.yaml"))) as cassette:
+        cassette_response, _ = get(url)
+
+        assert cassette_response.status == 304
+        assert response.status == 304
+        assert len(cassette_response.history) == len(response.history)
+        assert len(cassette) == 1
+        assert cassette.play_count == 1
+
+
 def test_double_requests(tmpdir):
     """We should capture, record, and replay all requests and response chains,
         even if there are duplicate ones.
