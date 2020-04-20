@@ -17,19 +17,19 @@ def run_in_loop(fn):
         return loop.run_until_complete(task)
 
 
-def request(method, url, output="text", **kwargs):
+def request(method, url, direct_method, output="text", **kwargs):
     def run(loop):
-        return aiohttp_request(loop, method, url, output=output, **kwargs)
+        return aiohttp_request(loop, method, url, direct_method=direct_method, output=output, **kwargs)
 
     return run_in_loop(run)
 
 
-def get(url, output="text", **kwargs):
-    return request("GET", url, output=output, **kwargs)
+def get(url, direct_method, output="text", **kwargs):
+    return request("GET", url, direct_method=direct_method, output=output, **kwargs)
 
 
-def post(url, output="text", **kwargs):
-    return request("POST", url, output="text", **kwargs)
+def post(url, direct_method, output="text", **kwargs):
+    return request("POST", url, direct_method=direct_method, output=output, **kwargs)
 
 
 @pytest.fixture(params=["https", "http"])
@@ -38,105 +38,113 @@ def scheme(request):
     return request.param
 
 
-def test_status(tmpdir, scheme):
+@pytest.fixture(params=[True, False])
+def use_direct_method(request):
+    """Fixture that returns True and False indicating to use direct method or request(method)."""
+    return request.param
+
+
+def test_status(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org"
     with vcr.use_cassette(str(tmpdir.join("status.yaml"))):
-        response, _ = get(url)
+        response, _ = get(url, direct_method=use_direct_method)
 
     with vcr.use_cassette(str(tmpdir.join("status.yaml"))) as cassette:
-        cassette_response, _ = get(url)
+        cassette_response, _ = get(url, direct_method=use_direct_method)
         assert cassette_response.status == response.status
         assert cassette.play_count == 1
 
 
 @pytest.mark.parametrize("auth", [None, aiohttp.BasicAuth("vcrpy", "test")])
-def test_headers(tmpdir, scheme, auth):
+def test_headers(use_direct_method, tmpdir, scheme, auth):
     url = scheme + "://httpbin.org"
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
-        response, _ = get(url, auth=auth)
+        response, _ = get(url, direct_method=use_direct_method, auth=auth)
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))) as cassette:
         if auth is not None:
             request = cassette.requests[0]
             assert "AUTHORIZATION" in request.headers
-        cassette_response, _ = get(url, auth=auth)
+        cassette_response, _ = get(url, auth=auth, direct_method=use_direct_method)
         assert dict(cassette_response.headers) == dict(response.headers)
         assert cassette.play_count == 1
         assert "istr" not in cassette.data[0]
         assert "yarl.URL" not in cassette.data[0]
 
 
-def test_case_insensitive_headers(tmpdir, scheme):
+def test_case_insensitive_headers(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org"
     with vcr.use_cassette(str(tmpdir.join("whatever.yaml"))):
-        _, _ = get(url)
+        _, _ = get(url, direct_method=use_direct_method)
 
     with vcr.use_cassette(str(tmpdir.join("whatever.yaml"))) as cassette:
-        cassette_response, _ = get(url)
+        cassette_response, _ = get(url, direct_method=use_direct_method)
         assert "Content-Type" in cassette_response.headers
         assert "content-type" in cassette_response.headers
         assert cassette.play_count == 1
 
 
-def test_text(tmpdir, scheme):
+def test_text(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org"
     with vcr.use_cassette(str(tmpdir.join("text.yaml"))):
-        _, response_text = get(url)
+        _, response_text = get(url, direct_method=use_direct_method)
 
     with vcr.use_cassette(str(tmpdir.join("text.yaml"))) as cassette:
-        _, cassette_response_text = get(url)
+        _, cassette_response_text = get(url, direct_method=use_direct_method)
         assert cassette_response_text == response_text
         assert cassette.play_count == 1
 
 
-def test_json(tmpdir, scheme):
+def test_json(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org/get"
     headers = {"Content-Type": "application/json"}
 
     with vcr.use_cassette(str(tmpdir.join("json.yaml"))):
-        _, response_json = get(url, output="json", headers=headers)
+        _, response_json = get(url, output="json", headers=headers, direct_method=use_direct_method)
 
     with vcr.use_cassette(str(tmpdir.join("json.yaml"))) as cassette:
-        _, cassette_response_json = get(url, output="json", headers=headers)
+        _, cassette_response_json = get(url, output="json", headers=headers, direct_method=use_direct_method)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
 
-def test_binary(tmpdir, scheme):
+def test_binary(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org/image/png"
     with vcr.use_cassette(str(tmpdir.join("binary.yaml"))):
-        _, response_binary = get(url, output="raw")
+        _, response_binary = get(url, output="raw", direct_method=use_direct_method)
 
     with vcr.use_cassette(str(tmpdir.join("binary.yaml"))) as cassette:
-        _, cassette_response_binary = get(url, output="raw")
+        _, cassette_response_binary = get(url, output="raw", direct_method=use_direct_method)
         assert cassette_response_binary == response_binary
         assert cassette.play_count == 1
 
 
-def test_stream(tmpdir, scheme):
+def test_stream(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org/get"
 
     with vcr.use_cassette(str(tmpdir.join("stream.yaml"))):
-        resp, body = get(url, output="raw")  # Do not use stream here, as the stream is exhausted by vcr
+        resp, body = get(
+            url, output="raw", direct_method=use_direct_method
+        )  # Do not use stream here, as the stream is exhausted by vcr
 
     with vcr.use_cassette(str(tmpdir.join("stream.yaml"))) as cassette:
-        cassette_resp, cassette_body = get(url, output="stream")
+        cassette_resp, cassette_body = get(url, output="stream", direct_method=use_direct_method)
         assert cassette_body == body
         assert cassette.play_count == 1
 
 
 @pytest.mark.parametrize("body", ["data", "json"])
-def test_post(tmpdir, scheme, body, caplog):
+def test_post(use_direct_method, tmpdir, scheme, body, caplog):
     caplog.set_level(logging.INFO)
     data = {"key1": "value1", "key2": "value2"}
     url = scheme + "://httpbin.org/post"
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
-        _, response_json = post(url, **{body: data})
+        _, response_json = post(url, direct_method=use_direct_method, **{body: data})
 
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))) as cassette:
         request = cassette.requests[0]
         assert request.body == data
-        _, cassette_response_json = post(url, **{body: data})
+        _, cassette_response_json = post(url, direct_method=use_direct_method, **{body: data})
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
@@ -150,51 +158,61 @@ def test_post(tmpdir, scheme, body, caplog):
     ), "Log message not found."
 
 
-def test_params(tmpdir, scheme):
+def test_params(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org/get"
     headers = {"Content-Type": "application/json"}
     params = {"a": 1, "b": False, "c": "c"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        _, response_json = get(url, output="json", params=params, headers=headers)
+        _, response_json = get(
+            url, output="json", params=params, headers=headers, direct_method=use_direct_method
+        )
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        _, cassette_response_json = get(url, output="json", params=params, headers=headers)
+        _, cassette_response_json = get(
+            url, output="json", params=params, headers=headers, direct_method=use_direct_method
+        )
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
 
-def test_params_same_url_distinct_params(tmpdir, scheme):
+def test_params_same_url_distinct_params(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org/get"
     headers = {"Content-Type": "application/json"}
     params = {"a": 1, "b": False, "c": "c"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        _, response_json = get(url, output="json", params=params, headers=headers)
+        _, response_json = get(
+            url, output="json", params=params, headers=headers, direct_method=use_direct_method
+        )
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        _, cassette_response_json = get(url, output="json", params=params, headers=headers)
+        _, cassette_response_json = get(
+            url, output="json", params=params, headers=headers, direct_method=use_direct_method
+        )
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
     other_params = {"other": "params"}
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        response, cassette_response_text = get(url, output="text", params=other_params)
+        response, cassette_response_text = get(
+            url, output="text", params=other_params, direct_method=use_direct_method
+        )
         assert "No match for the request" in cassette_response_text
         assert response.status == 599
 
 
-def test_params_on_url(tmpdir, scheme):
+def test_params_on_url(use_direct_method, tmpdir, scheme):
     url = scheme + "://httpbin.org/get?a=1&b=foo"
     headers = {"Content-Type": "application/json"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        _, response_json = get(url, output="json", headers=headers)
+        _, response_json = get(url, output="json", headers=headers, direct_method=use_direct_method)
         request = cassette.requests[0]
         assert request.url == url
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        _, cassette_response_json = get(url, output="json", headers=headers)
+        _, cassette_response_json = get(url, output="json", headers=headers, direct_method=use_direct_method)
         request = cassette.requests[0]
         assert request.url == url
         assert cassette_response_json == response_json
@@ -249,14 +267,14 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     assert cassette.play_count == 1
 
 
-def test_redirect(aiohttp_client, tmpdir):
+def test_redirect(use_direct_method, aiohttp_client, tmpdir):
     url = "https://httpbin.org/redirect/2"
 
     with vcr.use_cassette(str(tmpdir.join("redirect.yaml"))):
-        response, _ = get(url)
+        response, _ = get(url, direct_method=use_direct_method)
 
     with vcr.use_cassette(str(tmpdir.join("redirect.yaml"))) as cassette:
-        cassette_response, _ = get(url)
+        cassette_response, _ = get(url, direct_method=use_direct_method)
 
         assert cassette_response.status == response.status
         assert len(cassette_response.history) == len(response.history)
@@ -273,7 +291,7 @@ def test_redirect(aiohttp_client, tmpdir):
     assert cassette_response.request_info.real_url == response.request_info.real_url
 
 
-def test_double_requests(tmpdir):
+def test_double_requests(use_direct_method, tmpdir):
     """We should capture, record, and replay all requests and response chains,
         even if there are duplicate ones.
 
@@ -282,11 +300,11 @@ def test_double_requests(tmpdir):
     url = "https://httpbin.org/get"
 
     with vcr.use_cassette(str(tmpdir.join("text.yaml"))):
-        _, response_text1 = get(url, output="text")
-        _, response_text2 = get(url, output="text")
+        _, response_text1 = get(url, output="text", direct_method=use_direct_method)
+        _, response_text2 = get(url, output="text", direct_method=use_direct_method)
 
     with vcr.use_cassette(str(tmpdir.join("text.yaml"))) as cassette:
-        resp, cassette_response_text = get(url, output="text")
+        resp, cassette_response_text = get(url, output="text", direct_method=use_direct_method)
         assert resp.status == 200
         assert cassette_response_text == response_text1
 
@@ -294,7 +312,7 @@ def test_double_requests(tmpdir):
         assert cassette.play_count == 1
 
         # Now make the second test to url
-        resp, cassette_response_text = get(url, output="text")
+        resp, cassette_response_text = get(url, output="text", direct_method=use_direct_method)
 
         assert resp.status == 200
 

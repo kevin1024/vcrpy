@@ -5,9 +5,16 @@ import aiohttp
 from aiohttp.test_utils import TestClient
 
 
-async def aiohttp_request(loop, method, url, output="text", encoding="utf-8", content_type=None, **kwargs):
+async def aiohttp_request(
+    loop, method, url, direct_method=False, output="text", encoding="utf-8", content_type=None, **kwargs
+):
     session = aiohttp.ClientSession(loop=loop)
-    response_ctx = session.request(method, url, **kwargs)
+
+    if direct_method:
+        session_request = getattr(session, method.lower())
+        response_ctx = session_request(url, **kwargs)
+    else:
+        response_ctx = session.request(method.upper(), url, **kwargs)
 
     response = await response_ctx.__aenter__()
     if output == "text":
