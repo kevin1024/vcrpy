@@ -94,6 +94,15 @@ else:
     _AiohttpClientSessionRequest = aiohttp.client.ClientSession._request
 
 
+try:
+    import httpx
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _HttpxClient_send = httpx.Client.send
+    _HttpxAsyncClient_send = httpx.AsyncClient.send
+
+
 class CassettePatcherBuilder:
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
@@ -116,6 +125,7 @@ class CassettePatcherBuilder:
             self._boto(),
             self._tornado(),
             self._aiohttp(),
+            self._httpx(),
             self._build_patchers_from_mock_triples(self._cassette.custom_patches),
         )
 
@@ -312,6 +322,18 @@ class CassettePatcherBuilder:
 
             new_request = vcr_request(self._cassette, _AiohttpClientSessionRequest)
             yield client.ClientSession, "_request", new_request
+
+    @_build_patchers_from_mock_triples_decorator
+    def _httpx(self):
+        try:
+            import httpx
+        except ImportError:  # pragma: no cover
+            return
+        else:
+            from .stubs.httpx_stubs import async_vcr_send
+
+            new_async_client_send = async_vcr_send(self._cassette, _HttpxAsyncClient_send)
+            yield httpx.AsyncClient, "send", new_async_client_send
 
     def _urllib3_patchers(self, cpool, stubs):
         http_connection_remover = ConnectionRemover(
