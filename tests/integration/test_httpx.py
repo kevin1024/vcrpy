@@ -139,3 +139,15 @@ def test_redirect(tmpdir, do_request, yml):
     assert {k: v for k, v in cassette_response.request.headers.items()} == {
         k: v for k, v in response.request.headers.items()
     }
+
+
+def test_work_with_gzipped_data(tmpdir, do_request, yml):
+    with vcr.use_cassette(yml):
+        response = do_request()("GET", "https://httpbin.org/gzip")
+
+    with vcr.use_cassette(yml) as cassette:
+        cassette_response = do_request()("GET", "https://httpbin.org/gzip")
+
+        assert "gzip" in cassette_response.json()["headers"]["Accept-Encoding"]
+        assert cassette_response.read()
+        assert cassette.play_count == 1
