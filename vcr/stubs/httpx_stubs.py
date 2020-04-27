@@ -27,15 +27,19 @@ def _to_serialized_response(httpx_reponse):
 
 
 @patch("httpx.Response.close", MagicMock())
+@patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
-    return httpx.Response(
+    content = serialized_response.get("content").encode()
+    response = httpx.Response(
         status_code=serialized_response.get("status_code"),
         request=request,
         http_version=serialized_response.get("http_version"),
         headers=serialized_response.get("headers"),
-        content=serialized_response.get("content"),
+        content=content,
         history=history or [],
     )
+    response._content = content
+    return response
 
 
 def _make_vcr_request(httpx_request, **kwargs):
