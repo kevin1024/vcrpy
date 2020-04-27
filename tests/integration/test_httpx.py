@@ -1,6 +1,10 @@
+from unittest.mock import MagicMock
 import pytest
 import contextlib
 import vcr  # noqa: E402
+
+from vcr.stubs.httpx_stubs import _get_next_url
+
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
@@ -151,3 +155,34 @@ def test_work_with_gzipped_data(tmpdir, do_request, yml):
         assert "gzip" in cassette_response.json()["headers"]["Accept-Encoding"]
         assert cassette_response.read()
         assert cassette.play_count == 1
+
+
+@pytest.mark.parametrize("url", [f"http://github.com/kevin1024/vcrpy/issues/{i}" for i in range(3, 6)])
+def test_simple_fetching(tmpdir, do_request, yml, url):
+    with vcr.use_cassette(yml):
+        response = do_request()("GET", url)
+
+    with vcr.use_cassette(yml) as cassette:
+        cassette_response = do_request()("GET", url)
+        cassette_response.request.url == url
+        assert cassette.play_count == 1
+
+
+class TestGetNextUrl:
+    def test_relative_location(self):
+        response = MagicMock()
+        response.url = "http://github.com/"
+        response.headers = {"location": "relative"}
+        assert str(_get_next_url(response)) == "http://github.com/relative"
+
+    def test_absolute_location(self):
+        response = MagicMock()
+        response.url = "http://github.com/"
+        response.headers = {"location": "http://google.com"}
+        assert str(_get_next_url(response)) == "http://google.com"
+
+    def test_no_location(self):
+        response = MagicMock()
+        response.url = "http://github.com/"
+        response.headers = {}
+        assert _get_next_url(response) is None
