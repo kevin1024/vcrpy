@@ -73,14 +73,27 @@ def _record_responses(cassette, vcr_request, real_response):
     return real_response
 
 
+def _get_next_url(response):
+    location_str = response.headers.get("location")
+    if not location_str:
+        return None
+
+    next_url = URL(location_str)
+    if not next_url.is_absolute():
+        next_url = URL(str(response.url)).with_path(str(next_url))
+
+    return next_url
+
+
 def _play_responses(cassette, request, vcr_request):
     history = []
     vcr_response = cassette.play_response(vcr_request)
     response = _from_serialized_response(request, vcr_response)
 
     while 300 <= response.status_code <= 399:
-        location = response.headers["location"]
-        next_url = URL(str(response.url)).with_path(location)
+        next_url = _get_next_url(response)
+        if not next_url:
+            break
 
         vcr_request = VcrRequest("GET", str(next_url), None, dict(response.headers))
         vcr_request = cassette.find_requests_with_most_matches(vcr_request)[0][0]
