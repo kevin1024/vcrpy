@@ -1,0 +1,43 @@
+interactions:
+- request:
+    body: null
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      host:
+      - httpbin.org
+      user-agent:
+      - python-httpx/0.12.1
+    method: GET
+    uri: https://localhost:8080/headers
+  response:
+    body:
+      string: "{\n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\"\
+        : \"gzip, deflate, br\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\"\
+        : \"python-httpx/0.12.1\", \n    \"X-Amzn-Trace-Id\": \"Root=1-5ea778ca-c402f3ae901e78b3435b0a0c\"\
+        \n  }\n}\n"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '226'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 28 Apr 2020 00:28:58 GMT
+      Server:
+      - gunicorn/19.9.0
+      Via:
+      - my_own_proxy
+    status:
+      code: 200
+      message: OK
+version: 1

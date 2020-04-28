@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 import contextlib
+import os
 import vcr  # noqa: E402
 
 from vcr.stubs.httpx_stubs import _get_next_url
@@ -186,3 +187,27 @@ class TestGetNextUrl:
         response.url = "http://github.com/"
         response.headers = {}
         assert _get_next_url(response) is None
+
+
+def test_behind_proxy(do_request):
+    # This is recorded because otherwise we should have a live proxy somewhere.
+    yml = (
+        os.path.dirname(os.path.realpath(__file__))
+        + "/cassettes/"
+        + do_request.__name__
+        + "test_httpx_test_test_behind_proxy.yml"
+    )
+    url = "https://httpbin.org/headers"
+    proxy = "http://localhost:8080"
+    proxies = {"http": proxy, "https": proxy}
+
+    with vcr.use_cassette(yml):
+        response = do_request(proxies=proxies, verify=False)("GET", url)
+
+    with vcr.use_cassette(yml) as cassette:
+        cassette_response = do_request(proxies=proxies, verify=False)("GET", url)
+        cassette_response.request.url == url
+        assert cassette.play_count == 1
+
+        assert cassette_response.headers["Via"] == "my_own_proxy", str(cassette_response.headers)
+        assert cassette_response.request.url == response.request.url
