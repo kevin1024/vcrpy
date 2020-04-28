@@ -68,7 +68,11 @@ def _record_responses(cassette, vcr_request, real_response):
         past_vcr_request = _make_vcr_request(past_real_response.request)
         cassette.append(past_vcr_request, _to_serialized_response(past_real_response))
 
-    vcr_request = _make_vcr_request(real_response.request)
+    if real_response.history:
+        # If there was a redirection keep we want the request which will hold the
+        # final redirect value
+        vcr_request = _make_vcr_request(real_response.request)
+
     cassette.append(vcr_request, _to_serialized_response(real_response))
     return real_response
 
