@@ -2,13 +2,12 @@ from unittest.mock import MagicMock
 import pytest
 import contextlib
 import os
-import vcr  # noqa: E402
-
-from vcr.stubs.httpx_stubs import _get_next_url
-
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
+
+import vcr  # noqa: E402
+from vcr.stubs.httpx_stubs import _get_next_url  # noqa: E402
 
 
 class BaseDoRequest:
@@ -148,7 +147,7 @@ def test_redirect(tmpdir, do_request, yml):
 
 def test_work_with_gzipped_data(tmpdir, do_request, yml):
     with vcr.use_cassette(yml):
-        response = do_request()("GET", "https://httpbin.org/gzip")
+        do_request()("GET", "https://httpbin.org/gzip")
 
     with vcr.use_cassette(yml) as cassette:
         cassette_response = do_request()("GET", "https://httpbin.org/gzip")
@@ -158,10 +157,10 @@ def test_work_with_gzipped_data(tmpdir, do_request, yml):
         assert cassette.play_count == 1
 
 
-@pytest.mark.parametrize("url", [f"http://github.com/kevin1024/vcrpy/issues/{i}" for i in range(3, 6)])
+@pytest.mark.parametrize("url", ["http://github.com/kevin1024/vcrpy/issues/" + str(i) for i in range(3, 6)])
 def test_simple_fetching(tmpdir, do_request, yml, url):
     with vcr.use_cassette(yml):
-        response = do_request()("GET", url)
+        do_request()("GET", url)
 
     with vcr.use_cassette(yml) as cassette:
         cassette_response = do_request()("GET", url)
