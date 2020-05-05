@@ -210,3 +210,37 @@ def test_behind_proxy(do_request):
 
         assert cassette_response.headers["Via"] == "my_own_proxy", str(cassette_response.headers)
         assert cassette_response.request.url == response.request.url
+
+
+def test_cookies(tmpdir, scheme, do_request):
+    def client_cookies(client):
+        return [c for c in client._client.cookies]
+    def response_cookies(response):
+        return [c for c in response.cookies]
+
+    client = do_request()
+    assert client_cookies(client) == []
+
+    url = scheme + "://httpbin.org"
+    testfile = str(tmpdir.join("cookies.yml"))
+    with vcr.use_cassette(testfile):
+        r1 = client("GET", url + "/cookies/set?k1=v1&k2=v2")
+        assert response_cookies(r1.history[0]) == ['k1', 'k2']
+        assert response_cookies(r1) == []
+
+        r2 = client("GET", url + "/cookies")
+        assert len(r2.json()["cookies"]) == 2
+
+        assert client_cookies(client) == ['k1', 'k2']
+
+
+    new_client = do_request()
+    assert client_cookies(new_client) == []
+
+    with vcr.use_cassette(testfile) as cassette:
+        cassette_response = new_client("GET", url + "/cookies/set?k1=v1&k2=v2")
+        assert response_cookies(cassette_response.history[0]) == ['k1', 'k2']
+        assert response_cookies(cassette_response) == []
+
+        assert cassette.play_count == 2
+        assert client_cookies(new_client) == ['k1', 'k2']
