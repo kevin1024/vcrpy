@@ -2,7 +2,6 @@ import functools
 import logging
 from unittest.mock import patch, MagicMock
 
-from yarl import URL
 import httpx
 from vcr.request import Request as VcrRequest
 from vcr.errors import CannotOverwriteExistingCassetteException
