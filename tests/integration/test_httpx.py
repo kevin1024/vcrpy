@@ -7,7 +7,6 @@ asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
 
 import vcr  # noqa: E402
-from vcr.stubs.httpx_stubs import _get_next_url  # noqa: E402
 
 
 class BaseDoRequest:
@@ -168,26 +167,6 @@ def test_simple_fetching(tmpdir, do_request, yml, url):
         assert cassette.play_count == 1
 
 
-class TestGetNextUrl:
-    def test_relative_location(self):
-        response = MagicMock()
-        response.url = "http://github.com/"
-        response.headers = {"location": "relative"}
-        assert str(_get_next_url(response)) == "http://github.com/relative"
-
-    def test_absolute_location(self):
-        response = MagicMock()
-        response.url = "http://github.com/"
-        response.headers = {"location": "http://google.com"}
-        assert str(_get_next_url(response)) == "http://google.com"
-
-    def test_no_location(self):
-        response = MagicMock()
-        response.url = "http://github.com/"
-        response.headers = {}
-        assert _get_next_url(response) is None
-
-
 def test_behind_proxy(do_request):
     # This is recorded because otherwise we should have a live proxy somewhere.
     yml = (
@@ -244,3 +223,20 @@ def test_cookies(tmpdir, scheme, do_request):
 
         assert cassette.play_count == 2
         assert client_cookies(new_client) == ['k1', 'k2']
+
+
+def test_relative_redirects(tmpdir, scheme, do_request):
+    url = scheme + "://httpbin.org"
+    testfile = str(tmpdir.join("relative_redirects.yml"))
+    with vcr.use_cassette(testfile):
+        response = do_request()("GET", url + "/redirect-to?url=/redirect-to?url=/get")
+        assert len(response.history) == 2
+        assert response.json()["url"].endswith("get")
+
+    with vcr.use_cassette(testfile) as cassette:
+        response = do_request()("GET", url + "/redirect-to?url=/redirect-to?url=/get")
+        assert len(response.history) == 2
+        assert response.json()["url"].endswith("get")
+
+        assert cassette.play_count == 3
+
