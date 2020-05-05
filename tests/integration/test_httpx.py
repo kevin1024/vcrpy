@@ -157,14 +157,14 @@ def test_work_with_gzipped_data(tmpdir, do_request, yml):
         assert cassette.play_count == 1
 
 
-@pytest.mark.parametrize("url", ["http://github.com/kevin1024/vcrpy/issues/" + str(i) for i in range(3, 6)])
+@pytest.mark.parametrize("url", ["https://github.com/kevin1024/vcrpy/issues/" + str(i) for i in range(3, 6)])
 def test_simple_fetching(tmpdir, do_request, yml, url):
     with vcr.use_cassette(yml):
         do_request()("GET", url)
 
     with vcr.use_cassette(yml) as cassette:
         cassette_response = do_request()("GET", url)
-        cassette_response.request.url == url
+        assert str(cassette_response.request.url) == url
         assert cassette.play_count == 1
 
 
@@ -205,7 +205,7 @@ def test_behind_proxy(do_request):
 
     with vcr.use_cassette(yml) as cassette:
         cassette_response = do_request(proxies=proxies, verify=False)("GET", url)
-        cassette_response.request.url == url
+        assert str(cassette_response.request.url) == url
         assert cassette.play_count == 1
 
         assert cassette_response.headers["Via"] == "my_own_proxy", str(cassette_response.headers)

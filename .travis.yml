@@ -12,6 +12,7 @@ env:
     - TOX_SUFFIX="urllib3"
     - TOX_SUFFIX="tornado4"
     - TOX_SUFFIX="aiohttp"
+    - TOX_SUFFIX="httpx"
 matrix:
   include:
     # Only run lint on a single 3.x
