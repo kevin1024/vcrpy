@@ -12,9 +12,17 @@ _logger = logging.getLogger(__name__)
 
 
 def _transform_headers(httpx_reponse):
-    return {
-        key.decode("utf-8"): var.decode("utf-8") for (key, var) in dict(httpx_reponse.headers.raw).items()
-    }
+    """
+    Some headers can appear multiple times, like "Set-Cookie".
+    Therefore transform to every header key to list of values.
+    """
+
+    out = {}
+    for key, var in httpx_reponse.headers.raw:
+        decoded_key = key.decode("utf-8")
+        out.setdefault(decoded_key, [])
+        out[decoded_key].append(var.decode("utf-8"))
+    return out
 
 
 def _to_serialized_response(httpx_reponse):
@@ -26,6 +34,18 @@ def _to_serialized_response(httpx_reponse):
     }
 
 
+def _from_serialized_headers(headers):
+    """
+    httpx accepts headers as list of tuples of header key and value.
+    """
+
+    header_list = []
+    for key, values in headers.items():
+        for v in values:
+            header_list.append((key, v))
+    return header_list
+
+
 @patch("httpx.Response.close", MagicMock())
 @patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
@@ -34,7 +54,7 @@ def _from_serialized_response(request, serialized_response, history=None):
         status_code=serialized_response.get("status_code"),
         request=request,
         http_version=serialized_response.get("http_version"),
-        headers=serialized_response.get("headers"),
+        headers=_from_serialized_headers(serialized_response.get("headers")),
         content=content,
         history=history or [],
     )
@@ -54,7 +74,7 @@ def _shared_vcr_send(cassette, real_send, *args, **kwargs):
     vcr_request = _make_vcr_request(real_request, **kwargs)
 
     if cassette.can_play_response_for(vcr_request):
-        return vcr_request, _play_responses(cassette, real_request, vcr_request)
+        return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0])
 
     if cassette.write_protected and cassette.filter_request(vcr_request):
         raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
@@ -89,7 +109,7 @@ def _get_next_url(response):
     return next_url
 
 
-def _play_responses(cassette, request, vcr_request):
+def _play_responses(cassette, request, vcr_request, client):
     history = []
     vcr_response = cassette.play_response(vcr_request)
     response = _from_serialized_response(request, vcr_response)
@@ -103,6 +123,9 @@ def _play_responses(cassette, request, vcr_request):
         vcr_request = cassette.find_requests_with_most_matches(vcr_request)[0][0]
 
         history.append(response)
+        # add cookies from response to session cookie store
+        client.cookies.extract_cookies(response)
+
         vcr_response = cassette.play_response(vcr_request)
         response = _from_serialized_response(vcr_request, vcr_response, history)
 
@@ -112,6 +135,8 @@ def _play_responses(cassette, request, vcr_request):
 async def _async_vcr_send(cassette, real_send, *args, **kwargs):
     vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
     if response:
+        # add cookies from response to session cookie store
+        args[0].cookies.extract_cookies(response)
         return response
 
     real_response = await real_send(*args, **kwargs)
