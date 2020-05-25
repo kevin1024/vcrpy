@@ -1,7 +1,7 @@
 import logging
 from .config import VCR
 from logging import NullHandler
-from .record_mode import RecordMode as mode
+from .record_mode import RecordMode as mode  # noqa import is not used in this file
 
 __version__ = "4.0.2"
 
