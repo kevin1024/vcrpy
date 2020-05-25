@@ -14,6 +14,7 @@ from .serializers import yamlserializer
 from .persisters.filesystem import FilesystemPersister
 from .util import partition_dict
 from ._handle_coroutine import handle_coroutine
+from .record_mode import RecordMode
 
 try:
     from asyncio import iscoroutinefunction
@@ -175,7 +176,7 @@ class Cassette:
         path,
         serializer=None,
         persister=None,
-        record_mode="once",
+        record_mode=RecordMode.ONCE,
         match_on=(uri, method),
         before_record_request=None,
         before_record_response=None,
@@ -218,7 +219,7 @@ class Cassette:
 
     @property
     def write_protected(self):
-        return self.rewound and self.record_mode == "once" or self.record_mode == "none"
+        return self.rewound and self.record_mode == RecordMode.ONCE or self.record_mode == RecordMode.NONE
 
     def append(self, request, response):
         """Add a request, response pair to this cassette"""
@@ -250,7 +251,7 @@ class Cassette:
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        return request and request in self and self.record_mode != "all" and self.rewound
+        return request and request in self and self.record_mode != RecordMode.ALL and self.rewound
 
     def play_response(self, request):
         """

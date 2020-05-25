@@ -1,6 +1,7 @@
 import logging
 from .config import VCR
 from logging import NullHandler
+from .record_mode import RecordMode as mode
 
 __version__ = "4.0.2"
 

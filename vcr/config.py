@@ -12,6 +12,7 @@ from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
 from .persisters.filesystem import FilesystemPersister
 from .util import compose, auto_decorate
+from .record_mode import RecordMode
 from . import matchers
 from . import filters
 
@@ -37,7 +38,7 @@ class VCR:
         custom_patches=(),
         filter_query_parameters=(),
         ignore_hosts=(),
-        record_mode="once",
+        record_mode=RecordMode.ONCE,
         ignore_localhost=False,
         filter_headers=(),
         before_record_response=None,
