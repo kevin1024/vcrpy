@@ -59,14 +59,14 @@ def build_response(vcr_request, vcr_response, history):
     request_info = RequestInfo(
         url=URL(vcr_request.url),
         method=vcr_request.method,
-        headers=CIMultiDictProxy(CIMultiDict(vcr_request.headers)),
+        headers=_deserialize_headers(vcr_request.headers),
         real_url=URL(vcr_request.url),
     )
     response = MockClientResponse(vcr_request.method, URL(vcr_response.get("url")), request_info=request_info)
     response.status = vcr_response["status"]["code"]
     response._body = vcr_response["body"].get("string", b"")
     response.reason = vcr_response["status"]["message"]
-    response._headers = CIMultiDictProxy(CIMultiDict(vcr_response["headers"]))
+    response._headers = _deserialize_headers(vcr_response["headers"])
     response._history = tuple(history)
 
     response.close()
@@ -81,7 +81,23 @@ def _serialize_headers(headers):
     """
     # Mark strings as keys so 'istr' types don't show up in
     # the cassettes as comments.
-    return {str(k): v for k, v in headers.items()}
+    serialized_headers = {}
+    for k, v in headers.items():
+        serialized_headers.setdefault(str(k), []).append(v)
+
+    return serialized_headers
+
+
+def _deserialize_headers(headers):
+    deserialized_headers = CIMultiDict()
+    for k, vs in headers.items():
+        if isinstance(vs, list):
+            for v in vs:
+                deserialized_headers.add(k, v)
+        else:
+            deserialized_headers.add(k, vs)
+
+    return CIMultiDictProxy(deserialized_headers)
 
 
 def play_responses(cassette, vcr_request):
