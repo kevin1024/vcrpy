@@ -5,6 +5,8 @@ import logging
 import json
 
 from aiohttp import ClientConnectionError, ClientResponse, RequestInfo, streams
+from aiohttp import hdrs
+from http.cookies import CookieError
 from multidict import CIMultiDict, CIMultiDictProxy
 from yarl import URL
 
@@ -68,6 +70,12 @@ def build_response(vcr_request, vcr_response, history):
     response.reason = vcr_response["status"]["message"]
     response._headers = _deserialize_headers(vcr_response["headers"])
     response._history = tuple(history)
+    # cookies
+    for hdr in response.headers.getall(hdrs.SET_COOKIE, ()):
+        try:
+            response.cookies.load(hdr)
+        except CookieError as exc:
+            log.warning('Can not load response cookies: %s', exc)
 
     response.close()
     return response
