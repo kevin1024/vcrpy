@@ -211,7 +211,11 @@ def vcr_request(cassette, real_request):
         vcr_request = Request(method, str(request_url), data, headers)
 
         if cassette.can_play_response_for(vcr_request):
-            return play_responses(cassette, vcr_request)
+            response = play_responses(cassette, vcr_request)
+            for resp in response.history:
+                self._cookie_jar.update_cookies(resp.cookies, resp.url)
+            self._cookie_jar.update_cookies(response.cookies, response.url)
+            return response
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
             response = MockClientResponse(method, URL(url))
