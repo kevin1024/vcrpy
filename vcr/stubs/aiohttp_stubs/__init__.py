@@ -75,7 +75,7 @@ def build_response(vcr_request, vcr_response, history):
         try:
             response.cookies.load(hdr)
         except CookieError as exc:
-            log.warning('Can not load response cookies: %s', exc)
+            log.warning("Can not load response cookies: %s", exc)
 
     response.close()
     return response
