@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 import logging
 import urllib.parse
@@ -324,7 +323,7 @@ def test_double_requests(tmpdir):
 
 
 def test_cookies(scheme, tmpdir):
-    async def run(scheme, tmpdir):
+    async def run(loop):
         cookies_url = scheme + (
             "://httpbin.org/response-headers?"
             "set-cookie=" + urllib.parse.quote("cookie_1=val_1; Path=/") + "&"
@@ -337,16 +336,18 @@ def test_cookies(scheme, tmpdir):
 
         # ------------------------- Record -------------------------- #
         with vcr.use_cassette(tmp) as cassette:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(loop=loop) as session:
                 cookies_resp = await session.get(cookies_url)
                 home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
+                assert cassette.play_count == 0
         assert_responses(cookies_resp, home_resp)
 
         # -------------------------- Play --------------------------- #
         with vcr.use_cassette(tmp, record_mode="none") as cassette:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(loop=loop) as session:
                 cookies_resp = await session.get(cookies_url)
                 home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
+                assert cassette.play_count == 2
         assert_responses(cookies_resp, home_resp)
 
     def assert_responses(cookies_resp, home_resp):
@@ -358,4 +359,4 @@ def test_cookies(scheme, tmpdir):
         assert "Cookie_3=Val_3" in request_cookies
         assert "Cookie_4=Val_4" in request_cookies
 
-    asyncio.run(run(scheme, tmpdir))
+    run_in_loop(run)
