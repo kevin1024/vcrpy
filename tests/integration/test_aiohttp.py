@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import logging
 import urllib.parse
@@ -323,20 +324,42 @@ def test_double_requests(tmpdir):
 
 
 def test_cookies(scheme, tmpdir):
-    url = scheme + (
-        "://httpbin.org/response-headers?"
-        "set-cookie=" + urllib.parse.quote("cookie_1=val_1; Path=/") + "&"
-        "Set-Cookie=" + urllib.parse.quote("Cookie_2=Val_2; Path=/")
-    )
-    with vcr.use_cassette(str(tmpdir.join("cookies.yaml"))) as cassette:
-        response, _ = get(url, output="json")
+    async def run(scheme, tmpdir):
+        cookies_url = scheme + (
+            "://httpbin.org/response-headers?"
+            "set-cookie=" + urllib.parse.quote("cookie_1=val_1; Path=/") + "&"
+            "Set-Cookie=" + urllib.parse.quote("Cookie_2=Val_2; Path=/")
+        )
+        home_url = scheme + "://httpbin.org/"
+        tmp = str(tmpdir.join("cookies.yaml"))
+        req_cookies = {"Cookie_3": "Val_3"}
+        req_headers = {"Cookie": "Cookie_4=Val_4"}
 
-    assert response.cookies.get("cookie_1").value == "val_1"
-    assert response.cookies.get("Cookie_2").value == "Val_2"
+        # ------------------------- Record -------------------------- #
+        with vcr.use_cassette(tmp) as cassette:
+            async with aiohttp.ClientSession() as session:
+                cookies_resp = await session.get(cookies_url)
+                home_resp = await session.get(
+                    home_url, cookies=req_cookies, headers=req_headers
+                )
+        assert_responses(cookies_resp, home_resp)
 
-    with vcr.use_cassette(str(tmpdir.join("cookies.yaml"))) as cassette:
-        response, _ = get(url, output="json")
-        assert cassette.play_count == 1
+        # -------------------------- Play --------------------------- #
+        with vcr.use_cassette(tmp, record_mode="none") as cassette:
+            async with aiohttp.ClientSession() as session:
+                cookies_resp = await session.get(cookies_url)
+                home_resp = await session.get(
+                    home_url, cookies=req_cookies, headers=req_headers
+                )
+        assert_responses(cookies_resp, home_resp)
 
-    assert response.cookies.get("cookie_1").value == "val_1"
-    assert response.cookies.get("Cookie_2").value == "Val_2"
+    def assert_responses(cookies_resp, home_resp):
+        assert cookies_resp.cookies.get("cookie_1").value == "val_1"
+        assert cookies_resp.cookies.get("Cookie_2").value == "Val_2"
+        request_cookies = home_resp.request_info.headers["cookie"]
+        assert "cookie_1=val_1" in request_cookies
+        assert "Cookie_2=Val_2" in request_cookies
+        assert "Cookie_3=Val_3" in request_cookies
+        assert "Cookie_4=Val_4" in request_cookies
+
+    asyncio.run(run(scheme, tmpdir))
