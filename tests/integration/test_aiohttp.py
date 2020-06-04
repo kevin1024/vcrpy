@@ -324,19 +324,19 @@ def test_double_requests(tmpdir):
 
 def test_cookies(scheme, tmpdir):
     url = scheme + (
-        '://httpbin.org/response-headers?'
-        'set-cookie=' + urllib.parse.quote('cookie_1=val_1; Path=/') + '&'
-        'Set-Cookie=' + urllib.parse.quote('Cookie_2=Val_2; Path=/')
+        "://httpbin.org/response-headers?"
+        "set-cookie=" + urllib.parse.quote("cookie_1=val_1; Path=/") + "&"
+        "Set-Cookie=" + urllib.parse.quote("Cookie_2=Val_2; Path=/")
     )
     with vcr.use_cassette(str(tmpdir.join("cookies.yaml"))) as cassette:
-        response, _ = get(url, output='json')
+        response, _ = get(url, output="json")
 
-    assert response.cookies.get('cookie_1').value == 'val_1'
-    assert response.cookies.get('Cookie_2').value == 'Val_2'
+    assert response.cookies.get("cookie_1").value == "val_1"
+    assert response.cookies.get("Cookie_2").value == "Val_2"
 
     with vcr.use_cassette(str(tmpdir.join("cookies.yaml"))) as cassette:
-        response, _ = get(url, output='json')
+        response, _ = get(url, output="json")
         assert cassette.play_count == 1
 
-    assert response.cookies.get('cookie_1').value == 'val_1'
-    assert response.cookies.get('Cookie_2').value == 'Val_2'
+    assert response.cookies.get("cookie_1").value == "val_1"
+    assert response.cookies.get("Cookie_2").value == "Val_2"
