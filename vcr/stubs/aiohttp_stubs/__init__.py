@@ -197,17 +197,17 @@ def _build_cookie_header(session, cookies, cookie_header, url):
     if cookies is not None:
         tmp_cookie_jar = CookieJar()
         tmp_cookie_jar.update_cookies(cookies)
-        req_cookies = tmp_cookie_jar.filter_cookies(request_url)
+        req_cookies = tmp_cookie_jar.filter_cookies(url)
         if req_cookies:
             all_cookies.load(req_cookies)
 
-    if not all_cookies:
+    if not all_cookies and not cookie_header:
         return None
 
     c = SimpleCookie()
     if cookie_header:
         c.load(cookie_header)
-    for name, value in all_cookies:
+    for name, value in all_cookies.items():
         if isinstance(value, Morsel):
             mrsl_val = value.get(value.key, Morsel())
             mrsl_val.set(value.key, value.value, value.coded_value)
@@ -237,19 +237,17 @@ def vcr_request(cassette, real_request):
                 params[k] = str(v)
             request_url = URL(url).with_query(params)
 
-        c_header = self.headers.pop(hdrs.COOKIE, None)
-        cookies_header = _build_cookie_header(
+        c_header = headers.pop(hdrs.COOKIE, None)
+        cookie_header = _build_cookie_header(
             self, cookies, c_header, request_url
         )
-        if cookies_header:
-            self.headers[hdrs.COOKIE] = cookies_header
+        if cookie_header:
+            headers[hdrs.COOKIE] = cookie_header
 
         vcr_request = Request(method, str(request_url), data, headers)
 
         if cassette.can_play_response_for(vcr_request):
             response = play_responses(cassette, vcr_request)
-            for resp in response.history:
-                self._cookie_jar.update_cookies(resp.cookies, resp.url)
             self._cookie_jar.update_cookies(response.cookies, response.url)
             return response
 
