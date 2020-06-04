@@ -5,8 +5,9 @@ import logging
 import json
 
 from aiohttp import ClientConnectionError, ClientResponse, RequestInfo, streams
-from aiohttp import hdrs
-from http.cookies import CookieError
+from aiohttp import hdrs, CookieJar
+from http.cookies import CookieError, Morsel, SimpleCookie
+from aiohttp.helpers import strip_auth_from_url
 from multidict import CIMultiDict, CIMultiDictProxy
 from yarl import URL
 
@@ -190,6 +191,33 @@ async def record_responses(cassette, vcr_request, response):
     await record_response(cassette, vcr_request, response)
 
 
+def _build_cookie_header(session, cookies, cookie_header, url):
+    url, _ = strip_auth_from_url(url)
+    all_cookies = session._cookie_jar.filter_cookies(url)
+    if cookies is not None:
+        tmp_cookie_jar = CookieJar()
+        tmp_cookie_jar.update_cookies(cookies)
+        req_cookies = tmp_cookie_jar.filter_cookies(request_url)
+        if req_cookies:
+            all_cookies.load(req_cookies)
+
+    if not all_cookies:
+        return None
+
+    c = SimpleCookie()
+    if cookie_header:
+        c.load(cookie_header)
+    for name, value in all_cookies:
+        if isinstance(value, Morsel):
+            mrsl_val = value.get(value.key, Morsel())
+            mrsl_val.set(value.key, value.value, value.coded_value)
+            c[name] = mrsl_val
+        else:
+            c[name] = value
+
+    return c.output(header="", sep=";").strip()
+
+
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
@@ -198,6 +226,7 @@ def vcr_request(cassette, real_request):
         headers = self._prepare_headers(headers)
         data = kwargs.get("data", kwargs.get("json"))
         params = kwargs.get("params")
+        cookies = kwargs.get("cookies")
 
         if auth is not None:
             headers["AUTHORIZATION"] = auth.encode()
@@ -207,6 +236,13 @@ def vcr_request(cassette, real_request):
             for k, v in params.items():
                 params[k] = str(v)
             request_url = URL(url).with_query(params)
+
+        c_header = self.headers.pop(hdrs.COOKIE, None)
+        cookies_header = _build_cookie_header(
+            self, cookies, c_header, request_url
+        )
+        if cookies_header:
+            self.headers[hdrs.COOKIE] = cookies_header
 
         vcr_request = Request(method, str(request_url), data, headers)
 
