@@ -339,18 +339,14 @@ def test_cookies(scheme, tmpdir):
         with vcr.use_cassette(tmp) as cassette:
             async with aiohttp.ClientSession() as session:
                 cookies_resp = await session.get(cookies_url)
-                home_resp = await session.get(
-                    home_url, cookies=req_cookies, headers=req_headers
-                )
+                home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
         assert_responses(cookies_resp, home_resp)
 
         # -------------------------- Play --------------------------- #
         with vcr.use_cassette(tmp, record_mode="none") as cassette:
             async with aiohttp.ClientSession() as session:
                 cookies_resp = await session.get(cookies_url)
-                home_resp = await session.get(
-                    home_url, cookies=req_cookies, headers=req_headers
-                )
+                home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
         assert_responses(cookies_resp, home_resp)
 
     def assert_responses(cookies_resp, home_resp):
