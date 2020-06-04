@@ -235,9 +235,7 @@ def vcr_request(cassette, real_request):
             request_url = URL(url).with_query(params)
 
         c_header = headers.pop(hdrs.COOKIE, None)
-        cookie_header = _build_cookie_header(
-            self, cookies, c_header, request_url
-        )
+        cookie_header = _build_cookie_header(self, cookies, c_header, request_url)
         if cookie_header:
             headers[hdrs.COOKIE] = cookie_header
 
