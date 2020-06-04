@@ -242,7 +242,7 @@ def vcr_request(cassette, real_request):
         if cookie_header:
             headers[hdrs.COOKIE] = cookie_header
 
-        vcr_request = Request(method, str(request_url), data, headers)
+        vcr_request = Request(method, str(request_url), data, _serialize_headers(headers))
 
         if cassette.can_play_response_for(vcr_request):
             response = play_responses(cassette, vcr_request)
