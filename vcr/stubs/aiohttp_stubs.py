@@ -252,9 +252,7 @@ def vcr_request(cassette, real_request):
             return response
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
-            raise CannotOverwriteExistingCassetteException(
-                cassette=cassette, failed_request=vcr_request
-            )
+            raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
         log.info("%s not in cassette, sending to real server", vcr_request)
 
