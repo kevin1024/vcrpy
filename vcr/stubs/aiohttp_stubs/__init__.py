@@ -11,6 +11,7 @@ from aiohttp.helpers import strip_auth_from_url
 from multidict import CIMultiDict, CIMultiDictProxy
 from yarl import URL
 
+from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
 
 log = logging.getLogger(__name__)
@@ -242,21 +243,15 @@ def vcr_request(cassette, real_request):
         vcr_request = Request(method, str(request_url), data, _serialize_headers(headers))
 
         if cassette.can_play_response_for(vcr_request):
+            log.info("Playing response for {} from cassette".format(vcr_request))
             response = play_responses(cassette, vcr_request)
             self._cookie_jar.update_cookies(response.cookies, response.url)
             return response
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
-            response = MockClientResponse(method, URL(url))
-            response.status = 599
-            msg = (
-                "No match for the request {!r} was found. Can't overwrite "
-                "existing cassette {!r} in your current record mode {!r}."
+            raise CannotOverwriteExistingCassetteException(
+                cassette=cassette, failed_request=vcr_request
             )
-            msg = msg.format(vcr_request, cassette._path, cassette.record_mode)
-            response._body = msg.encode()
-            response.close()
-            return response
 
         log.info("%s not in cassette, sending to real server", vcr_request)
 
