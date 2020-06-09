@@ -180,9 +180,8 @@ def test_params_same_url_distinct_params(tmpdir, scheme):
 
     other_params = {"other": "params"}
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        response, cassette_response_text = get(url, output="text", params=other_params)
-        assert "No match for the request" in cassette_response_text
-        assert response.status == 599
+        with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
+            get(url, output="text", params=other_params)
 
 
 def test_params_on_url(tmpdir, scheme):
