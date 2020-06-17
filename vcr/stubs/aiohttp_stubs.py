@@ -121,7 +121,7 @@ def play_responses(cassette, vcr_request):
         if "location" not in response.headers:
             break
 
-        next_url = URL(response.url).with_path(response.headers["location"])
+        next_url = URL(response.url).join(URL(response.headers["location"]))
 
         # Make a stub VCR request that we can then use to look up the recorded
         # VCR request saved to the cassette. This feels a little hacky and
