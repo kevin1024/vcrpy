@@ -77,11 +77,11 @@ def build_response(vcr_request, vcr_response, history):
         try:
             cookies = SimpleCookie(hdr)
             for cookie_name, cookie in cookies.items():
-                expires = cookie.get('expires', '').strip()
+                expires = cookie.get("expires", "").strip()
                 if expires:
-                    log.debug("Ignoring expiration date: %s=\"%s\"", cookie_name, expires)
-                cookie['expires'] = ''
-                response.cookies.load(cookie.output(header='').strip())
+                    log.debug('Ignoring expiration date: %s="%s"', cookie_name, expires)
+                cookie["expires"] = ""
+                response.cookies.load(cookie.output(header="").strip())
         except CookieError as exc:
             log.warning("Can not load response cookies: %s", exc)
 
