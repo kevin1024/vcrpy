@@ -359,3 +359,43 @@ def test_cookies(scheme, tmpdir):
         assert "Cookie_4=Val_4" in request_cookies
 
     run_in_loop(run)
+
+
+def test_cookies_redirect(scheme, tmpdir):
+    async def run(loop):
+        # Sets cookie as provided by the query string and redirects
+        cookies_url = scheme + '://httpbin.org/cookies/set?Cookie_1=Val_1'
+        tmp = str(tmpdir.join("cookies.yaml"))
+
+        # ------------------------- Record -------------------------- #
+        with vcr.use_cassette(tmp) as cassette:
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                assert not cookies_resp.cookies
+                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                assert cookies['Cookie_1'].value == 'Val_1'
+                assert cassette.play_count == 0
+            cassette.requests[1].headers['Cookie'] == 'Cookie_1=Val_1'
+
+        # -------------------------- Play --------------------------- #
+        with vcr.use_cassette(tmp, record_mode='none') as cassette:
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                assert not cookies_resp.cookies
+                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                assert cookies['Cookie_1'].value == 'Val_1'
+                assert cassette.play_count == 2
+            cassette.requests[1].headers['Cookie'] == 'Cookie_1=Val_1'
+
+        # Assert that it's ignoring expiration date
+        with vcr.use_cassette(tmp, record_mode='none') as cassette:
+            cassette.responses[0]['headers']['set-cookie'] = [
+                'Cookie_1=Val_1; Expires=Wed, 21 Oct 2015 07:28:00 GMT'
+            ]
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                assert not cookies_resp.cookies
+                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                assert cookies['Cookie_1'].value == 'Val_1'
+
+    run_in_loop(run)
