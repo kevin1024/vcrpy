@@ -134,7 +134,10 @@ def play_responses(cassette, vcr_request):
         # may have edge cases based on the headers we're providing (e.g. if
         # there's a matcher that is used to filter by headers).
         vcr_request = Request("GET", str(next_url), None, _serialize_headers(response.request_info.headers))
-        vcr_request = cassette.find_requests_with_most_matches(vcr_request)[0][0]
+        vcr_requests = cassette.find_requests_with_most_matches(vcr_request)
+        for vcr_request, *_ in vcr_requests:
+            if cassette.can_play_response_for(vcr_request):
+                break
 
         # Tack on the response we saw from the redirect into the history
         # list that is added on to the final response.
