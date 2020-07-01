@@ -22,6 +22,7 @@ The following HTTP libraries are supported:
 -  ``tornado.httpclient``
 -  ``urllib2``
 -  ``urllib3``
+-  ``httpx``
 
 Speed
 -----
