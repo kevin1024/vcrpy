@@ -45,7 +45,7 @@ def test_disk_saver_write(tmpdir, httpbin):
     # the mtime doesn't change
     time.sleep(1)
 
-    with vcr.use_cassette(fname, record_mode="any") as cass:
+    with vcr.use_cassette(fname, record_mode=vcr.mode.ANY) as cass:
         urlopen(httpbin.url).read()
         urlopen(httpbin.url + "/get").read()
         assert cass.play_count == 1

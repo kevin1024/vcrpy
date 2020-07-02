@@ -4,7 +4,7 @@ import os
 import pytest
 import http.client as httplib
 
-from vcr import VCR, use_cassette
+from vcr import VCR, mode, use_cassette
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 from vcr.patch import _HTTPConnection, force_reset
@@ -188,11 +188,11 @@ def test_custom_patchers():
 def test_inject_cassette():
     vcr = VCR(inject_cassette=True)
 
-    @vcr.use_cassette("test", record_mode="once")
+    @vcr.use_cassette("test", record_mode=mode.ONCE)
     def with_cassette_injected(cassette):
-        assert cassette.record_mode == "once"
+        assert cassette.record_mode == mode.ONCE
 
-    @vcr.use_cassette("test", record_mode="once", inject_cassette=False)
+    @vcr.use_cassette("test", record_mode=mode.ONCE, inject_cassette=False)
     def without_cassette_injected():
         pass
 
@@ -201,7 +201,7 @@ def test_inject_cassette():
 
 
 def test_with_current_defaults():
-    vcr = VCR(inject_cassette=True, record_mode="once")
+    vcr = VCR(inject_cassette=True, record_mode=mode.ONCE)
 
     @vcr.use_cassette("test", with_current_defaults=False)
     def changing_defaults(cassette, checks):
@@ -212,10 +212,10 @@ def test_with_current_defaults():
         checks(cassette)
 
     def assert_record_mode_once(cassette):
-        assert cassette.record_mode == "once"
+        assert cassette.record_mode == mode.ONCE
 
     def assert_record_mode_all(cassette):
-        assert cassette.record_mode == "all"
+        assert cassette.record_mode == mode.ALL
 
     changing_defaults(assert_record_mode_once)
     current_defaults(assert_record_mode_once)
