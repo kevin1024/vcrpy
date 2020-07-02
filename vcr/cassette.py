@@ -182,6 +182,7 @@ class Cassette:
         before_record_response=None,
         custom_patches=(),
         inject=False,
+        allow_playback_repeats=False,
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -193,6 +194,7 @@ class Cassette:
         self.inject = inject
         self.record_mode = record_mode
         self.custom_patches = custom_patches
+        self.allow_playback_repeats = allow_playback_repeats
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -207,7 +209,7 @@ class Cassette:
     @property
     def all_played(self):
         """Returns True if all responses have been played, False otherwise."""
-        return self.play_count == len(self)
+        return len(self.play_counts.values()) == len(self)
 
     @property
     def requests(self):
@@ -259,7 +261,7 @@ class Cassette:
         hasn't been played back before, and mark it as played
         """
         for index, response in self._responses(request):
-            if self.play_counts[index] == 0:
+            if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 self.play_counts[index] += 1
                 return response
         # The cassette doesn't contain the request asked for.
@@ -349,6 +351,6 @@ class Cassette:
     def __contains__(self, request):
         """Return whether or not a request has been stored"""
         for index, response in self._responses(request):
-            if self.play_counts[index] == 0:
+            if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 return True
         return False

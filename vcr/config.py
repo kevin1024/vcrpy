@@ -149,6 +149,7 @@ class VCR:
             "inject": kwargs.get("inject_cassette", self.inject_cassette),
             "path_transformer": path_transformer,
             "func_path_generator": func_path_generator,
+            "allow_playback_repeats": kwargs.get("allow_playback_repeats", False),
         }
         path = kwargs.get("path")
         if path:
