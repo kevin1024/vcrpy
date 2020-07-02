@@ -13,7 +13,7 @@ def _replace_httpbin(uri, httpbin, httpbin_secure):
 @pytest.fixture
 def cassette(tmpdir, httpbin, httpbin_secure):
     """
-    Helper fixture used to prepare the cassete
+    Helper fixture used to prepare the cassette
     returns path to the recorded cassette
     """
     default_uri = _replace_httpbin(DEFAULT_URI, httpbin, httpbin_secure)
