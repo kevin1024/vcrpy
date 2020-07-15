@@ -342,7 +342,7 @@ def test_cookies(scheme, tmpdir):
         assert_responses(cookies_resp, home_resp)
 
         # -------------------------- Play --------------------------- #
-        with vcr.use_cassette(tmp, record_mode="none") as cassette:
+        with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
             async with aiohttp.ClientSession(loop=loop) as session:
                 cookies_resp = await session.get(cookies_url)
                 home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
@@ -378,7 +378,7 @@ def test_cookies_redirect(scheme, tmpdir):
             cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
 
         # -------------------------- Play --------------------------- #
-        with vcr.use_cassette(tmp, record_mode="none") as cassette:
+        with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
             async with aiohttp.ClientSession(loop=loop) as session:
                 cookies_resp = await session.get(cookies_url)
                 assert not cookies_resp.cookies
@@ -388,7 +388,7 @@ def test_cookies_redirect(scheme, tmpdir):
             cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
 
         # Assert that it's ignoring expiration date
-        with vcr.use_cassette(tmp, record_mode="none") as cassette:
+        with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
             cassette.responses[0]["headers"]["set-cookie"] = [
                 "Cookie_1=Val_1; Expires=Wed, 21 Oct 2015 07:28:00 GMT"
             ]
