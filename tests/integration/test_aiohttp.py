@@ -250,7 +250,7 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
 
 
 def test_redirect(aiohttp_client, tmpdir):
-    url = "https://httpbin.org/redirect/2"
+    url = "https://mockbin.org/redirect/302/2"
 
     with vcr.use_cassette(str(tmpdir.join("redirect.yaml"))):
         response, _ = get(url)
