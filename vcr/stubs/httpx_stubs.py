@@ -29,7 +29,7 @@ def _to_serialized_response(httpx_reponse):
         "status_code": httpx_reponse.status_code,
         "http_version": httpx_reponse.http_version,
         "headers": _transform_headers(httpx_reponse),
-        "content": httpx_reponse.content.decode("utf-8"),
+        "content": httpx_reponse.content.decode("utf-8", "ignore"),
     }
 
 
