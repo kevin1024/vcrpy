@@ -53,7 +53,7 @@ def yml(tmpdir, request):
 
 
 def test_status(tmpdir, scheme, do_request):
-    url = scheme + "://httpbin.org"
+    url = scheme + "://mockbin.org/request"
     with vcr.use_cassette(str(tmpdir.join("status.yaml"))):
         response = do_request()("GET", url)
 
@@ -64,7 +64,7 @@ def test_status(tmpdir, scheme, do_request):
 
 
 def test_case_insensitive_headers(tmpdir, scheme, do_request):
-    url = scheme + "://httpbin.org"
+    url = scheme + "://mockbin.org/request"
     with vcr.use_cassette(str(tmpdir.join("whatever.yaml"))):
         do_request()("GET", url)
 
@@ -120,7 +120,7 @@ def test_params_same_url_distinct_params(tmpdir, scheme, do_request):
 
 
 def test_redirect(tmpdir, do_request, yml):
-    url = "https://httpbin.org/redirect/2"
+    url = "https://mockbin.org/redirect/303/2"
 
     response = do_request()("GET", url)
     with vcr.use_cassette(yml):
@@ -169,10 +169,7 @@ def test_simple_fetching(tmpdir, do_request, yml, url):
 def test_behind_proxy(do_request):
     # This is recorded because otherwise we should have a live proxy somewhere.
     yml = (
-        os.path.dirname(os.path.realpath(__file__))
-        + "/cassettes/"
-        + do_request.__name__
-        + "test_httpx_test_test_behind_proxy.yml"
+        os.path.dirname(os.path.realpath(__file__)) + "/cassettes/" + "test_httpx_test_test_behind_proxy.yml"
     )
     url = "https://httpbin.org/headers"
     proxy = "http://localhost:8080"
@@ -225,16 +222,16 @@ def test_cookies(tmpdir, scheme, do_request):
 
 
 def test_relative_redirects(tmpdir, scheme, do_request):
-    url = scheme + "://httpbin.org"
+    url = scheme + "://mockbin.com/redirect/301?to=/redirect/301?to=/request"
     testfile = str(tmpdir.join("relative_redirects.yml"))
     with vcr.use_cassette(testfile):
-        response = do_request()("GET", url + "/redirect-to?url=/redirect-to?url=/get")
-        assert len(response.history) == 2
-        assert response.json()["url"].endswith("get")
+        response = do_request()("GET", url)
+        assert len(response.history) == 2, response
+        assert response.json()["url"].endswith("request")
 
     with vcr.use_cassette(testfile) as cassette:
-        response = do_request()("GET", url + "/redirect-to?url=/redirect-to?url=/get")
+        response = do_request()("GET", url)
         assert len(response.history) == 2
-        assert response.json()["url"].endswith("get")
+        assert response.json()["url"].endswith("request")
 
         assert cassette.play_count == 3
