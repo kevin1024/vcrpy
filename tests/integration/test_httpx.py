@@ -235,3 +235,21 @@ def test_relative_redirects(tmpdir, scheme, do_request):
         assert response.json()["url"].endswith("request")
 
         assert cassette.play_count == 3
+
+
+def test_redirect_wo_allow_redirects(do_request, yml):
+    url = "https://mockbin.org/redirect/308/5"
+
+    with vcr.use_cassette(yml):
+        response = do_request()("GET", url, allow_redirects=False)
+
+        assert str(response.url).endswith("308/5")
+        assert response.status_code == 308
+
+    with vcr.use_cassette(yml) as cassette:
+        response = do_request()("GET", url, allow_redirects=False)
+
+        assert str(response.url).endswith("308/5")
+        assert response.status_code == 308
+
+        assert cassette.play_count == 1

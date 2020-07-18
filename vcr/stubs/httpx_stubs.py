@@ -70,10 +70,11 @@ def _make_vcr_request(httpx_request, **kwargs):
 
 def _shared_vcr_send(cassette, real_send, *args, **kwargs):
     real_request = args[1]
+
     vcr_request = _make_vcr_request(real_request, **kwargs)
 
     if cassette.can_play_response_for(vcr_request):
-        return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0])
+        return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0], kwargs)
 
     if cassette.write_protected and cassette.filter_request(vcr_request):
         raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
@@ -96,12 +97,13 @@ def _record_responses(cassette, vcr_request, real_response):
     return real_response
 
 
-def _play_responses(cassette, request, vcr_request, client):
+def _play_responses(cassette, request, vcr_request, client, kwargs):
     history = []
+    allow_redirects = kwargs.get("allow_redirects", True)
     vcr_response = cassette.play_response(vcr_request)
     response = _from_serialized_response(request, vcr_response)
 
-    while 300 <= response.status_code <= 399:
+    while allow_redirects and 300 <= response.status_code <= 399:
         next_url = response.headers.get("location")
         if not next_url:
             break
