@@ -136,3 +136,22 @@ def async_vcr_send(cassette, real_send):
         return _async_vcr_send(cassette, real_send, *args, **kwargs)
 
     return _inner_send
+
+
+def _sync_vcr_send(cassette, real_send, *args, **kwargs):
+    vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
+    if response:
+        # add cookies from response to session cookie store
+        args[0].cookies.extract_cookies(response)
+        return response
+
+    real_response = real_send(*args, **kwargs)
+    return _record_responses(cassette, vcr_request, real_response)
+
+
+def sync_vcr_send(cassette, real_send):
+    @functools.wraps(real_send)
+    def _inner_send(*args, **kwargs):
+        return _sync_vcr_send(cassette, real_send, *args, **kwargs)
+
+    return _inner_send
