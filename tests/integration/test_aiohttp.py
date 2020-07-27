@@ -399,3 +399,19 @@ def test_cookies_redirect(scheme, tmpdir):
                 assert cookies["Cookie_1"].value == "Val_1"
 
     run_in_loop(run)
+
+
+def test_not_allow_redirects(tmpdir):
+    url = "https://mockbin.org/redirect/308/5"
+    path = str(tmpdir.join("redirects.yaml"))
+
+    with vcr.use_cassette(path):
+        response, _ = get(url, allow_redirects=False)
+        assert response.url.path == "/redirect/308/5"
+        assert response.status == 308
+
+    with vcr.use_cassette(path) as cassette:
+        response, _ = get(url, allow_redirects=False)
+        assert response.url.path == "/redirect/308/5"
+        assert response.status == 308
+        assert cassette.play_count == 1
