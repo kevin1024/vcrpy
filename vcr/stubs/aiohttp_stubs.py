@@ -116,14 +116,15 @@ def _deserialize_headers(headers):
     return CIMultiDictProxy(deserialized_headers)
 
 
-def play_responses(cassette, vcr_request):
+def play_responses(cassette, vcr_request, kwargs):
     history = []
+    allow_redirects = kwargs.get("allow_redirects", True)
     vcr_response = cassette.play_response(vcr_request)
     response = build_response(vcr_request, vcr_response, history)
 
     # If we're following redirects, continue playing until we reach
     # our final destination.
-    while 300 <= response.status <= 399:
+    while allow_redirects and 300 <= response.status <= 399:
         if "location" not in response.headers:
             break
 
@@ -256,7 +257,7 @@ def vcr_request(cassette, real_request):
 
         if cassette.can_play_response_for(vcr_request):
             log.info("Playing response for {} from cassette".format(vcr_request))
-            response = play_responses(cassette, vcr_request)
+            response = play_responses(cassette, vcr_request, kwargs)
             for redirect in response.history:
                 self._cookie_jar.update_cookies(redirect.cookies, redirect.url)
             self._cookie_jar.update_cookies(response.cookies, response.url)
