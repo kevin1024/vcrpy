@@ -7,8 +7,13 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  UNRELEASED
-    - ...
+-  4.1.0
+    - Add support for httpx!! (thanks @herdigiorgi)
+    - Add the new `allow_playback_repeats` option (thanks @tysonholub)
+    - Several aiohttp improvements (cookie support, multiple headers with same key) (Thanks @pauloromeira)
+    - Use enums for record modes (thanks @aaronbannin)
+    - Bugfix: Do not redirect on 304 in aiohttp (Thanks @royjs)
+    - Bugfix: Fix test suite by switching to mockbin (thanks @jairhenrique)
 -  4.0.2
     - Fix mock imports as reported in #504 by @llybin. Thank you.
 -  4.0.1 
