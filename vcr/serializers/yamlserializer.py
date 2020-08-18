@@ -12,4 +12,4 @@ def deserialize(cassette_string):
 
 
 def serialize(cassette_dict):
-    return yaml.dump(cassette_dict, Dumper=Dumper)
+    return yaml.dump(cassette_dict, Dumper=Dumper, allow_unicode=True)
