@@ -143,6 +143,49 @@ def test_redirect(tmpdir, do_request, yml):
     }
 
 
+def test_follow_non_303_redirects_with_same_method(tmpdir, do_request, yml):
+    url = "https://mockbin.org/redirect/307/1"
+
+    response = do_request()("POST", url)
+    with vcr.use_cassette(yml):
+        response = do_request()("POST", url)
+
+    with vcr.use_cassette(yml):
+        cassette_response = do_request()("POST", url)
+
+        assert cassette_response.status_code == response.status_code
+        assert len(cassette_response.history) == len(response.history)
+        assert cassette_response.history[0].request.method == "POST"
+
+
+def test_follow_303_redirect_with_get(tmpdir, do_request, yml):
+    url = "https://mockbin.org/redirect/303/1"
+
+    response = do_request()("POST", url)
+    with vcr.use_cassette(yml):
+        response = do_request()("POST", url)
+
+    with vcr.use_cassette(yml):
+        cassette_response = do_request()("POST", url)
+
+        assert len(cassette_response.history) == len(response.history)
+        assert cassette_response.request.method == "GET"
+
+
+def test_follow_302_redirect_with_get(tmpdir, do_request, yml):
+    url = "https://mockbin.org/redirect/302/1"
+
+    response = do_request()("POST", url)
+    with vcr.use_cassette(yml):
+        response = do_request()("POST", url)
+
+    with vcr.use_cassette(yml):
+        cassette_response = do_request()("POST", url)
+
+        assert len(cassette_response.history) == len(response.history)
+        assert cassette_response.request.method == "GET"
+
+
 def test_work_with_gzipped_data(tmpdir, do_request, yml):
     with vcr.use_cassette(yml):
         do_request()("GET", "https://httpbin.org/gzip")

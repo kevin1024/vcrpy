@@ -108,7 +108,11 @@ def _play_responses(cassette, request, vcr_request, client, kwargs):
         if not next_url:
             break
 
-        vcr_request = VcrRequest("GET", next_url, None, dict(response.headers))
+        # Even though 302 shouldn't change request's method, browsers like Chromium
+        # change method to GET for compatibility
+        method = request.method if response.status_code not in [302, 303] else "GET"
+
+        vcr_request = VcrRequest(method, next_url, None, dict(response.headers))
         vcr_request = cassette.find_requests_with_most_matches(vcr_request)[0][0]
 
         history.append(response)
