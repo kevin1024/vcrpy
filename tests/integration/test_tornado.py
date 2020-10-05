@@ -90,10 +90,10 @@ def test_body(get_client, tmpdir, scheme):
 @pytest.mark.gen_test
 def test_effective_url(get_client, scheme, tmpdir):
     """Ensure that the effective_url is captured"""
-    url = scheme + "://httpbin.org/redirect-to?url=/html"
+    url = scheme + "://mockbin.org/redirect/301?url=/html"
     with vcr.use_cassette(str(tmpdir.join("url.yaml"))):
         effective_url = (yield get(get_client(), url)).effective_url
-        assert effective_url == scheme + "://httpbin.org/html"
+        assert effective_url == scheme + "://mockbin.org/redirect/301/0"
 
     with vcr.use_cassette(str(tmpdir.join("url.yaml"))) as cass:
         assert effective_url == (yield get(get_client(), url)).effective_url
@@ -156,7 +156,7 @@ def test_post(get_client, tmpdir, scheme):
 @pytest.mark.gen_test
 def test_redirects(get_client, tmpdir, scheme):
     """Ensure that we can handle redirects"""
-    url = scheme + "://httpbin.org/redirect-to?url=bytes/1024"
+    url = scheme + "://mockbin.org/redirect/301?url=bytes/1024"
     with vcr.use_cassette(str(tmpdir.join("requests.yaml"))):
         content = (yield get(get_client(), url)).body
 
