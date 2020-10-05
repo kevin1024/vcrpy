@@ -292,9 +292,9 @@ def test_not_modified(aiohttp_client, tmpdir):
 
 def test_double_requests(tmpdir):
     """We should capture, record, and replay all requests and response chains,
-        even if there are duplicate ones.
+    even if there are duplicate ones.
 
-        We should replay in the order we saw them.
+    We should replay in the order we saw them.
     """
     url = "https://httpbin.org/get"
 

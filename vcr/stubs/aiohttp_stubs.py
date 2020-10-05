@@ -91,9 +91,9 @@ def build_response(vcr_request, vcr_response, history):
 
 def _serialize_headers(headers):
     """Serialize CIMultiDictProxy to a pickle-able dict because proxy
-        objects forbid pickling:
+    objects forbid pickling:
 
-        https://github.com/aio-libs/multidict/issues/340
+    https://github.com/aio-libs/multidict/issues/340
     """
     # Mark strings as keys so 'istr' types don't show up in
     # the cassettes as comments.
@@ -170,9 +170,9 @@ async def record_response(cassette, vcr_request, response):
 
 async def record_responses(cassette, vcr_request, response):
     """Because aiohttp follows redirects by default, we must support
-        them by default. This method is used to write individual
-        request-response chains that were implicitly followed to get
-        to the final destination.
+    them by default. This method is used to write individual
+    request-response chains that were implicitly followed to get
+    to the final destination.
     """
 
     for past_response in response.history:
