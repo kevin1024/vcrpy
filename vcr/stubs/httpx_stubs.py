@@ -52,7 +52,6 @@ def _from_serialized_response(request, serialized_response, history=None):
     response = httpx.Response(
         status_code=serialized_response.get("status_code"),
         request=request,
-        http_version=serialized_response.get("http_version"),
         headers=_from_serialized_headers(serialized_response.get("headers")),
         content=content,
         history=history or [],
