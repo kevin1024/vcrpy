@@ -130,10 +130,10 @@ in this example::
     pip install tox tox-pyenv
 
     # Install supported versions (at time of writing), this does not activate them
-    pyenv install 3.5.9 3.6.9 3.7.5 3.8.0 pypy3.6-7.2.0
+    pyenv install 3.6.9 3.7.5 3.8.0 pypy3.6-7.2.0
 
     # This activates them
-    pyenv local 3.5.9 3.6.9 3.7.5 3.8.0 pypy3.6-7.2.0
+    pyenv local 3.6.9 3.7.5 3.8.0 pypy3.6-7.2.0
 
     # Run the whole test suite
     tox
