@@ -153,6 +153,19 @@ def test_replace_post_data_parameters_empty_body():
     assert request.body is None
 
 
+def test_replace_post_data_parameters_with_body_type_as_dict():
+    body = {'client_id': "123", "client_secret": "456"}
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(
+        request,
+        [
+            ("client_id", "test_client_id"),
+            ("client_secret", "test_client_session")
+        ],
+    )
+    assert request.body == {'client_id': 'test_client_id', 'client_secret': 'test_client_session'}
+
+
 def test_remove_post_data_parameters():
     # Test the backward-compatible API wrapper.
     body = b"id=secret&foo=bar"
