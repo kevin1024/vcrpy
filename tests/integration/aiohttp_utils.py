@@ -7,7 +7,7 @@ from aiohttp.test_utils import TestClient
 
 async def aiohttp_request(loop, method, url, output="text", encoding="utf-8", content_type=None, **kwargs):
     session = aiohttp.ClientSession(loop=loop)
-    response_ctx = session.request(method, url, **kwargs)
+    response_ctx = getattr(session, method.lower())(url, **kwargs)
 
     response = await response_ctx.__aenter__()
     if output == "text":
