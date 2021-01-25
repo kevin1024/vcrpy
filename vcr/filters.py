@@ -94,6 +94,8 @@ def replace_post_data_parameters(request, replacements):
                     if rv is not None:
                         json_data[k] = rv
             request.body = json.dumps(json_data).encode("utf-8")
+        elif isinstance(request.body, dict):
+            request.body = replacements
         else:
             if isinstance(request.body, str):
                 request.body = request.body.encode("utf-8")
