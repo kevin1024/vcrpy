@@ -253,3 +253,14 @@ def test_redirect_wo_allow_redirects(do_request, yml):
         assert response.status_code == 308
 
         assert cassette.play_count == 1
+
+
+def test_binary(tmpdir, scheme, do_request):
+    url = scheme + "://httpbin.org/image/png"
+    with vcr.use_cassette(str(tmpdir.join("binary.yaml"))):
+        response = do_request()("GET", url)
+
+    with vcr.use_cassette(str(tmpdir.join("binary.yaml"))) as cassette:
+        cassette_response = do_request()("GET", url)
+        assert cassette_response.content == response.content
+        assert cassette.play_count == 1

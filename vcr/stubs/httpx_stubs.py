@@ -25,11 +25,20 @@ def _transform_headers(httpx_reponse):
 
 
 def _to_serialized_response(httpx_reponse):
+    content = httpx_reponse.content
+    try:
+        if content is not None and not isinstance(content, str):
+            content = content.decode("utf-8")
+    except (TypeError, UnicodeDecodeError, AttributeError):
+        # Sometimes the string actually is binary or StringIO object,
+        # so if you can't decode it, just give up.
+        pass
+
     return {
         "status_code": httpx_reponse.status_code,
         "http_version": httpx_reponse.http_version,
         "headers": _transform_headers(httpx_reponse),
-        "content": httpx_reponse.content.decode("utf-8", "ignore"),
+        "content": content,
     }
 
 
@@ -48,7 +57,15 @@ def _from_serialized_headers(headers):
 @patch("httpx.Response.close", MagicMock())
 @patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
-    content = serialized_response.get("content").encode()
+    content = serialized_response.get("content")
+    try:
+        if content is not None and not isinstance(content, bytes):
+            content = content.encode("utf-8")
+    except (TypeError, UnicodeEncodeError, AttributeError):
+        # sometimes the thing actually is binary, so if you can't encode
+        # it, just give up.
+        pass
+
     response = httpx.Response(
         status_code=serialized_response.get("status_code"),
         request=request,
