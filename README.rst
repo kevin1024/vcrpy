@@ -73,3 +73,12 @@ more details
 .. |CodeStyleBlack| image:: https://img.shields.io/badge/code%20style-black-000000.svg 
    :target: https://github.com/psf/black
    :alt: Code Style: black
+   
+## :busts_in_silhouette: Contributing
+
+
+If you wish to submit a pull request, please be sure check the items on this list:
+- [ ] Tests related to the changed code were executed
+- [ ] The source code has been coded following the OWASP security best practices (https://owasp.org/www-pdf-archive/OWASP_SCP_Quick_Reference_Guide_v2.pdf).
+- [ ] Commit message properly labeled
+- [ ] There is a ticket associated to each PR. 
