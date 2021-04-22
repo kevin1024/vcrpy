@@ -61,7 +61,7 @@ def _from_serialized_response(request, serialized_response, history=None):
 
 
 def _make_vcr_request(httpx_request, **kwargs):
-    body = httpx_request.read().decode("utf-8")
+    body = httpx_request.read()
     uri = str(httpx_request.url)
     headers = dict(httpx_request.headers)
     return VcrRequest(httpx_request.method, uri, body, headers)
