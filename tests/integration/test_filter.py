@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from urllib.error import HTTPError
 import vcr
 import json
-from assertions import assert_cassette_has_one_response, assert_is_json
+from ..assertions import assert_cassette_has_one_response, assert_is_json
 
 
 def _request_with_auth(url, username, password):

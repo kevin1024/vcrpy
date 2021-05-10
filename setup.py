@@ -62,8 +62,15 @@ setup(
     packages=find_packages(exclude=["tests*"]),
     python_requires=">=3.5",
     install_requires=install_requires,
+    extras_require={
+        "tests": [
+            "pytest",
+            "mock",
+            "pytest-httpbin",
+            "importlib-resources"
+        ],
+    },
     license="MIT",
-    tests_require=["pytest", "mock", "pytest-httpbin"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",

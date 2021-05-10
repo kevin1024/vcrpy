@@ -4,7 +4,7 @@ import platform
 import pytest
 import sys
 import vcr
-from assertions import assert_cassette_empty, assert_is_json
+from ..assertions import assert_cassette_empty, assert_is_json
 
 requests = pytest.importorskip("requests")
 from requests.exceptions import ConnectionError  # noqa E402
