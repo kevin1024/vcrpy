@@ -84,7 +84,17 @@ def replace_post_data_parameters(request, replacements):
 
     replacements = dict(replacements)
     if request.method == "POST" and not isinstance(request.body, BytesIO):
-        if request.headers.get("Content-Type") == "application/json":
+        if isinstance(request.body, dict):
+            json_data = request.body.copy()
+            for k, rv in replacements.items():
+                if k in json_data:
+                    ov = json_data.pop(k)
+                    if callable(rv):
+                        rv = rv(key=k, value=ov, request=request)
+                    if rv is not None:
+                        json_data[k] = rv
+            request.body = json_data
+        elif request.headers.get("Content-Type") == "application/json":
             json_data = json.loads(request.body.decode("utf-8"))
             for k, rv in replacements.items():
                 if k in json_data:
