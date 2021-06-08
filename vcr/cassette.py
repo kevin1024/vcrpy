@@ -222,6 +222,7 @@ class Cassette:
 
     def append(self, request, response):
         """Add a request, response pair to this cassette"""
+        log.info("PLTM_append_cassette: %s", self._as_dict())
         log.info("Appending request %s and response %s", request, response)
         request = self._before_record_request(request)
         if not request:
@@ -249,7 +250,13 @@ class Cassette:
                 yield index, response
 
     def can_play_response_for(self, request):
+        log.info("PLTM_can_play_response_for_cassette: %s", self.requests)
+        log.info("PLTM_can_play_response_for_cassette: %s", id(self))
+        log.info("PLTM_can_play_response_for_request: %s", request)
         request = self._before_record_request(request)
+        log.info("PLTM_can_play_response_for__before_record_request: %s",  request)
+        log.info("PLTM_record_mode: %s", self.record_mode)
+        log.info("PLTM_rewound: %s", self.rewound)
         return request and request in self and self.record_mode != "all" and self.rewound
 
     def play_response(self, request):
