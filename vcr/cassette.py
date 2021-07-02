@@ -14,6 +14,7 @@ from .serializers import yamlserializer
 from .persisters.filesystem import FilesystemPersister
 from .util import partition_dict
 from ._handle_coroutine import handle_coroutine
+from .record_mode import RecordMode
 
 try:
     from asyncio import iscoroutinefunction
@@ -175,12 +176,13 @@ class Cassette:
         path,
         serializer=None,
         persister=None,
-        record_mode="once",
+        record_mode=RecordMode.ONCE,
         match_on=(uri, method),
         before_record_request=None,
         before_record_response=None,
         custom_patches=(),
         inject=False,
+        allow_playback_repeats=False,
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -192,6 +194,7 @@ class Cassette:
         self.inject = inject
         self.record_mode = record_mode
         self.custom_patches = custom_patches
+        self.allow_playback_repeats = allow_playback_repeats
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -206,7 +209,7 @@ class Cassette:
     @property
     def all_played(self):
         """Returns True if all responses have been played, False otherwise."""
-        return self.play_count == len(self)
+        return len(self.play_counts.values()) == len(self)
 
     @property
     def requests(self):
@@ -218,7 +221,7 @@ class Cassette:
 
     @property
     def write_protected(self):
-        return self.rewound and self.record_mode == "once" or self.record_mode == "none"
+        return self.rewound and self.record_mode == RecordMode.ONCE or self.record_mode == RecordMode.NONE
 
     def append(self, request, response):
         """Add a request, response pair to this cassette"""
@@ -250,7 +253,7 @@ class Cassette:
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        return request and request in self and self.record_mode != "all" and self.rewound
+        return request and request in self and self.record_mode != RecordMode.ALL and self.rewound
 
     def play_response(self, request):
         """
@@ -258,7 +261,7 @@ class Cassette:
         hasn't been played back before, and mark it as played
         """
         for index, response in self._responses(request):
-            if self.play_counts[index] == 0:
+            if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 self.play_counts[index] += 1
                 return response
         # The cassette doesn't contain the request asked for.
@@ -348,6 +351,6 @@ class Cassette:
     def __contains__(self, request):
         """Return whether or not a request has been stored"""
         for index, response in self._responses(request):
-            if self.play_counts[index] == 0:
+            if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 return True
         return False

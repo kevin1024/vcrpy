@@ -138,6 +138,31 @@ def test_cassette_all_played():
 
 
 @mock.patch("vcr.cassette.requests_match", _mock_requests_match)
+def test_cassette_allow_playback_repeats():
+    a = Cassette("test", allow_playback_repeats=True)
+    a.append("foo", "bar")
+    a.append("other", "resp")
+    for x in range(10):
+        assert a.play_response("foo") == "bar"
+    assert a.play_count == 10
+    assert a.all_played is False
+    assert a.play_response("other") == "resp"
+    assert a.play_count == 11
+    assert a.all_played
+
+    a.allow_playback_repeats = False
+    with pytest.raises(UnhandledHTTPRequestError) as e:
+        a.play_response("foo")
+    assert str(e.value) == "\"The cassette ('test') doesn't contain the request ('foo') asked for\""
+    a.rewind()
+    assert a.all_played is False
+    assert a.play_response("foo") == "bar"
+    assert a.all_played is False
+    assert a.play_response("other") == "resp"
+    assert a.all_played
+
+
+@mock.patch("vcr.cassette.requests_match", _mock_requests_match)
 def test_cassette_rewound():
     a = Cassette("test")
     a.append("foo", "bar")

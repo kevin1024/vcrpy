@@ -5,9 +5,13 @@ import logging
 import json
 
 from aiohttp import ClientConnectionError, ClientResponse, RequestInfo, streams
+from aiohttp import hdrs, CookieJar
+from http.cookies import CookieError, Morsel, SimpleCookie
+from aiohttp.helpers import strip_auth_from_url
 from multidict import CIMultiDict, CIMultiDictProxy
 from yarl import URL
 
+from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
 
 log = logging.getLogger(__name__)
@@ -59,15 +63,27 @@ def build_response(vcr_request, vcr_response, history):
     request_info = RequestInfo(
         url=URL(vcr_request.url),
         method=vcr_request.method,
-        headers=CIMultiDictProxy(CIMultiDict(vcr_request.headers)),
+        headers=_deserialize_headers(vcr_request.headers),
         real_url=URL(vcr_request.url),
     )
     response = MockClientResponse(vcr_request.method, URL(vcr_response.get("url")), request_info=request_info)
     response.status = vcr_response["status"]["code"]
     response._body = vcr_response["body"].get("string", b"")
     response.reason = vcr_response["status"]["message"]
-    response._headers = CIMultiDictProxy(CIMultiDict(vcr_response["headers"]))
+    response._headers = _deserialize_headers(vcr_response["headers"])
     response._history = tuple(history)
+    # cookies
+    for hdr in response.headers.getall(hdrs.SET_COOKIE, ()):
+        try:
+            cookies = SimpleCookie(hdr)
+            for cookie_name, cookie in cookies.items():
+                expires = cookie.get("expires", "").strip()
+                if expires:
+                    log.debug('Ignoring expiration date: %s="%s"', cookie_name, expires)
+                cookie["expires"] = ""
+                response.cookies.load(cookie.output(header="").strip())
+        except CookieError as exc:
+            log.warning("Can not load response cookies: %s", exc)
 
     response.close()
     return response
@@ -75,13 +91,29 @@ def build_response(vcr_request, vcr_response, history):
 
 def _serialize_headers(headers):
     """Serialize CIMultiDictProxy to a pickle-able dict because proxy
-        objects forbid pickling:
+    objects forbid pickling:
 
-        https://github.com/aio-libs/multidict/issues/340
+    https://github.com/aio-libs/multidict/issues/340
     """
     # Mark strings as keys so 'istr' types don't show up in
     # the cassettes as comments.
-    return {str(k): v for k, v in headers.items()}
+    serialized_headers = {}
+    for k, v in headers.items():
+        serialized_headers.setdefault(str(k), []).append(v)
+
+    return serialized_headers
+
+
+def _deserialize_headers(headers):
+    deserialized_headers = CIMultiDict()
+    for k, vs in headers.items():
+        if isinstance(vs, list):
+            for v in vs:
+                deserialized_headers.add(k, v)
+        else:
+            deserialized_headers.add(k, vs)
+
+    return CIMultiDictProxy(deserialized_headers)
 
 
 def play_responses(cassette, vcr_request):
@@ -92,14 +124,20 @@ def play_responses(cassette, vcr_request):
     # If we're following redirects, continue playing until we reach
     # our final destination.
     while 300 <= response.status <= 399:
-        next_url = URL(response.url).with_path(response.headers["location"])
+        if "location" not in response.headers:
+            break
+
+        next_url = URL(response.url).join(URL(response.headers["location"]))
 
         # Make a stub VCR request that we can then use to look up the recorded
         # VCR request saved to the cassette. This feels a little hacky and
         # may have edge cases based on the headers we're providing (e.g. if
         # there's a matcher that is used to filter by headers).
         vcr_request = Request("GET", str(next_url), None, _serialize_headers(response.request_info.headers))
-        vcr_request = cassette.find_requests_with_most_matches(vcr_request)[0][0]
+        vcr_requests = cassette.find_requests_with_most_matches(vcr_request)
+        for vcr_request, *_ in vcr_requests:
+            if cassette.can_play_response_for(vcr_request):
+                break
 
         # Tack on the response we saw from the redirect into the history
         # list that is added on to the final response.
@@ -132,9 +170,9 @@ async def record_response(cassette, vcr_request, response):
 
 async def record_responses(cassette, vcr_request, response):
     """Because aiohttp follows redirects by default, we must support
-        them by default. This method is used to write individual
-        request-response chains that were implicitly followed to get
-        to the final destination.
+    them by default. This method is used to write individual
+    request-response chains that were implicitly followed to get
+    to the final destination.
     """
 
     for past_response in response.history:
@@ -163,6 +201,33 @@ async def record_responses(cassette, vcr_request, response):
     await record_response(cassette, vcr_request, response)
 
 
+def _build_cookie_header(session, cookies, cookie_header, url):
+    url, _ = strip_auth_from_url(url)
+    all_cookies = session._cookie_jar.filter_cookies(url)
+    if cookies is not None:
+        tmp_cookie_jar = CookieJar()
+        tmp_cookie_jar.update_cookies(cookies)
+        req_cookies = tmp_cookie_jar.filter_cookies(url)
+        if req_cookies:
+            all_cookies.load(req_cookies)
+
+    if not all_cookies and not cookie_header:
+        return None
+
+    c = SimpleCookie()
+    if cookie_header:
+        c.load(cookie_header)
+    for name, value in all_cookies.items():
+        if isinstance(value, Morsel):
+            mrsl_val = value.get(value.key, Morsel())
+            mrsl_val.set(value.key, value.value, value.coded_value)
+            c[name] = mrsl_val
+        else:
+            c[name] = value
+
+    return c.output(header="", sep=";").strip()
+
+
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
@@ -171,6 +236,7 @@ def vcr_request(cassette, real_request):
         headers = self._prepare_headers(headers)
         data = kwargs.get("data", kwargs.get("json"))
         params = kwargs.get("params")
+        cookies = kwargs.get("cookies")
 
         if auth is not None:
             headers["AUTHORIZATION"] = auth.encode()
@@ -181,22 +247,23 @@ def vcr_request(cassette, real_request):
                 params[k] = str(v)
             request_url = URL(url).with_query(params)
 
-        vcr_request = Request(method, str(request_url), data, headers)
+        c_header = headers.pop(hdrs.COOKIE, None)
+        cookie_header = _build_cookie_header(self, cookies, c_header, request_url)
+        if cookie_header:
+            headers[hdrs.COOKIE] = cookie_header
+
+        vcr_request = Request(method, str(request_url), data, _serialize_headers(headers))
 
         if cassette.can_play_response_for(vcr_request):
-            return play_responses(cassette, vcr_request)
+            log.info("Playing response for {} from cassette".format(vcr_request))
+            response = play_responses(cassette, vcr_request)
+            for redirect in response.history:
+                self._cookie_jar.update_cookies(redirect.cookies, redirect.url)
+            self._cookie_jar.update_cookies(response.cookies, response.url)
+            return response
 
         if cassette.write_protected and cassette.filter_request(vcr_request):
-            response = MockClientResponse(method, URL(url))
-            response.status = 599
-            msg = (
-                "No match for the request {!r} was found. Can't overwrite "
-                "existing cassette {!r} in your current record mode {!r}."
-            )
-            msg = msg.format(vcr_request, cassette._path, cassette.record_mode)
-            response._body = msg.encode()
-            response.close()
-            return response
+            raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
         log.info("%s not in cassette, sending to real server", vcr_request)
 

@@ -13,7 +13,9 @@ def test_set_serializer_default_config(tmpdir, httpbin):
         urlopen(httpbin.url + "/get")
 
     with open(str(tmpdir.join("test.json"))) as f:
-        assert json.loads(f.read())
+        file_content = f.read()
+        assert file_content.endswith("\n")
+        assert json.loads(file_content)
 
 
 def test_default_set_cassette_library_dir(tmpdir, httpbin):

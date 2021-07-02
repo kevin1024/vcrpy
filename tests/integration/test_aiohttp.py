@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import urllib.parse
 
 import pytest
 
@@ -179,9 +180,8 @@ def test_params_same_url_distinct_params(tmpdir, scheme):
 
     other_params = {"other": "params"}
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        response, cassette_response_text = get(url, output="text", params=other_params)
-        assert "No match for the request" in cassette_response_text
-        assert response.status == 599
+        with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
+            get(url, output="text", params=other_params)
 
 
 def test_params_on_url(tmpdir, scheme):
@@ -250,7 +250,7 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
 
 
 def test_redirect(aiohttp_client, tmpdir):
-    url = "https://httpbin.org/redirect/2"
+    url = "https://mockbin.org/redirect/302/2"
 
     with vcr.use_cassette(str(tmpdir.join("redirect.yaml"))):
         response, _ = get(url)
@@ -273,11 +273,28 @@ def test_redirect(aiohttp_client, tmpdir):
     assert cassette_response.request_info.real_url == response.request_info.real_url
 
 
+def test_not_modified(aiohttp_client, tmpdir):
+    """It doesn't try to redirect on 304"""
+    url = "https://httpbin.org/status/304"
+
+    with vcr.use_cassette(str(tmpdir.join("not_modified.yaml"))):
+        response, _ = get(url)
+
+    with vcr.use_cassette(str(tmpdir.join("not_modified.yaml"))) as cassette:
+        cassette_response, _ = get(url)
+
+        assert cassette_response.status == 304
+        assert response.status == 304
+        assert len(cassette_response.history) == len(response.history)
+        assert len(cassette) == 1
+        assert cassette.play_count == 1
+
+
 def test_double_requests(tmpdir):
     """We should capture, record, and replay all requests and response chains,
-        even if there are duplicate ones.
+    even if there are duplicate ones.
 
-        We should replay in the order we saw them.
+    We should replay in the order we saw them.
     """
     url = "https://httpbin.org/get"
 
@@ -302,3 +319,83 @@ def test_double_requests(tmpdir):
 
         # Now that we made both requests, we should have played both.
         assert cassette.play_count == 2
+
+
+def test_cookies(scheme, tmpdir):
+    async def run(loop):
+        cookies_url = scheme + (
+            "://httpbin.org/response-headers?"
+            "set-cookie=" + urllib.parse.quote("cookie_1=val_1; Path=/") + "&"
+            "Set-Cookie=" + urllib.parse.quote("Cookie_2=Val_2; Path=/")
+        )
+        home_url = scheme + "://httpbin.org/"
+        tmp = str(tmpdir.join("cookies.yaml"))
+        req_cookies = {"Cookie_3": "Val_3"}
+        req_headers = {"Cookie": "Cookie_4=Val_4"}
+
+        # ------------------------- Record -------------------------- #
+        with vcr.use_cassette(tmp) as cassette:
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
+                assert cassette.play_count == 0
+        assert_responses(cookies_resp, home_resp)
+
+        # -------------------------- Play --------------------------- #
+        with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
+                assert cassette.play_count == 2
+        assert_responses(cookies_resp, home_resp)
+
+    def assert_responses(cookies_resp, home_resp):
+        assert cookies_resp.cookies.get("cookie_1").value == "val_1"
+        assert cookies_resp.cookies.get("Cookie_2").value == "Val_2"
+        request_cookies = home_resp.request_info.headers["cookie"]
+        assert "cookie_1=val_1" in request_cookies
+        assert "Cookie_2=Val_2" in request_cookies
+        assert "Cookie_3=Val_3" in request_cookies
+        assert "Cookie_4=Val_4" in request_cookies
+
+    run_in_loop(run)
+
+
+def test_cookies_redirect(scheme, tmpdir):
+    async def run(loop):
+        # Sets cookie as provided by the query string and redirects
+        cookies_url = scheme + "://httpbin.org/cookies/set?Cookie_1=Val_1"
+        tmp = str(tmpdir.join("cookies.yaml"))
+
+        # ------------------------- Record -------------------------- #
+        with vcr.use_cassette(tmp) as cassette:
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                assert not cookies_resp.cookies
+                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                assert cookies["Cookie_1"].value == "Val_1"
+                assert cassette.play_count == 0
+            cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
+
+        # -------------------------- Play --------------------------- #
+        with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                assert not cookies_resp.cookies
+                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                assert cookies["Cookie_1"].value == "Val_1"
+                assert cassette.play_count == 2
+            cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
+
+        # Assert that it's ignoring expiration date
+        with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
+            cassette.responses[0]["headers"]["set-cookie"] = [
+                "Cookie_1=Val_1; Expires=Wed, 21 Oct 2015 07:28:00 GMT"
+            ]
+            async with aiohttp.ClientSession(loop=loop) as session:
+                cookies_resp = await session.get(cookies_url)
+                assert not cookies_resp.cookies
+                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                assert cookies["Cookie_1"].value == "Val_1"
+
+    run_in_loop(run)

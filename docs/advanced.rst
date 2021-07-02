@@ -33,6 +33,8 @@ consider part of the API. The fields are as follows:
    been played back.
 -  ``responses_of(request)``: Access the responses that match a given
    request
+-  ``allow_playback_repeats``: A boolean indicating whether responses
+   can be played back more than once.
 
 The ``Request`` object has the following properties:
 
@@ -386,3 +388,19 @@ VCR.py allows to rewind a cassette in order to replay it inside the same functio
         assert cass.all_played
         cass.rewind()
         assert not cass.all_played
+
+Playback Repeats
+----------------
+
+By default, each response in a cassette can only be matched and played back
+once while the cassette is in use, unless the cassette is rewound.
+
+If you want to allow playback repeats without rewinding the cassette, use
+the Cassette ``allow_playback_repeats`` option.
+
+.. code:: python
+
+    with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml', allow_playback_repeats=True) as cass:
+        for x in range(10):
+            response = urllib2.urlopen('http://www.zombo.com/').read()
+        assert cass.all_played

@@ -47,6 +47,11 @@ VCR.py will detect the absence of a cassette file and once again record
 all HTTP interactions, which will update them to correspond to the new
 API.
 
+Usage with Pytest
+-----------------
+
+There is a library to provide some pytest fixtures called pytest-recording https://github.com/kiwicom/pytest-recording
+
 License
 -------
 
