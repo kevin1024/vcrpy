@@ -194,6 +194,7 @@ class Cassette:
         match_on=(uri, method),
         before_record_request=None,
         before_record_response=None,
+        before_handle_response=None,
         custom_patches=(),
         inject=False,
         allow_playback_repeats=False,
@@ -205,6 +206,7 @@ class Cassette:
         self._before_record_request = before_record_request or (lambda x: x)
         log.info(self._before_record_request)
         self._before_record_response = before_record_response or (lambda x: x)
+        self._before_handle_response = before_handle_response or (lambda x: x)
         self.inject = inject
         self.record_mode = record_mode
         self.custom_patches = custom_patches

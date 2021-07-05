@@ -1,5 +1,6 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
+import copy
 import logging
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
@@ -255,6 +256,9 @@ class VCRConnection:
                 "headers": serialize_headers(response),
                 "body": {"string": response.read()},
             }
+            response = copy.deepcopy(response)
+            response = self.cassette._before_handle_response(response)
+
             self.cassette.append(self._vcr_request, response)
         return VCRHTTPResponse(response)
 

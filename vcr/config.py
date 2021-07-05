@@ -41,6 +41,7 @@ class VCR:
         ignore_localhost=False,
         filter_headers=(),
         before_record_response=None,
+        before_handle_response=None,
         filter_post_data_parameters=(),
         match_on=("method", "scheme", "host", "port", "path", "query"),
         before_record=None,
@@ -75,6 +76,7 @@ class VCR:
         self.filter_post_data_parameters = filter_post_data_parameters
         self.before_record_request = before_record_request or before_record
         self.before_record_response = before_record_response
+        self.before_handle_response = before_handle_response
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
         self.inject_cassette = inject_cassette
@@ -147,6 +149,7 @@ class VCR:
             "record_mode": kwargs.get("record_mode", self.record_mode),
             "before_record_request": self._build_before_record_request(kwargs),
             "before_record_response": self._build_before_record_response(kwargs),
+            "before_handle_response": self._build_before_handle_response(kwargs),
             "custom_patches": self._custom_patches + kwargs.get("custom_patches", ()),
             "inject": kwargs.get("inject_cassette", self.inject_cassette),
             "path_transformer": path_transformer,
@@ -158,6 +161,28 @@ class VCR:
         if path:
             merged_config["path"] = path
         return merged_config
+
+    def _build_before_handle_response(self, options):
+        before_handle_response = options.get("before_handle_response", self.before_handle_response)
+        decode_compressed_response = options.get(
+            "decode_compressed_response", self.decode_compressed_response
+        )
+        filter_functions = []
+        if decode_compressed_response:
+            filter_functions.append(filters.decode_response)
+        if before_handle_response:
+            if not isinstance(before_handle_response, collections_abc.Iterable):
+                before_handle_response = (before_handle_response,)
+            filter_functions.extend(before_handle_response)
+
+        def before_handle_response(response):
+            for function in filter_functions:
+                if response is None:
+                    break
+                response = function(response)
+            return response
+
+        return before_handle_response
 
     def _build_before_record_response(self, options):
         before_record_response = options.get("before_record_response", self.before_record_response)
