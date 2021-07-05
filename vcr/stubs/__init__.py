@@ -1,5 +1,6 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
+import copy
 import logging
 from http.client import (
     HTTPConnection,
@@ -249,16 +250,24 @@ class VCRConnection:
                 )
 
             # get the response
-            response = self.real_connection.getresponse()
+            live_response = self.real_connection.getresponse()
 
             # put the response into the cassette
-            response = {
-                "status": {"code": response.status, "message": response.reason},
-                "headers": serialize_headers(response),
-                "body": {"string": response.read()},
+            live_response = {
+                "status": {"code": live_response.status, "message": live_response.reason},
+                "headers": serialize_headers(live_response),
+                "body": {"string": live_response.read()},
             }
+            # Deepcopy is here because mutation of `response` will corrupt the
+            # real response.
+            response = copy.deepcopy(live_response)
+            response = self.cassette._before_record_response(response)
+
             self.cassette.append(self._vcr_request, response)
-        return VCRHTTPResponse(response)
+        if self.cassette._alter_live_response:
+            return VCRHTTPResponse(response)
+        else:
+            return VCRHTTPResponse(live_response)
 
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)

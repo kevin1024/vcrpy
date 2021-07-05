@@ -180,6 +180,7 @@ class Cassette:
         match_on=(uri, method),
         before_record_request=None,
         before_record_response=None,
+        alter_live_response=False,
         custom_patches=(),
         inject=False,
         allow_playback_repeats=False,
@@ -191,6 +192,7 @@ class Cassette:
         self._before_record_request = before_record_request or (lambda x: x)
         log.info(self._before_record_request)
         self._before_record_response = before_record_response or (lambda x: x)
+        self._alter_live_response = alter_live_response
         self.inject = inject
         self.record_mode = record_mode
         self.custom_patches = custom_patches
@@ -229,10 +231,6 @@ class Cassette:
         request = self._before_record_request(request)
         if not request:
             return
-        # Deepcopy is here because mutation of `response` will corrupt the
-        # real response.
-        response = copy.deepcopy(response)
-        response = self._before_record_response(response)
         if response is None:
             return
         self.data.append((request, response))

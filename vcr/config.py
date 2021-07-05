@@ -42,6 +42,7 @@ class VCR:
         ignore_localhost=False,
         filter_headers=(),
         before_record_response=None,
+        alter_live_response=None,
         filter_post_data_parameters=(),
         match_on=("method", "scheme", "host", "port", "path", "query"),
         before_record=None,
@@ -75,6 +76,7 @@ class VCR:
         self.filter_post_data_parameters = filter_post_data_parameters
         self.before_record_request = before_record_request or before_record
         self.before_record_response = before_record_response
+        self.alter_live_response = alter_live_response
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
         self.inject_cassette = inject_cassette
@@ -145,6 +147,7 @@ class VCR:
             "record_mode": kwargs.get("record_mode", self.record_mode),
             "before_record_request": self._build_before_record_request(kwargs),
             "before_record_response": self._build_before_record_response(kwargs),
+            "alter_live_response": self.alter_live_response,
             "custom_patches": self._custom_patches + kwargs.get("custom_patches", ()),
             "inject": kwargs.get("inject_cassette", self.inject_cassette),
             "path_transformer": path_transformer,
