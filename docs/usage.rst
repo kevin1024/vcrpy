@@ -4,10 +4,10 @@ Usage
 .. code:: python
 
     import vcr
-    import urllib2
+    import urllib
 
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
-        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
         assert 'Example domains' in response
 
 Run this test once, and VCR.py will record the HTTP request to
@@ -25,7 +25,7 @@ look like this:
 
     @vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml')
     def test_iana():
-        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
         assert 'Example domains' in response
 
 When using the decorator version of ``use_cassette``, it is possible to
@@ -35,7 +35,7 @@ omit the path to the cassette file.
 
     @vcr.use_cassette()
     def test_iana():
-        response = urllib2.urlopen('http://www.iana.org/domains/reserved').read()
+        response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
         assert 'Example domains' in response
 
 In this case, the cassette file will be given the same name as the test
