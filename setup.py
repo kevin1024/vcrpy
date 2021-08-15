@@ -46,8 +46,7 @@ install_requires = [
     "PyYAML",
     "wrapt",
     "six>=1.5",
-    'yarl; python_version>="3.6"',
-    'yarl<1.4; python_version=="3.5"',
+    "yarl",
 ]
 
 setup(
@@ -70,7 +69,6 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
