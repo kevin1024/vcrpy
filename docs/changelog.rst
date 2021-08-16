@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-For a full list of triaged issues, bugs and PRs and what release they are targetted for please see the following link.
+For a full list of triaged issues, bugs and PRs and what release they are targeted for please see the following link.
 
 `ROADMAP MILESTONES <https://github.com/kevin1024/vcrpy/milestones>`_
 
@@ -100,7 +100,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - decode_compressed_response option and filter (thanks @jayvdb).
 -  1.7.4 [#217] 
     - Make use_cassette decorated functions actually return a value (thanks @bcen). 
-    - [#199] Fix path transfromation defaults.
+    - [#199] Fix path transformation defaults.
     - Better headers dictionary management.
 -  1.7.3 [#188] 
     - ``additional_matchers`` kwarg on ``use_cassette``.
@@ -203,7 +203,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 -  0.3.4
     - Bugfix: close file before renaming it. This fixes an issue on Windows. Thanks @smallcode for the fix.
 -  0.3.3
-    - Bugfix for error message when an unreigstered custom matcher was used
+    - Bugfix for error message when an unregistered custom matcher was used
 -  0.3.2
     - Fix issue with new config syntax and the ``match_on`` parameter. Thanks, @chromy!
 -  0.3.1

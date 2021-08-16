@@ -10,26 +10,26 @@ from vcr.errors import CannotOverwriteExistingCassetteException
 _logger = logging.getLogger(__name__)
 
 
-def _transform_headers(httpx_reponse):
+def _transform_headers(httpx_response):
     """
     Some headers can appear multiple times, like "Set-Cookie".
     Therefore transform to every header key to list of values.
     """
 
     out = {}
-    for key, var in httpx_reponse.headers.raw:
+    for key, var in httpx_response.headers.raw:
         decoded_key = key.decode("utf-8")
         out.setdefault(decoded_key, [])
         out[decoded_key].append(var.decode("utf-8"))
     return out
 
 
-def _to_serialized_response(httpx_reponse):
+def _to_serialized_response(httpx_response):
     return {
-        "status_code": httpx_reponse.status_code,
-        "http_version": httpx_reponse.http_version,
-        "headers": _transform_headers(httpx_reponse),
-        "content": httpx_reponse.content.decode("utf-8", "ignore"),
+        "status_code": httpx_response.status_code,
+        "http_version": httpx_response.http_version,
+        "headers": _transform_headers(httpx_response),
+        "content": httpx_response.content.decode("utf-8", "ignore"),
     }
 
 

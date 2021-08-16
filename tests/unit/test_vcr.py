@@ -31,7 +31,7 @@ def test_vcr_use_cassette():
         function()
         assert mock_cassette_load.call_args[1]["record_mode"] == test_vcr.record_mode
 
-        # Ensure that explicitly provided arguments still supercede
+        # Ensure that explicitly provided arguments still supersede
         # those on the vcr.
         new_record_mode = mock.Mock()
 
@@ -226,7 +226,7 @@ def test_with_current_defaults():
 
 
 def test_cassette_library_dir_with_decoration_and_no_explicit_path():
-    library_dir = "/libary_dir"
+    library_dir = "/library_dir"
     vcr = VCR(inject_cassette=True, cassette_library_dir=library_dir)
 
     @vcr.use_cassette()
@@ -237,7 +237,7 @@ def test_cassette_library_dir_with_decoration_and_no_explicit_path():
 
 
 def test_cassette_library_dir_with_decoration_and_explicit_path():
-    library_dir = "/libary_dir"
+    library_dir = "/library_dir"
     vcr = VCR(inject_cassette=True, cassette_library_dir=library_dir)
 
     @vcr.use_cassette(path="custom_name")
@@ -248,7 +248,7 @@ def test_cassette_library_dir_with_decoration_and_explicit_path():
 
 
 def test_cassette_library_dir_with_decoration_and_super_explicit_path():
-    library_dir = "/libary_dir"
+    library_dir = "/library_dir"
     vcr = VCR(inject_cassette=True, cassette_library_dir=library_dir)
 
     @vcr.use_cassette(path=os.path.join(library_dir, "custom_name"))
@@ -259,7 +259,7 @@ def test_cassette_library_dir_with_decoration_and_super_explicit_path():
 
 
 def test_cassette_library_dir_with_path_transformer():
-    library_dir = "/libary_dir"
+    library_dir = "/library_dir"
     vcr = VCR(
         inject_cassette=True, cassette_library_dir=library_dir, path_transformer=lambda path: path + ".json"
     )
