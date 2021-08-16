@@ -3,7 +3,7 @@ from enum import Enum
 
 class RecordMode(str, Enum):
     """
-    Configues when VCR will record to the cassette.
+    Configures when VCR will record to the cassette.
 
     Can be declared by either using the enumerated value (`vcr.mode.ONCE`)
     or by simply using the defined string (`once`).

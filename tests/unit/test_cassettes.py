@@ -208,7 +208,7 @@ def test_nesting_cassette_context_managers(*args):
         )
         assert_get_response_body_is("first_response")
 
-        # Make sure a second cassette can supercede the first
+        # Make sure a second cassette can supersede the first
         with Cassette.use(path="test") as second_cassette:
             with mock.patch.object(second_cassette, "play_response", return_value=second_response):
                 assert_get_response_body_is("second_response")
@@ -310,16 +310,16 @@ def test_func_path_generator():
 
 
 def test_use_as_decorator_on_coroutine():
-    original_http_connetion = httplib.HTTPConnection
+    original_http_connection = httplib.HTTPConnection
 
     @Cassette.use(inject=True)
     def test_function(cassette):
         assert httplib.HTTPConnection.cassette is cassette
-        assert httplib.HTTPConnection is not original_http_connetion
+        assert httplib.HTTPConnection is not original_http_connection
         value = yield 1
         assert value == 1
         assert httplib.HTTPConnection.cassette is cassette
-        assert httplib.HTTPConnection is not original_http_connetion
+        assert httplib.HTTPConnection is not original_http_connection
         value = yield 2
         assert value == 2
 
@@ -333,15 +333,15 @@ def test_use_as_decorator_on_coroutine():
 
 
 def test_use_as_decorator_on_generator():
-    original_http_connetion = httplib.HTTPConnection
+    original_http_connection = httplib.HTTPConnection
 
     @Cassette.use(inject=True)
     def test_function(cassette):
         assert httplib.HTTPConnection.cassette is cassette
-        assert httplib.HTTPConnection is not original_http_connetion
+        assert httplib.HTTPConnection is not original_http_connection
         yield 1
         assert httplib.HTTPConnection.cassette is cassette
-        assert httplib.HTTPConnection is not original_http_connetion
+        assert httplib.HTTPConnection is not original_http_connection
         yield 2
 
     assert list(test_function()) == [1, 2]
