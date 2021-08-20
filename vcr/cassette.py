@@ -12,6 +12,9 @@ from .errors import UnhandledHTTPRequestError
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder
 from .persisters.filesystem import FilesystemPersister
+from .persisters.deduplicated_filesystem import DeduplicatedFilesystemPersister
+from .util import partition_dict
+from ._handle_coroutine import handle_coroutine
 from .record_mode import RecordMode
 from .serializers import yamlserializer
 from .util import partition_dict
