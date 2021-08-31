@@ -253,6 +253,24 @@ class CassettePatcherBuilder:
 
         return patched_new_conn
 
+    def _patched_is_connection_dropped(self, cpool):
+        from .stubs import VCRFakeSocket
+        is_connection_dropped = cpool.is_connection_dropped
+
+        @functools.wraps(is_connection_dropped)
+        def patched_is_connection_dropped(conn):
+            sock = getattr(conn, "sock", None)
+            if isinstance(sock, VCRFakeSocket):
+                # Handle VCRFakeSocket instances here to avoid bad select() calls on Windows
+                # See https://github.com/kevin1024/vcrpy/issues/116
+                return False
+
+            # Let actual is_connection_dropped function handle real sockets.
+            # This allows urllib3 to detect closed TCP connections.
+            return is_connection_dropped(conn)
+
+        return patched_is_connection_dropped
+
     def _urllib3(self):
         try:
             import urllib3.connectionpool as cpool
@@ -349,7 +367,7 @@ class CassettePatcherBuilder:
             (cpool, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
             (cpool, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
             (cpool, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
-            (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
+            (cpool, "is_connection_dropped", self._patched_is_connection_dropped(cpool)),
             (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
             (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
         )
