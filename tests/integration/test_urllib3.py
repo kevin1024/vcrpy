@@ -2,6 +2,8 @@
 
 # coding=utf-8
 
+import http.server
+import multiprocessing
 import pytest
 import pytest_httpbin
 import vcr
@@ -157,3 +159,58 @@ def test_urllib3_force_reset():
         assert cpool.HTTPConnection is first_cassette_HTTPConnection
         assert cpool.HTTPSConnection is first_cassette_HTTPSConnection
         assert cpool.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection
+
+
+class ConnectionClosingRequestHandler(http.server.BaseHTTPRequestHandler):
+    """
+    By default TCP connections in HTTP/1.1 are persistent (reused between requests).
+    This request handler closes the underlying TCP connection immediately after sending
+    a response to thus creating a situation in which the client has to detect connection
+    closure and open a new one.
+    """
+    protocol_version = "HTTP/1.1"
+
+    def do_GET(self):
+        self.send_response(204)
+        self.end_headers()
+        self.close_connection = True
+
+
+class HTTPServer(http.server.HTTPServer):
+    def __init__(self):
+        super().__init__(("", 0), ConnectionClosingRequestHandler)
+        self.done_queue = multiprocessing.Queue()
+        self.process = multiprocessing.Process(target=self.serve_forever)
+
+    def start(self):
+        self.process.start()
+
+    def stop(self):
+        self.process.terminate()
+
+    def close_request(self, request):
+        super().close_request(request)
+        self.done_queue.put(1)
+
+    def wait_for_connection_closure(self):
+        self.done_queue.get(timeout=10)
+
+
+@pytest.fixture(scope="session")
+def server():
+    httpd = HTTPServer()
+    httpd.start()
+    yield httpd
+    httpd.stop()
+
+
+def test_persistent_connection_closure(tmpdir, pool_mgr, server):
+    url = "http://{}:{}/".format(*server.server_address)
+    with vcr.use_cassette(str(tmpdir.join("persistent_connection_gets_closed.yaml"))):
+        assert 204 == pool_mgr.request("GET", url, retries=False).status
+
+        server.wait_for_connection_closure()
+
+        # HTTP server has closed the TCP connection from 1st request,
+        # patched urllib3 must detect that and make a new con
+        assert 204 == pool_mgr.request("GET", url, retries=False).status
