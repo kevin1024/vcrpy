@@ -44,4 +44,4 @@ def test_try_migrate_with_invalid_or_new_cassettes(tmpdir):
     for file_path in files:
         shutil.copy(file_path, cassette)
         assert not vcr.migration.try_migrate(cassette)
-        assert filecmp.cmp(cassette, file_path)  # shold not change file
+        assert filecmp.cmp(cassette, file_path)  # should not change file

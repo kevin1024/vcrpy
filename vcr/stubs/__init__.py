@@ -314,7 +314,7 @@ class VCRConnection:
     def __setattr__(self, name, value):
         """
         We need to define this because any attributes that are set on the
-        VCRConnection need to be propogated to the real connection.
+        VCRConnection need to be propagated to the real connection.
 
         For example, urllib3 will set certain attributes on the connection,
         such as 'ssl_version'. These attributes need to get set on the real

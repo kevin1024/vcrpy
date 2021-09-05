@@ -11,7 +11,7 @@ import vcr
 
 def test_nonexistent_directory(tmpdir, httpbin):
     """If we load a cassette in a nonexistent directory, it can save ok"""
-    # Check to make sure directory doesnt exist
+    # Check to make sure directory doesn't exist
     assert not os.path.exists(str(tmpdir.join("nonexistent")))
 
     # Run VCR to create dir and cassette file
