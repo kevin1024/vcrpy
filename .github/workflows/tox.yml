@@ -4,8 +4,9 @@ jobs:
   tox:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python: ['3.6', '3.7', '3.8', '3.9', '3.10dev']
+        python: ['3.6', '3.7', '3.8', '3.9', '3.10-dev']
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
