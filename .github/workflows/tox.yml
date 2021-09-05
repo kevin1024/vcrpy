@@ -1,0 +1,19 @@
+name: tox
+on: [push, pull_request]
+jobs:
+  tox:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.6', '3.7', '3.8', '3.9', '3.10dev']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - run: sudo apt-get install libgnutls28-dev
+      - run: pip install codecov tox
+      - run: tox -e lint
+        if: ${{ matrix.python == '3.9' }}
+      - run: pip install -e .
+      - run: tox -e py
