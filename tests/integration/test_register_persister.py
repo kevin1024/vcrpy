@@ -30,7 +30,7 @@ def test_save_cassette_with_custom_persister(tmpdir, httpbin):
     my_vcr = vcr.VCR()
     my_vcr.register_persister(CustomFilesystemPersister)
 
-    # Check to make sure directory doesnt exist
+    # Check to make sure directory doesn't exist
     assert not os.path.exists(str(tmpdir.join("nonexistent")))
 
     # Run VCR to create dir and cassette file using new save_cassette callback
