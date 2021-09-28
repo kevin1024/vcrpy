@@ -70,15 +70,25 @@ def _transform_json(body):
         return json.loads(body.decode("utf-8"))
 
 
+def _transform_qs(body):
+    if body:
+        return urllib.parse.parse_qs(body.decode("ascii"))
+
+
+def _transform_xml(body):
+    if body:
+        return xmlrpc.client.loads(body)
+
+
 _xml_header_checker = _header_checker("text/xml")
 _xmlrpc_header_checker = _header_checker("xmlrpc", header="User-Agent")
 _checker_transformer_pairs = (
     (
         _header_checker("application/x-www-form-urlencoded"),
-        lambda body: urllib.parse.parse_qs(body.decode("ascii")),
+        _transform_qs,
     ),
     (_header_checker("application/json"), _transform_json),
-    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc.client.loads),
+    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), _transform_xml),
 )
 
 
