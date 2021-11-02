@@ -9,7 +9,7 @@ with pip::
 Compatibility
 -------------
 
-VCR.py supports Python 3.5+, and `pypy <http://pypy.org>`__.
+VCR.py supports Python 3.6+, and `pypy <http://pypy.org>`__.
 
 The following HTTP libraries are supported:
 
