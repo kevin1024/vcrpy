@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
 """Test requests' interaction with vcr"""
-import platform
 import pytest
-import sys
 import vcr
 from assertions import assert_cassette_empty, assert_is_json
 
@@ -117,10 +114,6 @@ def test_post_chunked_binary(tmpdir, httpbin):
 
 
 @pytest.mark.skipif("sys.version_info >= (3, 6)", strict=True, raises=ConnectionError)
-@pytest.mark.skipif(
-    (3, 5) < sys.version_info < (3, 6) and platform.python_implementation() == "CPython",
-    reason="Fails on CPython 3.5",
-)
 def test_post_chunked_binary_secure(tmpdir, httpbin_secure):
     """Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str."""
     data1 = iter([b"data", b"to", b"send"])
