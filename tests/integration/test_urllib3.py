@@ -94,9 +94,10 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
     assert req1 == req2
 
 
-def test_redirects(tmpdir, httpbin_both, verify_pool_mgr):
+def test_redirects(tmpdir, verify_pool_mgr):
     """Ensure that we can handle redirects"""
-    url = httpbin_both.url + "/redirect-to?url=bytes/1024"
+    url = "http://mockbin.org/redirect/301"
+
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
         content = verify_pool_mgr.request("GET", url).data
 
@@ -104,8 +105,9 @@ def test_redirects(tmpdir, httpbin_both, verify_pool_mgr):
         assert content == verify_pool_mgr.request("GET", url).data
         # Ensure that we've now cached *two* responses. One for the redirect
         # and one for the final fetch
-        assert len(cass) == 2
-        assert cass.play_count == 2
+
+    assert len(cass) == 2
+    assert cass.play_count == 2
 
 
 def test_cross_scheme(tmpdir, httpbin, httpbin_secure, verify_pool_mgr):

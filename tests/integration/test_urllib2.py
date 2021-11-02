@@ -56,12 +56,13 @@ def test_response_headers(httpbin_both, tmpdir):
         assert sorted(open1) == sorted(open2)
 
 
-def test_effective_url(httpbin_both, tmpdir):
+def test_effective_url(tmpdir):
     """Ensure that the effective_url is captured"""
-    url = httpbin_both.url + "/redirect-to?url=/html"
+    url = "http://mockbin.org/redirect/301"
+
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         effective_url = urlopen_with_cafile(url).geturl()
-        assert effective_url == httpbin_both.url + "/html"
+        assert effective_url == "http://mockbin.org/redirect/301/0"
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         assert effective_url == urlopen_with_cafile(url).geturl()
