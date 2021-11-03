@@ -62,8 +62,8 @@ more details
    :target: https://pypi.python.org/pypi/vcrpy
 .. |Python versions| image:: https://img.shields.io/pypi/pyversions/vcrpy.svg
    :target: https://pypi.python.org/pypi/vcrpy
-.. |Build Status| image:: https://secure.travis-ci.org/kevin1024/vcrpy.svg?branch=master
-   :target: http://travis-ci.org/kevin1024/vcrpy
+.. |Build Status| image:: https://github.com/kevin1024/vcrpy/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/kevin1024/vcrpy/actions
 .. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/kevin1024/vcrpy
    :target: https://gitter.im/kevin1024/vcrpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
