@@ -30,8 +30,8 @@ jobs:
 
       - name: Install project dependencies
         run: |
-          pip install --upgrade pip
-          pip install codecov tox tox-gh-actions
+          python -m pip install --upgrade pip
+          python -m pip install codecov tox tox-gh-actions
 
       - name: Run tests with tox
         run: tox
