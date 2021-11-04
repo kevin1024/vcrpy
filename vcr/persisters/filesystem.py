@@ -8,7 +8,7 @@ class FilesystemPersister:
     @classmethod
     def load_cassette(cls, cassette_path, serializer):
         try:
-            with open(cassette_path) as f:
+            with open(cassette_path, encoding="utf-8") as f:
                 cassette_content = f.read()
         except OSError:
             raise ValueError("Cassette not found.")
@@ -21,5 +21,5 @@ class FilesystemPersister:
         dirname, filename = os.path.split(cassette_path)
         if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
-        with open(cassette_path, "w") as f:
+        with open(cassette_path, "w", encoding="utf-8") as f:
             f.write(data)
