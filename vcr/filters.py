@@ -6,6 +6,20 @@ from urllib.parse import urlencode, urlparse, urlunparse
 
 from .util import CaseInsensitiveDict
 
+try:
+    # This supports both brotli & brotlipy packages
+    import brotli
+except ImportError:
+    try:
+        import brotlicffi as brotli
+    except ImportError:
+        brotli = None
+
+
+AVAILABLE_DECOMPRESSORS = {"gzip", "deflate"}
+if brotli is not None:
+    AVAILABLE_DECOMPRESSORS.add("br")
+
 
 def replace_headers(request, replacements):
     """Replace headers in request according to replacements.
@@ -136,15 +150,16 @@ def remove_post_data_parameters(request, post_data_parameters_to_remove):
 
 def decode_response(response):
     """
-    If the response is compressed with gzip or deflate:
+    If the response is compressed with any supported compression (gzip,
+    deflate, br if available):
       1. decompress the response body
       2. delete the content-encoding header
       3. update content-length header to decompressed length
     """
 
-    def is_compressed(headers):
+    def is_decompressable(headers):
         encoding = headers.get("content-encoding", [])
-        return encoding and encoding[0] in ("gzip", "deflate")
+        return encoding and encoding[0] in AVAILABLE_DECOMPRESSORS
 
     def decompress_body(body, encoding):
         """Returns decompressed body according to encoding using zlib.
@@ -157,17 +172,23 @@ def decode_response(response):
                 return zlib.decompress(body, zlib.MAX_WBITS | 16)
             except zlib.error:
                 return body  # assumes that the data was already decompressed
-        else:  # encoding == 'deflate'
+        elif encoding == 'deflate':
             try:
                 return zlib.decompress(body)
             except zlib.error:
                 return body  # assumes that the data was already decompressed
+        else:  # encoding == 'br'
+            try:
+                return brotli.decompress(body)
+            except brotli.error:
+                return body  # assumes that the data was already decompressed
+
 
     # Deepcopy here in case `headers` contain objects that could
     # be mutated by a shallow copy and corrupt the real response.
     response = copy.deepcopy(response)
     headers = CaseInsensitiveDict(response["headers"])
-    if is_compressed(headers):
+    if is_decompressable(headers):
         encoding = headers["content-encoding"][0]
         headers["content-encoding"].remove(encoding)
         if not headers["content-encoding"]:
