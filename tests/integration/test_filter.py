@@ -4,6 +4,7 @@ from urllib.request import urlopen, Request
 from urllib.parse import urlencode
 from urllib.error import HTTPError
 import vcr
+from vcr.filters import brotli
 import json
 from assertions import assert_cassette_has_one_response, assert_is_json
 
@@ -110,6 +111,22 @@ def test_decompress_deflate(tmpdir, httpbin):
     url = httpbin.url + "/deflate"
     request = Request(url, headers={"Accept-Encoding": ["gzip, deflate"]})
     cass_file = str(tmpdir.join("deflate_response.yaml"))
+    with vcr.use_cassette(cass_file, decode_compressed_response=True):
+        urlopen(request)
+    with vcr.use_cassette(cass_file) as cass:
+        decoded_response = urlopen(url).read()
+        assert_cassette_has_one_response(cass)
+    assert_is_json(decoded_response)
+
+
+def test_decompress_brotli(tmpdir, httpbin):
+    if brotli is None:
+        # XXX: this is never true, because brotlipy is installed with "httpbin"
+        pytest.skip("Brotli is not installed")
+
+    url = httpbin.url + "/brotli"
+    request = Request(url, headers={"Accept-Encoding": ["gzip, deflate, br"]})
+    cass_file = str(tmpdir.join("brotli_response.yaml"))
     with vcr.use_cassette(cass_file, decode_compressed_response=True):
         urlopen(request)
     with vcr.use_cassette(cass_file) as cass:
