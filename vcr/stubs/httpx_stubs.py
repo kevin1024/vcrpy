@@ -5,6 +5,14 @@ from unittest.mock import patch, MagicMock
 import httpx
 from vcr.request import Request as VcrRequest
 from vcr.errors import CannotOverwriteExistingCassetteException
+import inspect
+
+_httpx_signature = inspect.signature(httpx.Client.request)
+
+try:
+    HTTPX_REDIRECT_PARAM = _httpx_signature.parameters["follow_redirects"]
+except KeyError:
+    HTTPX_REDIRECT_PARAM = _httpx_signature.parameters["allow_redirects"]
 
 
 _logger = logging.getLogger(__name__)
@@ -98,7 +106,11 @@ def _record_responses(cassette, vcr_request, real_response):
 
 def _play_responses(cassette, request, vcr_request, client, kwargs):
     history = []
-    allow_redirects = kwargs.get("allow_redirects", True)
+
+    allow_redirects = kwargs.get(
+        HTTPX_REDIRECT_PARAM.name,
+        HTTPX_REDIRECT_PARAM.default,
+    )
     vcr_response = cassette.play_response(vcr_request)
     response = _from_serialized_response(request, vcr_response)
 
