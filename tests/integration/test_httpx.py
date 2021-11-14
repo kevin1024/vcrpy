@@ -1,43 +1,79 @@
 import pytest
-import contextlib
 import os
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
 
 import vcr  # noqa: E402
+from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM  # noqa: E402
 
 
 class BaseDoRequest:
     _client_class = None
 
     def __init__(self, *args, **kwargs):
-        self._client = self._client_class(*args, **kwargs)
+        self._client_args = args
+        self._client_kwargs = kwargs
+
+    def _make_client(self):
+        return self._client_class(*self._client_args, **self._client_kwargs)
 
 
 class DoSyncRequest(BaseDoRequest):
     _client_class = httpx.Client
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    @property
+    def client(self):
+        try:
+            return self._client
+        except AttributeError:
+            self._client = self._make_client()
+            return self._client
+
     def __call__(self, *args, **kwargs):
-        return self._client.request(*args, timeout=60, **kwargs)
+        return self.client.request(*args, timeout=60, **kwargs)
 
 
 class DoAsyncRequest(BaseDoRequest):
     _client_class = httpx.AsyncClient
 
-    @staticmethod
-    def run_in_loop(coroutine):
-        with contextlib.closing(asyncio.new_event_loop()) as loop:
-            asyncio.set_event_loop(loop)
-            task = loop.create_task(coroutine)
-            return loop.run_until_complete(task)
+    def __enter__(self):
+        # Need to manage both loop and client, because client's implementation
+        # will fail if the loop is closed before the client's end of life.
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+        self._client = self._make_client()
+        self._loop.run_until_complete(self._client.__aenter__())
+        return self
+
+    def __exit__(self, *args):
+        try:
+            self._loop.run_until_complete(self._client.__aexit__(*args))
+        finally:
+            del self._client
+            self._loop.close()
+            del self._loop
+
+    @property
+    def client(self):
+        try:
+            return self._client
+        except AttributeError:
+            raise ValueError('To access async client, use "with do_request() as client"')
 
     def __call__(self, *args, **kwargs):
-        async def _request():
-            async with self._client as c:
-                return await c.request(*args, **kwargs)
+        if hasattr(self, "_loop"):
+            return self._loop.run_until_complete(self.client.request(*args, **kwargs))
 
-        return DoAsyncRequest.run_in_loop(_request())
+        # Use one-time context and dispose of the loop/client afterwards
+        with self:
+            return self(*args, **kwargs)
 
 
 def pytest_generate_tests(metafunc):
@@ -122,12 +158,14 @@ def test_params_same_url_distinct_params(tmpdir, scheme, do_request):
 def test_redirect(tmpdir, do_request, yml):
     url = "https://mockbin.org/redirect/303/2"
 
-    response = do_request()("GET", url)
+    redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: True}
+
+    response = do_request()("GET", url, **redirect_kwargs)
     with vcr.use_cassette(yml):
-        response = do_request()("GET", url)
+        response = do_request()("GET", url, **redirect_kwargs)
 
     with vcr.use_cassette(yml) as cassette:
-        cassette_response = do_request()("GET", url)
+        cassette_response = do_request()("GET", url, **redirect_kwargs)
 
         assert cassette_response.status_code == response.status_code
         assert len(cassette_response.history) == len(response.history)
@@ -173,7 +211,7 @@ def test_behind_proxy(do_request):
     )
     url = "https://httpbin.org/headers"
     proxy = "http://localhost:8080"
-    proxies = {"http": proxy, "https": proxy}
+    proxies = {"http://": proxy, "https://": proxy}
 
     with vcr.use_cassette(yml):
         response = do_request(proxies=proxies, verify=False)("GET", url)
@@ -189,48 +227,52 @@ def test_behind_proxy(do_request):
 
 def test_cookies(tmpdir, scheme, do_request):
     def client_cookies(client):
-        return [c for c in client._client.cookies]
+        return [c for c in client.client.cookies]
 
     def response_cookies(response):
         return [c for c in response.cookies]
 
-    client = do_request()
-    assert client_cookies(client) == []
+    with do_request() as client:
+        assert client_cookies(client) == []
 
-    url = scheme + "://httpbin.org"
-    testfile = str(tmpdir.join("cookies.yml"))
-    with vcr.use_cassette(testfile):
-        r1 = client("GET", url + "/cookies/set?k1=v1&k2=v2")
-        assert response_cookies(r1.history[0]) == ["k1", "k2"]
-        assert response_cookies(r1) == []
+        redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: True}
 
-        r2 = client("GET", url + "/cookies")
-        assert len(r2.json()["cookies"]) == 2
+        url = scheme + "://httpbin.org"
+        testfile = str(tmpdir.join("cookies.yml"))
+        with vcr.use_cassette(testfile):
+            r1 = client("GET", url + "/cookies/set?k1=v1&k2=v2", **redirect_kwargs)
+            assert response_cookies(r1.history[0]) == ["k1", "k2"]
+            assert response_cookies(r1) == []
 
-        assert client_cookies(client) == ["k1", "k2"]
+            r2 = client("GET", url + "/cookies", **redirect_kwargs)
+            assert len(r2.json()["cookies"]) == 2
 
-    new_client = do_request()
-    assert client_cookies(new_client) == []
+            assert client_cookies(client) == ["k1", "k2"]
 
-    with vcr.use_cassette(testfile) as cassette:
-        cassette_response = new_client("GET", url + "/cookies/set?k1=v1&k2=v2")
-        assert response_cookies(cassette_response.history[0]) == ["k1", "k2"]
-        assert response_cookies(cassette_response) == []
+    with do_request() as new_client:
+        assert client_cookies(new_client) == []
 
-        assert cassette.play_count == 2
-        assert client_cookies(new_client) == ["k1", "k2"]
+        with vcr.use_cassette(testfile) as cassette:
+            cassette_response = new_client("GET", url + "/cookies/set?k1=v1&k2=v2")
+            assert response_cookies(cassette_response.history[0]) == ["k1", "k2"]
+            assert response_cookies(cassette_response) == []
+
+            assert cassette.play_count == 2
+            assert client_cookies(new_client) == ["k1", "k2"]
 
 
 def test_relative_redirects(tmpdir, scheme, do_request):
+    redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: True}
+
     url = scheme + "://mockbin.com/redirect/301?to=/redirect/301?to=/request"
     testfile = str(tmpdir.join("relative_redirects.yml"))
     with vcr.use_cassette(testfile):
-        response = do_request()("GET", url)
+        response = do_request()("GET", url, **redirect_kwargs)
         assert len(response.history) == 2, response
         assert response.json()["url"].endswith("request")
 
     with vcr.use_cassette(testfile) as cassette:
-        response = do_request()("GET", url)
+        response = do_request()("GET", url, **redirect_kwargs)
         assert len(response.history) == 2
         assert response.json()["url"].endswith("request")
 
@@ -240,14 +282,16 @@ def test_relative_redirects(tmpdir, scheme, do_request):
 def test_redirect_wo_allow_redirects(do_request, yml):
     url = "https://mockbin.org/redirect/308/5"
 
+    redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: False}
+
     with vcr.use_cassette(yml):
-        response = do_request()("GET", url, allow_redirects=False)
+        response = do_request()("GET", url, **redirect_kwargs)
 
         assert str(response.url).endswith("308/5")
         assert response.status_code == 308
 
     with vcr.use_cassette(yml) as cassette:
-        response = do_request()("GET", url, allow_redirects=False)
+        response = do_request()("GET", url, **redirect_kwargs)
 
         assert str(response.url).endswith("308/5")
         assert response.status_code == 308
