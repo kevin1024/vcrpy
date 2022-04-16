@@ -13,14 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy3"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.8"]
 
     steps:
       - name: Install libgnutls28-dev
         run: |
           sudo apt update -q
           sudo apt install -q -y libgnutls28-dev libcurl4-gnutls-dev
-      
+
       - uses: actions/checkout@v3.0.0
 
       - name: Set up Python ${{ matrix.python-version }}
