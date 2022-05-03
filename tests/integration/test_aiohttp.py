@@ -152,12 +152,13 @@ def test_post(tmpdir, scheme, body, caplog):
 
 
 def test_params(tmpdir, scheme):
-    url = scheme + "://httpbin.org/get"
+    url = scheme + "://httpbin.org/get?d=d"
     headers = {"Content-Type": "application/json"}
     params = {"a": 1, "b": 2, "c": "c"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
         _, response_json = get(url, output="json", params=params, headers=headers)
+        assert response_json["args"] == {"a": "1", "b": "2", "c": "c", "d": "d"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
         _, cassette_response_json = get(url, output="json", params=params, headers=headers)
