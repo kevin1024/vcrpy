@@ -8,7 +8,8 @@ from aiohttp import ClientConnectionError, ClientResponse, RequestInfo, streams
 from aiohttp import hdrs, CookieJar
 from http.cookies import CookieError, Morsel, SimpleCookie
 from aiohttp.helpers import strip_auth_from_url
-from multidict import CIMultiDict, CIMultiDictProxy
+from multidict import CIMultiDict, CIMultiDictProxy, MultiDict
+from typing import Union, Mapping
 from yarl import URL
 
 from vcr.errors import CannotOverwriteExistingCassetteException
@@ -229,6 +230,16 @@ def _build_cookie_header(session, cookies, cookie_header, url):
     return c.output(header="", sep=";").strip()
 
 
+def _build_url_with_params(url_str: str, params: Mapping[str, Union[str, int, float]]) -> URL:
+    # This code is basically a copy&paste of aiohttp.
+    # https://github.com/aio-libs/aiohttp/blob/master/aiohttp/client_reqrep.py#L225
+    url = URL(url_str)
+    q = MultiDict(url.query)
+    url2 = url.with_query(params)
+    q.extend(url2.query)
+    return url.with_query(q)
+
+
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
@@ -242,10 +253,7 @@ def vcr_request(cassette, real_request):
         if auth is not None:
             headers["AUTHORIZATION"] = auth.encode()
 
-        request_url = URL(url)
-        if params:
-            request_url = URL(url).with_query(params)
-
+        request_url = URL(url) if not params else _build_url_with_params(url, params)
         c_header = headers.pop(hdrs.COOKIE, None)
         cookie_header = _build_cookie_header(self, cookies, c_header, request_url)
         if cookie_header:
