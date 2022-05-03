@@ -154,7 +154,7 @@ def test_post(tmpdir, scheme, body, caplog):
 def test_params(tmpdir, scheme):
     url = scheme + "://httpbin.org/get"
     headers = {"Content-Type": "application/json"}
-    params = {"a": 1, "b": False, "c": "c"}
+    params = {"a": 1, "b": 2, "c": "c"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
         _, response_json = get(url, output="json", params=params, headers=headers)
@@ -168,7 +168,7 @@ def test_params(tmpdir, scheme):
 def test_params_same_url_distinct_params(tmpdir, scheme):
     url = scheme + "://httpbin.org/get"
     headers = {"Content-Type": "application/json"}
-    params = {"a": 1, "b": False, "c": "c"}
+    params = {"a": 1, "b": 2, "c": "c"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
         _, response_json = get(url, output="json", params=params, headers=headers)

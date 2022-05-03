@@ -244,8 +244,6 @@ def vcr_request(cassette, real_request):
 
         request_url = URL(url)
         if params:
-            for k, v in params.items():
-                params[k] = str(v)
             request_url = URL(url).with_query(params)
 
         c_header = headers.pop(hdrs.COOKIE, None)
