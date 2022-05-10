@@ -271,7 +271,7 @@ You can also do response filtering with the
 similar to the above ``before_record_request`` - you can
 mutate the response, or return ``None`` to avoid recording
 the request and response altogether. For example to hide
-sensitive data from the request body:
+sensitive data from the response body:
 
 .. code:: python
 
