@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
 long_description = open("README.rst", "r").read()
@@ -47,6 +47,7 @@ install_requires = [
     "wrapt",
     "six>=1.5",
     "yarl",
+    "requests_toolbelt",
 ]
 
 setup(

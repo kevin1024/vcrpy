@@ -3,8 +3,7 @@ from unittest import mock
 
 import pytest
 
-from vcr import matchers
-from vcr import request
+from vcr import matchers, request
 
 # the dict contains requests with corresponding to its key difference
 # with 'base' request.
@@ -66,6 +65,22 @@ boto3_bytes_headers = {
 }
 
 
+def make_multipart_data(boundary, name):
+    # Simulates multipart request containing a "name" text field and "file" binary data (1x1 white PNG pixel).
+    return (
+        b"--"
+        + boundary
+        + b'\r\nContent-Disposition: form-data; name="name"\r\n\r\n'
+        + name.encode("utf-8")
+        + b"\r\n--"
+        + boundary
+        + b'\r\nContent-Disposition: form-data; name="file"; filename="file"\r\n\r\n\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\r\xefF\xb8\x00\x00\x00\x00IEND\xaeB`\x82\r\n--'
+        + boundary
+        + b"--\r\n",
+        {"Content-Type": f"multipart/form-data; boundary={boundary.decode('utf-8')}"},
+    )
+
+
 @pytest.mark.parametrize(
     "r1, r2",
     [
@@ -125,6 +140,18 @@ boto3_bytes_headers = {
             request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
             request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
         ),
+        (
+            request.Request(
+                "POST",
+                "http://host.com/",
+                *make_multipart_data(b"1ef6f9a15c8b2da0dce8f3d2804bf01a", "a.png"),
+            ),
+            request.Request(
+                "POST",
+                "http://host.com/",
+                *make_multipart_data(b"e60f58697d0dcf44d44c50a64de09dbb", "a.png"),
+            ),
+        ),
     ],
 )
 def test_body_matcher_does_match(r1, r2):
@@ -149,6 +176,28 @@ def test_body_matcher_does_match(r1, r2):
         (
             request.Request("POST", "http://host.com/", req1_body, {"Content-Type": "text/xml"}),
             request.Request("POST", "http://host.com/", req2_body, {"content-type": "text/xml"}),
+        ),
+        (
+            request.Request(
+                "POST",
+                "http://host.com/",
+                *make_multipart_data(b"1ef6f9a15c8b2da0dce8f3d2804bf01a", "a.png"),
+            ),
+            request.Request(
+                "POST",
+                "http://host.com/",
+                *make_multipart_data(b"e60f58697d0dcf44d44c50a64de09dbb", "b.png"),
+            ),
+        ),
+        (
+            request.Request(
+                "POST",
+                "http://host.com/",
+                *make_multipart_data(b"1ef6f9a15c8b2da0dce8f3d2804bf01a", "a.png"),
+            ),
+            request.Request(
+                "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
+            ),
         ),
     ],
 )

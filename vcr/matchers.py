@@ -1,9 +1,12 @@
 import json
+import logging
+import re
 import urllib
 import xmlrpc.client
-from .util import read_body
-import logging
 
+from requests_toolbelt.multipart import decoder
+
+from .util import read_body
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +48,7 @@ def body(r1, r2):
     r2_transformer = _get_transformer(r2)
     if transformer != r2_transformer:
         transformer = _identity
-    assert transformer(read_body(r1)) == transformer(read_body(r2))
+    assert transformer(r1.headers, read_body(r1)) == transformer(r2.headers, read_body(r2))
 
 
 def headers(r1, r2):
@@ -62,7 +65,7 @@ def _header_checker(value, header="Content-Type"):
     return checker
 
 
-def _transform_json(body):
+def _transform_json(headers, body):
     # Request body is always a byte string, but json.loads() wants a text
     # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
     # and UTF-32 are also allowed: hmmmmm).
@@ -70,20 +73,32 @@ def _transform_json(body):
         return json.loads(body.decode("utf-8"))
 
 
+def _transform_multipart_form_data(headers, body):
+    decoded_data = decoder.MultipartDecoder(content=body, content_type=headers["content-type"])
+    return (
+        decoded_data.encoding,
+        [(part.headers, part.content) for part in decoded_data.parts],
+    )
+
+
 _xml_header_checker = _header_checker("text/xml")
 _xmlrpc_header_checker = _header_checker("xmlrpc", header="User-Agent")
 _checker_transformer_pairs = (
     (
         _header_checker("application/x-www-form-urlencoded"),
-        lambda body: urllib.parse.parse_qs(body.decode("ascii")),
+        lambda headers, body: urllib.parse.parse_qs(body.decode("ascii")),
     ),
     (_header_checker("application/json"), _transform_json),
-    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc.client.loads),
+    (
+        lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request),
+        lambda headers, body: xmlrpc.client.loads(body),
+    ),
+    (_header_checker("multipart/form-data"), _transform_multipart_form_data),
 )
 
 
-def _identity(x):
-    return x
+def _identity(headers, body):
+    return body
 
 
 def _get_transformer(request):
