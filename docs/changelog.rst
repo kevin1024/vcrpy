@@ -7,6 +7,15 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  4.2.0
+    - Drop support for python < 3.7, thanks @jairhenrique, @IvanMalison, @AthulMuralidhar
+    - Various aiohtt bigfixes (thanks @pauloromeira and boechat107)
+    - Bugfix: filter_post_data_parameters not working with aiohttp.  Thank you @vprakashplanview, @scop, @jairhenrique, and @cinemascop89
+    - Bugfix: Some random misspellings (thanks @scop)
+    - Migrate the CI suite to Github Actions from Travis (thanks @jairhenrique and @cclauss)
+    - Various documentation and code misspelling fixes (thanks @scop and @Justintime50)
+    - Bugfix: httpx support (select between allow_redirects/follow_redirects) (thanks @immerrr)
+    - Bugfix: httpx support (select between allow_redirects/follow_redirects) (thanks @immerrr)
 -  4.1.1
     - Fix HTTPX support for versions greater than 0.15 (thanks @jairhenrique)
     - Include a trailing newline on json cassettes (thanks @AaronRobson)
