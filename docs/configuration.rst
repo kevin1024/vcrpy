@@ -42,7 +42,8 @@ This can be configured by changing the ``match_on`` setting.
 The following options are available :
 
 -  method (for example, POST or GET)
--  uri (the full URI.)
+-  uri (the full URI)
+-  scheme (for example, HTTP or HTTPS)
 -  host (the hostname of the server receiving the request)
 -  port (the port of the server receiving the request)
 -  path (the path of the request)
