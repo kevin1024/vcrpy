@@ -57,7 +57,7 @@ def test_new_episodes_record_mode(tmpdir, httpbin):
         assert cass.all_played
 
         # in the "new_episodes" record mode, we can add more requests to
-        # a cassette without repurcussions.
+        # a cassette without repercussions.
         urlopen(httpbin.url + "/get").read()
 
         # one of the responses has been played
@@ -108,7 +108,7 @@ def test_all_record_mode(tmpdir, httpbin):
         urlopen(httpbin.url).read()
 
         # in the "all" record mode, we can add more requests to
-        # a cassette without repurcussions.
+        # a cassette without repercussions.
         urlopen(httpbin.url + "/get").read()
 
         # The cassette was never actually played, even though it existed.

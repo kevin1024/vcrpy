@@ -64,7 +64,7 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
         inside = conn.getresponse()
 
         # Assert that we do not modify the original response while appending
-        # to the casssette.
+        # to the cassette.
         assert "gzip" == inside.headers["content-encoding"]
 
         # They should effectively be the same response.

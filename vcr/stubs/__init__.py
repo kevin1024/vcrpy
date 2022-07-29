@@ -87,7 +87,7 @@ class VCRHTTPResponse(HTTPResponse):
     def closed(self):
         # in python3, I can't change the value of self.closed.  So I'
         # twiddling self._closed and using this property to shadow the real
-        # self.closed from the superclas
+        # self.closed from the superclass
         return self._closed
 
     def read(self, *args, **kwargs):
