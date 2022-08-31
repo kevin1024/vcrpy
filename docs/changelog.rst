@@ -7,6 +7,9 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  4.2.1
+    - Fix a bug where the first request in a redirect chain was not being recorded with aiohttp
+    - Various typos and small fixes, thanks @jairhenrique, @timgates42
 -  4.2.0
     - Drop support for python < 3.7, thanks @jairhenrique, @IvanMalison, @AthulMuralidhar
     - Various aiohtt bigfixes (thanks @pauloromeira and boechat107)
