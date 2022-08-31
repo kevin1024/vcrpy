@@ -1,3 +1,6 @@
+# This cassette is problematic because it was recorded
+# with a Python 2.x environment and would NEVER deserialize
+# properly in a 3.x environment.
 - request: !!python/object:vcr.request.Request
     body: null
     headers: !!python/object/apply:__builtin__.frozenset
