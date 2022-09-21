@@ -9,7 +9,7 @@ import pytest_httpbin.certs
 
 import vcr
 
-from assertions import assert_cassette_has_one_response
+from ..assertions import assert_cassette_has_one_response
 
 httplib2 = pytest.importorskip("httplib2")
 

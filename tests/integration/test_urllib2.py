@@ -9,7 +9,7 @@ import pytest_httpbin.certs
 # Internal imports
 import vcr
 
-from assertions import assert_cassette_has_one_response
+from ..assertions import assert_cassette_has_one_response
 
 
 def urlopen_with_cafile(*args, **kwargs):

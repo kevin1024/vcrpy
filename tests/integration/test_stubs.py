@@ -3,7 +3,7 @@ import zlib
 import json
 import http.client as httplib
 
-from assertions import assert_is_json
+from ..assertions import assert_is_json
 
 
 def _headers_are_case_insensitive(host, port):
