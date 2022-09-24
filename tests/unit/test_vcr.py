@@ -1,5 +1,6 @@
 import http.client as httplib
 import os
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -95,7 +96,6 @@ def test_vcr_before_record_response_iterable():
 
     # Prevent actually saving the cassette
     with mock.patch("vcr.cassette.FilesystemPersister.save_cassette"):
-
         # Baseline: non-iterable before_record_response should work
         mock_filter = mock.Mock()
         vcr = VCR(before_record_response=mock_filter)
@@ -119,7 +119,6 @@ def test_before_record_response_as_filter():
 
     # Prevent actually saving the cassette
     with mock.patch("vcr.cassette.FilesystemPersister.save_cassette"):
-
         filter_all = mock.Mock(return_value=None)
         vcr = VCR(before_record_response=filter_all)
         with vcr.use_cassette("test") as cassette:
@@ -133,7 +132,6 @@ def test_vcr_path_transformer():
 
     # Prevent actually saving the cassette
     with mock.patch("vcr.cassette.FilesystemPersister.save_cassette"):
-
         # Baseline: path should be unchanged
         vcr = VCR()
         with vcr.use_cassette("test") as cassette:
@@ -360,3 +358,11 @@ def test_dynamically_added(self):
 
 TestVCRClass.test_dynamically_added = test_dynamically_added
 del test_dynamically_added
+
+
+def test_path_class_as_cassette():
+    path = Path(__file__).parent.parent.joinpath(
+        "integration/cassettes/test_httpx_test_test_behind_proxy.yml"
+    )
+    with use_cassette(path):
+        pass

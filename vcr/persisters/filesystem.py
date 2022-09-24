@@ -1,6 +1,6 @@
 # .. _persister_example:
 
-import os
+from pathlib import Path
 
 from ..serialize import deserialize, serialize
 
@@ -8,19 +8,25 @@ from ..serialize import deserialize, serialize
 class FilesystemPersister:
     @classmethod
     def load_cassette(cls, cassette_path, serializer):
-        try:
-            with open(cassette_path) as f:
-                cassette_content = f.read()
-        except OSError:
+        cassette_path = Path(cassette_path)  # if cassette path is already Path this is no operation
+        if not cassette_path.is_file():
             raise ValueError("Cassette not found.")
-        cassette = deserialize(cassette_content, serializer)
-        return cassette
+        try:
+            with cassette_path.open() as f:
+                data = f.read()
+        except UnicodeEncodeError as err:
+            raise ValueError("Can't read Cassette, Encoding is broken") from err
+
+        return deserialize(data, serializer)
 
     @staticmethod
     def save_cassette(cassette_path, cassette_dict, serializer):
         data = serialize(cassette_dict, serializer)
-        dirname, filename = os.path.split(cassette_path)
-        if dirname and not os.path.exists(dirname):
-            os.makedirs(dirname)
-        with open(cassette_path, "w") as f:
+        cassette_path = Path(cassette_path)  # if cassette path is already Path this is no operation
+
+        cassette_folder = cassette_path.parent
+        if not cassette_folder.exists():
+            cassette_folder.mkdir(parents=True)
+
+        with cassette_path.open("w") as f:
             f.write(data)

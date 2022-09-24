@@ -4,6 +4,7 @@ import inspect
 import os
 import types
 from collections import abc as collections_abc
+from pathlib import Path
 
 import six
 
@@ -98,7 +99,7 @@ class VCR:
         return matchers
 
     def use_cassette(self, path=None, **kwargs):
-        if path is not None and not isinstance(path, str):
+        if path is not None and not isinstance(path, (str, Path)):
             function = path
             # Assume this is an attempt to decorate a function
             return self._use_cassette(**kwargs)(function)
