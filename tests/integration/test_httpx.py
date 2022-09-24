@@ -1,5 +1,7 @@
-import pytest
 import os
+from pathlib import Path
+
+import pytest
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
@@ -207,7 +209,7 @@ def test_simple_fetching(tmpdir, do_request, yml, url):
 def test_behind_proxy(do_request):
     # This is recorded because otherwise we should have a live proxy somewhere.
     yml = (
-        os.path.dirname(os.path.realpath(__file__)) + "/cassettes/" + "test_httpx_test_test_behind_proxy.yml"
+            os.path.dirname(os.path.realpath(__file__)) + "/cassettes/" + "test_httpx_test_test_behind_proxy.yml"
     )
     url = "https://httpbin.org/headers"
     proxy = "http://localhost:8080"
@@ -297,3 +299,9 @@ def test_redirect_wo_allow_redirects(do_request, yml):
         assert response.status_code == 308
 
         assert cassette.play_count == 1
+
+
+def test_upload(do_request):
+    with Path(__file__).parent.parent.joinpath("assets/test_upload.jpg").open("rb") as f:
+        with vcr.use_cassette(str(Path(__file__).parent.joinpath("cassettes/test_upload.yaml"))):
+            do_request()("POST", "http://127.0.0.1/uploadfile/", files={'file': f})

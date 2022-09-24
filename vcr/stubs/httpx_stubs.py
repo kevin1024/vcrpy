@@ -1,11 +1,12 @@
 import functools
+import inspect
 import logging
 from unittest.mock import patch, MagicMock
 
 import httpx
-from vcr.request import Request as VcrRequest
+
 from vcr.errors import CannotOverwriteExistingCassetteException
-import inspect
+from vcr.request import Request as VcrRequest
 
 _httpx_signature = inspect.signature(httpx.Client.request)
 
@@ -69,7 +70,7 @@ def _from_serialized_response(request, serialized_response, history=None):
 
 
 def _make_vcr_request(httpx_request, **kwargs):
-    body = httpx_request.read().decode("utf-8")
+    body = httpx_request.read()
     uri = str(httpx_request.url)
     headers = dict(httpx_request.headers)
     return VcrRequest(httpx_request.method, uri, body, headers)
