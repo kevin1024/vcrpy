@@ -60,7 +60,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
             )
             return callback(response)
         else:
-            if cassette.write_protected and cassette.filter_request(vcr_request):
+            if cassette.write_protected and vcr_request in cassette:
                 response = HTTPResponse(
                     request,
                     599,

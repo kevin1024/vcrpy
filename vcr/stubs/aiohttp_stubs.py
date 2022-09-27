@@ -269,7 +269,7 @@ def vcr_request(cassette, real_request):
             self._cookie_jar.update_cookies(response.cookies, response.url)
             return response
 
-        if cassette.write_protected and cassette.filter_request(vcr_request):
+        if cassette.write_protected and vcr_request in cassette:
             raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
         log.info("%s not in cassette, sending to real server", vcr_request)
