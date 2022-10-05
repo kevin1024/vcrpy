@@ -150,6 +150,8 @@ def decode_response(response):
         """Returns decompressed body according to encoding using zlib.
         to (de-)compress gzip format, use wbits = zlib.MAX_WBITS | 16
         """
+        if not body:
+            return ""
         if encoding == "gzip":
             return zlib.decompress(body, zlib.MAX_WBITS | 16)
         else:  # encoding == 'deflate'

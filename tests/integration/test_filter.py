@@ -106,6 +106,18 @@ def test_decompress_gzip(tmpdir, httpbin):
     assert_is_json(decoded_response)
 
 
+def test_decomptess_empty_body(tmpdir, httpbin):
+    url = httpbin.url + "/gzip"
+    request = Request(url, headers={"Accept-Encoding": ["gzip, deflate"]}, method="HEAD")
+    cass_file = str(tmpdir.join("gzip_empty_response.yaml"))
+    with vcr.use_cassette(cass_file, decode_compressed_response=True):
+        response = urlopen(request).read()
+    with vcr.use_cassette(cass_file) as cass:
+        decoded_response = urlopen(request).read()
+        assert_cassette_has_one_response(cass)
+    assert decoded_response == response
+
+
 def test_decompress_deflate(tmpdir, httpbin):
     url = httpbin.url + "/deflate"
     request = Request(url, headers={"Accept-Encoding": ["gzip, deflate"]})
