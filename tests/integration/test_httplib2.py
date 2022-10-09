@@ -2,14 +2,13 @@
 """Integration tests with httplib2"""
 
 import sys
-
 from urllib.parse import urlencode
+
 import pytest
 import pytest_httpbin.certs
+from assertions import assert_cassette_has_one_response
 
 import vcr
-
-from assertions import assert_cassette_has_one_response
 
 httplib2 = pytest.importorskip("httplib2")
 

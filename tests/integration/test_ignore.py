@@ -1,6 +1,7 @@
-from urllib.request import urlopen
 import socket
 from contextlib import contextmanager
+from urllib.request import urlopen
+
 import vcr
 
 

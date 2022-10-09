@@ -2,11 +2,13 @@ import pytest
 
 boto = pytest.importorskip("boto")
 
+from configparser import DuplicateSectionError  # NOQA
+
 import boto  # NOQA
 import boto.iam  # NOQA
 from boto.s3.connection import S3Connection  # NOQA
 from boto.s3.key import Key  # NOQA
-from configparser import DuplicateSectionError  # NOQA
+
 import vcr  # NOQA
 
 
@@ -15,6 +17,7 @@ def test_boto_stubs(tmpdir):
         # Perform the imports within the patched context so that
         # CertValidatingHTTPSConnection refers to the patched version.
         from boto.https_connection import CertValidatingHTTPSConnection
+
         from vcr.stubs.boto_stubs import VCRCertValidatingHTTPSConnection
 
         # Prove that the class was patched by the stub and that we can instantiate it.

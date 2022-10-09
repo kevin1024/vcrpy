@@ -1,6 +1,5 @@
-from io import BytesIO
 import http.client
-
+from io import BytesIO
 
 """
 The python3 http.client api moved some stuff around, so this is an abstraction

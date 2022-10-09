@@ -2,9 +2,10 @@ import yaml
 
 # Use the libYAML versions if possible
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Dumper, Loader
 
 
 def deserialize(cassette_string):

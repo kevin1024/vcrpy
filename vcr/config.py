@@ -1,20 +1,18 @@
 import copy
-
-from collections import abc as collections_abc
 import functools
 import inspect
 import os
 import types
+from collections import abc as collections_abc
 
 import six
 
+from . import filters, matchers
 from .cassette import Cassette
-from .serializers import yamlserializer, jsonserializer
 from .persisters.filesystem import FilesystemPersister
-from .util import compose, auto_decorate
 from .record_mode import RecordMode
-from . import matchers
-from . import filters
+from .serializers import jsonserializer, yamlserializer
+from .util import auto_decorate, compose
 
 
 class VCR:

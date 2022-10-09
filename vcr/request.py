@@ -1,8 +1,9 @@
+import logging
 import warnings
 from io import BytesIO
-from urllib.parse import urlparse, parse_qsl
+from urllib.parse import parse_qsl, urlparse
+
 from .util import CaseInsensitiveDict
-import logging
 
 log = logging.getLogger(__name__)
 

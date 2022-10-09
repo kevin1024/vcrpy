@@ -1,6 +1,7 @@
 import pytest
-from vcr.serializers.jsonserializer import serialize
+
 from vcr.request import Request
+from vcr.serializers.jsonserializer import serialize
 
 
 def test_serialize_binary():

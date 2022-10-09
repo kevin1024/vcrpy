@@ -1,9 +1,10 @@
-import vcr
-import zlib
-import json
 import http.client as httplib
+import json
+import zlib
 
 from assertions import assert_is_json
+
+import vcr
 
 
 def _headers_are_case_insensitive(host, port):

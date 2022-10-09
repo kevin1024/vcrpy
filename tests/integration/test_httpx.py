@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")

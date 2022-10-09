@@ -3,8 +3,7 @@ from unittest import mock
 
 import pytest
 
-from vcr import matchers
-from vcr import request
+from vcr import matchers, request
 
 # the dict contains requests with corresponding to its key difference
 # with 'base' request.

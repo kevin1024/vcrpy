@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 """Test using a proxy."""
 
-# External imports
-import multiprocessing
-import pytest
-
 import http.server
+import multiprocessing
 import socketserver
 from urllib.request import urlopen
 
-# Internal imports
+import pytest
+
 import vcr
 
 # Conditional imports

@@ -1,7 +1,8 @@
 """Test requests' interaction with vcr"""
 import pytest
-import vcr
 from assertions import assert_cassette_empty, assert_is_json
+
+import vcr
 
 requests = pytest.importorskip("requests")
 from requests.exceptions import ConnectionError  # noqa E402

@@ -5,7 +5,7 @@ import pytest
 
 from vcr.request import Request
 from vcr.serialize import deserialize, serialize
-from vcr.serializers import yamlserializer, jsonserializer, compat
+from vcr.serializers import compat, jsonserializer, yamlserializer
 
 
 def test_deserialize_old_yaml_cassette():

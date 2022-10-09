@@ -1,7 +1,8 @@
 # .. _persister_example:
 
 import os
-from ..serialize import serialize, deserialize
+
+from ..serialize import deserialize, serialize
 
 
 class FilesystemPersister:

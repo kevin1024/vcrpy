@@ -1,15 +1,14 @@
 """Stubs for aiohttp HTTP clients"""
 import asyncio
 import functools
-import logging
 import json
-
-from aiohttp import ClientConnectionError, ClientResponse, RequestInfo, streams
-from aiohttp import hdrs, CookieJar
+import logging
 from http.cookies import CookieError, Morsel, SimpleCookie
+from typing import Mapping, Union
+
+from aiohttp import ClientConnectionError, ClientResponse, CookieJar, RequestInfo, hdrs, streams
 from aiohttp.helpers import strip_auth_from_url
 from multidict import CIMultiDict, CIMultiDictProxy, MultiDict
-from typing import Union, Mapping
 from yarl import URL
 
 from vcr.errors import CannotOverwriteExistingCassetteException
