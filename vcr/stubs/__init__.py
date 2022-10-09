@@ -1,14 +1,12 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
 import logging
-from http.client import (
-    HTTPConnection,
-    HTTPSConnection,
-    HTTPResponse,
-)
+from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
-from vcr.request import Request
+
 from vcr.errors import CannotOverwriteExistingCassetteException
+from vcr.request import Request
+
 from . import compat
 
 log = logging.getLogger(__name__)

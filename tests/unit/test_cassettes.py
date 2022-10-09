@@ -7,6 +7,7 @@ from unittest import mock
 
 import pytest
 import yaml
+
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset

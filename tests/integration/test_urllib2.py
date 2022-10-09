@@ -2,14 +2,14 @@
 """Integration tests with urllib2"""
 
 import ssl
-from urllib.request import urlopen
 from urllib.parse import urlencode
+from urllib.request import urlopen
+
 import pytest_httpbin.certs
+from assertions import assert_cassette_has_one_response
 
 # Internal imports
 import vcr
-
-from assertions import assert_cassette_has_one_response
 
 
 def urlopen_with_cafile(*args, **kwargs):

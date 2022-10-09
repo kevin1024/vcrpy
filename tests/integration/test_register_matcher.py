@@ -1,5 +1,6 @@
-import vcr
 from urllib.request import urlopen
+
+import vcr
 
 
 def true_matcher(r1, r2):

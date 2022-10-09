@@ -1,13 +1,12 @@
 """Utilities for patching in cassettes"""
 import contextlib
 import functools
+import http.client as httplib
 import itertools
+import logging
 from unittest import mock
 
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
-import http.client as httplib
-
-import logging
 
 log = logging.getLogger(__name__)
 # Save some of the original types for the purposes of unpatching
@@ -16,7 +15,7 @@ _HTTPSConnection = httplib.HTTPSConnection
 
 # Try to save the original types for boto3
 try:
-    from botocore.awsrequest import AWSHTTPSConnection, AWSHTTPConnection
+    from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
 except ImportError:
     try:
         import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
@@ -269,8 +268,7 @@ class CassettePatcherBuilder:
         except ImportError:  # pragma: no cover
             pass
         else:
-            from .stubs.httplib2_stubs import VCRHTTPConnectionWithTimeout
-            from .stubs.httplib2_stubs import VCRHTTPSConnectionWithTimeout
+            from .stubs.httplib2_stubs import VCRHTTPConnectionWithTimeout, VCRHTTPSConnectionWithTimeout
 
             yield cpool, "HTTPConnectionWithTimeout", VCRHTTPConnectionWithTimeout
             yield cpool, "HTTPSConnectionWithTimeout", VCRHTTPSConnectionWithTimeout

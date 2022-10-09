@@ -1,10 +1,12 @@
-import pytest
 import os
+
+import pytest
 
 boto3 = pytest.importorskip("boto3")
 
 import boto3  # NOQA
 import botocore  # NOQA
+
 import vcr  # NOQA
 
 try:
@@ -64,6 +66,7 @@ def test_boto_vendored_stubs(tmpdir):
             HTTPConnection,
             VerifiedHTTPSConnection,
         )
+
         from vcr.stubs.boto3_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
 
         # Prove that the class was patched by the stub and that we can instantiate it.

@@ -1,8 +1,8 @@
 from unittest import mock
 
 from vcr import mode
-from vcr.stubs import VCRHTTPSConnection
 from vcr.cassette import Cassette
+from vcr.stubs import VCRHTTPSConnection
 
 
 class TestVCRConnection:

@@ -1,8 +1,9 @@
 import http.client as httplib
 import multiprocessing
-import pytest
 from xmlrpc.client import ServerProxy
 from xmlrpc.server import SimpleXMLRPCServer
+
+import pytest
 
 requests = pytest.importorskip("requests")
 

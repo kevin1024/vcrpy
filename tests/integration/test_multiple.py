@@ -1,6 +1,8 @@
-import pytest
-import vcr
 from urllib.request import urlopen
+
+import pytest
+
+import vcr
 
 
 def test_making_extra_request_raises_exception(tmpdir, httpbin):

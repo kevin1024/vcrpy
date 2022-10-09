@@ -1,6 +1,7 @@
 """Stubs for urllib3"""
 
 from urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
+
 from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
 
 # urllib3 defines its own HTTPConnection classes. It includes some polyfills

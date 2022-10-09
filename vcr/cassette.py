@@ -1,20 +1,20 @@
 import collections
 import contextlib
 import copy
-import sys
 import inspect
 import logging
+import sys
 
 import wrapt
 
-from .errors import UnhandledHTTPRequestError
-from .matchers import requests_match, uri, method, get_matchers_results
-from .patch import CassettePatcherBuilder
-from .serializers import yamlserializer
-from .persisters.filesystem import FilesystemPersister
-from .util import partition_dict
 from ._handle_coroutine import handle_coroutine
+from .errors import UnhandledHTTPRequestError
+from .matchers import get_matchers_results, method, requests_match, uri
+from .patch import CassettePatcherBuilder
+from .persisters.filesystem import FilesystemPersister
 from .record_mode import RecordMode
+from .serializers import yamlserializer
+from .util import partition_dict
 
 try:
     from asyncio import iscoroutinefunction

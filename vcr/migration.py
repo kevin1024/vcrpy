@@ -17,11 +17,12 @@ import os
 import shutil
 import sys
 import tempfile
+
 import yaml
 
-from .serializers import yamlserializer, jsonserializer
-from .serialize import serialize
 from . import request
+from .serialize import serialize
+from .serializers import jsonserializer, yamlserializer
 from .stubs.compat import get_httpmessage
 
 # Use the libYAML versions if possible

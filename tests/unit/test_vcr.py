@@ -1,13 +1,13 @@
-from unittest import mock
+import http.client as httplib
 import os
+from unittest import mock
 
 import pytest
-import http.client as httplib
 
 from vcr import VCR, mode, use_cassette
+from vcr.patch import _HTTPConnection, force_reset
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
-from vcr.patch import _HTTPConnection, force_reset
 
 
 def test_vcr_use_cassette():

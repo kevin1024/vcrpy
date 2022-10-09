@@ -1,11 +1,12 @@
 import functools
+import inspect
 import logging
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import httpx
-from vcr.request import Request as VcrRequest
+
 from vcr.errors import CannotOverwriteExistingCassetteException
-import inspect
+from vcr.request import Request as VcrRequest
 
 _httpx_signature = inspect.signature(httpx.Client.request)
 

@@ -1,5 +1,6 @@
-import vcr
 from urllib.request import urlopen
+
+import vcr
 
 
 def test_recorded_request_uri_with_redirected_request(tmpdir, httpbin):

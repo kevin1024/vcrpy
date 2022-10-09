@@ -1,8 +1,8 @@
-from io import BytesIO
-from urllib.parse import urlparse, urlencode, urlunparse
 import copy
 import json
 import zlib
+from io import BytesIO
+from urllib.parse import urlencode, urlparse, urlunparse
 
 from .util import CaseInsensitiveDict
 

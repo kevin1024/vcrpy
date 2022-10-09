@@ -1,6 +1,7 @@
 """Stubs for boto"""
 
 from boto.https_connection import CertValidatingHTTPSConnection
+
 from ..stubs import VCRHTTPSConnection
 
 

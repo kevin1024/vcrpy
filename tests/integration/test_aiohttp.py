@@ -8,6 +8,7 @@ asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")
 
 import vcr  # noqa: E402
+
 from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
 
 

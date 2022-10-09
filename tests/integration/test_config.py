@@ -1,8 +1,10 @@
-import os
 import json
-import pytest
-import vcr
+import os
 from urllib.request import urlopen
+
+import pytest
+
+import vcr
 
 
 def test_set_serializer_default_config(tmpdir, httpbin):

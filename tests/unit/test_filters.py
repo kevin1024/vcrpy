@@ -1,18 +1,19 @@
-from io import BytesIO
-from vcr.filters import (
-    remove_headers,
-    replace_headers,
-    remove_query_parameters,
-    replace_query_parameters,
-    remove_post_data_parameters,
-    replace_post_data_parameters,
-    decode_response,
-)
-from vcr.request import Request
 import gzip
 import json
-from unittest import mock
 import zlib
+from io import BytesIO
+from unittest import mock
+
+from vcr.filters import (
+    decode_response,
+    remove_headers,
+    remove_post_data_parameters,
+    remove_query_parameters,
+    replace_headers,
+    replace_post_data_parameters,
+    replace_query_parameters,
+)
+from vcr.request import Request
 
 
 def test_replace_headers():

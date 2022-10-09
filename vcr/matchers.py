@@ -1,9 +1,9 @@
 import json
+import logging
 import urllib
 import xmlrpc.client
-from .util import read_body
-import logging
 
+from .util import read_body
 
 log = logging.getLogger(__name__)
 
