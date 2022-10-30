@@ -46,7 +46,9 @@ class CassetteContextDecorator:
     """
 
     _non_cassette_arguments = (
-        "path_transformer", "func_path_generator", "record_on_exception",
+        "path_transformer",
+        "func_path_generator",
+        "record_on_exception",
     )
 
     @classmethod
@@ -91,9 +93,7 @@ class CassetteContextDecorator:
 
     def __exit__(self, *exc_info):
         exception_was_raised = any(exc_info)
-        record_on_exception = self._args_getter().get(
-            'record_on_exception', True
-        )
+        record_on_exception = self._args_getter().get("record_on_exception", True)
         if record_on_exception or not exception_was_raised:
             next(self.__finish, None)
         self.__finish = None
