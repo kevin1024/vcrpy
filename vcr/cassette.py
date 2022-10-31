@@ -59,6 +59,7 @@ class CassetteContextDecorator:
         self.cls = cls
         self._args_getter = args_getter
         self.__finish = None
+        self.__cassette = None
 
     def _patch_generator(self, cassette):
         with contextlib.ExitStack() as exit_stack:
@@ -68,9 +69,6 @@ class CassetteContextDecorator:
             log.debug(log_format.format(action="Entering", path=cassette._path))
             yield cassette
             log.debug(log_format.format(action="Exiting", path=cassette._path))
-            # TODO(@IvanMalison): Hmmm. it kind of feels like this should be
-            # somewhere else.
-            cassette._save()
 
     def __enter__(self):
         # This assertion is here to prevent the dangerous behavior
@@ -88,14 +86,23 @@ class CassetteContextDecorator:
         if other_kwargs.get("path_transformer"):
             transformer = other_kwargs["path_transformer"]
             cassette_kwargs["path"] = transformer(cassette_kwargs["path"])
-        self.__finish = self._patch_generator(self.cls.load(**cassette_kwargs))
+        self.__cassette = self.cls.load(**cassette_kwargs)
+        self.__finish = self._patch_generator(self.__cassette)
         return next(self.__finish)
 
     def __exit__(self, *exc_info):
         exception_was_raised = any(exc_info)
         record_on_exception = self._args_getter().get("record_on_exception", True)
         if record_on_exception or not exception_was_raised:
-            next(self.__finish, None)
+            self.__cassette._save()
+            self.__cassette = None
+        # Fellow programmer, don't remove this `next`, if `self.__finish` is
+        # not consumed the unpatcher functions accumulated in the `exit_stack`
+        # object created in `_patch_generator` will not be called until
+        # `exit_stack` is not garbage collected.
+        # This works in CPython but not in Pypy, where the unpatchers will not
+        # be called until much later.
+        next(self.__finish, None)
         self.__finish = None
 
     @wrapt.decorator
