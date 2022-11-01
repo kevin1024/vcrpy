@@ -404,3 +404,25 @@ the Cassette ``allow_playback_repeats`` option.
         for x in range(10):
             response = urllib2.urlopen('http://www.zombo.com/').read()
         assert cass.all_played
+
+Discards Cassette on Errors
+---------------------------
+
+By default VCR will save the cassette file even when there is any error inside
+the enclosing context/test.
+
+If you want to save the cassette only when the test succeedes, set the Cassette
+``record_on_exception`` option to ``False``.
+
+.. code:: python
+
+    try:
+        my_vcr = VCR(record_on_exception=False)
+        with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
+            response = urllib2.urlopen('http://www.zombo.com/').read()
+            raise RuntimeError("Oops, something happened")
+    except RuntimeError:
+        pass
+
+    # Since there was an exception, the cassette file hasn't been created.
+    assert not os.path.exists('fixtures/vcr_cassettes/synopsis.yaml')
