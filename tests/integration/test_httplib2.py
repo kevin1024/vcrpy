@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Integration tests with httplib2"""
-
-import sys
 from urllib.parse import urlencode
 
 import pytest
@@ -19,8 +17,6 @@ def http():
     with the certificate replaced by the httpbin one.
     """
     kwargs = {"ca_certs": pytest_httpbin.certs.where()}
-    if sys.version_info[:2] in [(2, 7), (3, 7)]:
-        kwargs["disable_ssl_certificate_validation"] = True
     return httplib2.Http(**kwargs)
 
 
