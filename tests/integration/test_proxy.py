@@ -37,7 +37,7 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
         self.copyfile(upstream_response, self.wfile)
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def proxy_server():
     httpd = socketserver.ThreadingTCPServer(("", 0), Proxy)
     proxy_process = multiprocessing.Process(target=httpd.serve_forever)
