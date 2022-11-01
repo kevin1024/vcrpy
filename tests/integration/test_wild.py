@@ -84,7 +84,7 @@ def start_rpc_server(q):
     httpd.serve_forever()
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def rpc_server():
     q = multiprocessing.Queue()
     proxy_process = multiprocessing.Process(target=start_rpc_server, args=(q,))
