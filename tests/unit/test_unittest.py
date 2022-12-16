@@ -3,6 +3,8 @@ from unittest import TextTestRunner, defaultTestLoader
 from unittest.mock import MagicMock
 from urllib.request import urlopen
 
+import pytest
+
 from vcr.unittest import VCRTestCase
 
 
@@ -126,6 +128,7 @@ def test_vcr_kwargs_cassette_dir():
     assert test._get_cassette_library_dir.call_count == 0
 
 
+@pytest.mark.online
 def test_get_vcr_with_matcher(tmpdir):
     cassette_dir = tmpdir.mkdir("cassettes")
     assert len(cassette_dir.listdir()) == 0
@@ -160,6 +163,7 @@ def test_get_vcr_with_matcher(tmpdir):
     )
 
 
+@pytest.mark.online
 def test_testcase_playback(tmpdir):
     cassette_dir = tmpdir.mkdir("cassettes")
     assert len(cassette_dir.listdir()) == 0

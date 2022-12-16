@@ -13,3 +13,8 @@ skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
 #
 # ignore-words-list = ''
+
+[tool.pytest.ini_options]
+markers = [
+    "online",
+]

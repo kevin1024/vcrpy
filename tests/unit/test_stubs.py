@@ -1,5 +1,7 @@
 from unittest import mock
 
+from pytest import mark
+
 from vcr import mode
 from vcr.cassette import Cassette
 from vcr.stubs import VCRHTTPSConnection
@@ -11,6 +13,7 @@ class TestVCRConnection:
         vcr_connection.ssl_version = "example_ssl_version"
         assert vcr_connection.real_connection.ssl_version == "example_ssl_version"
 
+    @mark.online
     @mock.patch("vcr.cassette.Cassette.can_play_response_for", return_value=False)
     def testing_connect(*args):
         vcr_connection = VCRHTTPSConnection("www.google.com")

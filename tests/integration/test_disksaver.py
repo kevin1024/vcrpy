@@ -6,10 +6,13 @@ import os
 import time
 from urllib.request import urlopen
 
+import pytest
+
 # Internal imports
 import vcr
 
 
+@pytest.mark.online
 def test_disk_saver_nowrite(tmpdir, mockbin_request_url):
     """
     Ensure that when you close a cassette without changing it it doesn't
@@ -30,6 +33,7 @@ def test_disk_saver_nowrite(tmpdir, mockbin_request_url):
     assert last_mod == last_mod2
 
 
+@pytest.mark.online
 def test_disk_saver_write(tmpdir, mockbin_request_url):
     """
     Ensure that when you close a cassette after changing it it does

@@ -1,5 +1,7 @@
 from urllib.request import urlopen
 
+import pytest
+
 import vcr
 
 
@@ -11,6 +13,7 @@ def false_matcher(r1, r2):
     return False
 
 
+@pytest.mark.online
 def test_registered_true_matcher(tmpdir, mockbin_request_url):
     my_vcr = vcr.VCR()
     my_vcr.register_matcher("true", true_matcher)
@@ -26,6 +29,7 @@ def test_registered_true_matcher(tmpdir, mockbin_request_url):
         urlopen(mockbin_request_url)
 
 
+@pytest.mark.online
 def test_registered_false_matcher(tmpdir, mockbin_request_url):
     my_vcr = vcr.VCR()
     my_vcr.register_matcher("false", false_matcher)

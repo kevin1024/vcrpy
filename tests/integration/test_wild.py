@@ -52,6 +52,7 @@ def test_flickr_multipart_upload(httpbin, tmpdir):
         assert cass.play_count == 1
 
 
+@pytest.mark.online
 def test_flickr_should_respond_with_200(tmpdir):
     testfile = str(tmpdir.join("flickr.yml"))
     with vcr.use_cassette(testfile):
@@ -70,6 +71,7 @@ def test_cookies(tmpdir, httpbin):
         assert sorted(r2.json()["cookies"].keys()) == ["k1", "k2"]
 
 
+@pytest.mark.online
 def test_amazon_doctype(tmpdir):
     # amazon gzips its homepage.  For some reason, in requests 2.7, it's not
     # getting gunzipped.

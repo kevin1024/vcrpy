@@ -87,6 +87,7 @@ def yml(tmpdir, request):
     return str(tmpdir.join(request.function.__name__ + ".yaml"))
 
 
+@pytest.mark.online
 def test_status(tmpdir, mockbin, do_request):
     url = mockbin
 
@@ -99,6 +100,7 @@ def test_status(tmpdir, mockbin, do_request):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_case_insensitive_headers(tmpdir, mockbin, do_request):
     url = mockbin
 
@@ -112,6 +114,7 @@ def test_case_insensitive_headers(tmpdir, mockbin, do_request):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_content(tmpdir, mockbin, do_request):
     url = mockbin
 
@@ -124,6 +127,7 @@ def test_content(tmpdir, mockbin, do_request):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_json(tmpdir, mockbin, do_request):
     url = mockbin + "/request"
 
@@ -138,6 +142,7 @@ def test_json(tmpdir, mockbin, do_request):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_params_same_url_distinct_params(tmpdir, mockbin, do_request):
     url = mockbin + "/request"
     headers = {"Content-Type": "application/json"}
@@ -158,6 +163,7 @@ def test_params_same_url_distinct_params(tmpdir, mockbin, do_request):
             do_request()("GET", url, params=params, headers=headers)
 
 
+@pytest.mark.online
 def test_redirect(mockbin, yml, do_request):
     url = mockbin + "/redirect/303/2"
 
@@ -184,6 +190,7 @@ def test_redirect(mockbin, yml, do_request):
     }
 
 
+@pytest.mark.online
 def test_work_with_gzipped_data(mockbin, do_request, yml):
     url = mockbin + "/gzip?foo=bar"
     headers = {"accept-encoding": "deflate, gzip"}
@@ -199,6 +206,7 @@ def test_work_with_gzipped_data(mockbin, do_request, yml):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 @pytest.mark.parametrize("url", ["https://github.com/kevin1024/vcrpy/issues/" + str(i) for i in range(3, 6)])
 def test_simple_fetching(do_request, yml, url):
     with vcr.use_cassette(yml):
@@ -231,6 +239,7 @@ def test_behind_proxy(do_request):
         assert cassette_response.request.url == response.request.url
 
 
+@pytest.mark.online
 def test_cookies(tmpdir, mockbin, do_request):
     def client_cookies(client):
         return [c for c in client.client.cookies]
@@ -268,6 +277,7 @@ def test_cookies(tmpdir, mockbin, do_request):
             assert client_cookies(new_client) == ["k1", "k2"]
 
 
+@pytest.mark.online
 def test_relative_redirects(tmpdir, scheme, do_request, mockbin):
     redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: True}
 
@@ -286,6 +296,7 @@ def test_relative_redirects(tmpdir, scheme, do_request, mockbin):
         assert cassette.play_count == 3
 
 
+@pytest.mark.online
 def test_redirect_wo_allow_redirects(do_request, mockbin, yml):
     url = mockbin + "/redirect/308/5"
 
