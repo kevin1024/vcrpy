@@ -7,6 +7,8 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  4.3.0
+    - Add `before_record_interaction` (thanks @edthedev, @ddriddle, @mpitcel, @zdc217, @tzturner)
 -  4.2.1
     - Fix a bug where the first request in a redirect chain was not being recorded with aiohttp
     - Various typos and small fixes, thanks @jairhenrique, @timgates42
