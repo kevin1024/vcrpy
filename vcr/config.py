@@ -41,6 +41,7 @@ class VCR:
         ignore_localhost=False,
         filter_headers=(),
         before_record_response=None,
+        before_record_interaction=None,
         filter_post_data_parameters=(),
         match_on=("method", "scheme", "host", "port", "path", "query"),
         before_record=None,
@@ -75,6 +76,7 @@ class VCR:
         self.filter_post_data_parameters = filter_post_data_parameters
         self.before_record_request = before_record_request or before_record
         self.before_record_response = before_record_response
+        self.before_record_interaction = before_record_interaction
         self.ignore_hosts = ignore_hosts
         self.ignore_localhost = ignore_localhost
         self.inject_cassette = inject_cassette
@@ -126,6 +128,7 @@ class VCR:
         cassette_library_dir = kwargs.get("cassette_library_dir", self.cassette_library_dir)
         additional_matchers = kwargs.get("additional_matchers", ())
         record_on_exception = kwargs.get("record_on_exception", self.record_on_exception)
+        before_record_interaction = kwargs.get("before_record_interaction", self.before_record_interaction)
 
         if cassette_library_dir:
 
@@ -147,6 +150,7 @@ class VCR:
             "record_mode": kwargs.get("record_mode", self.record_mode),
             "before_record_request": self._build_before_record_request(kwargs),
             "before_record_response": self._build_before_record_response(kwargs),
+            "before_record_interaction": before_record_interaction,
             "custom_patches": self._custom_patches + kwargs.get("custom_patches", ()),
             "inject": kwargs.get("inject_cassette", self.inject_cassette),
             "path_transformer": path_transformer,

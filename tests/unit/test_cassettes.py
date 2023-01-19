@@ -183,6 +183,16 @@ def test_before_record_response():
     assert cassette.responses[0] == "mutated"
 
 
+def test_before_record_interaction():
+    before_record_interaction = mock.Mock(return_value=("mutated", "twice"))
+    cassette = Cassette("test", before_record_interaction=before_record_interaction)
+    cassette.append("req", "res")
+
+    before_record_interaction.assert_called_once_with("req", "res")
+    assert cassette.requests[0] == "mutated"
+    assert cassette.responses[0] == "twice"
+
+
 def assert_get_response_body_is(value):
     conn = httplib.HTTPConnection("www.python.org")
     conn.request("GET", "/index.html")
