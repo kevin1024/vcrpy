@@ -58,12 +58,13 @@ class CassetteContextDecorator:
     def __init__(self, cls, args_getter):
         self.cls = cls
         self._args_getter = args_getter
+        self._patcher_builder_cls = CassettePatcherBuilder
         self.__finish = None
         self.__cassette = None
 
     def _patch_generator(self, cassette):
         with contextlib.ExitStack() as exit_stack:
-            for patcher in CassettePatcherBuilder(cassette).build():
+            for patcher in self._patcher_builder_cls(cassette).build():
                 exit_stack.enter_context(patcher)
             log_format = "{action} context for cassette at {path}."
             log.debug(log_format.format(action="Entering", path=cassette._path))
