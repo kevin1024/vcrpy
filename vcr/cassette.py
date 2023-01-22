@@ -11,7 +11,7 @@ from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder
-from .persisters.filesystem import FilesystemPersister
+from .persisters.filesystem import FilesystemPersister, ExpectedCassetteError
 from .record_mode import RecordMode
 from .serializers import yamlserializer
 from .util import partition_dict
@@ -352,7 +352,7 @@ class Cassette:
                 self.append(request, response)
             self.dirty = False
             self.rewound = True
-        except ValueError:
+        except ExpectedCassetteError:
             pass
 
     def __str__(self):

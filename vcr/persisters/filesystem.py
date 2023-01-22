@@ -5,17 +5,21 @@ from pathlib import Path
 from ..serialize import deserialize, serialize
 
 
+class ExpectedCassetteError(ValueError):
+    pass
+
+
 class FilesystemPersister:
     @classmethod
     def load_cassette(cls, cassette_path, serializer):
         cassette_path = Path(cassette_path)  # if cassette path is already Path this is no operation
         if not cassette_path.is_file():
-            raise ValueError("Cassette not found.")
+            raise ExpectedCassetteError("Cassette not found.")
         try:
             with cassette_path.open() as f:
                 data = f.read()
         except UnicodeEncodeError as err:
-            raise ValueError("Can't read Cassette, Encoding is broken") from err
+            raise ExpectedCassetteError("Can't read Cassette, Encoding is broken") from err
 
         return deserialize(data, serializer)
 
