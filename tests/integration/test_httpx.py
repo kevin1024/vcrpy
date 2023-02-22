@@ -136,6 +136,18 @@ def test_json(tmpdir, scheme, do_request):
         assert cassette.play_count == 1
 
 
+def test_post_binary_non_ascii_content(tmpdir, scheme, do_request):
+    url = scheme + "://httpbin.org/post"
+    with vcr.use_cassette(str(tmpdir.join("cointent.yaml"))):
+        binary_data = b"\xff\xd8\xff\xe0\x00\x10"
+        response = do_request()("POST", url, files={"some-image": binary_data})
+
+    with vcr.use_cassette(str(tmpdir.join("cointent.yaml"))) as cassette:
+        cassette_response = do_request()("POST", url, files={"some-image": binary_data})
+        assert cassette_response.content == response.content
+        assert cassette.play_count == 1
+
+
 def test_params_same_url_distinct_params(tmpdir, scheme, do_request):
     url = scheme + "://httpbin.org/get"
     headers = {"Content-Type": "application/json"}
