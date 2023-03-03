@@ -45,13 +45,16 @@ def test_filter_basic_auth(tmpdir, httpbin):
 
 
 def test_filter_querystring(tmpdir, httpbin):
-    url = httpbin.url + "/?foo=bar"
+    url = httpbin.url + "/?secretkey=secretvalue"
     cass_file = str(tmpdir.join("filter_qs.yaml"))
-    with vcr.use_cassette(cass_file, filter_query_parameters=["foo"]):
+    with vcr.use_cassette(cass_file, filter_query_parameters=["secretkey"]):
         urlopen(url)
-    with vcr.use_cassette(cass_file, filter_query_parameters=["foo"]) as cass:
+    with vcr.use_cassette(cass_file, filter_query_parameters=["secretkey"]):
         urlopen(url)
-        assert "foo" not in cass.requests[0].url
+        with open(cass_file) as cass_file:
+            cass = cass_file.read()
+            assert "secretkey" not in cass
+            assert "secretvalue" not in cass
 
 
 def test_filter_post_data(tmpdir, httpbin):

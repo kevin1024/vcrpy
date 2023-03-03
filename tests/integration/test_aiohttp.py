@@ -417,3 +417,16 @@ def test_not_allow_redirects(tmpdir):
         assert response.url.path == "/redirect/308/5"
         assert response.status == 308
         assert cassette.play_count == 1
+
+
+def test_filter_querystring(tmpdir, httpbin):
+    url = httpbin.url + "/?secretkey=secretvalue"
+    cass_file = str(tmpdir.join("aiohttp_filter_qs.yaml"))
+    with vcr.use_cassette(cass_file, filter_query_parameters=["secretkey"]):
+        response, _ = get(url)
+    with vcr.use_cassette(cass_file, filter_query_parameters=["secretkey"]):
+        response, _ = get(url)
+        with open(cass_file) as cass_file:
+            cass = cass_file.read()
+            assert "secretkey" not in cass
+            assert "secretvalue" not in cass

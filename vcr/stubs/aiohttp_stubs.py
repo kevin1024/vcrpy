@@ -66,7 +66,7 @@ def build_response(vcr_request, vcr_response, history):
         headers=_deserialize_headers(vcr_request.headers),
         real_url=URL(vcr_request.url),
     )
-    response = MockClientResponse(vcr_request.method, URL(vcr_response.get("url")), request_info=request_info)
+    response = MockClientResponse(vcr_request.method, URL(vcr_request.url), request_info=request_info)
     response.status = vcr_response["status"]["code"]
     response._body = vcr_response["body"].get("string", b"")
     response.reason = vcr_response["status"]["message"]
@@ -163,7 +163,6 @@ async def record_response(cassette, vcr_request, response):
         "status": {"code": response.status, "message": response.reason},
         "headers": _serialize_headers(response.headers),
         "body": body,  # NOQA: E999
-        "url": str(response.url),
     }
 
     cassette.append(vcr_request, vcr_response)
