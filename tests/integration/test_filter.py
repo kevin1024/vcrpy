@@ -142,3 +142,23 @@ def test_decompress_regular(tmpdir, httpbin):
         resp = urlopen(url).read()
         assert_cassette_has_one_response(cass)
     assert_is_json(resp)
+
+
+def test_before_record_request_corruption(tmpdir, httpbin):
+    """Modifying request in before_record_request should not effect outgoing request"""
+    def before_record(request):
+        request.headers.clear()
+        request.body = b''
+        return request
+
+    req = Request(
+        httpbin.url + "/post",
+        data=urlencode({'test': 'exists'}).encode(),
+        headers={'X-Test': 'exists'},
+    )
+    cass_file = str(tmpdir.join("modified_response.yaml"))
+    with vcr.use_cassette(cass_file, before_record_request=before_record):
+        resp = json.loads(urlopen(req).read())
+
+    assert(resp['headers']['X-Test'] == 'exists')
+    assert(resp['form']['test'] == 'exists')
