@@ -18,39 +18,39 @@ try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
 except ImportError:
     try:
-        import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+        import botocore.vendored.requests.packages.urllib3.connection as u_connection
     except ImportError:  # pragma: no cover
         pass
     else:
-        _Boto3VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-        _cpoolBoto3HTTPConnection = cpool.HTTPConnection
-        _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
+        _Boto3VerifiedHTTPSConnection = u_connection.HTTPSConnection
+        _cpoolBoto3HTTPConnection = u_connection.HTTPConnection
+        _cpoolBoto3HTTPSConnection = u_connection.HTTPSConnection
 else:
     _Boto3VerifiedHTTPSConnection = AWSHTTPSConnection
     _cpoolBoto3HTTPConnection = AWSHTTPConnection
     _cpoolBoto3HTTPSConnection = AWSHTTPSConnection
 
-cpool = None
+u_connection = None
 # Try to save the original types for urllib3
 try:
-    import urllib3.connectionpool as cpool
+    import urllib3.connection as u_connection
 except ImportError:  # pragma: no cover
     pass
 else:
-    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _cpoolHTTPConnection = cpool.HTTPConnection
-    _cpoolHTTPSConnection = cpool.HTTPSConnection
+    _VerifiedHTTPSConnection = u_connection.HTTPSConnection
+    _cpoolHTTPConnection = u_connection.HTTPConnection
+    _cpoolHTTPSConnection = u_connection.HTTPSConnection
 
 # Try to save the original types for requests
 try:
-    if not cpool:
-        import requests.packages.urllib3.connectionpool as cpool
+    if not u_connection:
+        import requests.packages.urllib3.connection as u_connection
 except ImportError:  # pragma: no cover
     pass
 else:
-    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _cpoolHTTPConnection = cpool.HTTPConnection
-    _cpoolHTTPSConnection = cpool.HTTPSConnection
+    _VerifiedHTTPSConnection = u_connection.HTTPSConnection
+    _cpoolHTTPConnection = u_connection.HTTPConnection
+    _cpoolHTTPSConnection = u_connection.HTTPSConnection
 
 # Try to save the original types for httplib2
 try:
