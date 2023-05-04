@@ -199,7 +199,6 @@ class CassettePatcherBuilder:
 
     @_build_patchers_from_mock_triples_decorator
     def _boto3(self):
-
         try:
             # botocore using awsrequest
             import botocore.awsrequest as cpool

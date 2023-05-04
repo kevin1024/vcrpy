@@ -36,7 +36,6 @@ def cassette(tmpdir, httpbin, httpbin_secure):
     ],
 )
 def test_matchers(httpbin, httpbin_secure, cassette, matcher, matching_uri, not_matching_uri):
-
     matching_uri = _replace_httpbin(matching_uri, httpbin, httpbin_secure)
     not_matching_uri = _replace_httpbin(not_matching_uri, httpbin, httpbin_secure)
     default_uri = _replace_httpbin(DEFAULT_URI, httpbin, httpbin_secure)
@@ -76,7 +75,6 @@ def test_method_matcher(cassette, httpbin, httpbin_secure):
     "uri", [DEFAULT_URI, "http://httpbin.org/get?p2=q2&p1=q1", "http://httpbin.org/get?p2=q2&p1=q1"]
 )
 def test_default_matcher_matches(cassette, uri, httpbin, httpbin_secure):
-
     uri = _replace_httpbin(uri, httpbin, httpbin_secure)
 
     with vcr.use_cassette(cassette) as cass:

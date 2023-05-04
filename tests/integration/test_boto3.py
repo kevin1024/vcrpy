@@ -83,7 +83,6 @@ def test_boto_vendored_stubs(tmpdir):
     "https://docs.travis-ci.com/user/pull-requests/#pull-requests-and-security-restrictions",
 )
 def test_boto_medium_difficulty(tmpdir, get_user):
-
     with vcr.use_cassette(str(tmpdir.join("boto3-medium.yml"))):
         response = get_user()
         assert response["User"]["UserName"] == IAM_USER_NAME
