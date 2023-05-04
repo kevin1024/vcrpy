@@ -60,7 +60,6 @@ def test_uri(method, uri):
 
 
 def test_HeadersDict():
-
     # Simple test of CaseInsensitiveDict
     h = HeadersDict()
     assert h == {}
