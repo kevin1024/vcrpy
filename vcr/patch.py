@@ -234,7 +234,7 @@ class CassettePatcherBuilder:
             # used connections (which might actually be of a different
             # class) around. This while loop will terminate because
             # eventually the pool will run out of connections.
-            while not connection.__module__.startswith("docker") and snot isinstance(connection, connection_class):
+            while not connection.__module__.startswith("docker") and not isinstance(connection, connection_class):
                 connection = get_conn(pool, timeout)
             return connection
 
