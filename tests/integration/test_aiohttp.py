@@ -34,12 +34,6 @@ def post(url, output="text", **kwargs):
     return request("POST", url, output="text", **kwargs)
 
 
-@pytest.fixture(params=["https", "http"])
-def scheme(request):
-    """Fixture that returns both http and https."""
-    return request.param
-
-
 def test_status(tmpdir, scheme):
     url = scheme + "://httpbin.org"
     with vcr.use_cassette(str(tmpdir.join("status.yaml"))):
