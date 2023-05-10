@@ -44,12 +44,6 @@ def post(client, url, data=None, **kwargs):
     return client.fetch(http.HTTPRequest(url, method="POST", **kwargs))
 
 
-@pytest.fixture(params=["https", "http"])
-def scheme(request):
-    """Fixture that returns both http and https."""
-    return request.param
-
-
 @pytest.mark.gen_test
 def test_status_code(get_client, scheme, tmpdir):
     """Ensure that we can read the status code"""
