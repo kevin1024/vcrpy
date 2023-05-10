@@ -127,18 +127,28 @@ def test_stream(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-@pytest.mark.parametrize("body", ["data", "json"])
-def test_post(tmpdir, scheme, body, caplog):
+POST_DATA = {"key1": "value1", "key2": "value2"}
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        dict(data=POST_DATA),
+        dict(json=POST_DATA),
+        dict(data=POST_DATA, json=None),
+        dict(data=None, json=POST_DATA),
+    ],
+)
+def test_post(tmpdir, scheme, kwargs, caplog):
     caplog.set_level(logging.INFO)
-    data = {"key1": "value1", "key2": "value2"}
     url = scheme + "://httpbin.org/post"
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
-        _, response_json = post(url, **{body: data})
+        _, response_json = post(url, **kwargs)
 
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))) as cassette:
         request = cassette.requests[0]
-        assert request.body == data
-        _, cassette_response_json = post(url, **{body: data})
+        assert request.body == POST_DATA
+        _, cassette_response_json = post(url, **kwargs)
         assert cassette_response_json == response_json
         assert cassette.play_count == 1
 
@@ -150,6 +160,15 @@ def test_post(tmpdir, scheme, body, caplog):
         ),
         None,
     ), "Log message not found."
+
+
+def test_post_data_plus_json_error(tmpdir, scheme):
+    url = scheme + "://httpbin.org/post"
+    with vcr.use_cassette(str(tmpdir.join("post.yaml"))) as cassette, pytest.raises(
+        ValueError, match="data and json parameters can not be used at the same time"
+    ):
+        post(url, data=POST_DATA, json=POST_DATA)
+    assert cassette.requests == []
 
 
 def test_params(tmpdir, scheme):
