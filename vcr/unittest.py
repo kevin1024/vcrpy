@@ -32,7 +32,7 @@ class VCRMixin:
         return os.path.join(testdir, "cassettes")
 
     def _get_cassette_name(self):
-        return "{0}.{1}.yaml".format(self.__class__.__name__, self._testMethodName)
+        return f"{self.__class__.__name__}.{self._testMethodName}.yaml"
 
 
 class VCRTestCase(VCRMixin, unittest.TestCase):

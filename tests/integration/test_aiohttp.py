@@ -151,7 +151,7 @@ def test_post(tmpdir, body, caplog, mockbin_request_url):
         (
             log
             for log in caplog.records
-            if log.getMessage() == "<Request (POST) {}> not in cassette, sending to real server".format(url)
+            if log.getMessage() == f"<Request (POST) {url}> not in cassette, sending to real server"
         ),
         None,
     ), "Log message not found."

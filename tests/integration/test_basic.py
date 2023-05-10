@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Basic tests for cassettes"""
 
 # External imports

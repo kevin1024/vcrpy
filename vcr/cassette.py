@@ -280,7 +280,7 @@ class Cassette:
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            "The cassette (%r) doesn't contain the request (%r) asked for" % (self._path, request)
+            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for"
         )
 
     def responses_of(self, request):
@@ -295,7 +295,7 @@ class Cassette:
             return responses
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            "The cassette (%r) doesn't contain the request (%r) asked for" % (self._path, request)
+            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for"
         )
 
     def rewind(self):
@@ -356,7 +356,7 @@ class Cassette:
             pass
 
     def __str__(self):
-        return "<Cassette containing {} recorded response(s)>".format(len(self))
+        return f"<Cassette containing {len(self)} recorded response(s)>"
 
     def __len__(self):
         """Return the number of request,response pairs stored in here"""

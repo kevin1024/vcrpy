@@ -10,37 +10,37 @@ log = logging.getLogger(__name__)
 
 def method(r1, r2):
     if r1.method != r2.method:
-        raise AssertionError("{} != {}".format(r1.method, r2.method))
+        raise AssertionError(f"{r1.method} != {r2.method}")
 
 
 def uri(r1, r2):
     if r1.uri != r2.uri:
-        raise AssertionError("{} != {}".format(r1.uri, r2.uri))
+        raise AssertionError(f"{r1.uri} != {r2.uri}")
 
 
 def host(r1, r2):
     if r1.host != r2.host:
-        raise AssertionError("{} != {}".format(r1.host, r2.host))
+        raise AssertionError(f"{r1.host} != {r2.host}")
 
 
 def scheme(r1, r2):
     if r1.scheme != r2.scheme:
-        raise AssertionError("{} != {}".format(r1.scheme, r2.scheme))
+        raise AssertionError(f"{r1.scheme} != {r2.scheme}")
 
 
 def port(r1, r2):
     if r1.port != r2.port:
-        raise AssertionError("{} != {}".format(r1.port, r2.port))
+        raise AssertionError(f"{r1.port} != {r2.port}")
 
 
 def path(r1, r2):
     if r1.path != r2.path:
-        raise AssertionError("{} != {}".format(r1.path, r2.path))
+        raise AssertionError(f"{r1.path} != {r2.path}")
 
 
 def query(r1, r2):
     if r1.query != r2.query:
-        raise AssertionError("{} != {}".format(r1.query, r2.query))
+        raise AssertionError(f"{r1.query} != {r2.query}")
 
 
 def raw_body(r1, r2):
@@ -59,7 +59,7 @@ def body(r1, r2):
 
 def headers(r1, r2):
     if r1.headers != r2.headers:
-        raise AssertionError("{} != {}".format(r1.headers, r2.headers))
+        raise AssertionError(f"{r1.headers} != {r2.headers}")
 
 
 def _header_checker(value, header="Content-Type"):
@@ -107,7 +107,7 @@ def _get_transformer(request):
 def requests_match(r1, r2, matchers):
     successes, failures = get_matchers_results(r1, r2, matchers)
     if failures:
-        log.debug("Requests {} and {} differ.\n" "Failure details:\n" "{}".format(r1, r2, failures))
+        log.debug(f"Requests {r1} and {r2} differ.\nFailure details:\n{failures}")
     return len(failures) == 0
 
 

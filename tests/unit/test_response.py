@@ -1,4 +1,3 @@
-# coding: UTF-8
 import io
 
 from vcr.stubs import VCRHTTPResponse

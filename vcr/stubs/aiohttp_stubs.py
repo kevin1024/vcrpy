@@ -261,7 +261,7 @@ def vcr_request(cassette, real_request):
         vcr_request = Request(method, str(request_url), data, _serialize_headers(headers))
 
         if cassette.can_play_response_for(vcr_request):
-            log.info("Playing response for {} from cassette".format(vcr_request))
+            log.info(f"Playing response for {vcr_request} from cassette")
             response = play_responses(cassette, vcr_request, kwargs)
             for redirect in response.history:
                 self._cookie_jar.update_cookies(redirect.cookies, redirect.url)

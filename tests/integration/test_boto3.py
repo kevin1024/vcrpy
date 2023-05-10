@@ -20,12 +20,12 @@ except ImportError:
 # https://github.com/boto/botocore/pull/1495
 boto3_skip_vendored_requests = pytest.mark.skipif(
     botocore_awsrequest,
-    reason="botocore version {ver} does not use vendored requests anymore.".format(ver=botocore.__version__),
+    reason=f"botocore version {botocore.__version__} does not use vendored requests anymore.",
 )
 
 boto3_skip_awsrequest = pytest.mark.skipif(
     not botocore_awsrequest,
-    reason="botocore version {ver} still uses vendored requests.".format(ver=botocore.__version__),
+    reason=f"botocore version {botocore.__version__} still uses vendored requests.",
 )
 
 IAM_USER_NAME = "vcrpy"
