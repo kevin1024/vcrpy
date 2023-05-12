@@ -32,15 +32,17 @@ else:
     _cpoolBoto3HTTPSConnection = AWSHTTPSConnection
 
 cpool = None
+conn = None
 # Try to save the original types for urllib3
 try:
+    import urllib3.connection as conn
     import urllib3.connectionpool as cpool
 except ImportError:  # pragma: no cover
     pass
 else:
-    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _cpoolHTTPConnection = cpool.HTTPConnection
-    _cpoolHTTPSConnection = cpool.HTTPSConnection
+    _VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection
+    _connHTTPConnection = conn.HTTPConnection
+    _connHTTPSConnection = conn.HTTPSConnection
 
 # Try to save the original types for requests
 try:
@@ -198,7 +200,7 @@ class CassettePatcherBuilder:
             from .stubs import requests_stubs
         except ImportError:  # pragma: no cover
             return ()
-        return self._urllib3_patchers(cpool, requests_stubs)
+        return self._urllib3_patchers(cpool, conn, requests_stubs)
 
     @_build_patchers_from_mock_triples_decorator
     def _boto3(self):
@@ -248,12 +250,13 @@ class CassettePatcherBuilder:
 
     def _urllib3(self):
         try:
+            import urllib3.connection as conn
             import urllib3.connectionpool as cpool
         except ImportError:  # pragma: no cover
             return ()
         from .stubs import urllib3_stubs
 
-        return self._urllib3_patchers(cpool, urllib3_stubs)
+        return self._urllib3_patchers(cpool, conn, urllib3_stubs)
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib2(self):
@@ -330,7 +333,7 @@ class CassettePatcherBuilder:
             new_sync_client_send = sync_vcr_send(self._cassette, _HttpxSyncClient_send)
             yield httpx.Client, "send", new_sync_client_send
 
-    def _urllib3_patchers(self, cpool, stubs):
+    def _urllib3_patchers(self, cpool, conn, stubs):
         http_connection_remover = ConnectionRemover(
             self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection)
         )
@@ -338,9 +341,9 @@ class CassettePatcherBuilder:
             self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection)
         )
         mock_triples = (
-            (cpool, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
-            (cpool, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
-            (cpool, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
+            (conn, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
+            (conn, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
+            (conn, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
             (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
             (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
             (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
@@ -410,16 +413,17 @@ def reset_patchers():
     yield mock.patch.object(httplib, "HTTPSConnection", _HTTPSConnection)
 
     try:
+        import urllib3.connection as conn
         import urllib3.connectionpool as cpool
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, "HTTPConnection", _cpoolHTTPConnection)
-        yield mock.patch.object(cpool, "HTTPSConnection", _cpoolHTTPSConnection)
+        yield mock.patch.object(conn, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
+        yield mock.patch.object(conn, "HTTPConnection", _connHTTPConnection)
+        yield mock.patch.object(conn, "HTTPSConnection", _connHTTPSConnection)
         if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
-            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolHTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolHTTPSConnection)
+            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _connHTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _connHTTPSConnection)
 
     try:
         # unpatch botocore with awsrequest
