@@ -35,8 +35,8 @@ cpool = None
 conn = None
 # Try to save the original types for urllib3
 try:
-    import urllib3.connectionpool as cpool
     import urllib3.connection as conn
+    import urllib3.connectionpool as cpool
 except ImportError:  # pragma: no cover
     pass
 else:
@@ -250,8 +250,8 @@ class CassettePatcherBuilder:
 
     def _urllib3(self):
         try:
-            import urllib3.connectionpool as cpool
             import urllib3.connection as conn
+            import urllib3.connectionpool as cpool
         except ImportError:  # pragma: no cover
             return ()
         from .stubs import urllib3_stubs
@@ -413,8 +413,8 @@ def reset_patchers():
     yield mock.patch.object(httplib, "HTTPSConnection", _HTTPSConnection)
 
     try:
-        import urllib3.connectionpool as cpool
         import urllib3.connection as conn
+        import urllib3.connectionpool as cpool
     except ImportError:  # pragma: no cover
         pass
     else:
