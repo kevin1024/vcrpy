@@ -1,6 +1,6 @@
 """Stubs for urllib3"""
 
-from urllib3.connectionpool import HTTPConnection, VerifiedHTTPSConnection
+from urllib3.connection import HTTPConnection, VerifiedHTTPSConnection
 
 from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
 
