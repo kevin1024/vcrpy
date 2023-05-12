@@ -145,18 +145,18 @@ def test_https_with_cert_validation_disabled(tmpdir, httpbin_secure, pool_mgr):
 
 
 def test_urllib3_force_reset():
-    cpool = urllib3.connectionpool
-    http_original = cpool.HTTPConnection
-    https_original = cpool.HTTPSConnection
-    verified_https_original = cpool.VerifiedHTTPSConnection
+    conn = urllib3.connection
+    http_original = conn.HTTPConnection
+    https_original = conn.HTTPSConnection
+    verified_https_original = conn.VerifiedHTTPSConnection
     with vcr.use_cassette(path="test"):
-        first_cassette_HTTPConnection = cpool.HTTPConnection
-        first_cassette_HTTPSConnection = cpool.HTTPSConnection
-        first_cassette_VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+        first_cassette_HTTPConnection = conn.HTTPConnection
+        first_cassette_HTTPSConnection = conn.HTTPSConnection
+        first_cassette_VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection
         with force_reset():
-            assert cpool.HTTPConnection is http_original
-            assert cpool.HTTPSConnection is https_original
-            assert cpool.VerifiedHTTPSConnection is verified_https_original
-        assert cpool.HTTPConnection is first_cassette_HTTPConnection
-        assert cpool.HTTPSConnection is first_cassette_HTTPSConnection
-        assert cpool.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection
+            assert conn.HTTPConnection is http_original
+            assert conn.HTTPSConnection is https_original
+            assert conn.VerifiedHTTPSConnection is verified_https_original
+        assert conn.HTTPConnection is first_cassette_HTTPConnection
+        assert conn.HTTPSConnection is first_cassette_HTTPSConnection
+        assert conn.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection
