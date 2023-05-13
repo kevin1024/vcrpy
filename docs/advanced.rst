@@ -411,7 +411,7 @@ Discards Cassette on Errors
 By default VCR will save the cassette file even when there is any error inside
 the enclosing context/test.
 
-If you want to save the cassette only when the test succeedes, set the Cassette
+If you want to save the cassette only when the test succeeds, set the Cassette
 ``record_on_exception`` option to ``False``.
 
 .. code:: python
