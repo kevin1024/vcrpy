@@ -16,15 +16,16 @@ _HTTPSConnection = httplib.HTTPSConnection
 # Try to save the original types for boto3
 try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
-except ImportError:
+except ImportError as e:
     try:
-        import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+        import botocore.vendored.requests  # noqa: F401
     except ImportError:  # pragma: no cover
         pass
     else:
-        _Boto3VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-        _cpoolBoto3HTTPConnection = cpool.HTTPConnection
-        _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
+        raise RuntimeError(
+            "vcrpy >=4.2.2 and botocore <1.11.0 are not compatible"
+            "; please upgrade botocore (or downgrade vcrpy)"
+        ) from e
 else:
     _Boto3VerifiedHTTPSConnection = AWSHTTPSConnection
     _cpoolBoto3HTTPConnection = AWSHTTPConnection
@@ -203,15 +204,7 @@ class CassettePatcherBuilder:
             # botocore using awsrequest
             import botocore.awsrequest as cpool
         except ImportError:  # pragma: no cover
-            try:
-                # botocore using vendored requests
-                import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
-            except ImportError:  # pragma: no cover
-                pass
-            else:
-                from .stubs import boto3_stubs
-
-                yield self._urllib3_patchers(cpool, boto3_stubs)
+            pass
         else:
             from .stubs import boto3_stubs
 
@@ -460,24 +453,7 @@ def reset_patchers():
         # unpatch botocore with awsrequest
         import botocore.awsrequest as cpool
     except ImportError:  # pragma: no cover
-        try:
-            # unpatch botocore with vendored requests
-            import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
-        except ImportError:  # pragma: no cover
-            pass
-        else:
-            # unpatch requests v1.x
-            yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _Boto3VerifiedHTTPSConnection)
-            yield mock.patch.object(cpool, "HTTPConnection", _cpoolBoto3HTTPConnection)
-            # unpatch requests v2.x
-            if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
-                yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
-                yield mock.patch.object(
-                    cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolBoto3HTTPSConnection
-                )
-
-            if hasattr(cpool, "HTTPSConnection"):
-                yield mock.patch.object(cpool, "HTTPSConnection", _cpoolBoto3HTTPSConnection)
+        pass
     else:
         if hasattr(cpool.AWSHTTPConnectionPool, "ConnectionCls"):
             yield mock.patch.object(cpool.AWSHTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
