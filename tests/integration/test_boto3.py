@@ -57,25 +57,6 @@ def get_user(iam_client):
     return _get_user
 
 
-@boto3_skip_vendored_requests
-def test_boto_vendored_stubs(tmpdir):
-    with vcr.use_cassette(str(tmpdir.join("boto3-stubs.yml"))):
-        # Perform the imports within the patched context so that
-        # HTTPConnection, VerifiedHTTPSConnection refers to the patched version.
-        from botocore.vendored.requests.packages.urllib3.connectionpool import (
-            HTTPConnection,
-            VerifiedHTTPSConnection,
-        )
-
-        from vcr.stubs.boto3_stubs import VCRRequestsHTTPConnection, VCRRequestsHTTPSConnection
-
-        # Prove that the class was patched by the stub and that we can instantiate it.
-        assert issubclass(HTTPConnection, VCRRequestsHTTPConnection)
-        assert issubclass(VerifiedHTTPSConnection, VCRRequestsHTTPSConnection)
-        HTTPConnection("hostname.does.not.matter")
-        VerifiedHTTPSConnection("hostname.does.not.matter")
-
-
 @pytest.mark.skipif(
     os.environ.get("TRAVIS_PULL_REQUEST") != "false",
     reason="Encrypted Environment Variables from Travis Repository Settings"
