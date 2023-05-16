@@ -47,8 +47,9 @@ def parse_headers(header_list):
 
 
 def serialize_headers(response):
+    headers = response.headers if response.msg is None else response.msg
     out = {}
-    for key, values in compat.get_headers(response.msg):
+    for key, values in compat.get_headers(headers):
         out.setdefault(key, [])
         out[key].extend(values)
     return out
