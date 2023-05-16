@@ -8,6 +8,7 @@ from assertions import assert_cassette_empty, assert_is_json
 
 import vcr
 from vcr.patch import force_reset
+from vcr.stubs.compat import get_headers
 
 urllib3 = pytest.importorskip("urllib3")
 
@@ -41,7 +42,8 @@ def test_headers(tmpdir, httpbin_both, verify_pool_mgr):
         headers = verify_pool_mgr.request("GET", url).headers
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
-        assert headers == verify_pool_mgr.request("GET", url).headers
+        new_headers = verify_pool_mgr.request("GET", url).headers
+        assert sorted(get_headers(headers)) == sorted(get_headers(new_headers))
 
 
 def test_body(tmpdir, httpbin_both, verify_pool_mgr):
