@@ -68,6 +68,7 @@ class VCRHTTPResponse(HTTPResponse):
         self.version = None
         self._content = BytesIO(self.recorded_response["body"]["string"])
         self._closed = False
+        self._original_response = self  # for requests.session.Session cookie extraction
 
         headers = self.recorded_response["headers"]
         # Since we are loading a response that has already been serialized, our
