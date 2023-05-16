@@ -41,7 +41,7 @@ def test_vcr_use_cassette():
 
 
 def test_vcr_before_record_request_params():
-    base_path = "http://httpbin.org/"
+    base_path = "http://whatever.test/"
 
     def before_record_cb(request):
         if request.path != "/get":
