@@ -64,9 +64,10 @@ def test_cookies(tmpdir, httpbin):
     with vcr.use_cassette(testfile):
         s = requests.Session()
         s.get(httpbin.url + "/cookies/set?k1=v1&k2=v2")
+        assert s.cookies.keys() == ["k1", "k2"]
 
         r2 = s.get(httpbin.url + "/cookies")
-        assert len(r2.json()["cookies"]) == 2
+        assert sorted(r2.json()["cookies"].keys()) == ["k1", "k2"]
 
 
 def test_amazon_doctype(tmpdir):
