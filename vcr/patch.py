@@ -16,15 +16,16 @@ _HTTPSConnection = httplib.HTTPSConnection
 # Try to save the original types for boto3
 try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
-except ImportError:
+except ImportError as e:
     try:
-        import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+        import botocore.vendored.requests  # noqa: F401
     except ImportError:  # pragma: no cover
         pass
     else:
-        _Boto3VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-        _cpoolBoto3HTTPConnection = cpool.HTTPConnection
-        _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
+        raise RuntimeError(
+            "vcrpy >=4.2.2 and botocore <1.11.0 are not compatible"
+            "; please upgrade botocore (or downgrade vcrpy)"
+        ) from e
 else:
     _Boto3VerifiedHTTPSConnection = AWSHTTPSConnection
     _cpoolBoto3HTTPConnection = AWSHTTPConnection
@@ -43,14 +44,16 @@ else:
 
 # Try to save the original types for requests
 try:
-    if not cpool:
-        import requests.packages.urllib3.connectionpool as cpool
+    import requests
 except ImportError:  # pragma: no cover
     pass
 else:
-    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _cpoolHTTPConnection = cpool.HTTPConnection
-    _cpoolHTTPSConnection = cpool.HTTPSConnection
+    if requests.__build__ < 0x021602:
+        raise RuntimeError(
+            "vcrpy >=4.2.2 and requests <2.16.2 are not compatible"
+            "; please upgrade requests (or downgrade vcrpy)"
+        )
+
 
 # Try to save the original types for httplib2
 try:
@@ -199,20 +202,11 @@ class CassettePatcherBuilder:
 
     @_build_patchers_from_mock_triples_decorator
     def _boto3(self):
-
         try:
             # botocore using awsrequest
             import botocore.awsrequest as cpool
         except ImportError:  # pragma: no cover
-            try:
-                # botocore using vendored requests
-                import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
-            except ImportError:  # pragma: no cover
-                pass
-            else:
-                from .stubs import boto3_stubs
-
-                yield self._urllib3_patchers(cpool, boto3_stubs)
+            pass
         else:
             from .stubs import boto3_stubs
 
@@ -416,36 +410,6 @@ def reset_patchers():
     yield mock.patch.object(httplib, "HTTPSConnection", _HTTPSConnection)
 
     try:
-        import requests
-
-        if requests.__build__ < 0x021603:
-            # Avoid double unmock if requests 2.16.3
-            # First, this is pointless, requests.packages.urllib3 *IS* urllib3 (see packages.py)
-            # Second, this is unmocking twice the same classes with different namespaces
-            # and is creating weird issues and bugs:
-            # > AssertionError: assert <class 'urllib3.connection.HTTPConnection'>
-            # >   is <class 'requests.packages.urllib3.connection.HTTPConnection'>
-            # This assert should work!!!
-            # Note that this also means that now, requests.packages is never imported
-            # if requests 2.16.3 or greater is used with VCRPy.
-            import requests.packages.urllib3.connectionpool as cpool
-        else:
-            raise ImportError("Skip requests not vendored anymore")
-    except ImportError:  # pragma: no cover
-        pass
-    else:
-        # unpatch requests v1.x
-        yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, "HTTPConnection", _cpoolHTTPConnection)
-        # unpatch requests v2.x
-        if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
-            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolHTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolHTTPSConnection)
-
-        if hasattr(cpool, "HTTPSConnection"):
-            yield mock.patch.object(cpool, "HTTPSConnection", _cpoolHTTPSConnection)
-
-    try:
         import urllib3.connectionpool as cpool
     except ImportError:  # pragma: no cover
         pass
@@ -461,24 +425,7 @@ def reset_patchers():
         # unpatch botocore with awsrequest
         import botocore.awsrequest as cpool
     except ImportError:  # pragma: no cover
-        try:
-            # unpatch botocore with vendored requests
-            import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
-        except ImportError:  # pragma: no cover
-            pass
-        else:
-            # unpatch requests v1.x
-            yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _Boto3VerifiedHTTPSConnection)
-            yield mock.patch.object(cpool, "HTTPConnection", _cpoolBoto3HTTPConnection)
-            # unpatch requests v2.x
-            if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
-                yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
-                yield mock.patch.object(
-                    cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolBoto3HTTPSConnection
-                )
-
-            if hasattr(cpool, "HTTPSConnection"):
-                yield mock.patch.object(cpool, "HTTPSConnection", _cpoolBoto3HTTPSConnection)
+        pass
     else:
         if hasattr(cpool.AWSHTTPConnectionPool, "ConnectionCls"):
             yield mock.patch.object(cpool.AWSHTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)

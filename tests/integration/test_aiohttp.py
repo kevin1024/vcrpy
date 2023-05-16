@@ -34,14 +34,9 @@ def post(url, output="text", **kwargs):
     return request("POST", url, output="text", **kwargs)
 
 
-@pytest.fixture(params=["https", "http"])
-def scheme(request):
-    """Fixture that returns both http and https."""
-    return request.param
+def test_status(tmpdir, mockbin_request_url):
+    url = mockbin_request_url
 
-
-def test_status(tmpdir, scheme):
-    url = scheme + "://httpbin.org"
     with vcr.use_cassette(str(tmpdir.join("status.yaml"))):
         response, _ = get(url)
 
@@ -52,8 +47,8 @@ def test_status(tmpdir, scheme):
 
 
 @pytest.mark.parametrize("auth", [None, aiohttp.BasicAuth("vcrpy", "test")])
-def test_headers(tmpdir, scheme, auth):
-    url = scheme + "://httpbin.org"
+def test_headers(tmpdir, auth, mockbin_request_url):
+    url = mockbin_request_url
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         response, _ = get(url, auth=auth)
 
@@ -68,8 +63,9 @@ def test_headers(tmpdir, scheme, auth):
         assert "yarl.URL" not in cassette.data[0]
 
 
-def test_case_insensitive_headers(tmpdir, scheme):
-    url = scheme + "://httpbin.org"
+def test_case_insensitive_headers(tmpdir, mockbin_request_url):
+    url = mockbin_request_url
+
     with vcr.use_cassette(str(tmpdir.join("whatever.yaml"))):
         _, _ = get(url)
 
@@ -80,8 +76,9 @@ def test_case_insensitive_headers(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_text(tmpdir, scheme):
-    url = scheme + "://httpbin.org"
+def test_text(tmpdir, mockbin_request_url):
+    url = mockbin_request_url
+
     with vcr.use_cassette(str(tmpdir.join("text.yaml"))):
         _, response_text = get(url)
 
@@ -91,8 +88,8 @@ def test_text(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_json(tmpdir, scheme):
-    url = scheme + "://httpbin.org/get"
+def test_json(tmpdir, mockbin_request_url):
+    url = mockbin_request_url
     headers = {"Content-Type": "application/json"}
 
     with vcr.use_cassette(str(tmpdir.join("json.yaml"))):
@@ -104,8 +101,8 @@ def test_json(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_binary(tmpdir, scheme):
-    url = scheme + "://httpbin.org/image/png"
+def test_binary(tmpdir, mockbin_request_url):
+    url = mockbin_request_url + "/image/png"
     with vcr.use_cassette(str(tmpdir.join("binary.yaml"))):
         _, response_binary = get(url, output="raw")
 
@@ -115,23 +112,23 @@ def test_binary(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_stream(tmpdir, scheme):
-    url = scheme + "://httpbin.org/get"
+def test_stream(tmpdir, mockbin_request_url):
+    url = mockbin_request_url
 
     with vcr.use_cassette(str(tmpdir.join("stream.yaml"))):
-        resp, body = get(url, output="raw")  # Do not use stream here, as the stream is exhausted by vcr
+        _, body = get(url, output="raw")  # Do not use stream here, as the stream is exhausted by vcr
 
     with vcr.use_cassette(str(tmpdir.join("stream.yaml"))) as cassette:
-        cassette_resp, cassette_body = get(url, output="stream")
+        _, cassette_body = get(url, output="stream")
         assert cassette_body == body
         assert cassette.play_count == 1
 
 
 @pytest.mark.parametrize("body", ["data", "json"])
-def test_post(tmpdir, scheme, body, caplog):
+def test_post(tmpdir, body, caplog, mockbin_request_url):
     caplog.set_level(logging.INFO)
     data = {"key1": "value1", "key2": "value2"}
-    url = scheme + "://httpbin.org/post"
+    url = mockbin_request_url
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
         _, response_json = post(url, **{body: data})
 
@@ -152,14 +149,14 @@ def test_post(tmpdir, scheme, body, caplog):
     ), "Log message not found."
 
 
-def test_params(tmpdir, scheme):
-    url = scheme + "://httpbin.org/get?d=d"
+def test_params(tmpdir, mockbin_request_url):
+    url = mockbin_request_url + "?d=d"
     headers = {"Content-Type": "application/json"}
     params = {"a": 1, "b": 2, "c": "c"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
         _, response_json = get(url, output="json", params=params, headers=headers)
-        assert response_json["args"] == {"a": "1", "b": "2", "c": "c", "d": "d"}
+        assert response_json["queryString"] == {"a": "1", "b": "2", "c": "c", "d": "d"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
         _, cassette_response_json = get(url, output="json", params=params, headers=headers)
@@ -167,8 +164,8 @@ def test_params(tmpdir, scheme):
         assert cassette.play_count == 1
 
 
-def test_params_same_url_distinct_params(tmpdir, scheme):
-    url = scheme + "://httpbin.org/get"
+def test_params_same_url_distinct_params(tmpdir, mockbin_request_url):
+    url = mockbin_request_url
     headers = {"Content-Type": "application/json"}
     params = {"a": 1, "b": 2, "c": "c"}
 
@@ -186,8 +183,8 @@ def test_params_same_url_distinct_params(tmpdir, scheme):
             get(url, output="text", params=other_params)
 
 
-def test_params_on_url(tmpdir, scheme):
-    url = scheme + "://httpbin.org/get?a=1&b=foo"
+def test_params_on_url(tmpdir, mockbin_request_url):
+    url = mockbin_request_url + "?a=1&b=foo"
     headers = {"Content-Type": "application/json"}
 
     with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
@@ -251,8 +248,8 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     assert cassette.play_count == 1
 
 
-def test_redirect(aiohttp_client, tmpdir):
-    url = "https://mockbin.org/redirect/302/2"
+def test_redirect(tmpdir, mockbin):
+    url = mockbin + "/redirect/302/2"
 
     with vcr.use_cassette(str(tmpdir.join("redirect.yaml"))):
         response, _ = get(url)
@@ -275,9 +272,9 @@ def test_redirect(aiohttp_client, tmpdir):
     assert cassette_response.request_info.real_url == response.request_info.real_url
 
 
-def test_not_modified(aiohttp_client, tmpdir):
+def test_not_modified(tmpdir, mockbin):
     """It doesn't try to redirect on 304"""
-    url = "https://httpbin.org/status/304"
+    url = mockbin + "/status/304"
 
     with vcr.use_cassette(str(tmpdir.join("not_modified.yaml"))):
         response, _ = get(url)
@@ -292,13 +289,13 @@ def test_not_modified(aiohttp_client, tmpdir):
         assert cassette.play_count == 1
 
 
-def test_double_requests(tmpdir):
+def test_double_requests(tmpdir, mockbin_request_url):
     """We should capture, record, and replay all requests and response chains,
     even if there are duplicate ones.
 
     We should replay in the order we saw them.
     """
-    url = "https://httpbin.org/get"
+    url = mockbin_request_url
 
     with vcr.use_cassette(str(tmpdir.join("text.yaml"))):
         _, response_text1 = get(url, output="text")
@@ -403,8 +400,8 @@ def test_cookies_redirect(scheme, tmpdir):
     run_in_loop(run)
 
 
-def test_not_allow_redirects(tmpdir):
-    url = "https://mockbin.org/redirect/308/5"
+def test_not_allow_redirects(tmpdir, mockbin):
+    url = mockbin + "/redirect/308/5"
     path = str(tmpdir.join("redirects.yaml"))
 
     with vcr.use_cassette(path):
