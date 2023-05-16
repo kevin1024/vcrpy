@@ -144,6 +144,28 @@ class VCRHTTPResponse(HTTPResponse):
     def readable(self):
         return self._content.readable()
 
+    @property
+    def length_remaining(self):
+        return self._content.getbuffer().nbytes - self._content.tell()
+
+    def get_redirect_location(self):
+        """
+        Returns (a) redirect location string if we got a redirect
+        status code and valid location, (b) None if redirect status and
+        no location, (c) False if not a redirect status code.
+        See https://urllib3.readthedocs.io/en/stable/reference/urllib3.response.html .
+        """
+        if not (300 <= self.status <= 399):
+            return False
+        return self.getheader("Location")
+
+    @property
+    def data(self):
+        return self._content.getbuffer().tobytes()
+
+    def drain_conn(self):
+        pass
+
 
 class VCRConnection:
     # A reference to the cassette that's currently being patched in
