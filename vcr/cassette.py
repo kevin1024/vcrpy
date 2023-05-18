@@ -194,6 +194,7 @@ class Cassette:
         match_on=(uri, method),
         before_record_request=None,
         before_record_response=None,
+        before_record_interaction=None,
         custom_patches=(),
         inject=False,
         allow_playback_repeats=False,
@@ -205,6 +206,7 @@ class Cassette:
         self._before_record_request = before_record_request or (lambda x: x)
         log.info(self._before_record_request)
         self._before_record_response = before_record_response or (lambda x: x)
+        self._before_record_interaction = before_record_interaction or (lambda x, y: (x, y))
         self.inject = inject
         self.record_mode = record_mode
         self.custom_patches = custom_patches
@@ -249,7 +251,10 @@ class Cassette:
         response = self._before_record_response(response)
         if response is None:
             return
-        self.data.append((request, response))
+        interaction = self._before_record_interaction(request, response)
+        if interaction is None:
+            return
+        self.data.append(interaction)
         self.dirty = True
 
     def filter_request(self, request):

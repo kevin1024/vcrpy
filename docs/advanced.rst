@@ -287,6 +287,30 @@ sensitive data from the response body:
     with my_vcr.use_cassette('test.yml'):
          # your http code here    
 
+Custom Request & Response Filtering
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can also do request and response filtering with the
+``before_record_interaction`` configuration option. Its usage is
+similar to the above ``before_record_request`` and
+``before_record_response`` - you can mutate the response or the request,
+or return ``None`` to avoid recording the request and response
+altogether. For example to hide sensitive data from the response body:
+
+.. code:: python
+
+    def scrub_string(string, replacement='', path):
+        def before_record_interaction(request, response):
+            if request.path == path:
+                response['body']['string'] = response['body']['string'].replace(string, replacement)
+            return request, response
+        return before_record_interaction
+
+    my_vcr = vcr.VCR(
+        before_record_interaction=scrub_string(settings.PASSWORD, 'password', '/auth'),
+    )
+    with my_vcr.use_cassette('test.yml'):
+         # your http code here
 
 Decode compressed response
 ---------------------------
@@ -313,8 +337,9 @@ in a few ways:
    or 0.0.0.0.
 -  Set the ``ignore_hosts`` configuration option to a list of hosts to
    ignore
--  Add a ``before_record_request`` or ``before_record_response`` callback
-   that returns ``None`` for requests you want to ignore (see above).
+-  Add a ``before_record_request``, ``before_record_response``, or
+   ``before_record_interaction`` callback that returns ``None`` for
+   requests you want to ignore (see above).
 
 Requests that are ignored by VCR will not be saved in a cassette, nor
 played back from a cassette. VCR will completely ignore those requests

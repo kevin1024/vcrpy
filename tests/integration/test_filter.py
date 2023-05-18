@@ -96,6 +96,36 @@ def test_filter_callback(tmpdir, httpbin):
         assert len(cass) == 0
 
 
+def test_before_record_interaction(tmpdir, httpbin):
+    url = httpbin.url + "/get"
+    cass_file = str(tmpdir.join("basic_auth_filter1.yaml"))
+
+    def before_record_interaction_cb(request, response):
+        if request.path == "/get":
+            return
+        return request, response
+
+    my_vcr = vcr.VCR(before_record_interaction=before_record_interaction_cb)
+    with my_vcr.use_cassette(cass_file, filter_headers=["authorization"]) as cass:
+        urlopen(url)
+        assert len(cass) == 0
+
+
+def test_before_record_interaction_override(tmpdir, httpbin):
+    url = httpbin.url + "/get"
+    cass_file = str(tmpdir.join("basic_auth_filter2.yaml"))
+
+    def before_record_interaction_cb(request, response):
+        if request.path == "/get":
+            return
+        return request, response
+
+    my_vcr = vcr.VCR()
+    with my_vcr.use_cassette(cass_file, before_record_interaction=before_record_interaction_cb) as cass:
+        urlopen(url)
+        assert len(cass) == 0
+
+
 def test_decompress_gzip(tmpdir, httpbin):
     url = httpbin.url + "/gzip"
     request = Request(url, headers={"Accept-Encoding": ["gzip, deflate"]})
