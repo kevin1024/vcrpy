@@ -145,7 +145,7 @@ def test_decompress_regular(tmpdir, httpbin):
 
 
 def test_before_record_request_corruption(tmpdir, httpbin):
-    """Modifying request in before_record_request should not effect outgoing request"""
+    """Modifying request in before_record_request should not affect outgoing request"""
     def before_record(request):
         request.headers.clear()
         request.body = b''
