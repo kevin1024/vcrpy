@@ -266,6 +266,9 @@ class Cassette:
                 yield index, response
 
     def can_play_response_for(self, request):
+        # Deepcopy is here because mutation of `request` will corrupt the
+        # real request.
+        request = copy.deepcopy(request)
         request = self._before_record_request(request)
         return request and request in self and self.record_mode != RecordMode.ALL and self.rewound
 
