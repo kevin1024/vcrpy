@@ -219,7 +219,7 @@ class VCR:
             filter_functions.extend(before_record_request)
 
         def before_record_request(request):
-            request = copy.copy(request)
+            request = copy.deepcopy(request)
             for function in filter_functions:
                 if request is None:
                     break
