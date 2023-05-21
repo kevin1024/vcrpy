@@ -26,6 +26,12 @@ jobs:
           pip install --upgrade pip
           pip install codecov tox tox-gh-actions
 
+      - name: "Debug OpenSSL version used with Python ${{ matrix.python-version }}"
+        run: |
+          which python
+          python --version
+          python -c 'import ssl; print(ssl.OPENSSL_VERSION_INFO)'
+
       - name: Run tests with tox
         run: tox
 
