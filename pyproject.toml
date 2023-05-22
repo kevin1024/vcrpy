@@ -10,5 +10,6 @@ include_trailing_comma = true
 
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
+ignore-regex = "\\\\[fnrstv]"
 #
 # ignore-words-list = ''
