@@ -7,6 +7,13 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  4.3.0
+    - Add support for Python 3.11 (Thanks @evgeni)
+    - Drop support for botocore <1.11.0 and requests <2.16.2 (thanks @hartwork)
+    - Bugfix: decode_compressed_response raises exception on empty responses. Thanks @CharString
+    - Don't save requests from decorated tests if decorated test fails (thanks @dan-passaro)
+    - Fix not calling all the exit stack when record_on_exception is False (thanks @Terseus)
+    - Various CI, documentation, testing, and formatting improvements (Thanks @jairhenrique, @dan-passaro, @hartwork, and Terseus)
 -  4.2.1
     - Fix a bug where the first request in a redirect chain was not being recorded with aiohttp
     - Various typos and small fixes, thanks @jairhenrique, @timgates42
