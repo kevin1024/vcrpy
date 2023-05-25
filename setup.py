@@ -49,6 +49,25 @@ install_requires = [
     "yarl",
 ]
 
+tests_require = [
+    "aiohttp",
+    "boto3",
+    "httplib2",
+    "httpx",
+    "pytest",
+    "pytest-aiohttp",
+    "pytest-httpbin",
+    "requests",
+    "tornado",
+    # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
+    # this pin and the dependency itself can be removed, provided
+    # that the related bug in httpbin has been fixed:
+    # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
+    # https://github.com/postmanlabs/httpbin/issues/673
+    # https://github.com/postmanlabs/httpbin/pull/674
+    "Werkzeug==2.0.3",
+]
+
 setup(
     name="vcrpy",
     version=find_version("vcr", "__init__.py"),
@@ -62,7 +81,7 @@ setup(
     python_requires=">=3.7",
     install_requires=install_requires,
     license="MIT",
-    tests_require=["pytest", "mock", "pytest-httpbin"],
+    tests_require=tests_require,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
