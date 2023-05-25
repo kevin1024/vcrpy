@@ -49,6 +49,12 @@ install_requires = [
     "yarl",
 ]
 
+tests_require = [
+    "mock",
+    "pytest",
+    "pytest-httpbin",
+]
+
 setup(
     name="vcrpy",
     version=find_version("vcr", "__init__.py"),
@@ -62,7 +68,7 @@ setup(
     python_requires=">=3.7",
     install_requires=install_requires,
     license="MIT",
-    tests_require=["pytest", "mock", "pytest-httpbin"],
+    tests_require=tests_require,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
