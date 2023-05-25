@@ -50,7 +50,6 @@ install_requires = [
 ]
 
 tests_require = [
-    "mock",
     "pytest",
     "pytest-httpbin",
 ]
