@@ -320,31 +320,35 @@ def test_double_requests(tmpdir, mockbin_request_url):
         assert cassette.play_count == 2
 
 
-def test_cookies(scheme, tmpdir):
+def test_cookies(httpbin_both, httpbin_ssl_context, tmpdir):
     async def run(loop):
-        cookies_url = scheme + (
-            "://httpbin.org/response-headers?"
+        cookies_url = httpbin_both.url + (
+            "/response-headers?"
             "set-cookie=" + urllib.parse.quote("cookie_1=val_1; Path=/") + "&"
             "Set-Cookie=" + urllib.parse.quote("Cookie_2=Val_2; Path=/")
         )
-        home_url = scheme + "://httpbin.org/"
+        home_url = httpbin_both.url + "/"
         tmp = str(tmpdir.join("cookies.yaml"))
         req_cookies = {"Cookie_3": "Val_3"}
         req_headers = {"Cookie": "Cookie_4=Val_4"}
 
         # ------------------------- Record -------------------------- #
         with vcr.use_cassette(tmp) as cassette:
-            async with aiohttp.ClientSession(loop=loop) as session:
-                cookies_resp = await session.get(cookies_url)
-                home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
+            async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
+                cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)
+                home_resp = await session.get(
+                    home_url, cookies=req_cookies, headers=req_headers, ssl=httpbin_ssl_context
+                )
                 assert cassette.play_count == 0
         assert_responses(cookies_resp, home_resp)
 
         # -------------------------- Play --------------------------- #
         with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
-            async with aiohttp.ClientSession(loop=loop) as session:
-                cookies_resp = await session.get(cookies_url)
-                home_resp = await session.get(home_url, cookies=req_cookies, headers=req_headers)
+            async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
+                cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)
+                home_resp = await session.get(
+                    home_url, cookies=req_cookies, headers=req_headers, ssl=httpbin_ssl_context
+                )
                 assert cassette.play_count == 2
         assert_responses(cookies_resp, home_resp)
 
@@ -360,16 +364,16 @@ def test_cookies(scheme, tmpdir):
     run_in_loop(run)
 
 
-def test_cookies_redirect(scheme, tmpdir):
+def test_cookies_redirect(httpbin_both, httpbin_ssl_context, tmpdir):
     async def run(loop):
         # Sets cookie as provided by the query string and redirects
-        cookies_url = scheme + "://httpbin.org/cookies/set?Cookie_1=Val_1"
+        cookies_url = httpbin_both.url + "/cookies/set?Cookie_1=Val_1"
         tmp = str(tmpdir.join("cookies.yaml"))
 
         # ------------------------- Record -------------------------- #
         with vcr.use_cassette(tmp) as cassette:
-            async with aiohttp.ClientSession(loop=loop) as session:
-                cookies_resp = await session.get(cookies_url)
+            async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
+                cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)
                 assert not cookies_resp.cookies
                 cookies = session.cookie_jar.filter_cookies(cookies_url)
                 assert cookies["Cookie_1"].value == "Val_1"
@@ -378,8 +382,8 @@ def test_cookies_redirect(scheme, tmpdir):
 
         # -------------------------- Play --------------------------- #
         with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
-            async with aiohttp.ClientSession(loop=loop) as session:
-                cookies_resp = await session.get(cookies_url)
+            async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
+                cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)
                 assert not cookies_resp.cookies
                 cookies = session.cookie_jar.filter_cookies(cookies_url)
                 assert cookies["Cookie_1"].value == "Val_1"
@@ -391,8 +395,8 @@ def test_cookies_redirect(scheme, tmpdir):
             cassette.responses[0]["headers"]["set-cookie"] = [
                 "Cookie_1=Val_1; Expires=Wed, 21 Oct 2015 07:28:00 GMT"
             ]
-            async with aiohttp.ClientSession(loop=loop) as session:
-                cookies_resp = await session.get(cookies_url)
+            async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
+                cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)
                 assert not cookies_resp.cookies
                 cookies = session.cookie_jar.filter_cookies(cookies_url)
                 assert cookies["Cookie_1"].value == "Val_1"
