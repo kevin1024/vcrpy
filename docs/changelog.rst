@@ -7,6 +7,11 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  4.3.1
+    - Support urllib3 v1 and v2.  NOTE: there is an issue running urllib3 v2 on
+      Python older than 3.10, so this is currently blocked in the requirements.
+      Hopefully we can resolve this situation in the future.  Thanks to @shifqu,
+      hartwork, jairhenrique, pquentin, and vEpiphyte for your work on this.
 -  4.3.0
     - Add support for Python 3.11 (Thanks @evgeni)
     - Drop support for botocore <1.11.0 and requests <2.16.2 (thanks @hartwork)
