@@ -45,7 +45,8 @@ def body(r1, r2):
     r2_transformer = _get_transformer(r2)
     if transformer != r2_transformer:
         transformer = _identity
-    assert transformer(read_body(r1)) == transformer(read_body(r2))
+    assert transformer(read_body(r1)) == transformer(read_body(r2)), \
+           "No stored requests match: {}".format(transformer(read_body(r1)))
 
 
 def headers(r1, r2):
