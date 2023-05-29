@@ -72,7 +72,7 @@ tests_require = [
     # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
     # https://github.com/postmanlabs/httpbin/issues/673
     # https://github.com/postmanlabs/httpbin/pull/674
-    "Werkzeug==2.0.3",
+    "Werkzeug==2.3.4",
 ]
 
 setup(
