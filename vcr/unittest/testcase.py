@@ -5,7 +5,7 @@ import unittest
 from .. import VCR
 
 
-class VCRMixin(object):
+class VCRMixin:
     """A TestCase mixin that provides VCR integration."""
 
     vcr_enabled = True
