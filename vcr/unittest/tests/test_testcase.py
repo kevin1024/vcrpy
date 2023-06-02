@@ -1,14 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 from unittest.mock import MagicMock as Mock
 from unittest import defaultTestLoader, TextTestRunner
+from urllib.request import urlopen
 from ..testcase import VCRTestCase
-
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 
 def test_defaults():
