@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 from unittest.mock import MagicMock as Mock
 from unittest import defaultTestLoader, TextTestRunner
-from vcr_unittest import VCRTestCase
+from ..testcase import VCRTestCase
 
 try:
     from urllib2 import urlopen
