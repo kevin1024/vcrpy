@@ -1,11 +1,8 @@
 import inspect
-import logging
 import os
 import unittest
 
 from .. import VCR
-
-logger = logging.getLogger(__name__)
 
 
 class VCRMixin(object):
