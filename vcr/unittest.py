@@ -2,7 +2,7 @@ import inspect
 import os
 import unittest
 
-from .. import VCR
+from .config import VCR
 
 
 class VCRMixin:

@@ -3,7 +3,7 @@ from unittest import TextTestRunner, defaultTestLoader
 from unittest.mock import MagicMock
 from urllib.request import urlopen
 
-from ..testcase import VCRTestCase
+from vcr.unittest import VCRTestCase
 
 
 def test_defaults():

@@ -132,7 +132,7 @@ you can hook on ``_get_vcr``, for example:
 
 See
 `the source
-<https://github.com/kevin1024/vcrpy/blob/master/vcr/unittest/testcase.py>`__
+<https://github.com/kevin1024/vcrpy/blob/master/vcr/unittest.py>`__
 for the default implementations of these methods.
 
 If you implement a ``setUp`` method on your test class then make sure to call
