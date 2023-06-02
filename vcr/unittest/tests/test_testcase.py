@@ -123,7 +123,7 @@ def test_get_vcr_with_matcher(tmpdir):
     cassette_dir = tmpdir.mkdir('cassettes')
     assert len(cassette_dir.listdir()) == 0
 
-    mock_matcher = MagicMock(return_value=True)
+    mock_matcher = MagicMock(return_value=True, __name__='MockMatcher')
 
     class MyTest(VCRTestCase):
         def test_foo(self):
