@@ -1,5 +1,5 @@
 import os
-from unittest.mock import MagicMock as Mock
+from unittest.mock import MagicMock
 from unittest import defaultTestLoader, TextTestRunner
 from urllib.request import urlopen
 from ..testcase import VCRTestCase
@@ -99,7 +99,7 @@ def test_vcr_kwargs_cassette_dir():
             return dict(
                 record_mode='new_episodes',
             )
-        _get_cassette_library_dir = Mock(return_value='/testing')
+        _get_cassette_library_dir = MagicMock(return_value='/testing')
     test = run_testcase(MyTest)[0][0]
     assert test.cassette._path.startswith('/testing/')
     assert test._get_cassette_library_dir.call_count == 1
@@ -113,7 +113,7 @@ def test_vcr_kwargs_cassette_dir():
             return dict(
                 cassette_library_dir='/testing',
             )
-        _get_cassette_library_dir = Mock(return_value='/ignored')
+        _get_cassette_library_dir = MagicMock(return_value='/ignored')
     test = run_testcase(MyTest)[0][0]
     assert test.cassette._path.startswith('/testing/')
     assert test._get_cassette_library_dir.call_count == 0
@@ -123,7 +123,7 @@ def test_get_vcr_with_matcher(tmpdir):
     cassette_dir = tmpdir.mkdir('cassettes')
     assert len(cassette_dir.listdir()) == 0
 
-    mock_matcher = Mock(return_value=True)
+    mock_matcher = MagicMock(return_value=True)
 
     class MyTest(VCRTestCase):
         def test_foo(self):
