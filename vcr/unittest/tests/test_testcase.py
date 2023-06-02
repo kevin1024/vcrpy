@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-from mock import MagicMock as Mock
+from unittest.mock import MagicMock as Mock
 from unittest import defaultTestLoader, TextTestRunner
 from vcr_unittest import VCRTestCase
 
