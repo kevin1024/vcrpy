@@ -68,7 +68,7 @@ def test_vcr_kwargs_overridden():
             pass
 
         def _get_vcr_kwargs(self):
-            kwargs = super(MyTest, self)._get_vcr_kwargs()
+            kwargs = super()._get_vcr_kwargs()
             kwargs["record_mode"] = "new_episodes"
             return kwargs
 
@@ -82,7 +82,7 @@ def test_vcr_kwargs_passed():
             pass
 
         def _get_vcr_kwargs(self):
-            return super(MyTest, self)._get_vcr_kwargs(
+            return super()._get_vcr_kwargs(
                 record_mode="new_episodes",
             )
 
@@ -137,7 +137,7 @@ def test_get_vcr_with_matcher(tmpdir):
             self.response = urlopen("http://example.com").read()
 
         def _get_vcr(self):
-            myvcr = super(MyTest, self)._get_vcr()
+            myvcr = super()._get_vcr()
             myvcr.register_matcher("mymatcher", mock_matcher)
             myvcr.match_on = ["mymatcher"]
             return myvcr

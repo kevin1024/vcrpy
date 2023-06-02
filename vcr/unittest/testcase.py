@@ -11,7 +11,7 @@ class VCRMixin:
     vcr_enabled = True
 
     def setUp(self):
-        super(VCRMixin, self).setUp()
+        super().setUp()
         if self.vcr_enabled:
             kwargs = self._get_vcr_kwargs()
             myvcr = self._get_vcr(**kwargs)
