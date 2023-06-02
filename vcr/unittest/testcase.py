@@ -4,7 +4,7 @@ import inspect
 import logging
 import os
 import unittest
-import vcr
+from .. import VCR
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class VCRMixin(object):
     def _get_vcr(self, **kwargs):
         if 'cassette_library_dir' not in kwargs:
             kwargs['cassette_library_dir'] = self._get_cassette_library_dir()
-        return vcr.VCR(**kwargs)
+        return VCR(**kwargs)
 
     def _get_vcr_kwargs(self, **kwargs):
         return kwargs
