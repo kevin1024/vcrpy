@@ -97,7 +97,7 @@ interactions.
 
 .. code:: python
 
-    from vcr_unittest import VCRTestCase
+    from vcr.unittest import VCRTestCase
     import requests
 
     class MyTestCase(VCRTestCase):
@@ -132,7 +132,7 @@ you can hook on ``_get_vcr``, for example:
 
 See
 `the source
-<https://github.com/agriffis/vcrpy-unittest/blob/master/vcr_unittest/testcase.py>`__
+<https://github.com/kevin1024/vcrpy/blob/master/vcr/unittest/testcase.py>`__
 for the default implementations of these methods, and `VCR.py`_ for more
 information.
 
@@ -147,7 +147,7 @@ instead.
 
 .. code:: python
 
-    from vcr_unittest import VCRMixin
+    from vcr.unittest import VCRMixin
     import requests
     import unittest
 
