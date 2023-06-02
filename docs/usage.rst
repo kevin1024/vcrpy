@@ -133,8 +133,7 @@ you can hook on ``_get_vcr``, for example:
 See
 `the source
 <https://github.com/kevin1024/vcrpy/blob/master/vcr/unittest/testcase.py>`__
-for the default implementations of these methods, and `VCR.py`_ for more
-information.
+for the default implementations of these methods.
 
 If you implement a ``setUp`` method on your test class then make sure to call
 the parent version ``super().setUp()`` in your own in order to continue getting
