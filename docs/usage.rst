@@ -136,7 +136,9 @@ See
 for the default implementations of these methods, and `VCR.py`_ for more
 information.
 
-If you implement a ``setUp`` method on your test class then make sure to call the parent version ``super().setUp()`` in your own in order to continue getting the cassettes produced.
+If you implement a ``setUp`` method on your test class then make sure to call
+the parent version ``super().setUp()`` in your own in order to continue getting
+the cassettes produced.
 
 VCRMixin
 ~~~~~~~~
