@@ -71,7 +71,7 @@ Finally, register your class with VCR to use your new serializer.
 
     import vcr
 
-    class BogoSerializer(object):
+    class BogoSerializer:
         """
         Must implement serialize() and deserialize() methods
         """
