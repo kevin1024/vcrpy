@@ -7,3 +7,9 @@ known_first_party = "vcrpy"
 multi_line_output = 3
 use_parentheses = true
 include_trailing_comma = true
+
+[tool.codespell]
+skip = '.git,*.pdf,*.svg,.tox'
+ignore-regex = "\\\\[fnrstv]"
+#
+# ignore-words-list = ''
