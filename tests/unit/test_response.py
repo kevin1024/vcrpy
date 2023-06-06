@@ -93,7 +93,7 @@ def test_response_parses_correctly_and_fp_attribute_error_is_not_thrown():
         },
     }
     vcr_response = VCRHTTPResponse(recorded_response)
-    handle = io.TextIOWrapper(io.BufferedReader(vcr_response), encoding="utf-8")
+    handle = io.TextIOWrapper(vcr_response, encoding="utf-8")
     handle = iter(handle)
     articles = [line for line in handle]
     assert len(articles) > 1
