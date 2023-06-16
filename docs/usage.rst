@@ -8,7 +8,7 @@ Usage
 
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
         response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
-        assert 'Example domains' in response
+        assert b'Example domains' in response
 
 Run this test once, and VCR.py will record the HTTP request to
 ``fixtures/vcr_cassettes/synopsis.yaml``. Run it again, and VCR.py will
@@ -26,7 +26,7 @@ look like this:
     @vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml')
     def test_iana():
         response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
-        assert 'Example domains' in response
+        assert b'Example domains' in response
 
 When using the decorator version of ``use_cassette``, it is possible to
 omit the path to the cassette file.
@@ -36,7 +36,7 @@ omit the path to the cassette file.
     @vcr.use_cassette()
     def test_iana():
         response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
-        assert 'Example domains' in response
+        assert b'Example domains' in response
 
 In this case, the cassette file will be given the same name as the test
 function, and it will be placed in the same directory as the file in
