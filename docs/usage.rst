@@ -4,7 +4,7 @@ Usage
 .. code:: python
 
     import vcr
-    import urllib
+    import urllib.request
 
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
         response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
