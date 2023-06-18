@@ -127,7 +127,7 @@ in this example::
     eval "$(pyenv init -)"
 
     # Setup your local system tox tooling
-    pip install tox tox-pyenv
+    pip3 install tox tox-pyenv
 
     # Install supported versions (at time of writing), this does not activate them
     pyenv install 3.7.5 3.8.0 pypy3.8

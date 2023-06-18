@@ -4,7 +4,7 @@ Installation
 VCR.py is a package on `PyPI <https://pypi.python.org>`__, so you can install
 with pip::
 
-    pip install vcrpy
+    pip3 install vcrpy
 
 Compatibility
 -------------
@@ -46,8 +46,8 @@ rebuilding pyyaml.
 
 3. Rebuild pyyaml with libyaml::
 
-     pip uninstall pyyaml
-     pip --no-cache-dir install pyyaml
+     pip3 uninstall pyyaml
+     pip3 --no-cache-dir install pyyaml
 
 Upgrade
 -------
