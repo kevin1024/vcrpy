@@ -7,6 +7,7 @@ import pytest
 import vcr
 
 
+@pytest.mark.online
 def test_set_serializer_default_config(tmpdir, mockbin_request_url):
     my_vcr = vcr.VCR(serializer="json")
 
@@ -20,6 +21,7 @@ def test_set_serializer_default_config(tmpdir, mockbin_request_url):
         assert json.loads(file_content)
 
 
+@pytest.mark.online
 def test_default_set_cassette_library_dir(tmpdir, mockbin_request_url):
     my_vcr = vcr.VCR(cassette_library_dir=str(tmpdir.join("subdir")))
 
@@ -29,6 +31,7 @@ def test_default_set_cassette_library_dir(tmpdir, mockbin_request_url):
     assert os.path.exists(str(tmpdir.join("subdir").join("test.json")))
 
 
+@pytest.mark.online
 def test_override_set_cassette_library_dir(tmpdir, mockbin_request_url):
     my_vcr = vcr.VCR(cassette_library_dir=str(tmpdir.join("subdir")))
 
@@ -41,6 +44,7 @@ def test_override_set_cassette_library_dir(tmpdir, mockbin_request_url):
     assert not os.path.exists(str(tmpdir.join("subdir").join("test.json")))
 
 
+@pytest.mark.online
 def test_override_match_on(tmpdir, mockbin_request_url):
     my_vcr = vcr.VCR(match_on=["method"])
 
@@ -62,6 +66,7 @@ def test_missing_matcher():
             pass
 
 
+@pytest.mark.online
 def test_dont_record_on_exception(tmpdir, mockbin_request_url):
     my_vcr = vcr.VCR(record_on_exception=False)
 

@@ -34,6 +34,7 @@ def post(url, output="text", **kwargs):
     return request("POST", url, output="text", **kwargs)
 
 
+@pytest.mark.online
 def test_status(tmpdir, mockbin_request_url):
     url = mockbin_request_url
 
@@ -46,6 +47,7 @@ def test_status(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 @pytest.mark.parametrize("auth", [None, aiohttp.BasicAuth("vcrpy", "test")])
 def test_headers(tmpdir, auth, mockbin_request_url):
     url = mockbin_request_url
@@ -63,6 +65,7 @@ def test_headers(tmpdir, auth, mockbin_request_url):
         assert "yarl.URL" not in cassette.data[0]
 
 
+@pytest.mark.online
 def test_case_insensitive_headers(tmpdir, mockbin_request_url):
     url = mockbin_request_url
 
@@ -76,6 +79,7 @@ def test_case_insensitive_headers(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_text(tmpdir, mockbin_request_url):
     url = mockbin_request_url
 
@@ -88,6 +92,7 @@ def test_text(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_json(tmpdir, mockbin_request_url):
     url = mockbin_request_url
     headers = {"Content-Type": "application/json"}
@@ -101,6 +106,7 @@ def test_json(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_binary(tmpdir, mockbin_request_url):
     url = mockbin_request_url + "/image/png"
     with vcr.use_cassette(str(tmpdir.join("binary.yaml"))):
@@ -112,6 +118,7 @@ def test_binary(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_stream(tmpdir, mockbin_request_url):
     url = mockbin_request_url
 
@@ -124,6 +131,7 @@ def test_stream(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 @pytest.mark.parametrize("body", ["data", "json"])
 def test_post(tmpdir, body, caplog, mockbin_request_url):
     caplog.set_level(logging.INFO)
@@ -149,6 +157,7 @@ def test_post(tmpdir, body, caplog, mockbin_request_url):
     ), "Log message not found."
 
 
+@pytest.mark.online
 def test_params(tmpdir, mockbin_request_url):
     url = mockbin_request_url + "?d=d"
     headers = {"Content-Type": "application/json"}
@@ -164,6 +173,7 @@ def test_params(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_params_same_url_distinct_params(tmpdir, mockbin_request_url):
     url = mockbin_request_url
     headers = {"Content-Type": "application/json"}
@@ -183,6 +193,7 @@ def test_params_same_url_distinct_params(tmpdir, mockbin_request_url):
             get(url, output="text", params=other_params)
 
 
+@pytest.mark.online
 def test_params_on_url(tmpdir, mockbin_request_url):
     url = mockbin_request_url + "?a=1&b=foo"
     headers = {"Content-Type": "application/json"}
@@ -248,6 +259,7 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_redirect(tmpdir, mockbin):
     url = mockbin + "/redirect/302/2"
 
@@ -272,6 +284,7 @@ def test_redirect(tmpdir, mockbin):
     assert cassette_response.request_info.real_url == response.request_info.real_url
 
 
+@pytest.mark.online
 def test_not_modified(tmpdir, mockbin):
     """It doesn't try to redirect on 304"""
     url = mockbin + "/status/304"
@@ -289,6 +302,7 @@ def test_not_modified(tmpdir, mockbin):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
 def test_double_requests(tmpdir, mockbin_request_url):
     """We should capture, record, and replay all requests and response chains,
     even if there are duplicate ones.
@@ -404,6 +418,7 @@ def test_cookies_redirect(httpbin_both, httpbin_ssl_context, tmpdir):
     run_in_loop(run)
 
 
+@pytest.mark.online
 def test_not_allow_redirects(tmpdir, mockbin):
     url = mockbin + "/redirect/308/5"
     path = str(tmpdir.join("redirects.yaml"))

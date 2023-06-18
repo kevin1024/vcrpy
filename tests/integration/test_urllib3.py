@@ -97,6 +97,7 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
     assert req1 == req2
 
 
+@pytest.mark.online
 def test_redirects(tmpdir, verify_pool_mgr):
     """Ensure that we can handle redirects"""
     url = "http://mockbin.org/redirect/301"
