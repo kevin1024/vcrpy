@@ -7,7 +7,7 @@ It merges and deletes the request obsolete keys (protocol, host, port, path)
 into new 'uri' key.
 Usage::
 
-    python -m vcr.migration PATH
+    python3 -m vcr.migration PATH
 
 The PATH can be path to the directory with cassettes or cassette itself
 """
@@ -138,7 +138,7 @@ def try_migrate(path):
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
-            "Please provide path to cassettes directory or file. " "Usage: python -m vcr.migration PATH"
+            "Please provide path to cassettes directory or file. " "Usage: python3 -m vcr.migration PATH"
         )
 
     path = sys.argv[1]

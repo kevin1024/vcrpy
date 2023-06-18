@@ -74,7 +74,7 @@ The PR reviewer is a second set of eyes to see if:
 **Release Manager:**
  - Ensure CI is passing.
  - Create a release on github and tag it with the changelog release notes.
- - ``python setup.py build sdist bdist_wheel``
+ - ``python3 setup.py build sdist bdist_wheel``
  - ``twine upload dist/*``
  - Go to ReadTheDocs build page and trigger a build https://readthedocs.org/projects/vcrpy/builds/
 
