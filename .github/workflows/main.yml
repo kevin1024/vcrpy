@@ -31,5 +31,13 @@ jobs:
       - name: Run tests with tox
         run: tox
 
+      - name: Run offline tests with tox with no access to the Internet
+        run: |
+          # We're using unshare to take Internet access
+          # away from tox so that we'll notice whenever some new test
+          # is missing @pytest.mark.online decoration in the future
+          unshare --map-root-user --net -- \
+              sh -c 'ip link set lo up; tox -- -m "not online"'
+
       - name: Run coverage
         run: codecov
