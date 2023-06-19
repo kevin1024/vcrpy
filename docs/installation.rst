@@ -4,7 +4,7 @@ Installation
 VCR.py is a package on `PyPI <https://pypi.python.org>`__, so you can install
 with pip::
 
-    pip install vcrpy
+    pip3 install vcrpy
 
 Compatibility
 -------------
@@ -35,7 +35,7 @@ rebuilding pyyaml.
 
 1. Test if pyyaml is built with libyaml. This should work::
 
-     python -c 'from yaml import CLoader'
+     python3 -c 'from yaml import CLoader'
 
 2. Install libyaml according to your Linux distribution, or using `Homebrew
    <http://mxcl.github.com/homebrew/>`__ on Mac::
@@ -46,8 +46,8 @@ rebuilding pyyaml.
 
 3. Rebuild pyyaml with libyaml::
 
-     pip uninstall pyyaml
-     pip --no-cache-dir install pyyaml
+     pip3 uninstall pyyaml
+     pip3 --no-cache-dir install pyyaml
 
 Upgrade
 -------
@@ -61,7 +61,7 @@ is to simply delete your cassettes and re-record all of them. VCR.py
 also provides a migration script that attempts to upgrade your 0.x
 cassettes to the new 1.x format. To use it, run the following command::
 
-    python -m vcr.migration PATH
+    python3 -m vcr.migration PATH
 
 The PATH can be either a path to the directory with cassettes or the
 path to a single cassette.

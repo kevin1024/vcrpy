@@ -74,7 +74,7 @@ The PR reviewer is a second set of eyes to see if:
 **Release Manager:**
  - Ensure CI is passing.
  - Create a release on github and tag it with the changelog release notes.
- - ``python setup.py build sdist bdist_wheel``
+ - ``python3 setup.py build sdist bdist_wheel``
  - ``twine upload dist/*``
  - Go to ReadTheDocs build page and trigger a build https://readthedocs.org/projects/vcrpy/builds/
 
@@ -127,7 +127,7 @@ in this example::
     eval "$(pyenv init -)"
 
     # Setup your local system tox tooling
-    pip install tox tox-pyenv
+    pip3 install tox tox-pyenv
 
     # Install supported versions (at time of writing), this does not activate them
     pyenv install 3.7.5 3.8.0 pypy3.8
