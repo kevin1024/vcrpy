@@ -298,6 +298,18 @@ def test_decode_response_deflate():
     assert decoded_response["headers"]["content-length"] == [str(len(body))]
 
 
+def test_decode_response_deflate_already_decompressed():
+    body = b"deflate message"
+    gzip_response = {
+        "body": {"string": body},
+        "headers": {
+            "content-encoding": ["deflate"],
+        },
+    }
+    decoded_response = decode_response(gzip_response)
+    assert decoded_response["body"]["string"] == body
+
+
 def test_decode_response_gzip():
     body = b"gzip message"
 
@@ -325,3 +337,15 @@ def test_decode_response_gzip():
     decoded_response = decode_response(gzip_response)
     assert decoded_response["body"]["string"] == body
     assert decoded_response["headers"]["content-length"] == [str(len(body))]
+
+
+def test_decode_response_gzip_already_decompressed():
+    body = b"gzip message"
+    gzip_response = {
+        "body": {"string": body},
+        "headers": {
+            "content-encoding": ["gzip"],
+        },
+    }
+    decoded_response = decode_response(gzip_response)
+    assert decoded_response["body"]["string"] == body
