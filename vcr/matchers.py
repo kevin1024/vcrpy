@@ -9,35 +9,43 @@ log = logging.getLogger(__name__)
 
 
 def method(r1, r2):
-    assert r1.method == r2.method, "{} != {}".format(r1.method, r2.method)
+    if r1.method != r2.method:
+        raise AssertionError("{} != {}".format(r1.method, r2.method))
 
 
 def uri(r1, r2):
-    assert r1.uri == r2.uri, "{} != {}".format(r1.uri, r2.uri)
+    if r1.uri != r2.uri:
+        raise AssertionError("{} != {}".format(r1.uri, r2.uri))
 
 
 def host(r1, r2):
-    assert r1.host == r2.host, "{} != {}".format(r1.host, r2.host)
+    if r1.host != r2.host:
+        raise AssertionError("{} != {}".format(r1.host, r2.host))
 
 
 def scheme(r1, r2):
-    assert r1.scheme == r2.scheme, "{} != {}".format(r1.scheme, r2.scheme)
+    if r1.scheme != r2.scheme:
+        raise AssertionError("{} != {}".format(r1.scheme, r2.scheme))
 
 
 def port(r1, r2):
-    assert r1.port == r2.port, "{} != {}".format(r1.port, r2.port)
+    if r1.port != r2.port:
+        raise AssertionError("{} != {}".format(r1.port, r2.port))
 
 
 def path(r1, r2):
-    assert r1.path == r2.path, "{} != {}".format(r1.path, r2.path)
+    if r1.path != r2.path:
+        raise AssertionError("{} != {}".format(r1.path, r2.path))
 
 
 def query(r1, r2):
-    assert r1.query == r2.query, "{} != {}".format(r1.query, r2.query)
+    if r1.query != r2.query:
+        raise AssertionError("{} != {}".format(r1.query, r2.query))
 
 
 def raw_body(r1, r2):
-    assert read_body(r1) == read_body(r2)
+    if read_body(r1) != read_body(r2):
+        raise AssertionError
 
 
 def body(r1, r2):
@@ -45,11 +53,13 @@ def body(r1, r2):
     r2_transformer = _get_transformer(r2)
     if transformer != r2_transformer:
         transformer = _identity
-    assert transformer(read_body(r1)) == transformer(read_body(r2))
+    if transformer(read_body(r1)) != transformer(read_body(r2)):
+        raise AssertionError
 
 
 def headers(r1, r2):
-    assert r1.headers == r2.headers, "{} != {}".format(r1.headers, r2.headers)
+    if r1.headers != r2.headers:
+        raise AssertionError("{} != {}".format(r1.headers, r2.headers))
 
 
 def _header_checker(value, header="Content-Type"):
