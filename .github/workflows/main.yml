@@ -28,8 +28,8 @@ jobs:
           pip3 install --upgrade pip
           pip3 install codecov tox tox-gh-actions
 
-      - name: Run tests with tox
-        run: tox
+      - name: Run online tests with tox
+        run: tox -- -m online
 
       - name: Run offline tests with tox with no access to the Internet
         run: |
