@@ -167,20 +167,40 @@ def test_cross_scheme(tmpdir, httpbin_secure, httpbin):
         assert len(cass) == 2
 
 
-def test_gzip(tmpdir, httpbin_both):
+def test_gzip__decode_compressed_response_false(tmpdir, httpbin_both):
     """
     Ensure that requests (actually urllib3) is able to automatically decompress
     the response body
     """
+    for _ in range(2):  # one for recording, one for re-playing
+        with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
+            response = requests.get(httpbin_both + "/gzip")
+            assert response.headers["content-encoding"] == "gzip"  # i.e. not removed
+            assert_is_json(response.content)  # i.e. uncompressed bytes
+
+
+def test_gzip__decode_compressed_response_true(tmpdir, httpbin_both):
     url = httpbin_both + "/gzip"
-    response = requests.get(url)
 
-    with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
-        response = requests.get(url)
-        assert_is_json(response.content)
+    expected_response = requests.get(url)
+    expected_content = expected_response.content
+    assert expected_response.headers["content-encoding"] == "gzip"  # self-test
 
-    with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
-        assert_is_json(response.content)
+    with vcr.use_cassette(
+        str(tmpdir.join("decode_compressed.yaml")), decode_compressed_response=True
+    ) as cassette:
+        r = requests.get(url)
+        assert r.headers["content-encoding"] == "gzip"  # i.e. not removed
+        assert r.content == expected_content
+
+    # Has the cassette body been decompressed?
+    cassette_response_body = cassette.responses[0]["body"]["string"]
+    assert isinstance(cassette_response_body, str)
+
+    with vcr.use_cassette(str(tmpdir.join("decode_compressed.yaml")), decode_compressed_response=True):
+        r = requests.get(url)
+        assert "content-encoding" not in r.headers  # i.e. removed
+        assert r.content == expected_content
 
 
 def test_session_and_connection_close(tmpdir, httpbin):
