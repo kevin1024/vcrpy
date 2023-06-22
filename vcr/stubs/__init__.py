@@ -170,6 +170,13 @@ class VCRHTTPResponse(HTTPResponse):
     def drain_conn(self):
         pass
 
+    def stream(self, amt=65536, decode_content=None):
+        while True:
+            b = self._content.read(amt)
+            yield b
+            if not b:
+                break
+
 
 class VCRConnection:
     # A reference to the cassette that's currently being patched in

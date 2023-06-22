@@ -144,6 +144,17 @@ def test_redirects(tmpdir, httpbin_both):
         assert cass.play_count == 2
 
 
+def test_raw_stream(tmpdir, httpbin):
+    expected_response = requests.get(httpbin.url, stream=True)
+    expected_content = b"".join(expected_response.raw.stream())
+
+    for _ in range(2):  # one for recording, one for cassette reply
+        with vcr.use_cassette(str(tmpdir.join("raw_stream.yaml"))):
+            actual_response = requests.get(httpbin.url, stream=True)
+            actual_content = b"".join(actual_response.raw.stream())
+        assert actual_content == expected_content
+
+
 def test_cross_scheme(tmpdir, httpbin_secure, httpbin):
     """Ensure that requests between schemes are treated separately"""
     # First fetch a url under http, and then again under https and then
