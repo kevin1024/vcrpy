@@ -70,10 +70,10 @@ def test_load_cassette_with_custom_persister(tmpdir, httpbin):
         assert b"difficult sometimes" in response
 
 
-def test_load_cassette_with_custom_persister(tmpdir, httpbin):
+def test_load_cassette_persister_exception_handling(tmpdir, httpbin):
     """
     Ensure expected errors from persister are swallowed while unexpected ones
-    are passed up the stack.
+    are passed up the call stack.
     """
     my_vcr = vcr.VCR()
     my_vcr.register_persister(BadPersister)

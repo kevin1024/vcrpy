@@ -34,12 +34,12 @@ def test_cassette_load_nonexistent():
     assert len(a_cassette) == 0
 
 
-def test_cassette_load_invalid_unicode(tmpdir):
-    a_file = tmpdir.join("invalid_unicode.yml")
+def test_cassette_load_invalid_encoding(tmpdir):
+    a_file = tmpdir.join("invalid_encoding.yml")
     with open(a_file, "wb") as fd:
         fd.write(b"\xda")
-    with pytest.raises(UnicodeDecodeError):
-        Cassette.load(path=a_file)
+    a_cassette = Cassette.load(path=str(a_file))
+    assert len(a_cassette) == 0
 
 
 def test_cassette_not_played():

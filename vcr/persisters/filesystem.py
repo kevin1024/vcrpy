@@ -22,7 +22,7 @@ class FilesystemPersister:
         try:
             with cassette_path.open() as f:
                 data = f.read()
-        except UnicodeEncodeError as err:
+        except UnicodeDecodeError as err:
             raise CassetteDecodeError("Can't read Cassette, Encoding is broken") from err
 
         return deserialize(data, serializer)
