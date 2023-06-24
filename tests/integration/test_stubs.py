@@ -2,7 +2,7 @@ import http.client as httplib
 import json
 import zlib
 
-from assertions import assert_is_json
+from assertions import assert_is_json_bytes
 
 import vcr
 
@@ -84,7 +84,7 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
         inside = conn.getresponse()
 
         assert "content-encoding" not in inside.headers
-        assert_is_json(inside.read())
+        assert_is_json_bytes(inside.read())
 
 
 def _make_before_record_response(fields, replacement="[REDACTED]"):

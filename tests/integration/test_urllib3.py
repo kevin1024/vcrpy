@@ -4,7 +4,7 @@
 
 import pytest
 import pytest_httpbin
-from assertions import assert_cassette_empty, assert_is_json
+from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.patch import force_reset
@@ -136,10 +136,10 @@ def test_gzip(tmpdir, httpbin_both, verify_pool_mgr):
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
         response = verify_pool_mgr.request("GET", url)
-        assert_is_json(response.data)
+        assert_is_json_bytes(response.data)
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
-        assert_is_json(response.data)
+        assert_is_json_bytes(response.data)
 
 
 def test_https_with_cert_validation_disabled(tmpdir, httpbin_secure, pool_mgr):

@@ -4,7 +4,7 @@
 import json
 
 import pytest
-from assertions import assert_cassette_empty, assert_is_json
+from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.errors import CannotOverwriteExistingCassetteException
@@ -195,11 +195,11 @@ def test_gzip(get_client, tmpdir, scheme):
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
         response = yield get(get_client(), url, **kwargs)
-        assert_is_json(response.body)
+        assert_is_json_bytes(response.body)
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))) as cass:
         response = yield get(get_client(), url, **kwargs)
-        assert_is_json(response.body)
+        assert_is_json_bytes(response.body)
         assert 1 == cass.play_count
 
 
