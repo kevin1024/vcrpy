@@ -11,7 +11,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - HUGE thanks to @hartwork for all the work done on this release!
     - Bring vcr/unittest in to vcrpy as a full feature of vcr instead of a separate library.  Big thanks to @hartwork for doing this and to @agriffis for originally creating the library
     - Make decompression robust towards already decompressed input (thanks @hartwork)
-    - Bugfix: Add read1 method (fixes compatability with biopython), thanks @mghantous
+    - Bugfix: Add read1 method (fixes compatibility with biopython), thanks @mghantous
     - Bugfix: Prevent filters from corrupting request (thanks @abramclark)
     - Bugfix: Add support for `response.raw.stream()` to fix urllib v2 compat
     - Bugfix: Replace `assert` with `raise AssertionError`: fixes support for `PYTHONOPTIMIZE=1`
