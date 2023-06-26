@@ -7,6 +7,17 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  4.4.0
+    - HUGE thanks to @hartwork for all the work done on this release!
+    - Bring vcr/unittest in to vcrpy as a full feature of vcr instead of a separate library.  Big thanks to @hartwork for doing this and to @agriffis for originally creating the library
+    - Make decompression robust towards already decompressed input (thanks @hartwork)
+    - Bugfix: Add read1 method (fixes compatability with biopython), thanks @mghantous
+    - Bugfix: Prevent filters from corrupting request (thanks @abramclark)
+    - Bugfix: Add support for `response.raw.stream()` to fix urllib v2 compat
+    - Bugfix: Replace `assert` with `raise AssertionError`: fixes support for `PYTHONOPTIMIZE=1`
+    - Add pytest.mark.online to run test suite offline, thanks @jspricke
+    - use python3 and pip3 binaries to ease debian packaging (thanks @hartwork)
+    - Add codespell (thanks @mghantous)
 -  4.3.1
     - Support urllib3 v1 and v2.  NOTE: there is an issue running urllib3 v2 on
       Python older than 3.10, so this is currently blocked in the requirements.
