@@ -18,7 +18,7 @@ try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
 except ImportError as e:
     try:
-        import botocore.vendored.requests
+        import botocore.vendored.requests  # noqa: F401
     except ImportError:  # pragma: no cover
         pass
     else:

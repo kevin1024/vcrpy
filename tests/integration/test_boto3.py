@@ -2,15 +2,14 @@ import os
 
 import pytest
 
-boto3 = pytest.importorskip("boto3")
-
-import boto3
-import botocore
-
 import vcr
 
+boto3 = pytest.importorskip("boto3")
+
+import botocore  # noqa
+
 try:
-    from botocore import awsrequest
+    from botocore import awsrequest  # noqa
 
     botocore_awsrequest = True
 except ImportError:

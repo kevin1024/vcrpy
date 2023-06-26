@@ -4,12 +4,13 @@ import urllib.parse
 
 import pytest
 
+import vcr
+
 asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")
 
-import vcr
 
-from .aiohttp_utils import aiohttp_app, aiohttp_request
+from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
 
 
 def run_in_loop(fn):
@@ -59,7 +60,7 @@ def test_headers(tmpdir, auth, mockbin_request_url):
             request = cassette.requests[0]
             assert "AUTHORIZATION" in request.headers
         cassette_response, _ = get(url, auth=auth)
-        assert dict(cassette_response.headers) == dict(response.headers)
+        assert cassette_response.headers.items() == response.headers.items()
         assert cassette.play_count == 1
         assert "istr" not in cassette.data[0]
         assert "yarl.URL" not in cassette.data[0]
@@ -278,7 +279,7 @@ def test_redirect(tmpdir, mockbin):
     # looking request_info.
     assert cassette_response.request_info.url == response.request_info.url
     assert cassette_response.request_info.method == response.request_info.method
-    assert dict(cassette_response.request_info.headers.items()) == dict(response.request_info.headers.items())
+    assert cassette_response.request_info.headers.items() == response.request_info.headers.items()
     assert cassette_response.request_info.real_url == response.request_info.real_url
 
 

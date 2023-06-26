@@ -2,11 +2,12 @@ import os
 
 import pytest
 
+import vcr
+
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
 
-import vcr
-from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM
+from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM  # noqa: E402
 
 
 class BaseDoRequest:
@@ -185,7 +186,7 @@ def test_redirect(mockbin, yml, do_request):
     # looking request_info.
     assert cassette_response.request.url == response.request.url
     assert cassette_response.request.method == response.request.method
-    assert dict(cassette_response.request.headers.items()) == dict(response.request.headers.items())
+    assert cassette_response.request.headers.items() == response.request.headers.items()
 
 
 @pytest.mark.online
