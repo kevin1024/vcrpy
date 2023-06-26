@@ -7,6 +7,9 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  5.0.0
+    - BREAKING CHANGE: Drop support for Python 3.7.  3.7 is EOL as of 6/27/23 Thanks @jairhenrique
+    - BREAKING CHANGE: Custom Cassette persisters no longer catch ValueError.  If you have implemented a custom persister (has anyone implemented a custom persister?  Let us know!) then you will need to throw a CassetteNotFoundError when unable to find a cassette.  See #681 for discussion and reason for this change. Thanks @amosjyng for the PR and the review from @hartwork
 -  4.4.0
     - HUGE thanks to @hartwork for all the work done on this release!
     - Bring vcr/unittest in to vcrpy as a full feature of vcr instead of a separate library.  Big thanks to @hartwork for doing this and to @agriffis for originally creating the library
