@@ -29,6 +29,19 @@ def test_cassette_load(tmpdir):
     assert len(a_cassette) == 1
 
 
+def test_cassette_load_nonexistent():
+    a_cassette = Cassette.load(path="something/nonexistent.yml")
+    assert len(a_cassette) == 0
+
+
+def test_cassette_load_invalid_encoding(tmpdir):
+    a_file = tmpdir.join("invalid_encoding.yml")
+    with open(a_file, "wb") as fd:
+        fd.write(b"\xda")
+    a_cassette = Cassette.load(path=str(a_file))
+    assert len(a_cassette) == 0
+
+
 def test_cassette_not_played():
     a = Cassette("test")
     assert not a.play_count

@@ -136,7 +136,8 @@ Create your own persistence class, see the example below:
 
 Your custom persister must implement both ``load_cassette`` and ``save_cassette``
 methods.  The ``load_cassette`` method must return a deserialized cassette or raise
-``ValueError`` if no cassette is found.
+either ``CassetteNotFoundError`` if no cassette is found, or ``CassetteDecodeError``
+if the cassette cannot be successfully deserialized.
 
 Once the persister class is defined, register with VCR like so...
 

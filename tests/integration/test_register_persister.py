@@ -5,9 +5,11 @@
 import os
 from urllib.request import urlopen
 
+import pytest
+
 # Internal imports
 import vcr
-from vcr.persisters.filesystem import FilesystemPersister
+from vcr.persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 
 
 class CustomFilesystemPersister:
@@ -23,6 +25,19 @@ class CustomFilesystemPersister:
     def save_cassette(cassette_path, cassette_dict, serializer):
         cassette_path += ".test"
         FilesystemPersister.save_cassette(cassette_path, cassette_dict, serializer)
+
+
+class BadPersister(FilesystemPersister):
+    """A bad persister that raises different errors."""
+
+    @staticmethod
+    def load_cassette(cassette_path, serializer):
+        if "nonexistent" in cassette_path:
+            raise CassetteNotFoundError()
+        elif "encoding" in cassette_path:
+            raise CassetteDecodeError()
+        else:
+            raise ValueError("buggy persister")
 
 
 def test_save_cassette_with_custom_persister(tmpdir, httpbin):
@@ -53,3 +68,22 @@ def test_load_cassette_with_custom_persister(tmpdir, httpbin):
     with my_vcr.use_cassette(test_fixture, serializer="json"):
         response = urlopen(httpbin.url).read()
         assert b"difficult sometimes" in response
+
+
+def test_load_cassette_persister_exception_handling(tmpdir, httpbin):
+    """
+    Ensure expected errors from persister are swallowed while unexpected ones
+    are passed up the call stack.
+    """
+    my_vcr = vcr.VCR()
+    my_vcr.register_persister(BadPersister)
+
+    with my_vcr.use_cassette("bad/nonexistent") as cass:
+        assert len(cass) == 0
+
+    with my_vcr.use_cassette("bad/encoding") as cass:
+        assert len(cass) == 0
+
+    with pytest.raises(ValueError):
+        with my_vcr.use_cassette("bad/buggy") as cass:
+            pass
