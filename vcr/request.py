@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import warnings
 from io import BytesIO
@@ -64,10 +65,9 @@ class Request:
         parse_uri = urlparse(self.uri)
         port = parse_uri.port
         if port is None:
-            try:
+            with contextlib.suppress(KeyError):
                 port = {"https": 443, "http": 80}[parse_uri.scheme]
-            except KeyError:
-                pass
+
         return port
 
     @property
@@ -90,7 +90,7 @@ class Request:
         return self.scheme
 
     def __str__(self):
-        return "<Request ({}) {}>".format(self.method, self.uri)
+        return f"<Request ({self.method}) {self.uri}>"
 
     def __repr__(self):
         return self.__str__()

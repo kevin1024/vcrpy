@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 from unittest import mock
 
 import pytest
@@ -9,24 +8,22 @@ from vcr.serializers import compat, jsonserializer, yamlserializer
 
 
 def test_deserialize_old_yaml_cassette():
-    with open("tests/fixtures/migration/old_cassette.yaml", "r") as f:
-        with pytest.raises(ValueError):
-            deserialize(f.read(), yamlserializer)
+    with open("tests/fixtures/migration/old_cassette.yaml") as f, pytest.raises(ValueError):
+        deserialize(f.read(), yamlserializer)
 
 
 def test_deserialize_old_json_cassette():
-    with open("tests/fixtures/migration/old_cassette.json", "r") as f:
-        with pytest.raises(ValueError):
-            deserialize(f.read(), jsonserializer)
+    with open("tests/fixtures/migration/old_cassette.json") as f, pytest.raises(ValueError):
+        deserialize(f.read(), jsonserializer)
 
 
 def test_deserialize_new_yaml_cassette():
-    with open("tests/fixtures/migration/new_cassette.yaml", "r") as f:
+    with open("tests/fixtures/migration/new_cassette.yaml") as f:
         deserialize(f.read(), yamlserializer)
 
 
 def test_deserialize_new_json_cassette():
-    with open("tests/fixtures/migration/new_cassette.json", "r") as f:
+    with open("tests/fixtures/migration/new_cassette.json") as f:
         deserialize(f.read(), jsonserializer)
 
 
@@ -86,7 +83,7 @@ def test_deserialize_py2py3_yaml_cassette(tmpdir, req_body, expect):
     "dumps",
     side_effect=UnicodeDecodeError("utf-8", b"unicode error in serialization", 0, 10, "blew up"),
 )
-def test_serialize_constructs_UnicodeDecodeError(mock_dumps):
+def test_serialize_constructs_UnicodeDecodeError(mock_dumps):  # noqa
     with pytest.raises(UnicodeDecodeError):
         jsonserializer.serialize({})
 

@@ -28,8 +28,8 @@ except ImportError as e:
         ) from e
 else:
     _Boto3VerifiedHTTPSConnection = AWSHTTPSConnection
-    _cpoolBoto3HTTPConnection = AWSHTTPConnection
-    _cpoolBoto3HTTPSConnection = AWSHTTPSConnection
+    _cpoolBoto3HTTPConnection = AWSHTTPConnection  # noqa
+    _cpoolBoto3HTTPSConnection = AWSHTTPSConnection  # noqa
 
 cpool = None
 conn = None
@@ -41,8 +41,8 @@ except ImportError:  # pragma: no cover
     pass
 else:
     _VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection
-    _connHTTPConnection = conn.HTTPConnection
-    _connHTTPSConnection = conn.HTTPSConnection
+    _connHTTPConnection = conn.HTTPConnection  # noqa
+    _connHTTPSConnection = conn.HTTPSConnection  # noqa
 
 # Try to save the original types for requests
 try:
@@ -108,7 +108,7 @@ else:
 
 
 class CassettePatcherBuilder:
-    def _build_patchers_from_mock_triples_decorator(function):
+    def _build_patchers_from_mock_triples_decorator(function):  # noqa
         @functools.wraps(function)
         def wrapped(self, *args, **kwargs):
             return self._build_patchers_from_mock_triples(function(self, *args, **kwargs))
@@ -186,9 +186,7 @@ class CassettePatcherBuilder:
         bases = (base_class,)
         if not issubclass(base_class, object):  # Check for old style class
             bases += (object,)
-        return type(
-            "{}{}".format(base_class.__name__, self._cassette._path), bases, dict(cassette=self._cassette)
-        )
+        return type(f"{base_class.__name__}{self._cassette._path}", bases, dict(cassette=self._cassette))
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib(self):

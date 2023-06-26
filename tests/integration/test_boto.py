@@ -1,4 +1,8 @@
+import contextlib
+
 import pytest
+
+import vcr
 
 boto = pytest.importorskip("boto")
 
@@ -8,8 +12,6 @@ import boto  # NOQA
 import boto.iam  # NOQA
 from boto.s3.connection import S3Connection  # NOQA
 from boto.s3.key import Key  # NOQA
-
-import vcr  # NOQA
 
 
 def test_boto_stubs(tmpdir):
@@ -64,10 +66,9 @@ def test_boto_hardcore_mode(tmpdir):
 
 
 def test_boto_iam(tmpdir):
-    try:
+    with contextlib.suppress(DuplicateSectionError):
         boto.config.add_section("Boto")
-    except DuplicateSectionError:
-        pass
+
     # Ensure that boto uses HTTPS
     boto.config.set("Boto", "is_secure", "true")
     # Ensure that boto uses CertValidatingHTTPSConnection

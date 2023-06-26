@@ -123,9 +123,8 @@ def test_none_record_mode(tmpdir, httpbin):
     # Cassette file doesn't exist, yet we are trying to make a request.
     # raise hell.
     testfile = str(tmpdir.join("recordmode.yml"))
-    with vcr.use_cassette(testfile, record_mode=vcr.mode.NONE):
-        with pytest.raises(Exception):
-            urlopen(httpbin.url).read()
+    with vcr.use_cassette(testfile, record_mode=vcr.mode.NONE), pytest.raises(Exception):
+        urlopen(httpbin.url).read()
 
 
 def test_none_record_mode_with_existing_cassette(tmpdir, httpbin):

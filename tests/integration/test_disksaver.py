@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Basic tests about save behavior"""
 
 # External imports

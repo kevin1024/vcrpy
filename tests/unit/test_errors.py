@@ -54,7 +54,7 @@ from vcr.cassette import Cassette
         ),
     ],
 )
-def test_CannotOverwriteExistingCassetteException_get_message(
+def test_CannotOverwriteExistingCassetteException_get_message(  # noqa
     mock_find_requests_with_most_matches, most_matches, expected_message
 ):
     mock_find_requests_with_most_matches.return_value = most_matches
@@ -62,8 +62,8 @@ def test_CannotOverwriteExistingCassetteException_get_message(
     failed_request = "request"
     exception_message = errors.CannotOverwriteExistingCassetteException._get_message(cassette, "request")
     expected = (
-        "Can't overwrite existing cassette (%r) in your current record mode (%r).\n"
-        "No match for the request (%r) was found.\n"
-        "%s" % (cassette._path, cassette.record_mode, failed_request, expected_message)
+        "Can't overwrite existing cassette ({!r}) in your current record mode ({!r}).\n"
+        "No match for the request ({!r}) was found.\n"
+        "{}".format(cassette._path, cassette.record_mode, failed_request, expected_message)
     )
     assert exception_message == expected

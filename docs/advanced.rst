@@ -223,7 +223,7 @@ Here are two examples of the new functionality:
     # lots of different kinds of authorization.
     def replace_auth(key, value, request):
         auth_type = value.split(' ', 1)[0]
-        return '{} {}'.format(auth_type, 'XXXXXX')
+        return f'{auth_type} XXXXXX'
 
 Custom Request filtering
 ~~~~~~~~~~~~~~~~~~~~~~~~

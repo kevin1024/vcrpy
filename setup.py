@@ -4,11 +4,12 @@ import codecs
 import os
 import re
 import sys
+from pathlib import Path
 
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
+from setuptools.command.test import test as TestCommand  # noqa
 
-long_description = open("README.rst", "r").read()
+long_description = Path("README.rst").read_text()
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -85,7 +86,7 @@ setup(
     author_email="me@kevinmccarthy.org",
     url="https://github.com/kevin1024/vcrpy",
     packages=find_packages(exclude=["tests*"]),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=install_requires,
     license="MIT",
     tests_require=tests_require,
@@ -95,7 +96,6 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

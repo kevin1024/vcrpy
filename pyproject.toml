@@ -11,10 +11,16 @@ include_trailing_comma = true
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
-#
-# ignore-words-list = ''
 
 [tool.pytest.ini_options]
 markers = [
     "online",
 ]
+
+[tool.ruff]
+select = [ "E", "W", "F", "UP", "N", "I", "SIM", "RUF" ]
+line-length = 110
+target-version = "py38"
+
+[tool.ruff.isort]
+known-first-party = [ "vcr" ]

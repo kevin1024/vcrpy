@@ -153,9 +153,9 @@ def test_urllib3_force_reset():
     https_original = conn.HTTPSConnection
     verified_https_original = conn.VerifiedHTTPSConnection
     with vcr.use_cassette(path="test"):
-        first_cassette_HTTPConnection = conn.HTTPConnection
-        first_cassette_HTTPSConnection = conn.HTTPSConnection
-        first_cassette_VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection
+        first_cassette_HTTPConnection = conn.HTTPConnection  # noqa
+        first_cassette_HTTPSConnection = conn.HTTPSConnection  # noqa
+        first_cassette_VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection  # noqa
         with force_reset():
             assert conn.HTTPConnection is http_original
             assert conn.HTTPSConnection is https_original

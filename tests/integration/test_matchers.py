@@ -93,14 +93,12 @@ def test_default_matcher_matches(cassette, uri, httpbin, httpbin_secure):
 )
 def test_default_matcher_does_not_match(cassette, uri, httpbin, httpbin_secure):
     uri = _replace_httpbin(uri, httpbin, httpbin_secure)
-    with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
-        with vcr.use_cassette(cassette):
-            urlopen(uri)
+    with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException), vcr.use_cassette(cassette):
+        urlopen(uri)
 
 
 def test_default_matcher_does_not_match_on_method(cassette, httpbin, httpbin_secure):
     default_uri = _replace_httpbin(DEFAULT_URI, httpbin, httpbin_secure)
-    with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
-        with vcr.use_cassette(cassette):
-            # is a POST request
-            urlopen(default_uri, data=b"")
+    with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException), vcr.use_cassette(cassette):
+        # is a POST request
+        urlopen(default_uri, data=b"")

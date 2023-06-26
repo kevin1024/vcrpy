@@ -59,7 +59,7 @@ def test_uri(method, uri):
     assert Request(method, uri, "", {}).uri == uri
 
 
-def test_HeadersDict():
+def test_HeadersDict():  # noqa
     # Simple test of CaseInsensitiveDict
     h = HeadersDict()
     assert h == {}

@@ -66,7 +66,7 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
 
         # Assert that we do not modify the original response while appending
         # to the cassette.
-        assert "gzip" == inside.headers["content-encoding"]
+        assert inside.headers["content-encoding"] == "gzip"
 
         # They should effectively be the same response.
         inside_headers = (h for h in inside.headers.items() if h[0].lower() != "date")
@@ -122,7 +122,7 @@ def test_original_response_is_not_modified_by_before_filter(tmpdir, httpbin):
         # Furthermore, the responses should be identical.
         inside_body = json.loads(inside.read().decode("utf-8"))
         outside_body = json.loads(outside.read().decode("utf-8"))
-        assert not inside_body[field_to_scrub] == replacement
+        assert inside_body[field_to_scrub] != replacement
         assert inside_body[field_to_scrub] == outside_body[field_to_scrub]
 
     # Ensure that when a cassette exists, the scrubbed response is returned.

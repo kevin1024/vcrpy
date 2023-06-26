@@ -151,7 +151,7 @@ def test_post(tmpdir, body, caplog, mockbin_request_url):
         (
             log
             for log in caplog.records
-            if log.getMessage() == "<Request (POST) {}> not in cassette, sending to real server".format(url)
+            if log.getMessage() == f"<Request (POST) {url}> not in cassette, sending to real server"
         ),
         None,
     ), "Log message not found."
@@ -188,7 +188,7 @@ def test_params_same_url_distinct_params(tmpdir, mockbin_request_url):
         assert cassette.play_count == 1
 
     other_params = {"other": "params"}
-    with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
+    with vcr.use_cassette(str(tmpdir.join("get.yaml"))):
         with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
             get(url, output="text", params=other_params)
 

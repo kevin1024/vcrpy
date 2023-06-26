@@ -1,5 +1,6 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
+import contextlib
 import logging
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
@@ -76,7 +77,7 @@ class VCRHTTPResponse(HTTPResponse):
         # libraries trying to process a chunked response.  By removing the
         # transfer-encoding: chunked header, this should cause the downstream
         # libraries to process this as a non-chunked response.
-        te_key = [h for h in headers.keys() if h.upper() == "TRANSFER-ENCODING"]
+        te_key = [h for h in headers if h.upper() == "TRANSFER-ENCODING"]
         if te_key:
             del headers[te_key[0]]
         self.headers = self.msg = parse_headers(headers)
@@ -188,26 +189,26 @@ class VCRConnection:
         """
         port = self.real_connection.port
         default_port = {"https": 443, "http": 80}[self._protocol]
-        return ":{}".format(port) if port != default_port else ""
+        return f":{port}" if port != default_port else ""
 
     def _uri(self, url):
         """Returns request absolute URI"""
         if url and not url.startswith("/"):
             # Then this must be a proxy request.
             return url
-        uri = "{}://{}{}{}".format(self._protocol, self.real_connection.host, self._port_postfix(), url)
+        uri = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}{url}"
         log.debug("Absolute URI: %s", uri)
         return uri
 
     def _url(self, uri):
         """Returns request selector url from absolute URI"""
-        prefix = "{}://{}{}".format(self._protocol, self.real_connection.host, self._port_postfix())
+        prefix = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}"
         return uri.replace(prefix, "", 1)
 
     def request(self, method, url, body=None, headers=None, *args, **kwargs):
         """Persist the request metadata in self._vcr_request"""
         self._vcr_request = Request(method=method, uri=self._uri(url), body=body, headers=headers or {})
-        log.debug("Got {}".format(self._vcr_request))
+        log.debug(f"Got {self._vcr_request}")
 
         # Note: The request may not actually be finished at this point, so
         # I'm not sending the actual request until getresponse().  This
@@ -223,7 +224,7 @@ class VCRConnection:
         of putheader() calls.
         """
         self._vcr_request = Request(method=method, uri=self._uri(url), body="", headers={})
-        log.debug("Got {}".format(self._vcr_request))
+        log.debug(f"Got {self._vcr_request}")
 
     def putheader(self, header, *values):
         self._vcr_request.headers[header] = values
@@ -255,7 +256,7 @@ class VCRConnection:
         # Check to see if the cassette has a response for this request. If so,
         # then return it
         if self.cassette.can_play_response_for(self._vcr_request):
-            log.info("Playing response for {} from cassette".format(self._vcr_request))
+            log.info(f"Playing response for {self._vcr_request} from cassette")
             response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
@@ -267,7 +268,7 @@ class VCRConnection:
             # Otherwise, we should send the request, then get the response
             # and return it.
 
-            log.info("{} not in cassette, sending to real server".format(self._vcr_request))
+            log.info(f"{self._vcr_request} not in cassette, sending to real server")
             # This is imported here to avoid circular import.
             # TODO(@IvanMalison): Refactor to allow normal import.
             from vcr.patch import force_reset
@@ -356,12 +357,8 @@ class VCRConnection:
         TODO: Separately setting the attribute on the two instances is not
         ideal. We should switch to a proxying implementation.
         """
-        try:
+        with contextlib.suppress(AttributeError):
             setattr(self.real_connection, name, value)
-        except AttributeError:
-            # raised if real_connection has not been set yet, such as when
-            # we're setting the real_connection itself for the first time
-            pass
 
         super().__setattr__(name, value)
 

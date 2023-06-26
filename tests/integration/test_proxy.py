@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test using a proxy."""
 
 import http.server
@@ -21,7 +20,7 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
     (Inspired by: http://effbot.org/librarybook/simplehttpserver.htm).
     """
 
-    def do_GET(self):
+    def do_GET(self):  # noqa
         upstream_response = urlopen(self.path)
         try:
             status = upstream_response.status
