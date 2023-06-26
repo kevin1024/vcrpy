@@ -162,7 +162,8 @@ class VCR:
     def _build_before_record_response(self, options):
         before_record_response = options.get("before_record_response", self.before_record_response)
         decode_compressed_response = options.get(
-            "decode_compressed_response", self.decode_compressed_response
+            "decode_compressed_response",
+            self.decode_compressed_response,
         )
         filter_functions = []
         if decode_compressed_response:
@@ -186,10 +187,12 @@ class VCR:
         filter_headers = options.get("filter_headers", self.filter_headers)
         filter_query_parameters = options.get("filter_query_parameters", self.filter_query_parameters)
         filter_post_data_parameters = options.get(
-            "filter_post_data_parameters", self.filter_post_data_parameters
+            "filter_post_data_parameters",
+            self.filter_post_data_parameters,
         )
         before_record_request = options.get(
-            "before_record_request", options.get("before_record", self.before_record_request)
+            "before_record_request",
+            options.get("before_record", self.before_record_request),
         )
         ignore_hosts = options.get("ignore_hosts", self.ignore_hosts)
         ignore_localhost = options.get("ignore_localhost", self.ignore_localhost)
@@ -199,12 +202,12 @@ class VCR:
         if filter_query_parameters:
             replacements = [p if isinstance(p, tuple) else (p, None) for p in filter_query_parameters]
             filter_functions.append(
-                functools.partial(filters.replace_query_parameters, replacements=replacements)
+                functools.partial(filters.replace_query_parameters, replacements=replacements),
             )
         if filter_post_data_parameters:
             replacements = [p if isinstance(p, tuple) else (p, None) for p in filter_post_data_parameters]
             filter_functions.append(
-                functools.partial(filters.replace_post_data_parameters, replacements=replacements)
+                functools.partial(filters.replace_post_data_parameters, replacements=replacements),
             )
 
         hosts_to_ignore = set(ignore_hosts)

@@ -92,7 +92,7 @@ def migrate_json(in_fp, out_fp):
 
 
 def _list_of_tuples_to_dict(fs):
-    return {k: v for k, v in fs[0]}
+    return dict(fs[0])
 
 
 def _already_migrated(data):
@@ -130,7 +130,7 @@ def migrate(file_path, migration_fn):
 def try_migrate(path):
     if path.endswith(".json"):
         return migrate(path, migrate_json)
-    elif path.endswith(".yaml") or path.endswith(".yml"):
+    elif path.endswith((".yaml", ".yml")):
         return migrate(path, migrate_yml)
     return False
 
@@ -138,7 +138,7 @@ def try_migrate(path):
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
-            "Please provide path to cassettes directory or file. " "Usage: python3 -m vcr.migration PATH"
+            "Please provide path to cassettes directory or file. Usage: python3 -m vcr.migration PATH",
         )
 
     path = sys.argv[1]

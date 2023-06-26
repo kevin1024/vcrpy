@@ -18,13 +18,13 @@ try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
 except ImportError as e:
     try:
-        import botocore.vendored.requests  # noqa: F401
+        import botocore.vendored.requests
     except ImportError:  # pragma: no cover
         pass
     else:
         raise RuntimeError(
             "vcrpy >=4.2.2 and botocore <1.11.0 are not compatible"
-            "; please upgrade botocore (or downgrade vcrpy)"
+            "; please upgrade botocore (or downgrade vcrpy)",
         ) from e
 else:
     _Boto3VerifiedHTTPSConnection = AWSHTTPSConnection
@@ -53,7 +53,7 @@ else:
     if requests.__build__ < 0x021602:
         raise RuntimeError(
             "vcrpy >=4.2.2 and requests <2.16.2 are not compatible"
-            "; please upgrade requests (or downgrade vcrpy)"
+            "; please upgrade requests (or downgrade vcrpy)",
         )
 
 
@@ -144,7 +144,9 @@ class CassettePatcherBuilder:
             return
 
         return mock.patch.object(
-            obj, patched_attribute, self._recursively_apply_get_cassette_subclass(replacement_class)
+            obj,
+            patched_attribute,
+            self._recursively_apply_get_cassette_subclass(replacement_class),
         )
 
     def _recursively_apply_get_cassette_subclass(self, replacement_dict_or_obj):
@@ -186,7 +188,7 @@ class CassettePatcherBuilder:
         bases = (base_class,)
         if not issubclass(base_class, object):  # Check for old style class
             bases += (object,)
-        return type(f"{base_class.__name__}{self._cassette._path}", bases, dict(cassette=self._cassette))
+        return type(f"{base_class.__name__}{self._cassette._path}", bases, {"cassette": self._cassette})
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib(self):
@@ -333,10 +335,10 @@ class CassettePatcherBuilder:
 
     def _urllib3_patchers(self, cpool, conn, stubs):
         http_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection)
+            self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection),
         )
         https_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection)
+            self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection),
         )
         mock_triples = (
             (conn, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),

@@ -35,7 +35,7 @@ class MockClientResponse(ClientResponse):
             session=None,
         )
 
-    async def json(self, *, encoding="utf-8", loads=json.loads, **kwargs):  # NOQA: E999
+    async def json(self, *, encoding="utf-8", loads=json.loads, **kwargs):
         stripped = self._body.strip()
         if not stripped:
             return None
@@ -162,7 +162,7 @@ async def record_response(cassette, vcr_request, response):
     vcr_response = {
         "status": {"code": response.status, "message": response.reason},
         "headers": _serialize_headers(response.headers),
-        "body": body,  # NOQA: E999
+        "body": body,
         "url": str(response.url),
     }
 
@@ -273,7 +273,7 @@ def vcr_request(cassette, real_request):
 
         log.info("%s not in cassette, sending to real server", vcr_request)
 
-        response = await real_request(self, method, url, **kwargs)  # NOQA: E999
+        response = await real_request(self, method, url, **kwargs)
         await record_responses(cassette, vcr_request, response)
         return response
 

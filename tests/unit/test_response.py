@@ -88,11 +88,11 @@ def test_response_parses_correctly_and_fp_attribute_error_is_not_thrown():
             b"different types of cancer cells. Recently, the first HDACi was\n      "
             b"approved for the "
             b"treatment of cutaneous T cell lymphomas. Most HDACi currently in\n      "
-            b"clinical "
+            b"clinical ",
         },
     }
     vcr_response = VCRHTTPResponse(recorded_response)
     handle = io.TextIOWrapper(vcr_response, encoding="utf-8")
     handle = iter(handle)
-    articles = [line for line in handle]
+    articles = list(handle)
     assert len(articles) > 1

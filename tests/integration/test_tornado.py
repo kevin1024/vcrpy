@@ -242,7 +242,10 @@ def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
 
     with vcr.use_cassette(str(tmpdir.join("invalid.yaml"))):
         response = yield get(
-            get_client(), "http://httpbin.org", streaming_callback=callback, raise_error=False
+            get_client(),
+            "http://httpbin.org",
+            streaming_callback=callback,
+            raise_error=False,
         )
 
     assert "not yet supported by VCR" in str(response.error)

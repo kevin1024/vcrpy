@@ -100,9 +100,9 @@ def test_vcr_kwargs_cassette_dir():
             pass
 
         def _get_vcr_kwargs(self):
-            return dict(
-                record_mode="new_episodes",
-            )
+            return {
+                "record_mode": "new_episodes",
+            }
 
         _get_cassette_library_dir = MagicMock(return_value="/testing")
 
@@ -117,9 +117,9 @@ def test_vcr_kwargs_cassette_dir():
             pass
 
         def _get_vcr_kwargs(self):
-            return dict(
-                cassette_library_dir="/testing",
-            )
+            return {
+                "cassette_library_dir": "/testing",
+            }
 
         _get_cassette_library_dir = MagicMock(return_value="/ignored")
 

@@ -18,3 +18,19 @@ ignore-regex = "\\\\[fnrstv]"
 markers = [
     "online",
 ]
+
+[tool.ruff]
+select = [
+    "C4",  # flake8-comprehensions
+    "COM", # flake8-commas
+    "I",   # isort
+    "ISC", # flake8-implicit-str-concat
+    "PIE", # flake8-pie
+    "RUF", # Ruff-specific rules
+    "UP",  # pyupgrade
+]
+line-length = 110
+target-version = "py38"
+
+[tool.ruff.isort]
+known-first-party = [ "vcr" ]

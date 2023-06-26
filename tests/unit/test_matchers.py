@@ -74,10 +74,16 @@ boto3_bytes_headers = {
         ),
         (
             request.Request(
-                "POST", "http://host.com/", "a=1&b=2", {"Content-Type": "application/x-www-form-urlencoded"}
+                "POST",
+                "http://host.com/",
+                "a=1&b=2",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
             request.Request(
-                "POST", "http://host.com/", "b=2&a=1", {"Content-Type": "application/x-www-form-urlencoded"}
+                "POST",
+                "http://host.com/",
+                "b=2&a=1",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
         ),
         (
@@ -86,23 +92,38 @@ boto3_bytes_headers = {
         ),
         (
             request.Request(
-                "POST", "http://host.com/", "a=1&b=2", {"Content-Type": "application/x-www-form-urlencoded"}
+                "POST",
+                "http://host.com/",
+                "a=1&b=2",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
             request.Request(
-                "POST", "http://host.com/", "b=2&a=1", {"Content-Type": "application/x-www-form-urlencoded"}
-            ),
-        ),
-        (
-            request.Request(
-                "POST", "http://host.com/", '{"a": 1, "b": 2}', {"Content-Type": "application/json"}
-            ),
-            request.Request(
-                "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
+                "POST",
+                "http://host.com/",
+                "b=2&a=1",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
         ),
         (
             request.Request(
-                "POST", "http://host.com/", req1_body, {"User-Agent": "xmlrpclib", "Content-Type": "text/xml"}
+                "POST",
+                "http://host.com/",
+                '{"a": 1, "b": 2}',
+                {"Content-Type": "application/json"},
+            ),
+            request.Request(
+                "POST",
+                "http://host.com/",
+                '{"b": 2, "a": 1}',
+                {"content-type": "application/json"},
+            ),
+        ),
+        (
+            request.Request(
+                "POST",
+                "http://host.com/",
+                req1_body,
+                {"User-Agent": "xmlrpclib", "Content-Type": "text/xml"},
             ),
             request.Request(
                 "POST",
@@ -113,10 +134,16 @@ boto3_bytes_headers = {
         ),
         (
             request.Request(
-                "POST", "http://host.com/", '{"a": 1, "b": 2}', {"Content-Type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"a": 1, "b": 2}',
+                {"Content-Type": "application/json"},
             ),
             request.Request(
-                "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"b": 2, "a": 1}',
+                {"content-type": "application/json"},
             ),
         ),
         (
@@ -139,10 +166,16 @@ def test_body_matcher_does_match(r1, r2):
         ),
         (
             request.Request(
-                "POST", "http://host.com/", '{"a": 1, "b": 3}', {"Content-Type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"a": 1, "b": 3}',
+                {"Content-Type": "application/json"},
             ),
             request.Request(
-                "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"b": 2, "a": 1}',
+                {"content-type": "application/json"},
             ),
         ),
         (
