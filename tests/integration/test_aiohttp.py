@@ -7,9 +7,9 @@ import pytest
 asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")
 
-import vcr  # noqa: E402
+import vcr
 
-from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
+from .aiohttp_utils import aiohttp_app, aiohttp_request
 
 
 def run_in_loop(fn):
@@ -278,9 +278,7 @@ def test_redirect(tmpdir, mockbin):
     # looking request_info.
     assert cassette_response.request_info.url == response.request_info.url
     assert cassette_response.request_info.method == response.request_info.method
-    assert {k: v for k, v in cassette_response.request_info.headers.items()} == {
-        k: v for k, v in response.request_info.headers.items()
-    }
+    assert dict(cassette_response.request_info.headers.items()) == dict(response.request_info.headers.items())
     assert cassette_response.request_info.real_url == response.request_info.real_url
 
 
@@ -351,7 +349,10 @@ def test_cookies(httpbin_both, httpbin_ssl_context, tmpdir):
             async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
                 cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)
                 home_resp = await session.get(
-                    home_url, cookies=req_cookies, headers=req_headers, ssl=httpbin_ssl_context
+                    home_url,
+                    cookies=req_cookies,
+                    headers=req_headers,
+                    ssl=httpbin_ssl_context,
                 )
                 assert cassette.play_count == 0
         assert_responses(cookies_resp, home_resp)
@@ -361,7 +362,10 @@ def test_cookies(httpbin_both, httpbin_ssl_context, tmpdir):
             async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
                 cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)
                 home_resp = await session.get(
-                    home_url, cookies=req_cookies, headers=req_headers, ssl=httpbin_ssl_context
+                    home_url,
+                    cookies=req_cookies,
+                    headers=req_headers,
+                    ssl=httpbin_ssl_context,
                 )
                 assert cassette.play_count == 2
         assert_responses(cookies_resp, home_resp)
@@ -407,7 +411,7 @@ def test_cookies_redirect(httpbin_both, httpbin_ssl_context, tmpdir):
         # Assert that it's ignoring expiration date
         with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
             cassette.responses[0]["headers"]["set-cookie"] = [
-                "Cookie_1=Val_1; Expires=Wed, 21 Oct 2015 07:28:00 GMT"
+                "Cookie_1=Val_1; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
             ]
             async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
                 cookies_resp = await session.get(cookies_url, ssl=httpbin_ssl_context)

@@ -20,10 +20,13 @@ def test_cassette_load(tmpdir):
         yaml.dump(
             {
                 "interactions": [
-                    {"request": {"body": "", "uri": "foo", "method": "GET", "headers": {}}, "response": "bar"}
-                ]
-            }
-        )
+                    {
+                        "request": {"body": "", "uri": "foo", "method": "GET", "headers": {}},
+                        "response": "bar",
+                    },
+                ],
+            },
+        ),
     )
     a_cassette = Cassette.load(path=str(a_file))
     assert len(a_cassette) == 1
@@ -218,7 +221,7 @@ def test_nesting_cassette_context_managers(*args):
     with contextlib.ExitStack() as exit_stack:
         first_cassette = exit_stack.enter_context(Cassette.use(path="test"))
         exit_stack.enter_context(
-            mock.patch.object(first_cassette, "play_response", return_value=first_response)
+            mock.patch.object(first_cassette, "play_response", return_value=first_response),
         )
         assert_get_response_body_is("first_response")
 

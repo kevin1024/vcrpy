@@ -5,7 +5,7 @@ from assertions import assert_cassette_empty, assert_is_json_bytes
 import vcr
 
 requests = pytest.importorskip("requests")
-from requests.exceptions import ConnectionError  # noqa E402
+from requests.exceptions import ConnectionError  # E402
 
 
 def test_status_code(httpbin_both, tmpdir):
@@ -171,7 +171,8 @@ def test_gzip__decode_compressed_response_true(tmpdir, httpbin_both):
     assert expected_response.headers["content-encoding"] == "gzip"  # self-test
 
     with vcr.use_cassette(
-        str(tmpdir.join("decode_compressed.yaml")), decode_compressed_response=True
+        str(tmpdir.join("decode_compressed.yaml")),
+        decode_compressed_response=True,
     ) as cassette:
         r = requests.get(url)
         assert r.headers["content-encoding"] == "gzip"  # i.e. not removed

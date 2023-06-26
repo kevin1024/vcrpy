@@ -81,7 +81,8 @@ class CassetteContextDecorator:
         #         pass
         assert self.__finish is None, "Cassette already open."
         other_kwargs, cassette_kwargs = partition_dict(
-            lambda key, _: key in self._non_cassette_arguments, self._args_getter()
+            lambda key, _: key in self._non_cassette_arguments,
+            self._args_getter(),
         )
         if other_kwargs.get("path_transformer"):
             transformer = other_kwargs["path_transformer"]
@@ -280,7 +281,7 @@ class Cassette:
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for"
+            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for",
         )
 
     def responses_of(self, request):
@@ -295,7 +296,7 @@ class Cassette:
             return responses
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for"
+            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for",
         )
 
     def rewind(self):

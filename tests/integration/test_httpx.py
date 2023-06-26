@@ -5,8 +5,8 @@ import pytest
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
 
-import vcr  # noqa: E402
-from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM  # noqa: E402
+import vcr
+from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM
 
 
 class BaseDoRequest:
@@ -185,9 +185,7 @@ def test_redirect(mockbin, yml, do_request):
     # looking request_info.
     assert cassette_response.request.url == response.request.url
     assert cassette_response.request.method == response.request.method
-    assert {k: v for k, v in cassette_response.request.headers.items()} == {
-        k: v for k, v in response.request.headers.items()
-    }
+    assert dict(cassette_response.request.headers.items()) == dict(response.request.headers.items())
 
 
 @pytest.mark.online
@@ -242,10 +240,10 @@ def test_behind_proxy(do_request):
 @pytest.mark.online
 def test_cookies(tmpdir, mockbin, do_request):
     def client_cookies(client):
-        return [c for c in client.client.cookies]
+        return list(client.client.cookies)
 
     def response_cookies(response):
-        return [c for c in response.cookies]
+        return list(response.cookies)
 
     url = mockbin + "/bin/26148652-fe25-4f21-aaf5-689b5b4bf65f"
     headers = {"cookie": "k1=v1;k2=v2"}

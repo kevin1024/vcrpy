@@ -261,7 +261,8 @@ class VCRConnection:
         else:
             if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
                 raise CannotOverwriteExistingCassetteException(
-                    cassette=self.cassette, failed_request=self._vcr_request
+                    cassette=self.cassette,
+                    failed_request=self._vcr_request,
                 )
 
             # Otherwise, we should send the request, then get the response

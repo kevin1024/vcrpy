@@ -7,7 +7,7 @@ import pytest
 
 requests = pytest.importorskip("requests")
 
-import vcr  # NOQA
+import vcr
 
 
 def test_domain_redirect():

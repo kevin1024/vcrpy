@@ -28,7 +28,7 @@ def _warn_about_old_cassette_format():
     raise ValueError(
         "Your cassette files were generated in an older version "
         "of VCR. Delete your cassettes or run the migration script."
-        "See http://git.io/mHhLBg for more details."
+        "See http://git.io/mHhLBg for more details.",
     )
 
 

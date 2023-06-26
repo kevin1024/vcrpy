@@ -16,7 +16,8 @@ urllib3 = pytest.importorskip("urllib3")
 @pytest.fixture(scope="module")
 def verify_pool_mgr():
     return urllib3.PoolManager(
-        cert_reqs="CERT_REQUIRED", ca_certs=pytest_httpbin.certs.where()  # Force certificate check.
+        cert_reqs="CERT_REQUIRED",
+        ca_certs=pytest_httpbin.certs.where(),  # Force certificate check.
     )
 
 

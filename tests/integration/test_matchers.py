@@ -72,7 +72,12 @@ def test_method_matcher(cassette, httpbin, httpbin_secure):
 
 
 @pytest.mark.parametrize(
-    "uri", [DEFAULT_URI, "http://httpbin.org/get?p2=q2&p1=q1", "http://httpbin.org/get?p2=q2&p1=q1"]
+    "uri",
+    (
+        DEFAULT_URI,
+        "http://httpbin.org/get?p2=q2&p1=q1",
+        "http://httpbin.org/get?p2=q2&p1=q1",
+    ),
 )
 def test_default_matcher_matches(cassette, uri, httpbin, httpbin_secure):
     uri = _replace_httpbin(uri, httpbin, httpbin_secure)

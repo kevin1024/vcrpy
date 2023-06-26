@@ -1,3 +1,3 @@
-async def handle_coroutine(vcr, fn):  # noqa: E999
+async def handle_coroutine(vcr, fn):
     with vcr as cassette:
-        return await fn(cassette)  # noqa: E999
+        return await fn(cassette)
