@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Integration tests with urllib2"""
 
 import ssl

@@ -55,7 +55,7 @@ def build_uri(**parts):
     port = parts["port"]
     scheme = parts["protocol"]
     default_port = {"https": 443, "http": 80}[scheme]
-    parts["port"] = ":{}".format(port) if port != default_port else ""
+    parts["port"] = f":{port}" if port != default_port else ""
     return "{protocol}://{host}{port}{path}".format(**parts)
 
 
@@ -118,7 +118,7 @@ def migrate(file_path, migration_fn):
     # because we assume that original files can be reverted
     # we will try to copy the content. (os.rename not needed)
     with tempfile.TemporaryFile(mode="w+") as out_fp:
-        with open(file_path, "r") as in_fp:
+        with open(file_path) as in_fp:
             if not migration_fn(in_fp, out_fp):
                 return False
         with open(file_path, "w") as in_fp:
@@ -150,7 +150,7 @@ def main():
     for file_path in files:
         migrated = try_migrate(file_path)
         status = "OK" if migrated else "FAIL"
-        sys.stderr.write("[{}] {}\n".format(status, file_path))
+        sys.stderr.write(f"[{status}] {file_path}\n")
     sys.stderr.write("Done.\n")
 
 

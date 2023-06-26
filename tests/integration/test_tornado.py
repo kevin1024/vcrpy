@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test requests' interaction with vcr"""
 
 import json

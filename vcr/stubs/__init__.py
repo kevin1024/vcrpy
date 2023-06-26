@@ -188,26 +188,26 @@ class VCRConnection:
         """
         port = self.real_connection.port
         default_port = {"https": 443, "http": 80}[self._protocol]
-        return ":{}".format(port) if port != default_port else ""
+        return f":{port}" if port != default_port else ""
 
     def _uri(self, url):
         """Returns request absolute URI"""
         if url and not url.startswith("/"):
             # Then this must be a proxy request.
             return url
-        uri = "{}://{}{}{}".format(self._protocol, self.real_connection.host, self._port_postfix(), url)
+        uri = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}{url}"
         log.debug("Absolute URI: %s", uri)
         return uri
 
     def _url(self, uri):
         """Returns request selector url from absolute URI"""
-        prefix = "{}://{}{}".format(self._protocol, self.real_connection.host, self._port_postfix())
+        prefix = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}"
         return uri.replace(prefix, "", 1)
 
     def request(self, method, url, body=None, headers=None, *args, **kwargs):
         """Persist the request metadata in self._vcr_request"""
         self._vcr_request = Request(method=method, uri=self._uri(url), body=body, headers=headers or {})
-        log.debug("Got {}".format(self._vcr_request))
+        log.debug(f"Got {self._vcr_request}")
 
         # Note: The request may not actually be finished at this point, so
         # I'm not sending the actual request until getresponse().  This
@@ -223,7 +223,7 @@ class VCRConnection:
         of putheader() calls.
         """
         self._vcr_request = Request(method=method, uri=self._uri(url), body="", headers={})
-        log.debug("Got {}".format(self._vcr_request))
+        log.debug(f"Got {self._vcr_request}")
 
     def putheader(self, header, *values):
         self._vcr_request.headers[header] = values
@@ -255,7 +255,7 @@ class VCRConnection:
         # Check to see if the cassette has a response for this request. If so,
         # then return it
         if self.cassette.can_play_response_for(self._vcr_request):
-            log.info("Playing response for {} from cassette".format(self._vcr_request))
+            log.info(f"Playing response for {self._vcr_request} from cassette")
             response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
@@ -267,7 +267,7 @@ class VCRConnection:
             # Otherwise, we should send the request, then get the response
             # and return it.
 
-            log.info("{} not in cassette, sending to real server".format(self._vcr_request))
+            log.info(f"{self._vcr_request} not in cassette, sending to real server")
             # This is imported here to avoid circular import.
             # TODO(@IvanMalison): Refactor to allow normal import.
             from vcr.patch import force_reset

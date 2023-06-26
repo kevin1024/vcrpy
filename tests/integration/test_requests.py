@@ -114,22 +114,6 @@ def test_post_chunked_binary(tmpdir, httpbin):
     assert req1 == req2
 
 
-@pytest.mark.skipif("sys.version_info >= (3, 6)", strict=True, raises=ConnectionError)
-def test_post_chunked_binary_secure(tmpdir, httpbin_secure):
-    """Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str."""
-    data1 = iter([b"data", b"to", b"send"])
-    data2 = iter([b"data", b"to", b"send"])
-    url = httpbin_secure.url + "/post"
-    with vcr.use_cassette(str(tmpdir.join("requests.yaml"))):
-        req1 = requests.post(url, data1).content
-        print(req1)
-
-    with vcr.use_cassette(str(tmpdir.join("requests.yaml"))):
-        req2 = requests.post(url, data2).content
-
-    assert req1 == req2
-
-
 def test_redirects(tmpdir, httpbin_both):
     """Ensure that we can handle redirects"""
     url = httpbin_both + "/redirect-to?url=bytes/1024"

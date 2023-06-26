@@ -90,7 +90,7 @@ class Request:
         return self.scheme
 
     def __str__(self):
-        return "<Request ({}) {}>".format(self.method, self.uri)
+        return f"<Request ({self.method}) {self.uri}>"
 
     def __repr__(self):
         return self.__str__()

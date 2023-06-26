@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for cassettes with custom persistence"""
 
 # External imports

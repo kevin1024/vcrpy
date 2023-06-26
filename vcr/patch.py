@@ -186,9 +186,7 @@ class CassettePatcherBuilder:
         bases = (base_class,)
         if not issubclass(base_class, object):  # Check for old style class
             bases += (object,)
-        return type(
-            "{}{}".format(base_class.__name__, self._cassette._path), bases, dict(cassette=self._cassette)
-        )
+        return type(f"{base_class.__name__}{self._cassette._path}", bases, dict(cassette=self._cassette))
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib(self):

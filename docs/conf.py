@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # vcrpy documentation build configuration file, created by
 # sphinx-quickstart on Sun Sep 13 11:18:00 2015.
