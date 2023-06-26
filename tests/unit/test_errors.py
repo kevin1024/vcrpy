@@ -64,8 +64,9 @@ def test_CannotOverwriteExistingCassetteException_get_message(
     failed_request = "request"
     exception_message = errors.CannotOverwriteExistingCassetteException._get_message(cassette, "request")
     expected = (
-        "Can't overwrite existing cassette ({!r}) in your current record mode ({!r}).\n"
-        "No match for the request ({!r}) was found.\n"
-        "{}".format(cassette._path, cassette.record_mode, failed_request, expected_message)
+        f"Can't overwrite existing cassette ({cassette._path!r}) "
+        f"in your current record mode ({cassette.record_mode!r}).\n"
+        f"No match for the request ({failed_request!r}) was found.\n"
+        f"{expected_message}"
     )
     assert exception_message == expected

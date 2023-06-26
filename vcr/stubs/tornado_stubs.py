@@ -29,9 +29,9 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                 request,
                 599,
                 error=Exception(
-                    "The request (%s) uses AsyncHTTPClient functionality "
+                    f"The request ({request!r}) uses AsyncHTTPClient functionality "
                     "that is not yet supported by VCR.py. Please make the "
-                    "request outside a VCR.py context." % repr(request),
+                    "request outside a VCR.py context.",
                 ),
                 request_time=self.io_loop.time() - request.start_time,
             )
