@@ -1,15 +1,15 @@
+from configparser import DuplicateSectionError
+
 import pytest
+
+import vcr
 
 boto = pytest.importorskip("boto")
 
-from configparser import DuplicateSectionError
-
-import boto
-import boto.iam
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
-
-import vcr
+import boto  # noqa
+import boto.iam  # noqa
+from boto.s3.connection import S3Connection  # noqa
+from boto.s3.key import Key  # noqa
 
 
 def test_boto_stubs(tmpdir):

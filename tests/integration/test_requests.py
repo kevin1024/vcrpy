@@ -5,7 +5,6 @@ from assertions import assert_cassette_empty, assert_is_json_bytes
 import vcr
 
 requests = pytest.importorskip("requests")
-from requests.exceptions import ConnectionError  # E402
 
 
 def test_status_code(httpbin_both, tmpdir):

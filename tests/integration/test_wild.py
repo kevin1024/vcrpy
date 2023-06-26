@@ -5,9 +5,9 @@ from xmlrpc.server import SimpleXMLRPCServer
 
 import pytest
 
-requests = pytest.importorskip("requests")
-
 import vcr
+
+requests = pytest.importorskip("requests")
 
 
 def test_domain_redirect():
