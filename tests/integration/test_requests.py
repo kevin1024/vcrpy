@@ -1,6 +1,6 @@
 """Test requests' interaction with vcr"""
 import pytest
-from assertions import assert_cassette_empty, assert_is_json
+from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 
@@ -176,7 +176,7 @@ def test_gzip__decode_compressed_response_false(tmpdir, httpbin_both):
         with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
             response = requests.get(httpbin_both + "/gzip")
             assert response.headers["content-encoding"] == "gzip"  # i.e. not removed
-            assert_is_json(response.content)  # i.e. uncompressed bytes
+            assert_is_json_bytes(response.content)  # i.e. uncompressed bytes
 
 
 def test_gzip__decode_compressed_response_true(tmpdir, httpbin_both):

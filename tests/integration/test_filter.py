@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import pytest
-from assertions import assert_cassette_has_one_response, assert_is_json
+from assertions import assert_cassette_has_one_response, assert_is_json_bytes
 
 import vcr
 
@@ -105,7 +105,7 @@ def test_decompress_gzip(tmpdir, httpbin):
     with vcr.use_cassette(cass_file) as cass:
         decoded_response = urlopen(url).read()
         assert_cassette_has_one_response(cass)
-    assert_is_json(decoded_response)
+    assert_is_json_bytes(decoded_response)
 
 
 def test_decomptess_empty_body(tmpdir, httpbin):
@@ -129,7 +129,7 @@ def test_decompress_deflate(tmpdir, httpbin):
     with vcr.use_cassette(cass_file) as cass:
         decoded_response = urlopen(url).read()
         assert_cassette_has_one_response(cass)
-    assert_is_json(decoded_response)
+    assert_is_json_bytes(decoded_response)
 
 
 def test_decompress_regular(tmpdir, httpbin):
@@ -141,7 +141,7 @@ def test_decompress_regular(tmpdir, httpbin):
     with vcr.use_cassette(cass_file) as cass:
         resp = urlopen(url).read()
         assert_cassette_has_one_response(cass)
-    assert_is_json(resp)
+    assert_is_json_bytes(resp)
 
 
 def test_before_record_request_corruption(tmpdir, httpbin):
