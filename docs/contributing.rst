@@ -103,10 +103,10 @@ This will run only tests that look like ``test_status_code`` or
 ``test_gzip`` in the test suite, and only in the python 3.8 environment
 that has ``requests`` installed.
 
-Also, in order for the boto tests to run, you will need an AWS key.
-Refer to the `boto
-documentation <https://boto.readthedocs.io/en/latest/getting_started.html>`__
-for how to set this up. I have marked the boto tests as optional in
+Also, in order for the boto3 tests to run, you will need an AWS key.
+Refer to the `boto3
+documentation <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/index.html>`__
+for how to set this up. I have marked the boto3 tests as optional in
 Travis so you don't have to worry about them failing if you submit a
 pull request.
 
