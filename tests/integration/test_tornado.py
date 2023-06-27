@@ -220,7 +220,7 @@ def test_unsupported_features_raises_in_future(get_client, tmpdir):
     supported is raised inside the future."""
 
     def callback(chunk):
-        assert False, "Did not expect to be called."
+        raise AssertionError("Did not expect to be called.")
 
     with vcr.use_cassette(str(tmpdir.join("invalid.yaml"))):
         future = get(get_client(), "http://httpbin.org", streaming_callback=callback)
@@ -238,7 +238,7 @@ def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
     supported is not raised if raise_error=False."""
 
     def callback(chunk):
-        assert False, "Did not expect to be called."
+        raise AssertionError("Did not expect to be called.")
 
     with vcr.use_cassette(str(tmpdir.join("invalid.yaml"))):
         response = yield get(

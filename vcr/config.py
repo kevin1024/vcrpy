@@ -88,7 +88,7 @@ class VCR:
         try:
             serializer = self.serializers[serializer_name]
         except KeyError:
-            raise KeyError(f"Serializer {serializer_name} doesn't exist or isn't registered")
+            raise KeyError(f"Serializer {serializer_name} doesn't exist or isn't registered") from None
         return serializer
 
     def _get_matchers(self, matcher_names):
@@ -97,7 +97,7 @@ class VCR:
             for m in matcher_names:
                 matchers.append(self.matchers[m])
         except KeyError:
-            raise KeyError(f"Matcher {m} doesn't exist or isn't registered")
+            raise KeyError(f"Matcher {m} doesn't exist or isn't registered") from None
         return matchers
 
     def use_cassette(self, path=None, **kwargs):

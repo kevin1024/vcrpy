@@ -48,6 +48,7 @@ class Request:
         warnings.warn(
             "Request.add_header is deprecated. Please assign to request.headers instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.headers[key] = value
 

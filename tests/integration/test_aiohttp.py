@@ -397,7 +397,8 @@ def test_cookies_redirect(httpbin_both, httpbin_ssl_context, tmpdir):
                 cookies = session.cookie_jar.filter_cookies(cookies_url)
                 assert cookies["Cookie_1"].value == "Val_1"
                 assert cassette.play_count == 0
-            cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
+
+            assert cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
 
         # -------------------------- Play --------------------------- #
         with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
@@ -407,7 +408,8 @@ def test_cookies_redirect(httpbin_both, httpbin_ssl_context, tmpdir):
                 cookies = session.cookie_jar.filter_cookies(cookies_url)
                 assert cookies["Cookie_1"].value == "Val_1"
                 assert cassette.play_count == 2
-            cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
+
+            assert cassette.requests[1].headers["Cookie"] == "Cookie_1=Val_1"
 
         # Assert that it's ignoring expiration date
         with vcr.use_cassette(tmp, record_mode=vcr.mode.NONE) as cassette:
