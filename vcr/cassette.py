@@ -315,7 +315,7 @@ class Cassette:
         """
         best_matches = []
         request = self._before_record_request(request)
-        for index, (stored_request, response) in enumerate(self.data):
+        for _, (stored_request, _) in enumerate(self.data):
             successes, fails = get_matchers_results(request, stored_request, self._match_on)
             best_matches.append((len(successes), stored_request, successes, fails))
         best_matches.sort(key=lambda t: t[0], reverse=True)
@@ -365,7 +365,7 @@ class Cassette:
 
     def __contains__(self, request):
         """Return whether or not a request has been stored"""
-        for index, response in self._responses(request):
+        for index, _ in self._responses(request):
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 return True
         return False

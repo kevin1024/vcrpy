@@ -66,8 +66,8 @@ class DoAsyncRequest(BaseDoRequest):
     def client(self):
         try:
             return self._client
-        except AttributeError:
-            raise ValueError('To access async client, use "with do_request() as client"')
+        except AttributeError as e:
+            raise ValueError('To access async client, use "with do_request() as client"') from e
 
     def __call__(self, *args, **kwargs):
         if hasattr(self, "_loop"):

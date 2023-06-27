@@ -113,7 +113,7 @@ def make_get_request():
 @mock.patch("vcr.stubs.VCRHTTPResponse")
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
     decorated_function = Cassette.use(path="test")(make_get_request)
-    for i in range(4):
+    for _ in range(4):
         decorated_function()
 
 
@@ -159,7 +159,7 @@ def test_cassette_allow_playback_repeats():
     a = Cassette("test", allow_playback_repeats=True)
     a.append("foo", "bar")
     a.append("other", "resp")
-    for x in range(10):
+    for _ in range(10):
         assert a.play_response("foo") == "bar"
     assert a.play_count == 10
     assert a.all_played is False

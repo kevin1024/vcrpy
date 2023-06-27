@@ -13,8 +13,10 @@ def assert_cassette_has_one_response(cass):
 
 def assert_is_json_bytes(b: bytes):
     assert isinstance(b, bytes)
+
     try:
         json.loads(b.decode("utf-8"))
-    except Exception:
-        assert False
+    except Exception as error:
+        raise AssertionError() from error
+
     assert True

@@ -3,6 +3,7 @@ from urllib.request import urlopen
 import pytest
 
 import vcr
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 
 def test_once_record_mode(tmpdir, httpbin):
@@ -18,7 +19,7 @@ def test_once_record_mode(tmpdir, httpbin):
         # the first time, it's played from the cassette.
         # but, try to access something else from the same cassette, and an
         # exception is raised.
-        with pytest.raises(Exception):
+        with pytest.raises(CannotOverwriteExistingCassetteException):
             urlopen(httpbin.url + "/get").read()
 
 
@@ -94,7 +95,7 @@ def test_new_episodes_record_mode_two_times(tmpdir, httpbin):
         assert urlopen(url).read() == original_second_response
         # now that we are back in once mode, this should raise
         # an error.
-        with pytest.raises(Exception):
+        with pytest.raises(CannotOverwriteExistingCassetteException):
             urlopen(url).read()
 
 
@@ -124,7 +125,7 @@ def test_none_record_mode(tmpdir, httpbin):
     # raise hell.
     testfile = str(tmpdir.join("recordmode.yml"))
     with vcr.use_cassette(testfile, record_mode=vcr.mode.NONE):
-        with pytest.raises(Exception):
+        with pytest.raises(CannotOverwriteExistingCassetteException):
             urlopen(httpbin.url).read()
 
 
@@ -140,5 +141,5 @@ def test_none_record_mode_with_existing_cassette(tmpdir, httpbin):
         urlopen(httpbin.url).read()
         assert cass.play_count == 1
         # but if I try to hit the net, raise an exception.
-        with pytest.raises(Exception):
+        with pytest.raises(CannotOverwriteExistingCassetteException):
             urlopen(httpbin.url + "/get").read()
