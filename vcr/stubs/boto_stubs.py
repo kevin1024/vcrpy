@@ -2,7 +2,7 @@
 
 from boto.https_connection import CertValidatingHTTPSConnection
 
-from ..stubs import VCRHTTPSConnection
+from vcr.stubs import VCRHTTPSConnection
 
 
 class VCRCertValidatingHTTPSConnection(VCRHTTPSConnection):

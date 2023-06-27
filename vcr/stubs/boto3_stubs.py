@@ -2,7 +2,7 @@
 from botocore.awsrequest import AWSHTTPConnection as HTTPConnection
 from botocore.awsrequest import AWSHTTPSConnection as VerifiedHTTPSConnection
 
-from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
+from vcr.stubs import VCRHTTPConnection, VCRHTTPSConnection
 
 
 class VCRRequestsHTTPConnection(VCRHTTPConnection, HTTPConnection):

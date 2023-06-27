@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from ..serialize import deserialize, serialize
+from vcr.serialize import deserialize, serialize
 
 
 class CassetteNotFoundError(FileNotFoundError):

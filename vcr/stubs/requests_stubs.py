@@ -2,7 +2,7 @@
 
 from urllib3.connection import HTTPConnection, VerifiedHTTPSConnection
 
-from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
+from vcr.stubs import VCRHTTPConnection, VCRHTTPSConnection
 
 # urllib3 defines its own HTTPConnection classes, which requests goes ahead and assumes
 # you're using.  It includes some polyfills for newer features missing in older pythons.

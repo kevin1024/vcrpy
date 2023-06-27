@@ -23,6 +23,7 @@ select = [
     "ISC", # flake8-implicit-str-concat
     "PIE", # flake8-pie
     "RUF", # Ruff-specific rules
+    "TID", # flake8-tidy-imports
     "UP",  # pyupgrade
     "W",   # pycodestyle warning
 ]

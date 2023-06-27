@@ -2,7 +2,7 @@
 
 from httplib2 import HTTPConnectionWithTimeout, HTTPSConnectionWithTimeout
 
-from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
+from vcr.stubs import VCRHTTPConnection, VCRHTTPSConnection
 
 
 class VCRHTTPConnectionWithTimeout(VCRHTTPConnection, HTTPConnectionWithTimeout):
