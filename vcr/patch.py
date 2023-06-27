@@ -67,14 +67,6 @@ else:
     _HTTPSConnectionWithTimeout = httplib2.HTTPSConnectionWithTimeout
     _SCHEME_TO_CONNECTION = httplib2.SCHEME_TO_CONNECTION
 
-# Try to save the original types for boto
-try:
-    import boto.https_connection
-except ImportError:  # pragma: no cover
-    pass
-else:
-    _CertValidatingHTTPSConnection = boto.https_connection.CertValidatingHTTPSConnection
-
 # Try to save the original types for Tornado
 try:
     import tornado.simple_httpclient
@@ -126,7 +118,6 @@ class CassettePatcherBuilder:
             self._boto3(),
             self._urllib3(),
             self._httplib2(),
-            self._boto(),
             self._tornado(),
             self._aiohttp(),
             self._httpx(),
@@ -273,17 +264,6 @@ class CassettePatcherBuilder:
                 "http": VCRHTTPConnectionWithTimeout,
                 "https": VCRHTTPSConnectionWithTimeout,
             }
-
-    @_build_patchers_from_mock_triples_decorator
-    def _boto(self):
-        try:
-            import boto.https_connection as cpool
-        except ImportError:  # pragma: no cover
-            pass
-        else:
-            from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
-
-            yield cpool, "CertValidatingHTTPSConnection", VCRCertValidatingHTTPSConnection
 
     @_build_patchers_from_mock_triples_decorator
     def _tornado(self):
@@ -446,13 +426,6 @@ def reset_patchers():
         yield mock.patch.object(cpool, "HTTPConnectionWithTimeout", _HTTPConnectionWithTimeout)
         yield mock.patch.object(cpool, "HTTPSConnectionWithTimeout", _HTTPSConnectionWithTimeout)
         yield mock.patch.object(cpool, "SCHEME_TO_CONNECTION", _SCHEME_TO_CONNECTION)
-
-    try:
-        import boto.https_connection as cpool
-    except ImportError:  # pragma: no cover
-        pass
-    else:
-        yield mock.patch.object(cpool, "CertValidatingHTTPSConnection", _CertValidatingHTTPSConnection)
 
     try:
         import tornado.simple_httpclient as simple
