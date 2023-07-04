@@ -189,7 +189,7 @@ of post data parameters to filter.
 
 .. code:: python
 
-    with my_vcr.use_cassette('test.yml', filter_post_data_parameters=['client_secret']):
+    with my_vcr.use_cassette('test.yml', filter_post_data_parameters=['api_key']):
         requests.post('http://api.com/postdata', data={'api_key': 'secretstring'})
 
 Advanced use of filter_headers, filter_query_parameters and filter_post_data_parameters
