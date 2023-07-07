@@ -63,6 +63,9 @@ boto3_bytes_headers = {
     "Expect": b"100-continue",
     "Content-Length": "21",
 }
+chunked_headers = {
+    "Transfer-Encoding": "chunked",
+}
 
 
 @pytest.mark.parametrize(
@@ -150,6 +153,36 @@ boto3_bytes_headers = {
             # special case for boto3 bytes headers
             request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
             request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
+        ),
+        (
+            # chunked transfer encoding: decoded bytes versus encoded bytes
+            request.Request("POST", "scheme1://host1.test/", b"123456789_123456", chunked_headers),
+            request.Request(
+                "GET",
+                "scheme2://host2.test/",
+                b"10\r\n123456789_123456\r\n0\r\n\r\n",
+                chunked_headers,
+            ),
+        ),
+        (
+            # chunked transfer encoding: bytes iterator versus string iterator
+            request.Request(
+                "POST",
+                "scheme1://host1.test/",
+                iter([b"123456789_", b"123456"]),
+                chunked_headers,
+            ),
+            request.Request("GET", "scheme2://host2.test/", iter(["123456789_", "123456"]), chunked_headers),
+        ),
+        (
+            # chunked transfer encoding: bytes iterator versus single byte iterator
+            request.Request(
+                "POST",
+                "scheme1://host1.test/",
+                iter([b"123456789_", b"123456"]),
+                chunked_headers,
+            ),
+            request.Request("GET", "scheme2://host2.test/", iter(b"123456789_123456"), chunked_headers),
         ),
     ],
 )
