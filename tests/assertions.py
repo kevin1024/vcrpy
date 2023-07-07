@@ -15,7 +15,7 @@ def assert_is_json_bytes(b: bytes):
     assert isinstance(b, bytes)
 
     try:
-        json.loads(b.decode("utf-8"))
+        json.loads(b)
     except Exception as error:
         raise AssertionError() from error
 

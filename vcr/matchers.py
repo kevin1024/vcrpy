@@ -73,11 +73,8 @@ def _header_checker(value, header="Content-Type"):
 
 
 def _transform_json(body):
-    # Request body is always a byte string, but json.loads() wants a text
-    # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
-    # and UTF-32 are also allowed: hmmmmm).
     if body:
-        return json.loads(body.decode("utf-8"))
+        return json.loads(body)
 
 
 _xml_header_checker = _header_checker("text/xml")
