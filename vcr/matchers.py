@@ -3,11 +3,10 @@ import logging
 import urllib
 import xmlrpc.client
 from string import hexdigits
-from typing import List, Set
 
 from .util import read_body
 
-_HEXDIG_CODE_POINTS: Set[int] = {ord(s.encode("ascii")) for s in hexdigits}
+_HEXDIG_CODE_POINTS: set[int] = {ord(s.encode("ascii")) for s in hexdigits}
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +108,7 @@ def _dechunk(body):
     CHUNK_GAP = b"\r\n"
     BODY_LEN: int = len(body)
 
-    chunks: List[bytes] = []
+    chunks: list[bytes] = []
     pos: int = 0
 
     while True:
