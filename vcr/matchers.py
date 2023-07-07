@@ -49,11 +49,17 @@ def raw_body(r1, r2):
 
 
 def body(r1, r2):
-    transformer = _get_transformer(r1)
-    r2_transformer = _get_transformer(r2)
-    if transformer != r2_transformer:
-        transformer = _identity
-    if transformer(read_body(r1)) != transformer(read_body(r2)):
+    transformers = list(_get_transformers(r1))
+    if transformers != list(_get_transformers(r2)):
+        transformers = []
+
+    b1 = read_body(r1)
+    b2 = read_body(r2)
+    for transform in transformers:
+        b1 = transform(b1)
+        b2 = transform(b2)
+
+    if b1 != b2:
         raise AssertionError
 
 
@@ -92,16 +98,10 @@ _checker_transformer_pairs = (
 )
 
 
-def _identity(x):
-    return x
-
-
-def _get_transformer(request):
+def _get_transformers(request):
     for checker, transformer in _checker_transformer_pairs:
         if checker(request.headers):
-            return transformer
-    else:
-        return _identity
+            yield transformer
 
 
 def requests_match(r1, r2, matchers):
