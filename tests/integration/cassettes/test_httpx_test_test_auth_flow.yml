@@ -1,0 +1,155 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      host:
+      - mockbin.org
+      user-agent:
+      - python-httpx/0.24.1
+    method: GET
+    uri: https://mockbin.org/headers?foo=bar
+  response:
+    content: "{\n  \"headers\": [\n    {\n      \"name\": \"host\",\n      \"value\":
+      \"mockbin.org\"\n    },\n    {\n      \"name\": \"connection\",\n      \"value\":
+      \"close\"\n    },\n    {\n      \"name\": \"accept-encoding\",\n      \"value\":
+      \"gzip\"\n    },\n    {\n      \"name\": \"x-forwarded-for\",\n      \"value\":
+      \"188.24.111.114, 162.158.19.72\"\n    },\n    {\n      \"name\": \"cf-ray\",\n
+      \     \"value\": \"7e4c4af4c861989d-OTP\"\n    },\n    {\n      \"name\": \"x-forwarded-proto\",\n
+      \     \"value\": \"http\"\n    },\n    {\n      \"name\": \"cf-visitor\",\n
+      \     \"value\": \"{\\\"scheme\\\":\\\"https\\\"}\"\n    },\n    {\n      \"name\":
+      \"accept\",\n      \"value\": \"*/*\"\n    },\n    {\n      \"name\": \"user-agent\",\n
+      \     \"value\": \"python-httpx/0.24.1\"\n    },\n    {\n      \"name\": \"cdn-loop\",\n
+      \     \"value\": \"cloudflare\"\n    },\n    {\n      \"name\": \"cf-connecting-ip\",\n
+      \     \"value\": \"188.24.111.114\"\n    },\n    {\n      \"name\": \"x-request-id\",\n
+      \     \"value\": \"30cd4a6f-b1e6-4100-b7b3-5cfe88bbc75c\"\n    },\n    {\n      \"name\":
+      \"x-forwarded-port\",\n      \"value\": \"80\"\n    },\n    {\n      \"name\":
+      \"via\",\n      \"value\": \"1.1 vegur\"\n    },\n    {\n      \"name\": \"connect-time\",\n
+      \     \"value\": \"0\"\n    },\n    {\n      \"name\": \"x-request-start\",\n
+      \     \"value\": \"1689028662710\"\n    },\n    {\n      \"name\": \"total-route-time\",\n
+      \     \"value\": \"0\"\n    }\n  ],\n  \"headersSize\": 507\n}"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Headers:
+      - host,connection,accept-encoding,x-forwarded-for,cf-ray,x-forwarded-proto,cf-visitor,accept,user-agent,cdn-loop,cf-connecting-ip,x-request-id,x-forwarded-port,via,connect-time,x-request-start,total-route-time
+      Access-Control-Allow-Methods:
+      - GET
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 7e4c4af4c861989d-OTP
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 10 Jul 2023 22:37:42 GMT
+      Etag:
+      - W/"4f6-96wYR+WtOzQwNmsxI2xsQ0itcVk"
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=3Wn4%2BfN7FpKt461dFo1USOwFRcoH5KBIxOkbPEe7zTN1E56LjvSVlMi57x%2FN6NgAHhUrSqrQdh5JizM%2BvQ%2FFydbxBnrtca6GwAH4VnfGO67kUppgOa%2BVEz%2FVZkDAsA%3D%3D"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept, Accept-Encoding
+      Via:
+      - 1.1 vegur
+      X-Powered-By:
+      - mockbin
+      alt-svc:
+      - h3=":443"; ma=86400
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      foobar:
+      - somethingsomething
+      host:
+      - mockbin.org
+      user-agent:
+      - python-httpx/0.24.1
+    method: GET
+    uri: https://mockbin.org/headers
+  response:
+    content: "{\n  \"headers\": [\n    {\n      \"name\": \"host\",\n      \"value\":
+      \"mockbin.org\"\n    },\n    {\n      \"name\": \"connection\",\n      \"value\":
+      \"close\"\n    },\n    {\n      \"name\": \"accept-encoding\",\n      \"value\":
+      \"gzip\"\n    },\n    {\n      \"name\": \"x-forwarded-for\",\n      \"value\":
+      \"188.24.111.114, 162.158.19.71\"\n    },\n    {\n      \"name\": \"cf-ray\",\n
+      \     \"value\": \"7e4c4af669c6989d-OTP\"\n    },\n    {\n      \"name\": \"x-forwarded-proto\",\n
+      \     \"value\": \"http\"\n    },\n    {\n      \"name\": \"cf-visitor\",\n
+      \     \"value\": \"{\\\"scheme\\\":\\\"https\\\"}\"\n    },\n    {\n      \"name\":
+      \"accept\",\n      \"value\": \"*/*\"\n    },\n    {\n      \"name\": \"user-agent\",\n
+      \     \"value\": \"python-httpx/0.24.1\"\n    },\n    {\n      \"name\": \"foobar\",\n
+      \     \"value\": \"somethingsomething\"\n    },\n    {\n      \"name\": \"cdn-loop\",\n
+      \     \"value\": \"cloudflare\"\n    },\n    {\n      \"name\": \"cf-connecting-ip\",\n
+      \     \"value\": \"188.24.111.114\"\n    },\n    {\n      \"name\": \"x-request-id\",\n
+      \     \"value\": \"3d014b63-7b92-40f3-b7a1-416f8176bd91\"\n    },\n    {\n      \"name\":
+      \"x-forwarded-port\",\n      \"value\": \"80\"\n    },\n    {\n      \"name\":
+      \"via\",\n      \"value\": \"1.1 vegur\"\n    },\n    {\n      \"name\": \"connect-time\",\n
+      \     \"value\": \"0\"\n    },\n    {\n      \"name\": \"x-request-start\",\n
+      \     \"value\": \"1689028662976\"\n    },\n    {\n      \"name\": \"total-route-time\",\n
+      \     \"value\": \"0\"\n    }\n  ],\n  \"headersSize\": 527\n}"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Headers:
+      - host,connection,accept-encoding,x-forwarded-for,cf-ray,x-forwarded-proto,cf-visitor,accept,user-agent,foobar,cdn-loop,cf-connecting-ip,x-request-id,x-forwarded-port,via,connect-time,x-request-start,total-route-time
+      Access-Control-Allow-Methods:
+      - GET
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 7e4c4af669c6989d-OTP
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 10 Jul 2023 22:37:43 GMT
+      Etag:
+      - W/"53f-HCiVPpHhNS0OvxIv/sdjrKK3RBU"
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=GFYfXYWls15MeC2cw7WbFcEZh8XRTw4BYV2MzDlpbyvD8oPXPs8eulWKDohu4F%2FtYHAOGW79g%2BCad9V1XfTKFrDZIMnS0nHGFDfxikSyjM9rOfN1%2FK%2BIl2dUUobI4A%3D%3D"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept, Accept-Encoding
+      Via:
+      - 1.1 vegur
+      X-Powered-By:
+      - mockbin
+      alt-svc:
+      - h3=":443"; ma=86400
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

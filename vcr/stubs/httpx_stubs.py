@@ -141,6 +141,7 @@ async def _async_vcr_send(cassette, real_send, *args, **kwargs):
         return response
 
     real_response = await real_send(*args, **kwargs)
+    await real_response.aread()
     return _record_responses(cassette, vcr_request, real_response)
 
 
@@ -160,6 +161,7 @@ def _sync_vcr_send(cassette, real_send, *args, **kwargs):
         return response
 
     real_response = real_send(*args, **kwargs)
+    real_response.read()
     return _record_responses(cassette, vcr_request, real_response)
 
 

@@ -238,6 +238,39 @@ def test_behind_proxy(do_request):
         assert cassette_response.request.url == response.request.url
 
 
+def test_auth_flow(do_request):
+    yml = (
+        os.path.dirname(os.path.realpath(__file__)) + "/cassettes/" + "test_httpx_test_test_auth_flow.yml"
+    )
+    url = "https://mockbin.org/headers"
+    client = None
+
+    class AuthWithExtraRequest(httpx.Auth):
+        def auth_flow(self, request):
+            response = yield client.client.build_request("GET", url, params={'foo': 'bar'})
+            assert response
+            request.headers["Foobar"] = "somethingsomething"
+            yield request
+
+    with vcr.use_cassette(yml):
+        with do_request() as client:
+            client("GET", url, auth=AuthWithExtraRequest())
+
+    with vcr.use_cassette(yml) as cassette:
+        with do_request() as client:
+            cassette_response = client("GET", url, auth=AuthWithExtraRequest())
+        assert str(cassette_response.request.url) == url
+        assert cassette.play_count == 2
+
+        headers = cassette_response.json()['headers']
+        for header in headers:
+            if header["name"] == "foobar":
+                assert header["value"] == "somethingsomething"
+                break
+        else:
+            pytest.fail(f"Did not find Foobar header in {headers}")
+
+
 @pytest.mark.online
 def test_cookies(tmpdir, mockbin, do_request):
     def client_cookies(client):
