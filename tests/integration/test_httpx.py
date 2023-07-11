@@ -239,15 +239,13 @@ def test_behind_proxy(do_request):
 
 
 def test_auth_flow(do_request):
-    yml = (
-        os.path.dirname(os.path.realpath(__file__)) + "/cassettes/" + "test_httpx_test_test_auth_flow.yml"
-    )
+    yml = os.path.dirname(os.path.realpath(__file__)) + "/cassettes/" + "test_httpx_test_test_auth_flow.yml"
     url = "https://mockbin.org/headers"
     client = None
 
     class AuthWithExtraRequest(httpx.Auth):
         def auth_flow(self, request):
-            response = yield client.client.build_request("GET", url, params={'foo': 'bar'})
+            response = yield client.client.build_request("GET", url, params={"foo": "bar"})
             assert response
             request.headers["Foobar"] = "somethingsomething"
             yield request
@@ -262,7 +260,7 @@ def test_auth_flow(do_request):
         assert str(cassette_response.request.url) == url
         assert cassette.play_count == 2
 
-        headers = cassette_response.json()['headers']
+        headers = cassette_response.json()["headers"]
         for header in headers:
             if header["name"] == "foobar":
                 assert header["value"] == "somethingsomething"
