@@ -95,7 +95,7 @@ def replace_post_data_parameters(request, replacements):
                         new_body[k] = rv
             request.body = new_body
         elif request.headers.get("Content-Type") == "application/json":
-            json_data = json.loads(request.body.decode("utf-8"))
+            json_data = json.loads(request.body)
             for k, rv in replacements.items():
                 if k in json_data:
                     ov = json_data.pop(k)

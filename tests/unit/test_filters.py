@@ -197,7 +197,7 @@ def test_replace_json_post_data_parameters():
             ("six", "doesntexist"),
         ],
     )
-    request_data = json.loads(request.body.decode("utf-8"))
+    request_data = json.loads(request.body)
     expected_data = json.loads('{"one": "keep", "three": "tada", "four": "SHOUT"}')
     assert request_data == expected_data
 
@@ -208,8 +208,8 @@ def test_remove_json_post_data_parameters():
     request = Request("POST", "http://google.com", body, {})
     request.headers["Content-Type"] = "application/json"
     remove_post_data_parameters(request, ["id"])
-    request_body_json = json.loads(request.body.decode("utf-8"))
-    expected_json = json.loads(b'{"foo": "bar", "baz": "qux"}'.decode("utf-8"))
+    request_body_json = json.loads(request.body)
+    expected_json = json.loads(b'{"foo": "bar", "baz": "qux"}')
     assert request_body_json == expected_json
 
 
