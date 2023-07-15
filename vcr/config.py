@@ -6,8 +6,6 @@ import types
 from collections import abc as collections_abc
 from pathlib import Path
 
-import six
-
 from . import filters, matchers
 from .cassette import Cassette
 from .persisters.filesystem import FilesystemPersister
@@ -256,5 +254,5 @@ class VCR:
 
     def test_case(self, predicate=None):
         predicate = predicate or self.is_test_method
-        # TODO: Remove this reference to `six` in favor of the Python3 equivalent
-        return six.with_metaclass(auto_decorate(self.use_cassette, predicate))
+        metaclass = auto_decorate(self.use_cassette, predicate)
+        return metaclass("temporary_class", (), {})
