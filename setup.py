@@ -45,7 +45,6 @@ class PyTest(TestCommand):
 install_requires = [
     "PyYAML",
     "wrapt",
-    "six>=1.5",
     "yarl",
     # Support for urllib3 >=2 needs Python >=3.10
     # so we need to block urllib3 >=2 for Python <3.10 for now.
