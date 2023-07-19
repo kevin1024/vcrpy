@@ -440,3 +440,19 @@ def test_not_allow_redirects(tmpdir, mockbin):
         assert response.url.path == "/redirect/308/5"
         assert response.status == 308
         assert cassette.play_count == 1
+
+
+def test_filter_query_parameters(tmpdir, httpbin):
+    url = httpbin + "?password=secret"
+    path = str(tmpdir.join("query_param_filter.yaml"))
+
+    with vcr.use_cassette(path, filter_query_parameters=["password"]) as cassette:
+        get(url)
+
+    assert "password" not in cassette.requests[0].url
+    assert "secret" not in cassette.requests[0].url
+
+    with open(path) as f:
+        cassette_content = f.read()
+        assert "password" not in cassette_content
+        assert "secret" not in cassette_content
