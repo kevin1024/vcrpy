@@ -18,7 +18,7 @@ The following HTTP libraries are supported:
 -  ``boto3``
 -  ``http.client``
 -  ``httplib2``
--  ``requests`` (both 1.x and 2.x versions)
+-  ``requests`` (>=2.16.2 versions)
 -  ``tornado.httpclient``
 -  ``urllib2``
 -  ``urllib3``
