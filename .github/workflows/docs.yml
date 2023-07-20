@@ -1,0 +1,23 @@
+name: Validate docs
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      
+      - name: Install build dependencies
+        run: pip install -r docs/requirements.txt
+      - name: Rendering HTML documentation
+        run: sphinx-build -b html docs/ html
+      - name: Inspect html rendered
+        run: cat html/index.html

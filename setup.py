@@ -63,7 +63,7 @@ tests_require = [
     "pytest",
     "pytest-aiohttp",
     "pytest-httpbin",
-    "requests",
+    "requests>=2.16.2",
     "tornado",
     # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
     # this pin and the dependency itself can be removed, provided
