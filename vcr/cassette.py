@@ -4,6 +4,7 @@ import copy
 import inspect
 import logging
 import sys
+from asyncio import iscoroutinefunction
 
 import wrapt
 
@@ -15,14 +16,6 @@ from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, F
 from .record_mode import RecordMode
 from .serializers import yamlserializer
 from .util import partition_dict
-
-try:
-    from asyncio import iscoroutinefunction
-except ImportError:
-
-    def iscoroutinefunction(*args, **kwargs):
-        return False
-
 
 log = logging.getLogger(__name__)
 
