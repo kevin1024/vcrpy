@@ -55,7 +55,6 @@ def test_cassette_append():
     a.append("foo", "bar")
     assert a.requests == ["foo"]
     assert a.responses == ["bar"]
-    assert a.play_count == 1
 
 
 def test_cassette_len():
@@ -73,7 +72,6 @@ def _mock_requests_match(request1, request2, matchers):
 def test_cassette_contains():
     a = Cassette("test")
     a.append("foo", "bar")
-    a.rewind()
     assert "foo" in a
 
 
@@ -95,7 +93,6 @@ def test_cassette_get_missing_response():
 def test_cassette_cant_read_same_request_twice():
     a = Cassette("test")
     a.append("foo", "bar")
-    a.rewind()
     a.play_response("foo")
     with pytest.raises(UnhandledHTTPRequestError):
         a.play_response("foo")
@@ -146,7 +143,6 @@ def test_arg_getter_functionality():
 def test_cassette_not_all_played():
     a = Cassette("test")
     a.append("foo", "bar")
-    a.rewind()
     assert not a.all_played
 
 
@@ -154,7 +150,6 @@ def test_cassette_not_all_played():
 def test_cassette_all_played():
     a = Cassette("test")
     a.append("foo", "bar")
-    a.rewind()
     a.play_response("foo")
     assert a.all_played
 
@@ -164,7 +159,6 @@ def test_cassette_allow_playback_repeats():
     a = Cassette("test", allow_playback_repeats=True)
     a.append("foo", "bar")
     a.append("other", "resp")
-    a.rewind()
     for _ in range(10):
         assert a.play_response("foo") == "bar"
     assert a.play_count == 10
@@ -189,7 +183,6 @@ def test_cassette_allow_playback_repeats():
 def test_cassette_rewound():
     a = Cassette("test")
     a.append("foo", "bar")
-    a.rewind()
     a.play_response("foo")
     assert a.all_played
 

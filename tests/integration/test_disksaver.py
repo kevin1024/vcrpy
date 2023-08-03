@@ -20,7 +20,7 @@ def test_disk_saver_nowrite(tmpdir, mockbin_request_url):
     fname = str(tmpdir.join("synopsis.yaml"))
     with vcr.use_cassette(fname) as cass:
         urlopen(mockbin_request_url).read()
-        assert cass.play_count == 1
+        assert cass.play_count == 0
     last_mod = os.path.getmtime(fname)
 
     with vcr.use_cassette(fname) as cass:
@@ -41,7 +41,7 @@ def test_disk_saver_write(tmpdir, mockbin_request_url):
     fname = str(tmpdir.join("synopsis.yaml"))
     with vcr.use_cassette(fname) as cass:
         urlopen(mockbin_request_url).read()
-        assert cass.play_count == 1
+        assert cass.play_count == 0
     last_mod = os.path.getmtime(fname)
 
     # Make sure at least 1 second passes, otherwise sometimes
@@ -51,7 +51,7 @@ def test_disk_saver_write(tmpdir, mockbin_request_url):
     with vcr.use_cassette(fname, record_mode=vcr.mode.ANY) as cass:
         urlopen(mockbin_request_url).read()
         urlopen(mockbin_request_url + "/get").read()
-        assert cass.play_count == 2
+        assert cass.play_count == 1
         assert cass.dirty
     last_mod2 = os.path.getmtime(fname)
 
