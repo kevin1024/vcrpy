@@ -180,7 +180,7 @@ def test_testcase_playback(tmpdir):
     test = run_testcase(MyTest)[0][0]
     assert b"illustrative examples" in test.response
     assert len(test.cassette.requests) == 1
-    assert test.cassette.play_count == 0
+    assert test.cassette.play_count == 1
 
     # Second test reads from cassette.
 
