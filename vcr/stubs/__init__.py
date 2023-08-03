@@ -389,6 +389,8 @@ class VCRHTTPConnection(VCRConnection):
 
     _baseclass = HTTPConnection
     _protocol = "http"
+    debuglevel = _baseclass.debuglevel
+    _http_vsn = _baseclass._http_vsn
 
 
 class VCRHTTPSConnection(VCRConnection):
@@ -397,3 +399,5 @@ class VCRHTTPSConnection(VCRConnection):
     _baseclass = HTTPSConnection
     _protocol = "https"
     is_verified = True
+    debuglevel = _baseclass.debuglevel
+    _http_vsn = _baseclass._http_vsn
