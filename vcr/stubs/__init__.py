@@ -397,3 +397,4 @@ class VCRHTTPSConnection(VCRConnection):
     _baseclass = HTTPSConnection
     _protocol = "https"
     is_verified = True
+    ssl_context = None
