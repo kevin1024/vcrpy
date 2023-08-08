@@ -3,8 +3,9 @@ import asyncio
 import functools
 import json
 import logging
+from collections.abc import Mapping
 from http.cookies import CookieError, Morsel, SimpleCookie
-from typing import Mapping, Union
+from typing import Union
 
 from aiohttp import ClientConnectionError, ClientResponse, CookieJar, RequestInfo, hdrs, streams
 from aiohttp.helpers import strip_auth_from_url

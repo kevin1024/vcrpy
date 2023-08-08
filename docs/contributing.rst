@@ -96,11 +96,11 @@ The test suite is pretty big and slow, but you can tell tox to only run specific
 
     tox -e {pyNN}-{HTTP_LIBRARY} -- <pytest flags passed through>
 
-    tox -e py38-requests -- -v -k "'test_status_code or test_gzip'"
-    tox -e py38-requests -- -v --last-failed
+    tox -e py39-requests -- -v -k "'test_status_code or test_gzip'"
+    tox -e py39-requests -- -v --last-failed
 
 This will run only tests that look like ``test_status_code`` or
-``test_gzip`` in the test suite, and only in the python 3.8 environment
+``test_gzip`` in the test suite, and only in the python 3.9 environment
 that has ``requests`` installed.
 
 Also, in order for the boto3 tests to run, you will need an AWS key.
@@ -130,17 +130,17 @@ in this example::
     pip3 install tox tox-pyenv
 
     # Install supported versions (at time of writing), this does not activate them
-    pyenv install 3.8.0 pypy3.8
+    pyenv install 3.9.0 pypy3.8
 
     # This activates them
-    pyenv local 3.8.0 pypy3.8
+    pyenv local 3.9.0 pypy3.8
 
     # Run the whole test suite
     tox
 
     # Run the whole test suite or just part of it
     tox -e lint
-    tox -e py38-requests
+    tox -e py39-requests
 
 
 Troubleshooting on MacOSX

@@ -27,7 +27,7 @@ select = [
     "W",   # pycodestyle warning
 ]
 line-length = 110
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.isort]
 known-first-party = [ "vcr" ]
