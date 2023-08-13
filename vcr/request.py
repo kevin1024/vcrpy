@@ -41,7 +41,7 @@ class Request:
     @body.setter
     def body(self, value):
         if isinstance(value, str):
-            value = value.encode("utf-8")
+            value = value.encode("utf-8", errors="surrogateescape")
         self._body = value
 
     def add_header(self, key, value):
