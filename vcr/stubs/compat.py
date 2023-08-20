@@ -12,7 +12,7 @@ def get_header(message, name):
 
 
 def get_header_items(message):
-    for (key, values) in get_headers(message):
+    for key, values in get_headers(message):
         for value in values:
             yield key, value
 

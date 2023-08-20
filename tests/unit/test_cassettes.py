@@ -21,13 +21,29 @@ def test_cassette_load(tmpdir):
         yaml.dump(
             {
                 "interactions": [
-                    {"request": {"body": "", "uri": "foo", "method": "GET", "headers": {}}, "response": "bar"}
-                ]
-            }
-        )
+                    {
+                        "request": {"body": "", "uri": "foo", "method": "GET", "headers": {}},
+                        "response": "bar",
+                    },
+                ],
+            },
+        ),
     )
     a_cassette = Cassette.load(path=str(a_file))
     assert len(a_cassette) == 1
+
+
+def test_cassette_load_nonexistent():
+    a_cassette = Cassette.load(path="something/nonexistent.yml")
+    assert len(a_cassette) == 0
+
+
+def test_cassette_load_invalid_encoding(tmpdir):
+    a_file = tmpdir.join("invalid_encoding.yml")
+    with open(a_file, "wb") as fd:
+        fd.write(b"\xda")
+    a_cassette = Cassette.load(path=str(a_file))
+    assert len(a_cassette) == 0
 
 
 def test_cassette_not_played():
@@ -98,7 +114,7 @@ def make_get_request():
 @mock.patch("vcr.stubs.VCRHTTPResponse")
 def test_function_decorated_with_use_cassette_can_be_invoked_multiple_times(*args):
     decorated_function = Cassette.use(path="test")(make_get_request)
-    for i in range(4):
+    for _ in range(4):
         decorated_function()
 
 
@@ -144,7 +160,7 @@ def test_cassette_allow_playback_repeats():
     a = Cassette("test", allow_playback_repeats=True)
     a.append("foo", "bar")
     a.append("other", "resp")
-    for x in range(10):
+    for _ in range(10):
         assert a.play_response("foo") == "bar"
     assert a.play_count == 10
     assert a.all_played is False
@@ -206,7 +222,7 @@ def test_nesting_cassette_context_managers(*args):
     with contextlib.ExitStack() as exit_stack:
         first_cassette = exit_stack.enter_context(Cassette.use(path="test"))
         exit_stack.enter_context(
-            mock.patch.object(first_cassette, "play_response", return_value=first_response)
+            mock.patch.object(first_cassette, "play_response", return_value=first_response),
         )
         assert_get_response_body_is("first_response")
 

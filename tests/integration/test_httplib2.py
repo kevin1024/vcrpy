@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Integration tests with httplib2"""
 from urllib.parse import urlencode
 
@@ -56,6 +55,7 @@ def test_response_headers(tmpdir, httpbin_both):
         assert set(headers) == set(resp.items())
 
 
+@pytest.mark.online
 def test_effective_url(tmpdir):
     """Ensure that the effective_url is captured"""
     url = "http://mockbin.org/redirect/301"

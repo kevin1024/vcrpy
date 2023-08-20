@@ -5,9 +5,9 @@ from xmlrpc.server import SimpleXMLRPCServer
 
 import pytest
 
-requests = pytest.importorskip("requests")
+import vcr
 
-import vcr  # NOQA
+requests = pytest.importorskip("requests")
 
 
 def test_domain_redirect():
@@ -52,6 +52,7 @@ def test_flickr_multipart_upload(httpbin, tmpdir):
         assert cass.play_count == 1
 
 
+@pytest.mark.online
 def test_flickr_should_respond_with_200(tmpdir):
     testfile = str(tmpdir.join("flickr.yml"))
     with vcr.use_cassette(testfile):
@@ -64,11 +65,13 @@ def test_cookies(tmpdir, httpbin):
     with vcr.use_cassette(testfile):
         s = requests.Session()
         s.get(httpbin.url + "/cookies/set?k1=v1&k2=v2")
+        assert s.cookies.keys() == ["k1", "k2"]
 
         r2 = s.get(httpbin.url + "/cookies")
-        assert len(r2.json()["cookies"]) == 2
+        assert sorted(r2.json()["cookies"].keys()) == ["k1", "k2"]
 
 
+@pytest.mark.online
 def test_amazon_doctype(tmpdir):
     # amazon gzips its homepage.  For some reason, in requests 2.7, it's not
     # getting gunzipped.

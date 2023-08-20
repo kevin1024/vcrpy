@@ -28,7 +28,6 @@ class VCRHTTPSConnectionWithTimeout(VCRHTTPSConnection, HTTPSConnectionWithTimeo
     _baseclass = HTTPSConnectionWithTimeout
 
     def __init__(self, *args, **kwargs):
-
         # Delete the keyword arguments that HTTPSConnection would not recognize
         safe_keys = {
             "host",

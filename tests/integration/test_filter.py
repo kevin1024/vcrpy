@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import pytest
-from assertions import assert_cassette_has_one_response, assert_is_json
+from assertions import assert_cassette_has_one_response, assert_is_json_bytes
 
 import vcr
 
@@ -45,13 +45,18 @@ def test_filter_basic_auth(tmpdir, httpbin):
 
 
 def test_filter_querystring(tmpdir, httpbin):
-    url = httpbin.url + "/?foo=bar"
+    url = httpbin.url + "/?password=secret"
     cass_file = str(tmpdir.join("filter_qs.yaml"))
-    with vcr.use_cassette(cass_file, filter_query_parameters=["foo"]):
+    with vcr.use_cassette(cass_file, filter_query_parameters=["password"]):
         urlopen(url)
-    with vcr.use_cassette(cass_file, filter_query_parameters=["foo"]) as cass:
+    with vcr.use_cassette(cass_file, filter_query_parameters=["password"]) as cass:
         urlopen(url)
-        assert "foo" not in cass.requests[0].url
+        assert "password" not in cass.requests[0].url
+        assert "secret" not in cass.requests[0].url
+    with open(cass_file) as f:
+        cassette_content = f.read()
+        assert "password" not in cassette_content
+        assert "secret" not in cassette_content
 
 
 def test_filter_post_data(tmpdir, httpbin):
@@ -105,7 +110,7 @@ def test_decompress_gzip(tmpdir, httpbin):
     with vcr.use_cassette(cass_file) as cass:
         decoded_response = urlopen(url).read()
         assert_cassette_has_one_response(cass)
-    assert_is_json(decoded_response)
+    assert_is_json_bytes(decoded_response)
 
 
 def test_decomptess_empty_body(tmpdir, httpbin):
@@ -129,7 +134,7 @@ def test_decompress_deflate(tmpdir, httpbin):
     with vcr.use_cassette(cass_file) as cass:
         decoded_response = urlopen(url).read()
         assert_cassette_has_one_response(cass)
-    assert_is_json(decoded_response)
+    assert_is_json_bytes(decoded_response)
 
 
 def test_decompress_regular(tmpdir, httpbin):
@@ -141,4 +146,25 @@ def test_decompress_regular(tmpdir, httpbin):
     with vcr.use_cassette(cass_file) as cass:
         resp = urlopen(url).read()
         assert_cassette_has_one_response(cass)
-    assert_is_json(resp)
+    assert_is_json_bytes(resp)
+
+
+def test_before_record_request_corruption(tmpdir, httpbin):
+    """Modifying request in before_record_request should not affect outgoing request"""
+
+    def before_record(request):
+        request.headers.clear()
+        request.body = b""
+        return request
+
+    req = Request(
+        httpbin.url + "/post",
+        data=urlencode({"test": "exists"}).encode(),
+        headers={"X-Test": "exists"},
+    )
+    cass_file = str(tmpdir.join("modified_response.yaml"))
+    with vcr.use_cassette(cass_file, before_record_request=before_record):
+        resp = json.loads(urlopen(req).read())
+
+    assert resp["headers"]["X-Test"] == "exists"
+    assert resp["form"]["test"] == "exists"

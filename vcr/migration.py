@@ -7,7 +7,7 @@ It merges and deletes the request obsolete keys (protocol, host, port, path)
 into new 'uri' key.
 Usage::
 
-    python -m vcr.migration PATH
+    python3 -m vcr.migration PATH
 
 The PATH can be path to the directory with cassettes or cassette itself
 """
@@ -55,7 +55,7 @@ def build_uri(**parts):
     port = parts["port"]
     scheme = parts["protocol"]
     default_port = {"https": 443, "http": 80}[scheme]
-    parts["port"] = ":{}".format(port) if port != default_port else ""
+    parts["port"] = f":{port}" if port != default_port else ""
     return "{protocol}://{host}{port}{path}".format(**parts)
 
 
@@ -92,7 +92,7 @@ def migrate_json(in_fp, out_fp):
 
 
 def _list_of_tuples_to_dict(fs):
-    return {k: v for k, v in fs[0]}
+    return dict(fs[0])
 
 
 def _already_migrated(data):
@@ -118,7 +118,7 @@ def migrate(file_path, migration_fn):
     # because we assume that original files can be reverted
     # we will try to copy the content. (os.rename not needed)
     with tempfile.TemporaryFile(mode="w+") as out_fp:
-        with open(file_path, "r") as in_fp:
+        with open(file_path) as in_fp:
             if not migration_fn(in_fp, out_fp):
                 return False
         with open(file_path, "w") as in_fp:
@@ -130,7 +130,7 @@ def migrate(file_path, migration_fn):
 def try_migrate(path):
     if path.endswith(".json"):
         return migrate(path, migrate_json)
-    elif path.endswith(".yaml") or path.endswith(".yml"):
+    elif path.endswith((".yaml", ".yml")):
         return migrate(path, migrate_yml)
     return False
 
@@ -138,7 +138,7 @@ def try_migrate(path):
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
-            "Please provide path to cassettes directory or file. " "Usage: python -m vcr.migration PATH"
+            "Please provide path to cassettes directory or file. Usage: python3 -m vcr.migration PATH",
         )
 
     path = sys.argv[1]
@@ -150,7 +150,7 @@ def main():
     for file_path in files:
         migrated = try_migrate(file_path)
         status = "OK" if migrated else "FAIL"
-        sys.stderr.write("[{}] {}\n".format(status, file_path))
+        sys.stderr.write(f"[{status}] {file_path}\n")
     sys.stderr.write("Done.\n")
 
 

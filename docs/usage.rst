@@ -4,11 +4,11 @@ Usage
 .. code:: python
 
     import vcr
-    import urllib
+    import urllib.request
 
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
         response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
-        assert 'Example domains' in response
+        assert b'Example domains' in response
 
 Run this test once, and VCR.py will record the HTTP request to
 ``fixtures/vcr_cassettes/synopsis.yaml``. Run it again, and VCR.py will
@@ -26,7 +26,7 @@ look like this:
     @vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml')
     def test_iana():
         response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
-        assert 'Example domains' in response
+        assert b'Example domains' in response
 
 When using the decorator version of ``use_cassette``, it is possible to
 omit the path to the cassette file.
@@ -36,7 +36,7 @@ omit the path to the cassette file.
     @vcr.use_cassette()
     def test_iana():
         response = urllib.request.urlopen('http://www.iana.org/domains/reserved').read()
-        assert 'Example domains' in response
+        assert b'Example domains' in response
 
 In this case, the cassette file will be given the same name as the test
 function, and it will be placed in the same directory as the file in
@@ -92,9 +92,73 @@ all
 Unittest Integration
 --------------------
 
-While it's possible to use the context manager or decorator forms with unittest,
-there's also a ``VCRTestCase`` provided separately by `vcrpy-unittest
-<https://github.com/agriffis/vcrpy-unittest>`__.
+Inherit from ``VCRTestCase`` for automatic recording and playback of HTTP
+interactions.
+
+.. code:: python
+
+    from vcr.unittest import VCRTestCase
+    import requests
+
+    class MyTestCase(VCRTestCase):
+       def test_something(self):
+           response = requests.get('http://example.com')
+
+Similar to how VCR.py returns the cassette from the context manager,
+``VCRTestCase`` makes the cassette available as ``self.cassette``:
+
+.. code:: python
+
+    self.assertEqual(len(self.cassette), 1)
+    self.assertEqual(self.cassette.requests[0].uri, 'http://example.com')
+
+By default cassettes will be placed in the ``cassettes`` subdirectory next to the
+test, named according to the test class and method. For example, the above test
+would read from and write to ``cassettes/MyTestCase.test_something.yaml``
+
+The configuration can be modified by overriding methods on your subclass:
+``_get_vcr_kwargs``, ``_get_cassette_library_dir`` and ``_get_cassette_name``.
+To modify the ``VCR`` object after instantiation, for example to add a matcher,
+you can hook on ``_get_vcr``, for example:
+
+.. code:: python
+
+    class MyTestCase(VCRTestCase):
+        def _get_vcr(self, **kwargs):
+            myvcr = super(MyTestCase, self)._get_vcr(**kwargs)
+            myvcr.register_matcher('mymatcher', mymatcher)
+            myvcr.match_on = ['mymatcher']
+            return myvcr
+
+See
+`the source
+<https://github.com/kevin1024/vcrpy/blob/master/vcr/unittest.py>`__
+for the default implementations of these methods.
+
+If you implement a ``setUp`` method on your test class then make sure to call
+the parent version ``super().setUp()`` in your own in order to continue getting
+the cassettes produced.
+
+VCRMixin
+~~~~~~~~
+
+In case inheriting from ``VCRTestCase`` is difficult because of an existing
+class hierarchy containing tests in the base classes, inherit from ``VCRMixin``
+instead.
+
+.. code:: python
+
+    from vcr.unittest import VCRMixin
+    import requests
+    import unittest
+
+    class MyTestMixin(VCRMixin):
+       def test_something(self):
+           response = requests.get(self.url)
+
+    class MyTestCase(MyTestMixin, unittest.TestCase):
+        url = 'http://example.com'
+
 
 Pytest Integration
 ------------------

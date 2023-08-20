@@ -46,8 +46,9 @@ class Request:
 
     def add_header(self, key, value):
         warnings.warn(
-            "Request.add_header is deprecated. " "Please assign to request.headers instead.",
+            "Request.add_header is deprecated. Please assign to request.headers instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.headers[key] = value
 
@@ -90,7 +91,7 @@ class Request:
         return self.scheme
 
     def __str__(self):
-        return "<Request ({}) {}>".format(self.method, self.uri)
+        return f"<Request ({self.method}) {self.uri}>"
 
     def __repr__(self):
         return self.__str__()

@@ -6,8 +6,6 @@ import types
 from collections import abc as collections_abc
 from pathlib import Path
 
-import six
-
 from . import filters, matchers
 from .cassette import Cassette
 from .persisters.filesystem import FilesystemPersister
@@ -90,7 +88,7 @@ class VCR:
         try:
             serializer = self.serializers[serializer_name]
         except KeyError:
-            raise KeyError("Serializer {} doesn't exist or isn't registered".format(serializer_name))
+            raise KeyError(f"Serializer {serializer_name} doesn't exist or isn't registered") from None
         return serializer
 
     def _get_matchers(self, matcher_names):
@@ -99,7 +97,7 @@ class VCR:
             for m in matcher_names:
                 matchers.append(self.matchers[m])
         except KeyError:
-            raise KeyError("Matcher {} doesn't exist or isn't registered".format(m))
+            raise KeyError(f"Matcher {m} doesn't exist or isn't registered") from None
         return matchers
 
     def use_cassette(self, path=None, **kwargs):
@@ -165,7 +163,8 @@ class VCR:
     def _build_before_record_response(self, options):
         before_record_response = options.get("before_record_response", self.before_record_response)
         decode_compressed_response = options.get(
-            "decode_compressed_response", self.decode_compressed_response
+            "decode_compressed_response",
+            self.decode_compressed_response,
         )
         filter_functions = []
         if decode_compressed_response:
@@ -189,10 +188,12 @@ class VCR:
         filter_headers = options.get("filter_headers", self.filter_headers)
         filter_query_parameters = options.get("filter_query_parameters", self.filter_query_parameters)
         filter_post_data_parameters = options.get(
-            "filter_post_data_parameters", self.filter_post_data_parameters
+            "filter_post_data_parameters",
+            self.filter_post_data_parameters,
         )
         before_record_request = options.get(
-            "before_record_request", options.get("before_record", self.before_record_request)
+            "before_record_request",
+            options.get("before_record", self.before_record_request),
         )
         ignore_hosts = options.get("ignore_hosts", self.ignore_hosts)
         ignore_localhost = options.get("ignore_localhost", self.ignore_localhost)
@@ -202,12 +203,12 @@ class VCR:
         if filter_query_parameters:
             replacements = [p if isinstance(p, tuple) else (p, None) for p in filter_query_parameters]
             filter_functions.append(
-                functools.partial(filters.replace_query_parameters, replacements=replacements)
+                functools.partial(filters.replace_query_parameters, replacements=replacements),
             )
         if filter_post_data_parameters:
             replacements = [p if isinstance(p, tuple) else (p, None) for p in filter_post_data_parameters]
             filter_functions.append(
-                functools.partial(filters.replace_post_data_parameters, replacements=replacements)
+                functools.partial(filters.replace_post_data_parameters, replacements=replacements),
             )
 
         hosts_to_ignore = set(ignore_hosts)
@@ -222,7 +223,7 @@ class VCR:
             filter_functions.extend(before_record_request)
 
         def before_record_request(request):
-            request = copy.copy(request)
+            request = copy.deepcopy(request)
             for function in filter_functions:
                 if request is None:
                     break
@@ -256,5 +257,5 @@ class VCR:
 
     def test_case(self, predicate=None):
         predicate = predicate or self.is_test_method
-        # TODO: Remove this reference to `six` in favor of the Python3 equivalent
-        return six.with_metaclass(auto_decorate(self.use_cassette, predicate))
+        metaclass = auto_decorate(self.use_cassette, predicate)
+        return metaclass("temporary_class", (), {})

@@ -4,6 +4,7 @@ import copy
 import inspect
 import logging
 import sys
+from asyncio import iscoroutinefunction
 
 import wrapt
 
@@ -11,18 +12,10 @@ from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder
-from .persisters.filesystem import FilesystemPersister
+from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 from .record_mode import RecordMode
 from .serializers import yamlserializer
 from .util import partition_dict
-
-try:
-    from asyncio import iscoroutinefunction
-except ImportError:
-
-    def iscoroutinefunction(*args, **kwargs):
-        return False
-
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +74,8 @@ class CassetteContextDecorator:
         #         pass
         assert self.__finish is None, "Cassette already open."
         other_kwargs, cassette_kwargs = partition_dict(
-            lambda key, _: key in self._non_cassette_arguments, self._args_getter()
+            lambda key, _: key in self._non_cassette_arguments,
+            self._args_getter(),
         )
         if other_kwargs.get("path_transformer"):
             transformer = other_kwargs["path_transformer"]
@@ -287,7 +281,7 @@ class Cassette:
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            "The cassette (%r) doesn't contain the request (%r) asked for" % (self._path, request)
+            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for",
         )
 
     def responses_of(self, request):
@@ -302,7 +296,7 @@ class Cassette:
             return responses
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
-            "The cassette (%r) doesn't contain the request (%r) asked for" % (self._path, request)
+            f"The cassette ({self._path!r}) doesn't contain the request ({request!r}) asked for",
         )
 
     def rewind(self):
@@ -321,7 +315,7 @@ class Cassette:
         """
         best_matches = []
         request = self._before_record_request(request)
-        for index, (stored_request, response) in enumerate(self.data):
+        for _, (stored_request, _) in enumerate(self.data):
             successes, fails = get_matchers_results(request, stored_request, self._match_on)
             best_matches.append((len(successes), stored_request, successes, fails))
         best_matches.sort(key=lambda t: t[0], reverse=True)
@@ -377,11 +371,11 @@ class Cassette:
                 self._old_interactions.append((request, response))
             self.dirty = False
             self.rewound = True
-        except ValueError:
+        except (CassetteDecodeError, CassetteNotFoundError):
             pass
 
     def __str__(self):
-        return "<Cassette containing {} recorded response(s)>".format(len(self))
+        return f"<Cassette containing {len(self)} recorded response(s)>"
 
     def __len__(self):
         """Return the number of request,response pairs stored in here"""
@@ -389,7 +383,7 @@ class Cassette:
 
     def __contains__(self, request):
         """Return whether or not a request has been stored"""
-        for index, response in self._responses(request):
+        for index, _ in self._responses(request):
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 return True
         return False

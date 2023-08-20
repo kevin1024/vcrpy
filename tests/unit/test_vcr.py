@@ -15,7 +15,8 @@ def test_vcr_use_cassette():
     record_mode = mock.Mock()
     test_vcr = VCR(record_mode=record_mode)
     with mock.patch(
-        "vcr.cassette.Cassette.load", return_value=mock.MagicMock(inject=False)
+        "vcr.cassette.Cassette.load",
+        return_value=mock.MagicMock(inject=False),
     ) as mock_cassette_load:
 
         @test_vcr.use_cassette("test")
@@ -41,7 +42,7 @@ def test_vcr_use_cassette():
 
 
 def test_vcr_before_record_request_params():
-    base_path = "http://httpbin.org/"
+    base_path = "http://whatever.test/"
 
     def before_record_cb(request):
         if request.path != "/get":
@@ -71,16 +72,19 @@ def test_vcr_before_record_request_params():
 
         # Test filter_headers
         request = Request(
-            "GET", base_path + "?foo=bar", "", {"cookie": "test", "other": "fun", "bert": "nobody"}
+            "GET",
+            base_path + "?foo=bar",
+            "",
+            {"cookie": "test", "other": "fun", "bert": "nobody"},
         )
         assert cassette.filter_request(request).headers == {"other": "fun", "bert": "ernie"}
 
         # Test ignore_hosts
-        request = Request("GET", "http://www.test.com" + "?foo=bar", "", {"cookie": "test", "other": "fun"})
+        request = Request("GET", "http://www.test.com?foo=bar", "", {"cookie": "test", "other": "fun"})
         assert cassette.filter_request(request) is None
 
         # Test ignore_localhost
-        request = Request("GET", "http://localhost:8000" + "?foo=bar", "", {"cookie": "test", "other": "fun"})
+        request = Request("GET", "http://localhost:8000?foo=bar", "", {"cookie": "test", "other": "fun"})
         assert cassette.filter_request(request) is None
 
     with test_vcr.use_cassette("test", before_record_request=None) as cassette:
@@ -259,7 +263,9 @@ def test_cassette_library_dir_with_decoration_and_super_explicit_path():
 def test_cassette_library_dir_with_path_transformer():
     library_dir = "/library_dir"
     vcr = VCR(
-        inject_cassette=True, cassette_library_dir=library_dir, path_transformer=lambda path: path + ".json"
+        inject_cassette=True,
+        cassette_library_dir=library_dir,
+        path_transformer=lambda path: path + ".json",
     )
 
     @vcr.use_cassette()
@@ -362,7 +368,7 @@ del test_dynamically_added
 
 def test_path_class_as_cassette():
     path = Path(__file__).parent.parent.joinpath(
-        "integration/cassettes/test_httpx_test_test_behind_proxy.yml"
+        "integration/cassettes/test_httpx_test_test_behind_proxy.yml",
     )
     with use_cassette(path):
         pass

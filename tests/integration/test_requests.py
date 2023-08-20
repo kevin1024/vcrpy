@@ -1,11 +1,10 @@
 """Test requests' interaction with vcr"""
 import pytest
-from assertions import assert_cassette_empty, assert_is_json
+from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 
 requests = pytest.importorskip("requests")
-from requests.exceptions import ConnectionError  # noqa E402
 
 
 def test_status_code(httpbin_both, tmpdir):
@@ -114,22 +113,6 @@ def test_post_chunked_binary(tmpdir, httpbin):
     assert req1 == req2
 
 
-@pytest.mark.skipif("sys.version_info >= (3, 6)", strict=True, raises=ConnectionError)
-def test_post_chunked_binary_secure(tmpdir, httpbin_secure):
-    """Ensure that we can send chunked binary without breaking while trying to concatenate bytes with str."""
-    data1 = iter([b"data", b"to", b"send"])
-    data2 = iter([b"data", b"to", b"send"])
-    url = httpbin_secure.url + "/post"
-    with vcr.use_cassette(str(tmpdir.join("requests.yaml"))):
-        req1 = requests.post(url, data1).content
-        print(req1)
-
-    with vcr.use_cassette(str(tmpdir.join("requests.yaml"))):
-        req2 = requests.post(url, data2).content
-
-    assert req1 == req2
-
-
 def test_redirects(tmpdir, httpbin_both):
     """Ensure that we can handle redirects"""
     url = httpbin_both + "/redirect-to?url=bytes/1024"
@@ -144,6 +127,17 @@ def test_redirects(tmpdir, httpbin_both):
         assert cass.play_count == 2
 
 
+def test_raw_stream(tmpdir, httpbin):
+    expected_response = requests.get(httpbin.url, stream=True)
+    expected_content = b"".join(expected_response.raw.stream())
+
+    for _ in range(2):  # one for recording, one for cassette reply
+        with vcr.use_cassette(str(tmpdir.join("raw_stream.yaml"))):
+            actual_response = requests.get(httpbin.url, stream=True)
+            actual_content = b"".join(actual_response.raw.stream())
+        assert actual_content == expected_content
+
+
 def test_cross_scheme(tmpdir, httpbin_secure, httpbin):
     """Ensure that requests between schemes are treated separately"""
     # First fetch a url under http, and then again under https and then
@@ -156,20 +150,41 @@ def test_cross_scheme(tmpdir, httpbin_secure, httpbin):
         assert len(cass) == 2
 
 
-def test_gzip(tmpdir, httpbin_both):
+def test_gzip__decode_compressed_response_false(tmpdir, httpbin_both):
     """
     Ensure that requests (actually urllib3) is able to automatically decompress
     the response body
     """
+    for _ in range(2):  # one for recording, one for re-playing
+        with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
+            response = requests.get(httpbin_both + "/gzip")
+            assert response.headers["content-encoding"] == "gzip"  # i.e. not removed
+            assert_is_json_bytes(response.content)  # i.e. uncompressed bytes
+
+
+def test_gzip__decode_compressed_response_true(tmpdir, httpbin_both):
     url = httpbin_both + "/gzip"
-    response = requests.get(url)
 
-    with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
-        response = requests.get(url)
-        assert_is_json(response.content)
+    expected_response = requests.get(url)
+    expected_content = expected_response.content
+    assert expected_response.headers["content-encoding"] == "gzip"  # self-test
 
-    with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
-        assert_is_json(response.content)
+    with vcr.use_cassette(
+        str(tmpdir.join("decode_compressed.yaml")),
+        decode_compressed_response=True,
+    ) as cassette:
+        r = requests.get(url)
+        assert r.headers["content-encoding"] == "gzip"  # i.e. not removed
+        assert r.content == expected_content
+
+    # Has the cassette body been decompressed?
+    cassette_response_body = cassette.responses[0]["body"]["string"]
+    assert isinstance(cassette_response_body, str)
+
+    with vcr.use_cassette(str(tmpdir.join("decode_compressed.yaml")), decode_compressed_response=True):
+        r = requests.get(url)
+        assert "content-encoding" not in r.headers  # i.e. removed
+        assert r.content == expected_content
 
 
 def test_session_and_connection_close(tmpdir, httpbin):

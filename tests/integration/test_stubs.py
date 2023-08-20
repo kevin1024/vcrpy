@@ -2,7 +2,7 @@ import http.client as httplib
 import json
 import zlib
 
-from assertions import assert_is_json
+from assertions import assert_is_json_bytes
 
 import vcr
 
@@ -84,7 +84,7 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
         inside = conn.getresponse()
 
         assert "content-encoding" not in inside.headers
-        assert_is_json(inside.read())
+        assert_is_json_bytes(inside.read())
 
 
 def _make_before_record_response(fields, replacement="[REDACTED]"):
@@ -120,8 +120,8 @@ def test_original_response_is_not_modified_by_before_filter(tmpdir, httpbin):
 
         # The scrubbed field should be the same, because no cassette existed.
         # Furthermore, the responses should be identical.
-        inside_body = json.loads(inside.read().decode("utf-8"))
-        outside_body = json.loads(outside.read().decode("utf-8"))
+        inside_body = json.loads(inside.read())
+        outside_body = json.loads(outside.read())
         assert not inside_body[field_to_scrub] == replacement
         assert inside_body[field_to_scrub] == outside_body[field_to_scrub]
 
@@ -131,5 +131,5 @@ def test_original_response_is_not_modified_by_before_filter(tmpdir, httpbin):
         conn.request("GET", "/get")
         inside = conn.getresponse()
 
-        inside_body = json.loads(inside.read().decode("utf-8"))
+        inside_body = json.loads(inside.read())
         assert inside_body[field_to_scrub] == replacement

@@ -63,6 +63,9 @@ boto3_bytes_headers = {
     "Expect": b"100-continue",
     "Content-Length": "21",
 }
+chunked_headers = {
+    "Transfer-Encoding": "chunked",
+}
 
 
 @pytest.mark.parametrize(
@@ -74,10 +77,16 @@ boto3_bytes_headers = {
         ),
         (
             request.Request(
-                "POST", "http://host.com/", "a=1&b=2", {"Content-Type": "application/x-www-form-urlencoded"}
+                "POST",
+                "http://host.com/",
+                "a=1&b=2",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
             request.Request(
-                "POST", "http://host.com/", "b=2&a=1", {"Content-Type": "application/x-www-form-urlencoded"}
+                "POST",
+                "http://host.com/",
+                "b=2&a=1",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
         ),
         (
@@ -86,23 +95,38 @@ boto3_bytes_headers = {
         ),
         (
             request.Request(
-                "POST", "http://host.com/", "a=1&b=2", {"Content-Type": "application/x-www-form-urlencoded"}
+                "POST",
+                "http://host.com/",
+                "a=1&b=2",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
             request.Request(
-                "POST", "http://host.com/", "b=2&a=1", {"Content-Type": "application/x-www-form-urlencoded"}
-            ),
-        ),
-        (
-            request.Request(
-                "POST", "http://host.com/", '{"a": 1, "b": 2}', {"Content-Type": "application/json"}
-            ),
-            request.Request(
-                "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
+                "POST",
+                "http://host.com/",
+                "b=2&a=1",
+                {"Content-Type": "application/x-www-form-urlencoded"},
             ),
         ),
         (
             request.Request(
-                "POST", "http://host.com/", req1_body, {"User-Agent": "xmlrpclib", "Content-Type": "text/xml"}
+                "POST",
+                "http://host.com/",
+                '{"a": 1, "b": 2}',
+                {"Content-Type": "application/json"},
+            ),
+            request.Request(
+                "POST",
+                "http://host.com/",
+                '{"b": 2, "a": 1}',
+                {"content-type": "application/json"},
+            ),
+        ),
+        (
+            request.Request(
+                "POST",
+                "http://host.com/",
+                req1_body,
+                {"User-Agent": "xmlrpclib", "Content-Type": "text/xml"},
             ),
             request.Request(
                 "POST",
@@ -113,16 +137,52 @@ boto3_bytes_headers = {
         ),
         (
             request.Request(
-                "POST", "http://host.com/", '{"a": 1, "b": 2}', {"Content-Type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"a": 1, "b": 2}',
+                {"Content-Type": "application/json"},
             ),
             request.Request(
-                "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"b": 2, "a": 1}',
+                {"content-type": "application/json"},
             ),
         ),
         (
             # special case for boto3 bytes headers
             request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
             request.Request("POST", "http://aws.custom.com/", b"123", boto3_bytes_headers),
+        ),
+        (
+            # chunked transfer encoding: decoded bytes versus encoded bytes
+            request.Request("POST", "scheme1://host1.test/", b"123456789_123456", chunked_headers),
+            request.Request(
+                "GET",
+                "scheme2://host2.test/",
+                b"10\r\n123456789_123456\r\n0\r\n\r\n",
+                chunked_headers,
+            ),
+        ),
+        (
+            # chunked transfer encoding: bytes iterator versus string iterator
+            request.Request(
+                "POST",
+                "scheme1://host1.test/",
+                iter([b"123456789_", b"123456"]),
+                chunked_headers,
+            ),
+            request.Request("GET", "scheme2://host2.test/", iter(["123456789_", "123456"]), chunked_headers),
+        ),
+        (
+            # chunked transfer encoding: bytes iterator versus single byte iterator
+            request.Request(
+                "POST",
+                "scheme1://host1.test/",
+                iter([b"123456789_", b"123456"]),
+                chunked_headers,
+            ),
+            request.Request("GET", "scheme2://host2.test/", iter(b"123456789_123456"), chunked_headers),
         ),
     ],
 )
@@ -139,10 +199,16 @@ def test_body_matcher_does_match(r1, r2):
         ),
         (
             request.Request(
-                "POST", "http://host.com/", '{"a": 1, "b": 3}', {"Content-Type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"a": 1, "b": 3}',
+                {"Content-Type": "application/json"},
             ),
             request.Request(
-                "POST", "http://host.com/", '{"b": 2, "a": 1}', {"content-type": "application/json"}
+                "POST",
+                "http://host.com/",
+                '{"b": 2, "a": 1}',
+                {"content-type": "application/json"},
             ),
         ),
         (

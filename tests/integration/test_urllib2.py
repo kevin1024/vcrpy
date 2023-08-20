@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Integration tests with urllib2"""
 
 import ssl
@@ -7,6 +6,7 @@ from urllib.request import urlopen
 
 import pytest_httpbin.certs
 from assertions import assert_cassette_has_one_response
+from pytest import mark
 
 # Internal imports
 import vcr
@@ -56,6 +56,7 @@ def test_response_headers(httpbin_both, tmpdir):
         assert sorted(open1) == sorted(open2)
 
 
+@mark.online
 def test_effective_url(tmpdir):
     """Ensure that the effective_url is captured"""
     url = "http://mockbin.org/redirect/301"

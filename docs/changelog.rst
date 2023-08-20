@@ -7,6 +7,45 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  5.1.0
+   - Use ruff for linting (instead of current flake8/isort/pyflakes) - thanks @jairhenrique
+   - Enable rule B (flake8-bugbear) on ruff - thanks @jairhenrique
+   - Configure read the docs V2 - thanks @jairhenrique
+   - Fix typo in docs - thanks @quasimik
+   - Make json.loads of Python >=3.6 decode bytes by itself - thanks @hartwork
+   - Fix body matcher for chunked requests (fixes #734) - thanks @hartwork
+   - Fix query param filter for aiohttp (fixes #517) - thanks @hartwork and @salomvary
+   - Remove unnecessary dependency on six. - thanks @charettes
+   - build(deps): update sphinx requirement from <7 to <8 - thanks @jairhenrique
+   - Add action to validate docs - thanks @jairhenrique
+   - Add editorconfig file - thanks @jairhenrique
+   - Drop iscoroutinefunction fallback function for unsupported python thanks @jairhenrique
+-  5.0.0
+    - BREAKING CHANGE: Drop support for Python 3.7.  3.7 is EOL as of 6/27/23 Thanks @jairhenrique
+    - BREAKING CHANGE: Custom Cassette persisters no longer catch ValueError.  If you have implemented a custom persister (has anyone implemented a custom persister?  Let us know!) then you will need to throw a CassetteNotFoundError when unable to find a cassette.  See #681 for discussion and reason for this change. Thanks @amosjyng for the PR and the review from @hartwork
+-  4.4.0
+    - HUGE thanks to @hartwork for all the work done on this release!
+    - Bring vcr/unittest in to vcrpy as a full feature of vcr instead of a separate library.  Big thanks to @hartwork for doing this and to @agriffis for originally creating the library
+    - Make decompression robust towards already decompressed input (thanks @hartwork)
+    - Bugfix: Add read1 method (fixes compatibility with biopython), thanks @mghantous
+    - Bugfix: Prevent filters from corrupting request (thanks @abramclark)
+    - Bugfix: Add support for `response.raw.stream()` to fix urllib v2 compat
+    - Bugfix: Replace `assert` with `raise AssertionError`: fixes support for `PYTHONOPTIMIZE=1`
+    - Add pytest.mark.online to run test suite offline, thanks @jspricke
+    - use python3 and pip3 binaries to ease debian packaging (thanks @hartwork)
+    - Add codespell (thanks @mghantous)
+-  4.3.1
+    - Support urllib3 v1 and v2.  NOTE: there is an issue running urllib3 v2 on
+      Python older than 3.10, so this is currently blocked in the requirements.
+      Hopefully we can resolve this situation in the future.  Thanks to @shifqu,
+      hartwork, jairhenrique, pquentin, and vEpiphyte for your work on this.
+-  4.3.0
+    - Add support for Python 3.11 (Thanks @evgeni)
+    - Drop support for botocore <1.11.0 and requests <2.16.2 (thanks @hartwork)
+    - Bugfix: decode_compressed_response raises exception on empty responses. Thanks @CharString
+    - Don't save requests from decorated tests if decorated test fails (thanks @dan-passaro)
+    - Fix not calling all the exit stack when record_on_exception is False (thanks @Terseus)
+    - Various CI, documentation, testing, and formatting improvements (Thanks @jairhenrique, @dan-passaro, @hartwork, and Terseus)
 -  4.2.1
     - Fix a bug where the first request in a redirect chain was not being recorded with aiohttp
     - Various typos and small fixes, thanks @jairhenrique, @timgates42

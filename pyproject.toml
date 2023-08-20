@@ -1,9 +1,33 @@
 [tool.black]
 line-length=110
 
-[tool.isort]
-line_length = 110
-known_first_party = "vcrpy"
-multi_line_output = 3
-use_parentheses = true
-include_trailing_comma = true
+[tool.codespell]
+skip = '.git,*.pdf,*.svg,.tox'
+ignore-regex = "\\\\[fnrstv]"
+#
+# ignore-words-list = ''
+
+[tool.pytest.ini_options]
+markers = [
+    "online",
+]
+
+[tool.ruff]
+select = [
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "COM", # flake8-commas
+    "E",   # pycodestyle error
+    "F",   # pyflakes
+    "I",   # isort
+    "ISC", # flake8-implicit-str-concat
+    "PIE", # flake8-pie
+    "RUF", # Ruff-specific rules
+    "UP",  # pyupgrade
+    "W",   # pycodestyle warning
+]
+line-length = 110
+target-version = "py38"
+
+[tool.ruff.isort]
+known-first-party = [ "vcr" ]

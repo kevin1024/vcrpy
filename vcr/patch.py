@@ -16,41 +16,46 @@ _HTTPSConnection = httplib.HTTPSConnection
 # Try to save the original types for boto3
 try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
-except ImportError:
+except ImportError as e:
     try:
-        import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
+        import botocore.vendored.requests  # noqa: F401
     except ImportError:  # pragma: no cover
         pass
     else:
-        _Boto3VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-        _cpoolBoto3HTTPConnection = cpool.HTTPConnection
-        _cpoolBoto3HTTPSConnection = cpool.HTTPSConnection
+        raise RuntimeError(
+            "vcrpy >=4.2.2 and botocore <1.11.0 are not compatible"
+            "; please upgrade botocore (or downgrade vcrpy)",
+        ) from e
 else:
     _Boto3VerifiedHTTPSConnection = AWSHTTPSConnection
     _cpoolBoto3HTTPConnection = AWSHTTPConnection
     _cpoolBoto3HTTPSConnection = AWSHTTPSConnection
 
 cpool = None
+conn = None
 # Try to save the original types for urllib3
 try:
+    import urllib3.connection as conn
     import urllib3.connectionpool as cpool
 except ImportError:  # pragma: no cover
     pass
 else:
-    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _cpoolHTTPConnection = cpool.HTTPConnection
-    _cpoolHTTPSConnection = cpool.HTTPSConnection
+    _VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection
+    _connHTTPConnection = conn.HTTPConnection
+    _connHTTPSConnection = conn.HTTPSConnection
 
 # Try to save the original types for requests
 try:
-    if not cpool:
-        import requests.packages.urllib3.connectionpool as cpool
+    import requests
 except ImportError:  # pragma: no cover
     pass
 else:
-    _VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
-    _cpoolHTTPConnection = cpool.HTTPConnection
-    _cpoolHTTPSConnection = cpool.HTTPSConnection
+    if requests.__build__ < 0x021602:
+        raise RuntimeError(
+            "vcrpy >=4.2.2 and requests <2.16.2 are not compatible"
+            "; please upgrade requests (or downgrade vcrpy)",
+        )
+
 
 # Try to save the original types for httplib2
 try:
@@ -61,14 +66,6 @@ else:
     _HTTPConnectionWithTimeout = httplib2.HTTPConnectionWithTimeout
     _HTTPSConnectionWithTimeout = httplib2.HTTPSConnectionWithTimeout
     _SCHEME_TO_CONNECTION = httplib2.SCHEME_TO_CONNECTION
-
-# Try to save the original types for boto
-try:
-    import boto.https_connection
-except ImportError:  # pragma: no cover
-    pass
-else:
-    _CertValidatingHTTPSConnection = boto.https_connection.CertValidatingHTTPSConnection
 
 # Try to save the original types for Tornado
 try:
@@ -121,7 +118,6 @@ class CassettePatcherBuilder:
             self._boto3(),
             self._urllib3(),
             self._httplib2(),
-            self._boto(),
             self._tornado(),
             self._aiohttp(),
             self._httpx(),
@@ -139,7 +135,9 @@ class CassettePatcherBuilder:
             return
 
         return mock.patch.object(
-            obj, patched_attribute, self._recursively_apply_get_cassette_subclass(replacement_class)
+            obj,
+            patched_attribute,
+            self._recursively_apply_get_cassette_subclass(replacement_class),
         )
 
     def _recursively_apply_get_cassette_subclass(self, replacement_dict_or_obj):
@@ -181,9 +179,7 @@ class CassettePatcherBuilder:
         bases = (base_class,)
         if not issubclass(base_class, object):  # Check for old style class
             bases += (object,)
-        return type(
-            "{}{}".format(base_class.__name__, self._cassette._path), bases, dict(cassette=self._cassette)
-        )
+        return type(f"{base_class.__name__}{self._cassette._path}", bases, {"cassette": self._cassette})
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib(self):
@@ -195,24 +191,15 @@ class CassettePatcherBuilder:
             from .stubs import requests_stubs
         except ImportError:  # pragma: no cover
             return ()
-        return self._urllib3_patchers(cpool, requests_stubs)
+        return self._urllib3_patchers(cpool, conn, requests_stubs)
 
     @_build_patchers_from_mock_triples_decorator
     def _boto3(self):
-
         try:
             # botocore using awsrequest
             import botocore.awsrequest as cpool
         except ImportError:  # pragma: no cover
-            try:
-                # botocore using vendored requests
-                import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
-            except ImportError:  # pragma: no cover
-                pass
-            else:
-                from .stubs import boto3_stubs
-
-                yield self._urllib3_patchers(cpool, boto3_stubs)
+            pass
         else:
             from .stubs import boto3_stubs
 
@@ -254,12 +241,13 @@ class CassettePatcherBuilder:
 
     def _urllib3(self):
         try:
+            import urllib3.connection as conn
             import urllib3.connectionpool as cpool
         except ImportError:  # pragma: no cover
             return ()
         from .stubs import urllib3_stubs
 
-        return self._urllib3_patchers(cpool, urllib3_stubs)
+        return self._urllib3_patchers(cpool, conn, urllib3_stubs)
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib2(self):
@@ -276,17 +264,6 @@ class CassettePatcherBuilder:
                 "http": VCRHTTPConnectionWithTimeout,
                 "https": VCRHTTPSConnectionWithTimeout,
             }
-
-    @_build_patchers_from_mock_triples_decorator
-    def _boto(self):
-        try:
-            import boto.https_connection as cpool
-        except ImportError:  # pragma: no cover
-            pass
-        else:
-            from .stubs.boto_stubs import VCRCertValidatingHTTPSConnection
-
-            yield cpool, "CertValidatingHTTPSConnection", VCRCertValidatingHTTPSConnection
 
     @_build_patchers_from_mock_triples_decorator
     def _tornado(self):
@@ -336,17 +313,17 @@ class CassettePatcherBuilder:
             new_sync_client_send = sync_vcr_send(self._cassette, _HttpxSyncClient_send)
             yield httpx.Client, "send", new_sync_client_send
 
-    def _urllib3_patchers(self, cpool, stubs):
+    def _urllib3_patchers(self, cpool, conn, stubs):
         http_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection)
+            self._get_cassette_subclass(stubs.VCRRequestsHTTPConnection),
         )
         https_connection_remover = ConnectionRemover(
-            self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection)
+            self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection),
         )
         mock_triples = (
-            (cpool, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
-            (cpool, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
-            (cpool, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
+            (conn, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
+            (conn, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
+            (conn, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
             (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
             (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
             (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
@@ -416,69 +393,23 @@ def reset_patchers():
     yield mock.patch.object(httplib, "HTTPSConnection", _HTTPSConnection)
 
     try:
-        import requests
-
-        if requests.__build__ < 0x021603:
-            # Avoid double unmock if requests 2.16.3
-            # First, this is pointless, requests.packages.urllib3 *IS* urllib3 (see packages.py)
-            # Second, this is unmocking twice the same classes with different namespaces
-            # and is creating weird issues and bugs:
-            # > AssertionError: assert <class 'urllib3.connection.HTTPConnection'>
-            # >   is <class 'requests.packages.urllib3.connection.HTTPConnection'>
-            # This assert should work!!!
-            # Note that this also means that now, requests.packages is never imported
-            # if requests 2.16.3 or greater is used with VCRPy.
-            import requests.packages.urllib3.connectionpool as cpool
-        else:
-            raise ImportError("Skip requests not vendored anymore")
-    except ImportError:  # pragma: no cover
-        pass
-    else:
-        # unpatch requests v1.x
-        yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, "HTTPConnection", _cpoolHTTPConnection)
-        # unpatch requests v2.x
-        if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
-            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolHTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolHTTPSConnection)
-
-        if hasattr(cpool, "HTTPSConnection"):
-            yield mock.patch.object(cpool, "HTTPSConnection", _cpoolHTTPSConnection)
-
-    try:
+        import urllib3.connection as conn
         import urllib3.connectionpool as cpool
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
-        yield mock.patch.object(cpool, "HTTPConnection", _cpoolHTTPConnection)
-        yield mock.patch.object(cpool, "HTTPSConnection", _cpoolHTTPSConnection)
+        yield mock.patch.object(conn, "VerifiedHTTPSConnection", _VerifiedHTTPSConnection)
+        yield mock.patch.object(conn, "HTTPConnection", _connHTTPConnection)
+        yield mock.patch.object(conn, "HTTPSConnection", _connHTTPSConnection)
         if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
-            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolHTTPConnection)
-            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolHTTPSConnection)
+            yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _connHTTPConnection)
+            yield mock.patch.object(cpool.HTTPSConnectionPool, "ConnectionCls", _connHTTPSConnection)
 
     try:
         # unpatch botocore with awsrequest
         import botocore.awsrequest as cpool
     except ImportError:  # pragma: no cover
-        try:
-            # unpatch botocore with vendored requests
-            import botocore.vendored.requests.packages.urllib3.connectionpool as cpool
-        except ImportError:  # pragma: no cover
-            pass
-        else:
-            # unpatch requests v1.x
-            yield mock.patch.object(cpool, "VerifiedHTTPSConnection", _Boto3VerifiedHTTPSConnection)
-            yield mock.patch.object(cpool, "HTTPConnection", _cpoolBoto3HTTPConnection)
-            # unpatch requests v2.x
-            if hasattr(cpool.HTTPConnectionPool, "ConnectionCls"):
-                yield mock.patch.object(cpool.HTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
-                yield mock.patch.object(
-                    cpool.HTTPSConnectionPool, "ConnectionCls", _cpoolBoto3HTTPSConnection
-                )
-
-            if hasattr(cpool, "HTTPSConnection"):
-                yield mock.patch.object(cpool, "HTTPSConnection", _cpoolBoto3HTTPSConnection)
+        pass
     else:
         if hasattr(cpool.AWSHTTPConnectionPool, "ConnectionCls"):
             yield mock.patch.object(cpool.AWSHTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
@@ -495,13 +426,6 @@ def reset_patchers():
         yield mock.patch.object(cpool, "HTTPConnectionWithTimeout", _HTTPConnectionWithTimeout)
         yield mock.patch.object(cpool, "HTTPSConnectionWithTimeout", _HTTPSConnectionWithTimeout)
         yield mock.patch.object(cpool, "SCHEME_TO_CONNECTION", _SCHEME_TO_CONNECTION)
-
-    try:
-        import boto.https_connection as cpool
-    except ImportError:  # pragma: no cover
-        pass
-    else:
-        yield mock.patch.object(cpool, "CertValidatingHTTPSConnection", _CertValidatingHTTPSConnection)
 
     try:
         import tornado.simple_httpclient as simple

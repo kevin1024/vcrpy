@@ -2,54 +2,74 @@ import json
 import logging
 import urllib
 import xmlrpc.client
+from string import hexdigits
+from typing import List, Set
 
 from .util import read_body
+
+_HEXDIG_CODE_POINTS: Set[int] = {ord(s.encode("ascii")) for s in hexdigits}
 
 log = logging.getLogger(__name__)
 
 
 def method(r1, r2):
-    assert r1.method == r2.method, "{} != {}".format(r1.method, r2.method)
+    if r1.method != r2.method:
+        raise AssertionError(f"{r1.method} != {r2.method}")
 
 
 def uri(r1, r2):
-    assert r1.uri == r2.uri, "{} != {}".format(r1.uri, r2.uri)
+    if r1.uri != r2.uri:
+        raise AssertionError(f"{r1.uri} != {r2.uri}")
 
 
 def host(r1, r2):
-    assert r1.host == r2.host, "{} != {}".format(r1.host, r2.host)
+    if r1.host != r2.host:
+        raise AssertionError(f"{r1.host} != {r2.host}")
 
 
 def scheme(r1, r2):
-    assert r1.scheme == r2.scheme, "{} != {}".format(r1.scheme, r2.scheme)
+    if r1.scheme != r2.scheme:
+        raise AssertionError(f"{r1.scheme} != {r2.scheme}")
 
 
 def port(r1, r2):
-    assert r1.port == r2.port, "{} != {}".format(r1.port, r2.port)
+    if r1.port != r2.port:
+        raise AssertionError(f"{r1.port} != {r2.port}")
 
 
 def path(r1, r2):
-    assert r1.path == r2.path, "{} != {}".format(r1.path, r2.path)
+    if r1.path != r2.path:
+        raise AssertionError(f"{r1.path} != {r2.path}")
 
 
 def query(r1, r2):
-    assert r1.query == r2.query, "{} != {}".format(r1.query, r2.query)
+    if r1.query != r2.query:
+        raise AssertionError(f"{r1.query} != {r2.query}")
 
 
 def raw_body(r1, r2):
-    assert read_body(r1) == read_body(r2)
+    if read_body(r1) != read_body(r2):
+        raise AssertionError
 
 
 def body(r1, r2):
-    transformer = _get_transformer(r1)
-    r2_transformer = _get_transformer(r2)
-    if transformer != r2_transformer:
-        transformer = _identity
-    assert transformer(read_body(r1)) == transformer(read_body(r2))
+    transformers = list(_get_transformers(r1))
+    if transformers != list(_get_transformers(r2)):
+        transformers = []
+
+    b1 = read_body(r1)
+    b2 = read_body(r2)
+    for transform in transformers:
+        b1 = transform(b1)
+        b2 = transform(b2)
+
+    if b1 != b2:
+        raise AssertionError
 
 
 def headers(r1, r2):
-    assert r1.headers == r2.headers, "{} != {}".format(r1.headers, r2.headers)
+    if r1.headers != r2.headers:
+        raise AssertionError(f"{r1.headers} != {r2.headers}")
 
 
 def _header_checker(value, header="Content-Type"):
@@ -62,17 +82,71 @@ def _header_checker(value, header="Content-Type"):
     return checker
 
 
+def _dechunk(body):
+    if isinstance(body, str):
+        body = body.encode("utf-8")
+    elif isinstance(body, bytearray):
+        body = bytes(body)
+    elif hasattr(body, "__iter__"):
+        body = list(body)
+        if body:
+            if isinstance(body[0], str):
+                body = ("".join(body)).encode("utf-8")
+            elif isinstance(body[0], bytes):
+                body = b"".join(body)
+            elif isinstance(body[0], int):
+                body = bytes(body)
+            else:
+                raise ValueError(f"Body chunk type {type(body[0])} not supported")
+        else:
+            body = None
+
+    if not isinstance(body, bytes):
+        return body
+
+    # Now decode chunked data format (https://en.wikipedia.org/wiki/Chunked_transfer_encoding)
+    # Example input: b"45\r\n<69 bytes>\r\n0\r\n\r\n" where int(b"45", 16) == 69.
+    CHUNK_GAP = b"\r\n"
+    BODY_LEN: int = len(body)
+
+    chunks: List[bytes] = []
+    pos: int = 0
+
+    while True:
+        for i in range(pos, BODY_LEN):
+            if body[i] not in _HEXDIG_CODE_POINTS:
+                break
+
+        if i == 0 or body[i : i + len(CHUNK_GAP)] != CHUNK_GAP:
+            if pos == 0:
+                return body  # i.e. assume non-chunk data
+            raise ValueError("Malformed chunked data")
+
+        size_bytes = int(body[pos:i], 16)
+        if size_bytes == 0:  # i.e. well-formed ending
+            return b"".join(chunks)
+
+        chunk_data_first = i + len(CHUNK_GAP)
+        chunk_data_after_last = chunk_data_first + size_bytes
+
+        if body[chunk_data_after_last : chunk_data_after_last + len(CHUNK_GAP)] != CHUNK_GAP:
+            raise ValueError("Malformed chunked data")
+
+        chunk_data = body[chunk_data_first:chunk_data_after_last]
+        chunks.append(chunk_data)
+
+        pos = chunk_data_after_last + len(CHUNK_GAP)
+
+
 def _transform_json(body):
-    # Request body is always a byte string, but json.loads() wants a text
-    # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
-    # and UTF-32 are also allowed: hmmmmm).
     if body:
-        return json.loads(body.decode("utf-8"))
+        return json.loads(body)
 
 
 _xml_header_checker = _header_checker("text/xml")
 _xmlrpc_header_checker = _header_checker("xmlrpc", header="User-Agent")
 _checker_transformer_pairs = (
+    (_header_checker("chunked", header="Transfer-Encoding"), _dechunk),
     (
         _header_checker("application/x-www-form-urlencoded"),
         lambda body: urllib.parse.parse_qs(body.decode("ascii")),
@@ -82,22 +156,16 @@ _checker_transformer_pairs = (
 )
 
 
-def _identity(x):
-    return x
-
-
-def _get_transformer(request):
+def _get_transformers(request):
     for checker, transformer in _checker_transformer_pairs:
         if checker(request.headers):
-            return transformer
-    else:
-        return _identity
+            yield transformer
 
 
 def requests_match(r1, r2, matchers):
     successes, failures = get_matchers_results(r1, r2, matchers)
     if failures:
-        log.debug("Requests {} and {} differ.\n" "Failure details:\n" "{}".format(r1, r2, failures))
+        log.debug(f"Requests {r1} and {r2} differ.\nFailure details:\n{failures}")
     return len(failures) == 0
 
 

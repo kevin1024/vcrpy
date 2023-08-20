@@ -3,6 +3,7 @@ from urllib.request import urlopen
 import pytest
 
 import vcr
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 
 def test_making_extra_request_raises_exception(tmpdir, httpbin):
@@ -18,5 +19,5 @@ def test_making_extra_request_raises_exception(tmpdir, httpbin):
     with vcr.use_cassette(str(tmpdir.join("test.json")), match_on=["method"]):
         assert urlopen(httpbin.url + "/status/200").getcode() == 200
         assert urlopen(httpbin.url + "/status/201").getcode() == 201
-        with pytest.raises(Exception):
+        with pytest.raises(CannotOverwriteExistingCassetteException):
             urlopen(httpbin.url + "/status/200")

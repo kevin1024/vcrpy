@@ -8,7 +8,7 @@ import sys
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
-long_description = open("README.rst", "r").read()
+long_description = open("README.rst").read()
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -45,8 +45,33 @@ class PyTest(TestCommand):
 install_requires = [
     "PyYAML",
     "wrapt",
-    "six>=1.5",
     "yarl",
+    # Support for urllib3 >=2 needs Python >=3.10
+    # so we need to block urllib3 >=2 for Python <3.10 for now.
+    # Note that vcrpy would work fine without any urllib3 around,
+    # so this block and the dependency can be dropped at some point
+    # in the future. For more Details:
+    # https://github.com/kevin1024/vcrpy/pull/699#issuecomment-1551439663
+    "urllib3 <2; python_version <'3.10'",
+]
+
+tests_require = [
+    "aiohttp",
+    "boto3",
+    "httplib2",
+    "httpx",
+    "pytest",
+    "pytest-aiohttp",
+    "pytest-httpbin",
+    "requests>=2.16.2",
+    "tornado",
+    # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
+    # this pin and the dependency itself can be removed, provided
+    # that the related bug in httpbin has been fixed:
+    # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
+    # https://github.com/postmanlabs/httpbin/issues/673
+    # https://github.com/postmanlabs/httpbin/pull/674
+    "Werkzeug==2.0.3",
 ]
 
 setup(
@@ -59,17 +84,16 @@ setup(
     author_email="me@kevinmccarthy.org",
     url="https://github.com/kevin1024/vcrpy",
     packages=find_packages(exclude=["tests*"]),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=install_requires,
     license="MIT",
-    tests_require=["pytest", "mock", "pytest-httpbin"],
+    tests_require=tests_require,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

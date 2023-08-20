@@ -13,7 +13,7 @@ interactions:
       user-agent:
       - python-httpx/0.12.1
     method: GET
-    uri: https://httpbin.org/headers
+    uri: https://mockbin.org/headers
   response:
     content: "{\n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\"\
       : \"gzip, deflate, br\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\"\

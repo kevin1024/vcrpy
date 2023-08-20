@@ -71,7 +71,7 @@ Finally, register your class with VCR to use your new serializer.
 
     import vcr
 
-    class BogoSerializer(object):
+    class BogoSerializer:
         """
         Must implement serialize() and deserialize() methods
         """
@@ -136,7 +136,8 @@ Create your own persistence class, see the example below:
 
 Your custom persister must implement both ``load_cassette`` and ``save_cassette``
 methods.  The ``load_cassette`` method must return a deserialized cassette or raise
-``ValueError`` if no cassette is found.
+either ``CassetteNotFoundError`` if no cassette is found, or ``CassetteDecodeError``
+if the cassette cannot be successfully deserialized.
 
 Once the persister class is defined, register with VCR like so...
 
@@ -188,7 +189,7 @@ of post data parameters to filter.
 
 .. code:: python
 
-    with my_vcr.use_cassette('test.yml', filter_post_data_parameters=['client_secret']):
+    with my_vcr.use_cassette('test.yml', filter_post_data_parameters=['api_key']):
         requests.post('http://api.com/postdata', data={'api_key': 'secretstring'})
 
 Advanced use of filter_headers, filter_query_parameters and filter_post_data_parameters
@@ -411,7 +412,7 @@ Discards Cassette on Errors
 By default VCR will save the cassette file even when there is any error inside
 the enclosing context/test.
 
-If you want to save the cassette only when the test succeedes, set the Cassette
+If you want to save the cassette only when the test succeeds, set the Cassette
 ``record_on_exception`` option to ``False``.
 
 .. code:: python

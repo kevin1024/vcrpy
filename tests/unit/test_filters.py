@@ -197,7 +197,7 @@ def test_replace_json_post_data_parameters():
             ("six", "doesntexist"),
         ],
     )
-    request_data = json.loads(request.body.decode("utf-8"))
+    request_data = json.loads(request.body)
     expected_data = json.loads('{"one": "keep", "three": "tada", "four": "SHOUT"}')
     assert request_data == expected_data
 
@@ -208,8 +208,8 @@ def test_remove_json_post_data_parameters():
     request = Request("POST", "http://google.com", body, {})
     request.headers["Content-Type"] = "application/json"
     remove_post_data_parameters(request, ["id"])
-    request_body_json = json.loads(request.body.decode("utf-8"))
-    expected_json = json.loads(b'{"foo": "bar", "baz": "qux"}'.decode("utf-8"))
+    request_body_json = json.loads(request.body)
+    expected_json = json.loads(b'{"foo": "bar", "baz": "qux"}')
     assert request_body_json == expected_json
 
 
@@ -298,6 +298,18 @@ def test_decode_response_deflate():
     assert decoded_response["headers"]["content-length"] == [str(len(body))]
 
 
+def test_decode_response_deflate_already_decompressed():
+    body = b"deflate message"
+    gzip_response = {
+        "body": {"string": body},
+        "headers": {
+            "content-encoding": ["deflate"],
+        },
+    }
+    decoded_response = decode_response(gzip_response)
+    assert decoded_response["body"]["string"] == body
+
+
 def test_decode_response_gzip():
     body = b"gzip message"
 
@@ -325,3 +337,15 @@ def test_decode_response_gzip():
     decoded_response = decode_response(gzip_response)
     assert decoded_response["body"]["string"] == body
     assert decoded_response["headers"]["content-length"] == [str(len(body))]
+
+
+def test_decode_response_gzip_already_decompressed():
+    body = b"gzip message"
+    gzip_response = {
+        "body": {"string": body},
+        "headers": {
+            "content-encoding": ["gzip"],
+        },
+    }
+    decoded_response = decode_response(gzip_response)
+    assert decoded_response["body"]["string"] == body

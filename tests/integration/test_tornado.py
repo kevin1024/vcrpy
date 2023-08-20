@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """Test requests' interaction with vcr"""
 
 import json
 
 import pytest
-from assertions import assert_cassette_empty, assert_is_json
+from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.errors import CannotOverwriteExistingCassetteException
@@ -42,12 +41,6 @@ def post(client, url, data=None, **kwargs):
     if data:
         kwargs["body"] = json.dumps(data)
     return client.fetch(http.HTTPRequest(url, method="POST", **kwargs))
-
-
-@pytest.fixture(params=["https", "http"])
-def scheme(request):
-    """Fixture that returns both http and https."""
-    return request.param
 
 
 @pytest.mark.gen_test
@@ -201,11 +194,11 @@ def test_gzip(get_client, tmpdir, scheme):
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
         response = yield get(get_client(), url, **kwargs)
-        assert_is_json(response.body)
+        assert_is_json_bytes(response.body)
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))) as cass:
         response = yield get(get_client(), url, **kwargs)
-        assert_is_json(response.body)
+        assert_is_json_bytes(response.body)
         assert 1 == cass.play_count
 
 
@@ -227,7 +220,7 @@ def test_unsupported_features_raises_in_future(get_client, tmpdir):
     supported is raised inside the future."""
 
     def callback(chunk):
-        assert False, "Did not expect to be called."
+        raise AssertionError("Did not expect to be called.")
 
     with vcr.use_cassette(str(tmpdir.join("invalid.yaml"))):
         future = get(get_client(), "http://httpbin.org", streaming_callback=callback)
@@ -245,11 +238,14 @@ def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
     supported is not raised if raise_error=False."""
 
     def callback(chunk):
-        assert False, "Did not expect to be called."
+        raise AssertionError("Did not expect to be called.")
 
     with vcr.use_cassette(str(tmpdir.join("invalid.yaml"))):
         response = yield get(
-            get_client(), "http://httpbin.org", streaming_callback=callback, raise_error=False
+            get_client(),
+            "http://httpbin.org",
+            streaming_callback=callback,
+            raise_error=False,
         )
 
     assert "not yet supported by VCR" in str(response.error)

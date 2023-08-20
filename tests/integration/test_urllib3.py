@@ -4,10 +4,11 @@
 
 import pytest
 import pytest_httpbin
-from assertions import assert_cassette_empty, assert_is_json
+from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.patch import force_reset
+from vcr.stubs.compat import get_headers
 
 urllib3 = pytest.importorskip("urllib3")
 
@@ -15,7 +16,8 @@ urllib3 = pytest.importorskip("urllib3")
 @pytest.fixture(scope="module")
 def verify_pool_mgr():
     return urllib3.PoolManager(
-        cert_reqs="CERT_REQUIRED", ca_certs=pytest_httpbin.certs.where()  # Force certificate check.
+        cert_reqs="CERT_REQUIRED",
+        ca_certs=pytest_httpbin.certs.where(),  # Force certificate check.
     )
 
 
@@ -41,7 +43,8 @@ def test_headers(tmpdir, httpbin_both, verify_pool_mgr):
         headers = verify_pool_mgr.request("GET", url).headers
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
-        assert headers == verify_pool_mgr.request("GET", url).headers
+        new_headers = verify_pool_mgr.request("GET", url).headers
+        assert sorted(get_headers(headers)) == sorted(get_headers(new_headers))
 
 
 def test_body(tmpdir, httpbin_both, verify_pool_mgr):
@@ -95,6 +98,7 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
     assert req1 == req2
 
 
+@pytest.mark.online
 def test_redirects(tmpdir, verify_pool_mgr):
     """Ensure that we can handle redirects"""
     url = "http://mockbin.org/redirect/301"
@@ -133,10 +137,10 @@ def test_gzip(tmpdir, httpbin_both, verify_pool_mgr):
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
         response = verify_pool_mgr.request("GET", url)
-        assert_is_json(response.data)
+        assert_is_json_bytes(response.data)
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
-        assert_is_json(response.data)
+        assert_is_json_bytes(response.data)
 
 
 def test_https_with_cert_validation_disabled(tmpdir, httpbin_secure, pool_mgr):
@@ -145,18 +149,18 @@ def test_https_with_cert_validation_disabled(tmpdir, httpbin_secure, pool_mgr):
 
 
 def test_urllib3_force_reset():
-    cpool = urllib3.connectionpool
-    http_original = cpool.HTTPConnection
-    https_original = cpool.HTTPSConnection
-    verified_https_original = cpool.VerifiedHTTPSConnection
+    conn = urllib3.connection
+    http_original = conn.HTTPConnection
+    https_original = conn.HTTPSConnection
+    verified_https_original = conn.VerifiedHTTPSConnection
     with vcr.use_cassette(path="test"):
-        first_cassette_HTTPConnection = cpool.HTTPConnection
-        first_cassette_HTTPSConnection = cpool.HTTPSConnection
-        first_cassette_VerifiedHTTPSConnection = cpool.VerifiedHTTPSConnection
+        first_cassette_HTTPConnection = conn.HTTPConnection
+        first_cassette_HTTPSConnection = conn.HTTPSConnection
+        first_cassette_VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection
         with force_reset():
-            assert cpool.HTTPConnection is http_original
-            assert cpool.HTTPSConnection is https_original
-            assert cpool.VerifiedHTTPSConnection is verified_https_original
-        assert cpool.HTTPConnection is first_cassette_HTTPConnection
-        assert cpool.HTTPSConnection is first_cassette_HTTPSConnection
-        assert cpool.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection
+            assert conn.HTTPConnection is http_original
+            assert conn.HTTPSConnection is https_original
+            assert conn.VerifiedHTTPSConnection is verified_https_original
+        assert conn.HTTPConnection is first_cassette_HTTPConnection
+        assert conn.HTTPSConnection is first_cassette_HTTPSConnection
+        assert conn.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection

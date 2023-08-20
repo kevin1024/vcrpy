@@ -2,7 +2,6 @@
 import asyncio
 
 import aiohttp
-from aiohttp.test_utils import TestClient
 
 
 async def aiohttp_request(loop, method, url, output="text", encoding="utf-8", content_type=None, **kwargs):

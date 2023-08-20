@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test using a proxy."""
 
 import http.server

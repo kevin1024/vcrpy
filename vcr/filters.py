@@ -95,7 +95,7 @@ def replace_post_data_parameters(request, replacements):
                         new_body[k] = rv
             request.body = new_body
         elif request.headers.get("Content-Type") == "application/json":
-            json_data = json.loads(request.body.decode("utf-8"))
+            json_data = json.loads(request.body)
             for k, rv in replacements.items():
                 if k in json_data:
                     ov = json_data.pop(k)
@@ -153,9 +153,15 @@ def decode_response(response):
         if not body:
             return ""
         if encoding == "gzip":
-            return zlib.decompress(body, zlib.MAX_WBITS | 16)
+            try:
+                return zlib.decompress(body, zlib.MAX_WBITS | 16)
+            except zlib.error:
+                return body  # assumes that the data was already decompressed
         else:  # encoding == 'deflate'
-            return zlib.decompress(body)
+            try:
+                return zlib.decompress(body)
+            except zlib.error:
+                return body  # assumes that the data was already decompressed
 
     # Deepcopy here in case `headers` contain objects that could
     # be mutated by a shallow copy and corrupt the real response.

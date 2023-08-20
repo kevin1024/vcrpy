@@ -74,7 +74,7 @@ The PR reviewer is a second set of eyes to see if:
 **Release Manager:**
  - Ensure CI is passing.
  - Create a release on github and tag it with the changelog release notes.
- - ``python setup.py build sdist bdist_wheel``
+ - ``python3 setup.py build sdist bdist_wheel``
  - ``twine upload dist/*``
  - Go to ReadTheDocs build page and trigger a build https://readthedocs.org/projects/vcrpy/builds/
 
@@ -96,17 +96,17 @@ The test suite is pretty big and slow, but you can tell tox to only run specific
 
     tox -e {pyNN}-{HTTP_LIBRARY} -- <pytest flags passed through>
 
-    tox -e py37-requests -- -v -k "'test_status_code or test_gzip'"
-    tox -e py37-requests -- -v --last-failed
+    tox -e py38-requests -- -v -k "'test_status_code or test_gzip'"
+    tox -e py38-requests -- -v --last-failed
 
 This will run only tests that look like ``test_status_code`` or
-``test_gzip`` in the test suite, and only in the python 3.7 environment
+``test_gzip`` in the test suite, and only in the python 3.8 environment
 that has ``requests`` installed.
 
-Also, in order for the boto tests to run, you will need an AWS key.
-Refer to the `boto
-documentation <https://boto.readthedocs.io/en/latest/getting_started.html>`__
-for how to set this up. I have marked the boto tests as optional in
+Also, in order for the boto3 tests to run, you will need an AWS key.
+Refer to the `boto3
+documentation <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/index.html>`__
+for how to set this up. I have marked the boto3 tests as optional in
 Travis so you don't have to worry about them failing if you submit a
 pull request.
 
@@ -127,20 +127,20 @@ in this example::
     eval "$(pyenv init -)"
 
     # Setup your local system tox tooling
-    pip install tox tox-pyenv
+    pip3 install tox tox-pyenv
 
     # Install supported versions (at time of writing), this does not activate them
-    pyenv install 3.7.5 3.8.0 pypy3.8
+    pyenv install 3.8.0 pypy3.8
 
     # This activates them
-    pyenv local 3.7.5 3.8.0 pypy3.8
+    pyenv local 3.8.0 pypy3.8
 
     # Run the whole test suite
     tox
 
     # Run the whole test suite or just part of it
     tox -e lint
-    tox -e py37-requests
+    tox -e py38-requests
 
 
 Troubleshooting on MacOSX
