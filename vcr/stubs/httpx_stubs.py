@@ -1,3 +1,4 @@
+import base64
 import functools
 import inspect
 import logging
@@ -34,11 +35,19 @@ def _transform_headers(httpx_response):
 
 
 def _to_serialized_response(httpx_response):
+    try:
+        content = httpx_response.content.decode("utf-8")
+        base64encoded = False
+    except UnicodeDecodeError:
+        content = base64.b64encode(httpx_response.content)
+        base64encoded = True
+
     return {
         "status_code": httpx_response.status_code,
         "http_version": httpx_response.http_version,
         "headers": _transform_headers(httpx_response),
-        "content": httpx_response.content.decode("utf-8", "ignore"),
+        "content": content,
+        "base64encoded": base64encoded,
     }
 
 
@@ -57,7 +66,11 @@ def _from_serialized_headers(headers):
 @patch("httpx.Response.close", MagicMock())
 @patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
-    content = serialized_response.get("content").encode()
+    if serialized_response.get("base64encoded"):
+        content = base64.b64decode(serialized_response.get("content"))
+    else:
+        content = serialized_response.get("content").encode()
+
     response = httpx.Response(
         status_code=serialized_response.get("status_code"),
         request=request,
