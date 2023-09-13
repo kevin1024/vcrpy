@@ -159,6 +159,36 @@ def test_post(tmpdir, body, caplog, mockbin_request_url):
 
 
 @pytest.mark.online
+@pytest.mark.asyncio
+async def test_post_data_vs_json(tmpdir, caplog, mockbin_request_url):
+    caplog.set_level(logging.INFO)
+    data = {"key1": "value1", "key2": "value2"}
+    url = mockbin_request_url
+    with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
+        async with aiohttp.ClientSession() as session:
+            async with await session.post(url, json=data) as request:
+                response_json = await request.json()
+
+    with vcr.use_cassette(str(tmpdir.join("post.yaml"))) as cassette:
+        request = cassette.requests[0]
+        assert request.body == data
+        async with aiohttp.ClientSession() as session:
+            async with await session.post(url, json=data) as request:
+                cassette_response_json = await request.json()
+        assert cassette_response_json == response_json
+        assert cassette.play_count == 1
+
+    assert next(
+        (
+            log
+            for log in caplog.records
+            if log.getMessage() == f"<Request (POST) {url}> not in cassette, sending to real server"
+        ),
+        None,
+    ), "Log message not found."
+
+
+@pytest.mark.online
 def test_params(tmpdir, mockbin_request_url):
     url = mockbin_request_url + "?d=d"
     headers = {"Content-Type": "application/json"}
