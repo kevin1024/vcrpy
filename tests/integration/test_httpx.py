@@ -285,3 +285,29 @@ def test_stream(tmpdir, httpbin, do_request):
         assert cassette_content == response_content
         assert len(cassette_content) == 512
         assert cassette.play_count == 1
+
+@pytest.mark.online
+def test_text_content_type(tmpdir, httpbin, do_request):
+    url = httpbin.url + "/json"
+
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
+        response = do_request()("GET", url)
+
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
+        cassette_response = do_request()("GET", url)
+        assert cassette_response.content == response.content
+        assert cassette.play_count == 1
+        assert isinstance(cassette.responses[0]['content'], str)
+        
+@pytest.mark.online
+def test_binary_content_type(tmpdir, httpbin, do_request):
+    url = httpbin.url + "/bytes/1024"
+
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
+        response = do_request()("GET", url)
+
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
+        cassette_response = do_request()("GET", url)
+        assert cassette_response.content == response.content
+        assert cassette.play_count == 1
+        assert isinstance(cassette.responses[0]['content'], bytes)
