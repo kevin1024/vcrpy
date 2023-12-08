@@ -38,7 +38,7 @@ def _to_serialized_response(httpx_response):
         "status_code": httpx_response.status_code,
         "http_version": httpx_response.http_version,
         "headers": _transform_headers(httpx_response),
-        "content": httpx_response.content#.decode("utf-8", "ignore"),
+        "content": httpx_response.content,
     }
 
 
