@@ -111,7 +111,6 @@ def _play_responses(cassette, request, vcr_request, client, kwargs):
     return response
 
 
-
 async def _async_vcr_send(cassette, real_send, *args, **kwargs):
     vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
     if response:
