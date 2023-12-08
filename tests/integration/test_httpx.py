@@ -1,11 +1,9 @@
-
 import pytest
 
 import vcr
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
-
 
 
 @pytest.fixture(params=["https", "http"])
