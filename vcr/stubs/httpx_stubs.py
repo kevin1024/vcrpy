@@ -33,12 +33,18 @@ def _transform_headers(httpx_response):
     return out
 
 
+
 def _to_serialized_response(httpx_response):
+    try:
+        content = httpx_response.content.decode("utf-8")
+    except UnicodeDecodeError:
+        content = httpx_response.content
+    
     return {
         "status_code": httpx_response.status_code,
         "http_version": httpx_response.http_version,
         "headers": _transform_headers(httpx_response),
-        "content": httpx_response.content,
+        "content": content,
     }
 
 
@@ -58,6 +64,8 @@ def _from_serialized_headers(headers):
 @patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
     content = serialized_response.get("content")
+    if isinstance(content, str):
+        content = content.encode("utf-8")
     response = httpx.Response(
         status_code=serialized_response.get("status_code"),
         request=request,
