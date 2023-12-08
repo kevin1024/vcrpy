@@ -4,22 +4,6 @@ import ssl
 import pytest
 
 
-@pytest.fixture(params=["https", "http"])
-def scheme(request):
-    """Fixture that returns both http and https."""
-    return request.param
-
-
-@pytest.fixture
-def mockbin(scheme):
-    return scheme + "://mockbin.org"
-
-
-@pytest.fixture
-def mockbin_request_url(mockbin):
-    return mockbin + "/request"
-
-
 @pytest.fixture
 def httpbin_ssl_context():
     ssl_ca_location = os.environ["REQUESTS_CA_BUNDLE"]

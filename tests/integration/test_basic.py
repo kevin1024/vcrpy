@@ -39,7 +39,7 @@ def test_basic_json_use(tmpdir, httpbin):
     test_fixture = str(tmpdir.join("synopsis.json"))
     with vcr.use_cassette(test_fixture, serializer="json"):
         response = urlopen(httpbin.url).read()
-        assert b"difficult sometimes" in response
+        assert b"A simple HTTP Request &amp; Response Service." in response
 
 
 def test_patched_content(tmpdir, httpbin):

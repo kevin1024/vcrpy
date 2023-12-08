@@ -9,14 +9,12 @@ httpx = pytest.importorskip("httpx")
 
 from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM  # noqa: E402
 
+
 @pytest.fixture(params=["https", "http"])
 def scheme(request):
     """Fixture that returns both http and https."""
     return request.param
 
-@pytest.fixture
-def httpbin(scheme):
-    return scheme + "://httpbin.org"
 
 class BaseDoRequest:
     _client_class = None
@@ -24,7 +22,7 @@ class BaseDoRequest:
     def __init__(self, *args, **kwargs):
         self._client_args = args
         self._client_kwargs = kwargs
-        self._client_kwargs['follow_redirects'] = self._client_kwargs.get('follow_redirects', True)
+        self._client_kwargs["follow_redirects"] = self._client_kwargs.get("follow_redirects", True)
 
     def _make_client(self):
         return self._client_class(*self._client_args, **self._client_kwargs)
@@ -49,10 +47,11 @@ class DoSyncRequest(BaseDoRequest):
 
     def __call__(self, *args, **kwargs):
         return self.client.request(*args, timeout=60, **kwargs)
-    
+
     def stream(self, *args, **kwargs):
         with self.client.stream(*args, **kwargs) as response:
             return b"".join(response.iter_bytes())
+
 
 class DoAsyncRequest(BaseDoRequest):
     _client_class = httpx.AsyncClient
@@ -88,14 +87,14 @@ class DoAsyncRequest(BaseDoRequest):
         # Use one-time context and dispose of the loop/client afterwards
         with self:
             return self._loop.run_until_complete(self.client.request(*args, **kwargs))
-    
+
     async def _get_stream(self, *args, **kwargs):
         async with self.client.stream(*args, **kwargs) as response:
             content = b""
             async for c in response.aiter_bytes():
                 content += c
         return content
-                
+
     def stream(self, *args, **kwargs):
         if hasattr(self, "_loop"):
             return self._loop.run_until_complete(self._get_stream(*args, **kwargs))
@@ -103,6 +102,7 @@ class DoAsyncRequest(BaseDoRequest):
         # Use one-time context and dispose of the loop/client afterwards
         with self:
             return self._loop.run_until_complete(self._get_stream(*args, **kwargs))
+
 
 def pytest_generate_tests(metafunc):
     if "do_request" in metafunc.fixturenames:
@@ -116,7 +116,7 @@ def yml(tmpdir, request):
 
 @pytest.mark.online
 def test_status(tmpdir, httpbin, do_request):
-    url = httpbin
+    url = httpbin.url
 
     with vcr.use_cassette(str(tmpdir.join("status.yaml"))):
         response = do_request()("GET", url)
@@ -129,7 +129,7 @@ def test_status(tmpdir, httpbin, do_request):
 
 @pytest.mark.online
 def test_case_insensitive_headers(tmpdir, httpbin, do_request):
-    url = httpbin
+    url = httpbin.url
 
     with vcr.use_cassette(str(tmpdir.join("whatever.yaml"))):
         do_request()("GET", url)
@@ -143,7 +143,7 @@ def test_case_insensitive_headers(tmpdir, httpbin, do_request):
 
 @pytest.mark.online
 def test_content(tmpdir, httpbin, do_request):
-    url = httpbin
+    url = httpbin.url
 
     with vcr.use_cassette(str(tmpdir.join("cointent.yaml"))):
         response = do_request()("GET", url)
@@ -156,7 +156,7 @@ def test_content(tmpdir, httpbin, do_request):
 
 @pytest.mark.online
 def test_json(tmpdir, httpbin, do_request):
-    url = httpbin + "/json"
+    url = httpbin.url + "/json"
 
     with vcr.use_cassette(str(tmpdir.join("json.yaml"))):
         response = do_request()("GET", url)
@@ -169,7 +169,7 @@ def test_json(tmpdir, httpbin, do_request):
 
 @pytest.mark.online
 def test_params_same_url_distinct_params(tmpdir, httpbin, do_request):
-    url = httpbin + "/get"
+    url = httpbin.url + "/get"
     headers = {"Content-Type": "application/json"}
     params = {"a": 1, "b": False, "c": "c"}
 
@@ -190,7 +190,7 @@ def test_params_same_url_distinct_params(tmpdir, httpbin, do_request):
 
 @pytest.mark.online
 def test_redirect(httpbin, yml, do_request):
-    url = httpbin + "/redirect-to"
+    url = httpbin.url + "/redirect-to"
 
     response = do_request()("GET", url)
     with vcr.use_cassette(yml):
@@ -213,7 +213,7 @@ def test_redirect(httpbin, yml, do_request):
 
 @pytest.mark.online
 def test_work_with_gzipped_data(httpbin, do_request, yml):
-    url = httpbin + "/gzip?foo=bar"
+    url = httpbin.url + "/gzip?foo=bar"
     headers = {"accept-encoding": "deflate, gzip"}
 
     with vcr.use_cassette(yml):
@@ -238,6 +238,7 @@ def test_simple_fetching(do_request, yml, url):
         assert str(cassette_response.request.url) == url
         assert cassette.play_count == 1
 
+
 @pytest.mark.online
 def test_cookies(tmpdir, httpbin, do_request):
     def client_cookies(client):
@@ -246,7 +247,7 @@ def test_cookies(tmpdir, httpbin, do_request):
     def response_cookies(response):
         return list(response.cookies)
 
-    url = httpbin + "/cookies/set"
+    url = httpbin.url + "/cookies/set"
     params = {"k1": "v1", "k2": "v2"}
 
     with do_request(params=params, follow_redirects=False) as client:
@@ -273,19 +274,18 @@ def test_cookies(tmpdir, httpbin, do_request):
             assert response_cookies(cassette_response) == ["k1", "k2"]
             assert client_cookies(new_client) == ["k1", "k2"]
 
+
 @pytest.mark.online
 def test_stream(tmpdir, httpbin, do_request):
-    url = httpbin + "/stream-bytes/512"
+    url = httpbin.url + "/stream-bytes/512"
     testfile = str(tmpdir.join("stream.yml"))
 
     with vcr.use_cassette(testfile):
         response_content = do_request().stream("GET", url)
         assert len(response_content) == 512
-        
 
     with vcr.use_cassette(testfile) as cassette:
         cassette_content = do_request().stream("GET", url)
         assert cassette_content == response_content
         assert len(cassette_content) == 512
         assert cassette.play_count == 1
-        
