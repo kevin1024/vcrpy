@@ -1,9 +1,8 @@
 """Test using a proxy."""
 
 import http.server
-import multiprocessing
-import threading
 import socketserver
+import threading
 from urllib.request import urlopen
 
 import pytest

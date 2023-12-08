@@ -1,4 +1,3 @@
-import os
 
 import pytest
 
@@ -7,7 +6,6 @@ import vcr
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
 
-from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM  # noqa: E402
 
 
 @pytest.fixture(params=["https", "http"])
