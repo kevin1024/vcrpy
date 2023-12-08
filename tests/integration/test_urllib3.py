@@ -99,9 +99,9 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
 
 
 @pytest.mark.online
-def test_redirects(tmpdir, verify_pool_mgr):
+def test_redirects(tmpdir, verify_pool_mgr, httpbin):
     """Ensure that we can handle redirects"""
-    url = "http://mockbin.org/redirect/301"
+    url = httpbin.url + "/redirect/1"
 
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
         content = verify_pool_mgr.request("GET", url).data
