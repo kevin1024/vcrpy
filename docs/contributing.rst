@@ -24,7 +24,7 @@ So whilst reporting issues are valuable, please consider:
  - contributing an issue with a toy repo that replicates the issue.
  - contributing PRs is a more valuable donation of your time and effort.
 
-Thanks again for your interest and support in VCRpy. 
+Thanks again for your interest and support in VCRpy.
 
 We really appreciate it.
 
@@ -57,7 +57,7 @@ Simply adding these three labels for incoming issues means a lot for maintaining
  - Which library does it affect? ``core``, ``aiohttp``, ``requests``, ``urllib3``, ``tornado4``, ``httplib2``
  - If it is a bug, is it ``Verified Can Replicate`` or ``Requires Help Replicating``
  - Thanking people for raising issues. Feedback is always appreciated.
- - Politely asking if they are able to link to an example repo that replicates the issue if they haven't already. Being able to *clone and go* helps the next person and we like that. 😃 
+ - Politely asking if they are able to link to an example repo that replicates the issue if they haven't already. Being able to *clone and go* helps the next person and we like that. 😃
 
 **Maintainer:**
 
@@ -68,7 +68,7 @@ This involves creating PRs to address bugs and enhancement requests. It also mea
 The PR reviewer is a second set of eyes to see if:
  - Are there tests covering the code paths added/modified?
  - Do the tests and modifications make sense seem appropriate?
- - Add specific feedback, even on approvals, why it is accepted. eg "I like how you use a context manager there. 😄 " 
+ - Add specific feedback, even on approvals, why it is accepted. eg "I like how you use a context manager there. 😄 "
  - Also make sure they add a line to `docs/changelog.rst` to claim credit for their contribution.
 
 **Release Manager:**
@@ -86,10 +86,10 @@ Running VCR's test suite
 The tests are all run automatically on `Travis
 CI <https://travis-ci.org/kevin1024/vcrpy>`__, but you can also run them
 yourself using `pytest <http://pytest.org/>`__ and
-`Tox <http://tox.testrun.org/>`__. 
+`Tox <http://tox.testrun.org/>`__.
 
-Tox will automatically run them in all environments VCR.py supports if they are available on your `PATH`. Alternatively you can use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ with 
-`pyenv <https://github.com/pyenv/pyenv>`_. 
+Tox will automatically run them in all environments VCR.py supports if they are available on your `PATH`. Alternatively you can use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ with
+`pyenv <https://github.com/pyenv/pyenv>`_.
 We recommend you read the documentation for each and see the section further below.
 
 The test suite is pretty big and slow, but you can tell tox to only run specific tests like this::
@@ -114,8 +114,8 @@ Using PyEnv with VCR's test suite
 ---------------------------------
 
 PyEnv is a tool for managing multiple installation of python on your system.
-See the full documentation at their `github <https://github.com/pyenv/pyenv>`_ 
-but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ 
+See the full documentation at their `github <https://github.com/pyenv/pyenv>`_
+but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_
 in this example::
 
     git clone https://github.com/pyenv/pyenv ~/.pyenv
@@ -139,7 +139,6 @@ in this example::
     tox
 
     # Run the whole test suite or just part of it
-    tox -e lint
     tox -e py38-requests
 
 
