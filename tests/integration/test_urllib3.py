@@ -4,11 +4,12 @@
 
 import pytest
 import pytest_httpbin
-from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.patch import force_reset
 from vcr.stubs.compat import get_headers
+
+from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
 urllib3 = pytest.importorskip("urllib3")
 

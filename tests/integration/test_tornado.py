@@ -3,10 +3,11 @@
 import json
 
 import pytest
-from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.errors import CannotOverwriteExistingCassetteException
+
+from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
 tornado = pytest.importorskip("tornado")
 http = pytest.importorskip("tornado.httpclient")
