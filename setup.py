@@ -67,13 +67,13 @@ tests_require = [
     "pytest-httpbin",
     "requests>=2.16.2",
     "tornado",
-    # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
-    # this pin and the dependency itself can be removed, provided
-    # that the related bug in httpbin has been fixed:
-    # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
-    # https://github.com/postmanlabs/httpbin/issues/673
-    # https://github.com/postmanlabs/httpbin/pull/674
-    "Werkzeug==2.0.3",
+    # Needed to un-break httpbin 0.10.1. For httpbin >=0.10.2,
+    # this cap and the dependency itself can be removed, provided
+    # that the related bug in httpbin has has been fixed in a new release:
+    # https://github.com/psf/httpbin/issues/28
+    # https://github.com/psf/httpbin/pull/29
+    # https://github.com/psf/httpbin/pull/37
+    "Werkzeug<3",
 ]
 
 setup(
