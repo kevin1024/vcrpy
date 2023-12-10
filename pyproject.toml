@@ -1,6 +1,3 @@
-[tool.black]
-line-length=110
-
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
@@ -8,9 +5,7 @@ ignore-regex = "\\\\[fnrstv]"
 # ignore-words-list = ''
 
 [tool.pytest.ini_options]
-markers = [
-    "online",
-]
+markers = ["online"]
 
 [tool.ruff]
 select = [
@@ -30,4 +25,4 @@ line-length = 110
 target-version = "py38"
 
 [tool.ruff.isort]
-known-first-party = [ "vcr" ]
+known-first-party = ["vcr"]
