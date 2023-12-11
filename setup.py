@@ -46,13 +46,15 @@ install_requires = [
     "PyYAML",
     "wrapt",
     "yarl",
-    # Support for urllib3 >=2 needs Python >=3.10
-    # so we need to block urllib3 >=2 for Python <3.10 for now.
+    # Support for urllib3 >=2 needs CPython >=3.10
+    # so we need to block urllib3 >=2 for Python <3.10 and PyPy for now.
     # Note that vcrpy would work fine without any urllib3 around,
     # so this block and the dependency can be dropped at some point
     # in the future. For more Details:
     # https://github.com/kevin1024/vcrpy/pull/699#issuecomment-1551439663
     "urllib3 <2; python_version <'3.10'",
+    # https://github.com/kevin1024/vcrpy/pull/775#issuecomment-1847849962
+    "urllib3 <2; platform_python_implementation =='PyPy'",
 ]
 
 tests_require = [
@@ -98,6 +100,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",

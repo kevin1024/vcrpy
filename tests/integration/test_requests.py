@@ -1,8 +1,9 @@
 """Test requests' interaction with vcr"""
 import pytest
-from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
+
+from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
 requests = pytest.importorskip("requests")
 

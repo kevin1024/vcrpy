@@ -260,10 +260,14 @@ class CassettePatcherBuilder:
 
             yield cpool, "HTTPConnectionWithTimeout", VCRHTTPConnectionWithTimeout
             yield cpool, "HTTPSConnectionWithTimeout", VCRHTTPSConnectionWithTimeout
-            yield cpool, "SCHEME_TO_CONNECTION", {
-                "http": VCRHTTPConnectionWithTimeout,
-                "https": VCRHTTPSConnectionWithTimeout,
-            }
+            yield (
+                cpool,
+                "SCHEME_TO_CONNECTION",
+                {
+                    "http": VCRHTTPConnectionWithTimeout,
+                    "https": VCRHTTPSConnectionWithTimeout,
+                },
+            )
 
     @_build_patchers_from_mock_triples_decorator
     def _tornado(self):

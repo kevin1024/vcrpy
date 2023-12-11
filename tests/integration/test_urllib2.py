@@ -5,11 +5,12 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 import pytest_httpbin.certs
-from assertions import assert_cassette_has_one_response
 from pytest import mark
 
 # Internal imports
 import vcr
+
+from ..assertions import assert_cassette_has_one_response
 
 
 def urlopen_with_cafile(*args, **kwargs):
