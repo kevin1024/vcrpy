@@ -2,9 +2,9 @@ import http.client as httplib
 import json
 import zlib
 
-from assertions import assert_is_json_bytes
-
 import vcr
+
+from ..assertions import assert_is_json_bytes
 
 
 def _headers_are_case_insensitive(host, port):

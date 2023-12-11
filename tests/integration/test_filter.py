@@ -5,9 +5,10 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import pytest
-from assertions import assert_cassette_has_one_response, assert_is_json_bytes
 
 import vcr
+
+from ..assertions import assert_cassette_has_one_response, assert_is_json_bytes
 
 
 def _request_with_auth(url, username, password):
