@@ -33,7 +33,6 @@ def _transform_headers(httpx_response):
     return out
 
 
-
 def _to_serialized_response(httpx_response):
     try:
         content = httpx_response.content.decode("utf-8")
