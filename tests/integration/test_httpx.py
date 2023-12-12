@@ -298,7 +298,7 @@ def test_text_content_type(tmpdir, httpbin, do_request):
         assert cassette_response.content == response.content
         assert cassette.play_count == 1
         assert isinstance(cassette.responses[0]['content'], str)
-        
+
 @pytest.mark.online
 def test_binary_content_type(tmpdir, httpbin, do_request):
     url = httpbin.url + "/bytes/1024"

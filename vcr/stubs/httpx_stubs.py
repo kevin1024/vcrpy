@@ -39,7 +39,7 @@ def _to_serialized_response(httpx_response):
         content = httpx_response.content.decode("utf-8")
     except UnicodeDecodeError:
         content = httpx_response.content
-    
+
     return {
         "status_code": httpx_response.status_code,
         "http_version": httpx_response.http_version,
