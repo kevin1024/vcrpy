@@ -16,7 +16,7 @@ a nice addition. Here's an example:
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
         response = urllib2.urlopen('http://www.zombo.com/').read()
         # cass should have 1 request inside it
-        assert len(cass) == 1 
+        assert len(cass) == 1
         # the request uri should have been http://www.zombo.com/
         assert cass.requests[0].uri == 'http://www.zombo.com/'
 
@@ -208,7 +208,7 @@ So these two calls are the same:
 
     # original (still works)
     vcr = VCR(filter_headers=['authorization'])
-    
+
     # new
     vcr = VCR(filter_headers=[('authorization', None)])
 
@@ -218,7 +218,7 @@ Here are two examples of the new functionality:
 
     # replace with a static value (most common)
     vcr = VCR(filter_headers=[('authorization', 'XXXXXX')])
-    
+
     # replace with a callable, for example when testing
     # lots of different kinds of authorization.
     def replace_auth(key, value, request):
@@ -286,7 +286,7 @@ sensitive data from the response body:
         before_record_response=scrub_string(settings.USERNAME, 'username'),
     )
     with my_vcr.use_cassette('test.yml'):
-         # your http code here    
+         # your http code here
 
 
 Decode compressed response
