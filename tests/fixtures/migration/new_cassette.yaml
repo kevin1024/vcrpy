@@ -2,7 +2,7 @@ version: 1
 interactions:
 - request:
     body: null
-    headers: 
+    headers:
       accept: ['*/*']
       accept-encoding: ['gzip, deflate, compress']
       user-agent: ['python-requests/2.2.1 CPython/2.6.1 Darwin/10.8.0']

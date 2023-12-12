@@ -10,7 +10,7 @@ interactions:
     uri: http://seomoz.org/
   response:
     body: {string: ''}
-    headers: 
+    headers:
       Location: ['http://moz.com/']
       Server: ['BigIP']
       Connection: ['Keep-Alive']
