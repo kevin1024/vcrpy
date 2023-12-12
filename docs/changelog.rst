@@ -287,4 +287,3 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Add support for requests / urllib3
 -  0.0.1
     - Initial Release
-
