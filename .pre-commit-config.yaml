@@ -1,0 +1,9 @@
+# Copyright (c) 2023 Sebastian Pipping <sebastian@pipping.org>
+# Licensed under the MIT license
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.7
+    hooks:
+      - id: ruff
+      - id: ruff-format
