@@ -39,12 +39,12 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
 
 @pytest.fixture(scope="session")
 def proxy_server():
-    httpd = socketserver.ThreadingTCPServer(("", 0), Proxy)
-    proxy_process = threading.Thread(target=httpd.serve_forever)
-    proxy_process.start()
-    yield "http://{}:{}".format(*httpd.server_address)
-    httpd.shutdown()
-    proxy_process.join()
+    with socketserver.ThreadingTCPServer(("", 0), Proxy) as httpd:
+        proxy_process = threading.Thread(target=httpd.serve_forever)
+        proxy_process.start()
+        yield "http://{}:{}".format(*httpd.server_address)
+        httpd.shutdown()
+        proxy_process.join()
 
 
 def test_use_proxy(tmpdir, httpbin, proxy_server):
