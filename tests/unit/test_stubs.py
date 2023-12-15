@@ -1,3 +1,4 @@
+import contextlib
 from unittest import mock
 
 from pytest import mark
@@ -16,7 +17,7 @@ class TestVCRConnection:
     @mark.online
     @mock.patch("vcr.cassette.Cassette.can_play_response_for", return_value=False)
     def testing_connect(*args):
-        vcr_connection = VCRHTTPSConnection("www.google.com")
-        vcr_connection.cassette = Cassette("test", record_mode=mode.ALL)
-        vcr_connection.real_connection.connect()
-        assert vcr_connection.real_connection.sock is not None
+        with contextlib.closing(VCRHTTPSConnection("www.google.com")) as vcr_connection:
+            vcr_connection.cassette = Cassette("test", record_mode=mode.ALL)
+            vcr_connection.real_connection.connect()
+            assert vcr_connection.real_connection.sock is not None
