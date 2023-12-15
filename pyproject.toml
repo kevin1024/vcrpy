@@ -5,7 +5,12 @@ ignore-regex = "\\\\[fnrstv]"
 # ignore-words-list = ''
 
 [tool.pytest.ini_options]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+]
 markers = ["online"]
+filterwarnings = ["error"]
 
 [tool.ruff]
 select = [
