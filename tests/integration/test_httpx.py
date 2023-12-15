@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 import vcr
@@ -7,7 +5,11 @@ import vcr
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
 
-from vcr.stubs.httpx_stubs import HTTPX_REDIRECT_PARAM  # noqa: E402
+
+@pytest.fixture(params=["https", "http"])
+def scheme(request):
+    """Fixture that returns both http and https."""
+    return request.param
 
 
 class BaseDoRequest:
@@ -16,6 +18,7 @@ class BaseDoRequest:
     def __init__(self, *args, **kwargs):
         self._client_args = args
         self._client_kwargs = kwargs
+        self._client_kwargs["follow_redirects"] = self._client_kwargs.get("follow_redirects", True)
 
     def _make_client(self):
         return self._client_class(*self._client_args, **self._client_kwargs)
@@ -40,6 +43,10 @@ class DoSyncRequest(BaseDoRequest):
 
     def __call__(self, *args, **kwargs):
         return self.client.request(*args, timeout=60, **kwargs)
+
+    def stream(self, *args, **kwargs):
+        with self.client.stream(*args, **kwargs) as response:
+            return b"".join(response.iter_bytes())
 
 
 class DoAsyncRequest(BaseDoRequest):
@@ -75,7 +82,22 @@ class DoAsyncRequest(BaseDoRequest):
 
         # Use one-time context and dispose of the loop/client afterwards
         with self:
-            return self(*args, **kwargs)
+            return self._loop.run_until_complete(self.client.request(*args, **kwargs))
+
+    async def _get_stream(self, *args, **kwargs):
+        async with self.client.stream(*args, **kwargs) as response:
+            content = b""
+            async for c in response.aiter_bytes():
+                content += c
+        return content
+
+    def stream(self, *args, **kwargs):
+        if hasattr(self, "_loop"):
+            return self._loop.run_until_complete(self._get_stream(*args, **kwargs))
+
+        # Use one-time context and dispose of the loop/client afterwards
+        with self:
+            return self._loop.run_until_complete(self._get_stream(*args, **kwargs))
 
 
 def pytest_generate_tests(metafunc):
@@ -89,8 +111,8 @@ def yml(tmpdir, request):
 
 
 @pytest.mark.online
-def test_status(tmpdir, mockbin, do_request):
-    url = mockbin
+def test_status(tmpdir, httpbin, do_request):
+    url = httpbin.url
 
     with vcr.use_cassette(str(tmpdir.join("status.yaml"))):
         response = do_request()("GET", url)
@@ -102,8 +124,8 @@ def test_status(tmpdir, mockbin, do_request):
 
 
 @pytest.mark.online
-def test_case_insensitive_headers(tmpdir, mockbin, do_request):
-    url = mockbin
+def test_case_insensitive_headers(tmpdir, httpbin, do_request):
+    url = httpbin.url
 
     with vcr.use_cassette(str(tmpdir.join("whatever.yaml"))):
         do_request()("GET", url)
@@ -116,8 +138,8 @@ def test_case_insensitive_headers(tmpdir, mockbin, do_request):
 
 
 @pytest.mark.online
-def test_content(tmpdir, mockbin, do_request):
-    url = mockbin
+def test_content(tmpdir, httpbin, do_request):
+    url = httpbin.url
 
     with vcr.use_cassette(str(tmpdir.join("cointent.yaml"))):
         response = do_request()("GET", url)
@@ -129,23 +151,21 @@ def test_content(tmpdir, mockbin, do_request):
 
 
 @pytest.mark.online
-def test_json(tmpdir, mockbin, do_request):
-    url = mockbin + "/request"
-
-    headers = {"content-type": "application/json"}
+def test_json(tmpdir, httpbin, do_request):
+    url = httpbin.url + "/json"
 
     with vcr.use_cassette(str(tmpdir.join("json.yaml"))):
-        response = do_request(headers=headers)("GET", url)
+        response = do_request()("GET", url)
 
     with vcr.use_cassette(str(tmpdir.join("json.yaml"))) as cassette:
-        cassette_response = do_request(headers=headers)("GET", url)
+        cassette_response = do_request()("GET", url)
         assert cassette_response.json() == response.json()
         assert cassette.play_count == 1
 
 
 @pytest.mark.online
-def test_params_same_url_distinct_params(tmpdir, mockbin, do_request):
-    url = mockbin + "/request"
+def test_params_same_url_distinct_params(tmpdir, httpbin, do_request):
+    url = httpbin.url + "/get"
     headers = {"Content-Type": "application/json"}
     params = {"a": 1, "b": False, "c": "c"}
 
@@ -165,22 +185,20 @@ def test_params_same_url_distinct_params(tmpdir, mockbin, do_request):
 
 
 @pytest.mark.online
-def test_redirect(mockbin, yml, do_request):
-    url = mockbin + "/redirect/303/2"
+def test_redirect(httpbin, yml, do_request):
+    url = httpbin.url + "/redirect-to"
 
-    redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: True}
-
-    response = do_request()("GET", url, **redirect_kwargs)
+    response = do_request()("GET", url)
     with vcr.use_cassette(yml):
-        response = do_request()("GET", url, **redirect_kwargs)
+        response = do_request()("GET", url, params={"url": "./get", "status_code": 302})
 
     with vcr.use_cassette(yml) as cassette:
-        cassette_response = do_request()("GET", url, **redirect_kwargs)
+        cassette_response = do_request()("GET", url, params={"url": "./get", "status_code": 302})
 
         assert cassette_response.status_code == response.status_code
         assert len(cassette_response.history) == len(response.history)
-        assert len(cassette) == 3
-        assert cassette.play_count == 3
+        assert len(cassette) == 2
+        assert cassette.play_count == 2
 
     # Assert that the real response and the cassette response have a similar
     # looking request_info.
@@ -190,8 +208,8 @@ def test_redirect(mockbin, yml, do_request):
 
 
 @pytest.mark.online
-def test_work_with_gzipped_data(mockbin, do_request, yml):
-    url = mockbin + "/gzip?foo=bar"
+def test_work_with_gzipped_data(httpbin, do_request, yml):
+    url = httpbin.url + "/gzip?foo=bar"
     headers = {"accept-encoding": "deflate, gzip"}
 
     with vcr.use_cassette(yml):
@@ -217,55 +235,32 @@ def test_simple_fetching(do_request, yml, url):
         assert cassette.play_count == 1
 
 
-def test_behind_proxy(do_request):
-    # This is recorded because otherwise we should have a live proxy somewhere.
-    yml = (
-        os.path.dirname(os.path.realpath(__file__)) + "/cassettes/" + "test_httpx_test_test_behind_proxy.yml"
-    )
-    url = "https://mockbin.org/headers"
-    proxy = "http://localhost:8080"
-    proxies = {"http://": proxy, "https://": proxy}
-
-    with vcr.use_cassette(yml):
-        response = do_request(proxies=proxies, verify=False)("GET", url)
-
-    with vcr.use_cassette(yml) as cassette:
-        cassette_response = do_request(proxies=proxies, verify=False)("GET", url)
-        assert str(cassette_response.request.url) == url
-        assert cassette.play_count == 1
-
-        assert cassette_response.headers["Via"] == "my_own_proxy", str(cassette_response.headers)
-        assert cassette_response.request.url == response.request.url
-
-
 @pytest.mark.online
-def test_cookies(tmpdir, mockbin, do_request):
+def test_cookies(tmpdir, httpbin, do_request):
     def client_cookies(client):
         return list(client.client.cookies)
 
     def response_cookies(response):
         return list(response.cookies)
 
-    url = mockbin + "/bin/26148652-fe25-4f21-aaf5-689b5b4bf65f"
-    headers = {"cookie": "k1=v1;k2=v2"}
+    url = httpbin.url + "/cookies/set"
+    params = {"k1": "v1", "k2": "v2"}
 
-    with do_request(headers=headers) as client:
+    with do_request(params=params, follow_redirects=False) as client:
         assert client_cookies(client) == []
-
-        redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: True}
 
         testfile = str(tmpdir.join("cookies.yml"))
         with vcr.use_cassette(testfile):
-            r1 = client("GET", url, **redirect_kwargs)
+            r1 = client("GET", url)
 
             assert response_cookies(r1) == ["k1", "k2"]
 
-            r2 = client("GET", url, **redirect_kwargs)
+            r2 = client("GET", url)
 
             assert response_cookies(r2) == ["k1", "k2"]
             assert client_cookies(client) == ["k1", "k2"]
 
-    with do_request(headers=headers) as new_client:
+    with do_request(params=params, follow_redirects=False) as new_client:
         assert client_cookies(new_client) == []
 
         with vcr.use_cassette(testfile) as cassette:
@@ -277,40 +272,44 @@ def test_cookies(tmpdir, mockbin, do_request):
 
 
 @pytest.mark.online
-def test_relative_redirects(tmpdir, scheme, do_request, mockbin):
-    redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: True}
+def test_stream(tmpdir, httpbin, do_request):
+    url = httpbin.url + "/stream-bytes/512"
+    testfile = str(tmpdir.join("stream.yml"))
 
-    url = mockbin + "/redirect/301?to=/redirect/301?to=/request"
-    testfile = str(tmpdir.join("relative_redirects.yml"))
     with vcr.use_cassette(testfile):
-        response = do_request()("GET", url, **redirect_kwargs)
-        assert len(response.history) == 2, response
-        assert response.json()["url"].endswith("request")
+        response_content = do_request().stream("GET", url)
+        assert len(response_content) == 512
 
     with vcr.use_cassette(testfile) as cassette:
-        response = do_request()("GET", url, **redirect_kwargs)
-        assert len(response.history) == 2
-        assert response.json()["url"].endswith("request")
-
-        assert cassette.play_count == 3
+        cassette_content = do_request().stream("GET", url)
+        assert cassette_content == response_content
+        assert len(cassette_content) == 512
+        assert cassette.play_count == 1
 
 
 @pytest.mark.online
-def test_redirect_wo_allow_redirects(do_request, mockbin, yml):
-    url = mockbin + "/redirect/308/5"
+def test_text_content_type(tmpdir, httpbin, do_request):
+    url = httpbin.url + "/json"
 
-    redirect_kwargs = {HTTPX_REDIRECT_PARAM.name: False}
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
+        response = do_request()("GET", url)
 
-    with vcr.use_cassette(yml):
-        response = do_request()("GET", url, **redirect_kwargs)
-
-        assert str(response.url).endswith("308/5")
-        assert response.status_code == 308
-
-    with vcr.use_cassette(yml) as cassette:
-        response = do_request()("GET", url, **redirect_kwargs)
-
-        assert str(response.url).endswith("308/5")
-        assert response.status_code == 308
-
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
+        cassette_response = do_request()("GET", url)
+        assert cassette_response.content == response.content
         assert cassette.play_count == 1
+        assert isinstance(cassette.responses[0]["content"], str)
+
+
+@pytest.mark.online
+def test_binary_content_type(tmpdir, httpbin, do_request):
+    url = httpbin.url + "/bytes/1024"
+
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
+        response = do_request()("GET", url)
+
+    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
+        cassette_response = do_request()("GET", url)
+        assert cassette_response.content == response.content
+        assert cassette.play_count == 1
+        assert isinstance(cassette.responses[0]["content"], bytes)

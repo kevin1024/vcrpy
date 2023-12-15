@@ -34,11 +34,16 @@ def _transform_headers(httpx_response):
 
 
 def _to_serialized_response(httpx_response):
+    try:
+        content = httpx_response.content.decode("utf-8")
+    except UnicodeDecodeError:
+        content = httpx_response.content
+
     return {
         "status_code": httpx_response.status_code,
         "http_version": httpx_response.http_version,
         "headers": _transform_headers(httpx_response),
-        "content": httpx_response.content.decode("utf-8", "ignore"),
+        "content": content,
     }
 
 
@@ -57,7 +62,9 @@ def _from_serialized_headers(headers):
 @patch("httpx.Response.close", MagicMock())
 @patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
-    content = serialized_response.get("content").encode()
+    content = serialized_response.get("content")
+    if isinstance(content, str):
+        content = content.encode("utf-8")
     response = httpx.Response(
         status_code=serialized_response.get("status_code"),
         request=request,
@@ -106,30 +113,8 @@ def _record_responses(cassette, vcr_request, real_response):
 
 
 def _play_responses(cassette, request, vcr_request, client, kwargs):
-    history = []
-
-    allow_redirects = kwargs.get(
-        HTTPX_REDIRECT_PARAM.name,
-        HTTPX_REDIRECT_PARAM.default,
-    )
     vcr_response = cassette.play_response(vcr_request)
     response = _from_serialized_response(request, vcr_response)
-
-    while allow_redirects and 300 <= response.status_code <= 399:
-        next_url = response.headers.get("location")
-        if not next_url:
-            break
-
-        vcr_request = VcrRequest("GET", next_url, None, dict(response.headers))
-        vcr_request = cassette.find_requests_with_most_matches(vcr_request)[0][0]
-
-        history.append(response)
-        # add cookies from response to session cookie store
-        client.cookies.extract_cookies(response)
-
-        vcr_response = cassette.play_response(vcr_request)
-        response = _from_serialized_response(vcr_request, vcr_response, history)
-
     return response
 
 
@@ -141,6 +126,7 @@ async def _async_vcr_send(cassette, real_send, *args, **kwargs):
         return response
 
     real_response = await real_send(*args, **kwargs)
+    await real_response.aread()
     return _record_responses(cassette, vcr_request, real_response)
 
 
@@ -160,6 +146,7 @@ def _sync_vcr_send(cassette, real_send, *args, **kwargs):
         return response
 
     real_response = real_send(*args, **kwargs)
+    real_response.read()
     return _record_responses(cassette, vcr_request, real_response)
 
 

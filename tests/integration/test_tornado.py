@@ -3,10 +3,11 @@
 import json
 
 import pytest
-from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.errors import CannotOverwriteExistingCassetteException
+
+from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
 tornado = pytest.importorskip("tornado")
 http = pytest.importorskip("tornado.httpclient")
@@ -81,12 +82,12 @@ def test_body(get_client, tmpdir, scheme):
 
 
 @pytest.mark.gen_test
-def test_effective_url(get_client, scheme, tmpdir):
+def test_effective_url(get_client, tmpdir, httpbin):
     """Ensure that the effective_url is captured"""
-    url = scheme + "://mockbin.org/redirect/301?url=/html"
+    url = httpbin.url + "/redirect/1"
     with vcr.use_cassette(str(tmpdir.join("url.yaml"))):
         effective_url = (yield get(get_client(), url)).effective_url
-        assert effective_url == scheme + "://mockbin.org/redirect/301/0"
+        assert effective_url == httpbin.url + "/get"
 
     with vcr.use_cassette(str(tmpdir.join("url.yaml"))) as cass:
         assert effective_url == (yield get(get_client(), url)).effective_url

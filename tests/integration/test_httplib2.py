@@ -3,9 +3,10 @@ from urllib.parse import urlencode
 
 import pytest
 import pytest_httpbin.certs
-from assertions import assert_cassette_has_one_response
 
 import vcr
+
+from ..assertions import assert_cassette_has_one_response
 
 httplib2 = pytest.importorskip("httplib2")
 
@@ -56,14 +57,14 @@ def test_response_headers(tmpdir, httpbin_both):
 
 
 @pytest.mark.online
-def test_effective_url(tmpdir):
+def test_effective_url(tmpdir, httpbin):
     """Ensure that the effective_url is captured"""
-    url = "http://mockbin.org/redirect/301"
+    url = httpbin.url + "/redirect-to?url=.%2F&status_code=301"
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         resp, _ = http().request(url)
         effective_url = resp["content-location"]
-        assert effective_url == "http://mockbin.org/redirect/301/0"
+        assert effective_url == httpbin.url + "/"
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         resp, _ = http().request(url)

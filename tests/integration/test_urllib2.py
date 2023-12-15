@@ -5,11 +5,12 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 import pytest_httpbin.certs
-from assertions import assert_cassette_has_one_response
 from pytest import mark
 
 # Internal imports
 import vcr
+
+from ..assertions import assert_cassette_has_one_response
 
 
 def urlopen_with_cafile(*args, **kwargs):
@@ -57,13 +58,13 @@ def test_response_headers(httpbin_both, tmpdir):
 
 
 @mark.online
-def test_effective_url(tmpdir):
+def test_effective_url(tmpdir, httpbin):
     """Ensure that the effective_url is captured"""
-    url = "http://mockbin.org/redirect/301"
+    url = httpbin.url + "/redirect-to?url=.%2F&status_code=301"
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         effective_url = urlopen_with_cafile(url).geturl()
-        assert effective_url == "http://mockbin.org/redirect/301/0"
+        assert effective_url == httpbin.url + "/"
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         assert effective_url == urlopen_with_cafile(url).geturl()

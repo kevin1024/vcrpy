@@ -4,11 +4,12 @@
 
 import pytest
 import pytest_httpbin
-from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.patch import force_reset
 from vcr.stubs.compat import get_headers
+
+from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
 urllib3 = pytest.importorskip("urllib3")
 
@@ -99,9 +100,9 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
 
 
 @pytest.mark.online
-def test_redirects(tmpdir, verify_pool_mgr):
+def test_redirects(tmpdir, verify_pool_mgr, httpbin):
     """Ensure that we can handle redirects"""
-    url = "http://mockbin.org/redirect/301"
+    url = httpbin.url + "/redirect/1"
 
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
         content = verify_pool_mgr.request("GET", url).data

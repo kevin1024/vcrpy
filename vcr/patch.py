@@ -95,8 +95,8 @@ try:
 except ImportError:  # pragma: no cover
     pass
 else:
-    _HttpxSyncClient_send = httpx.Client.send
-    _HttpxAsyncClient_send = httpx.AsyncClient.send
+    _HttpxSyncClient_send_single_request = httpx.Client._send_single_request
+    _HttpxAsyncClient_send_single_request = httpx.AsyncClient._send_single_request
 
 
 class CassettePatcherBuilder:
@@ -260,10 +260,14 @@ class CassettePatcherBuilder:
 
             yield cpool, "HTTPConnectionWithTimeout", VCRHTTPConnectionWithTimeout
             yield cpool, "HTTPSConnectionWithTimeout", VCRHTTPSConnectionWithTimeout
-            yield cpool, "SCHEME_TO_CONNECTION", {
-                "http": VCRHTTPConnectionWithTimeout,
-                "https": VCRHTTPSConnectionWithTimeout,
-            }
+            yield (
+                cpool,
+                "SCHEME_TO_CONNECTION",
+                {
+                    "http": VCRHTTPConnectionWithTimeout,
+                    "https": VCRHTTPSConnectionWithTimeout,
+                },
+            )
 
     @_build_patchers_from_mock_triples_decorator
     def _tornado(self):
@@ -307,11 +311,11 @@ class CassettePatcherBuilder:
         else:
             from .stubs.httpx_stubs import async_vcr_send, sync_vcr_send
 
-            new_async_client_send = async_vcr_send(self._cassette, _HttpxAsyncClient_send)
-            yield httpx.AsyncClient, "send", new_async_client_send
+            new_async_client_send = async_vcr_send(self._cassette, _HttpxAsyncClient_send_single_request)
+            yield httpx.AsyncClient, "_send_single_request", new_async_client_send
 
-            new_sync_client_send = sync_vcr_send(self._cassette, _HttpxSyncClient_send)
-            yield httpx.Client, "send", new_sync_client_send
+            new_sync_client_send = sync_vcr_send(self._cassette, _HttpxSyncClient_send_single_request)
+            yield httpx.Client, "_send_single_request", new_sync_client_send
 
     def _urllib3_patchers(self, cpool, conn, stubs):
         http_connection_remover = ConnectionRemover(
