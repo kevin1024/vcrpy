@@ -259,6 +259,12 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     assert cassette.play_count == 1
 
 
+def test_cleanup_from_pytest_asyncio():
+    # work around https://github.com/pytest-dev/pytest-asyncio/issues/724
+    asyncio.get_event_loop().close()
+    asyncio.set_event_loop(None)
+
+
 @pytest.mark.online
 def test_redirect(tmpdir, httpbin):
     url = httpbin.url + "/redirect/2"
