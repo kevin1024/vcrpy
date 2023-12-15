@@ -28,21 +28,27 @@ class DoSyncRequest(BaseDoRequest):
     _client_class = httpx.Client
 
     def __enter__(self):
+        self._client = self._make_client()
         return self
 
     def __exit__(self, *args):
-        pass
+        self._client.close()
+        del self._client
 
     @property
     def client(self):
         try:
             return self._client
-        except AttributeError:
-            self._client = self._make_client()
-            return self._client
+        except AttributeError as e:
+            raise ValueError('To access sync client, use "with do_request() as client"') from e
 
     def __call__(self, *args, **kwargs):
-        return self.client.request(*args, timeout=60, **kwargs)
+        if hasattr(self, "_client"):
+            return self.client.request(*args, timeout=60, **kwargs)
+
+        # Use one-time context and dispose of the client afterwards
+        with self:
+            return self.client.request(*args, timeout=60, **kwargs)
 
     def stream(self, *args, **kwargs):
         with self.client.stream(*args, **kwargs) as response:
