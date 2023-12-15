@@ -371,7 +371,6 @@ class ConnectionRemover:
     def add_connection_to_pool_entry(self, pool, connection):
         if isinstance(connection, self._connection_class):
             self._connection_pool_to_connections.setdefault(pool, set()).add(connection)
-            pool._put_conn(connection)
 
     def remove_connection_to_pool_entry(self, pool, connection):
         if isinstance(connection, self._connection_class):
@@ -387,7 +386,6 @@ class ConnectionRemover:
                 connection = pool.pool.get()
                 if isinstance(connection, self._connection_class):
                     connections.remove(connection)
-                    connection.close()
                 else:
                     readd_connections.append(connection)
             for connection in readd_connections:
