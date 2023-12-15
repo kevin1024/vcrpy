@@ -387,6 +387,8 @@ class ConnectionRemover:
                     readd_connections.append(connection)
             for connection in readd_connections:
                 pool._put_conn(connection)
+            for connection in connections:
+                connection.close()
 
 
 def reset_patchers():
