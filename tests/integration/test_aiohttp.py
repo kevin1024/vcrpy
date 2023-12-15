@@ -14,10 +14,10 @@ from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
 
 
 def run_in_loop(fn):
-    with contextlib.closing(asyncio.new_event_loop()) as loop:
-        asyncio.set_event_loop(loop)
-        task = loop.create_task(fn(loop))
-        return loop.run_until_complete(task)
+    async def wrapper():
+        return await fn(asyncio.get_running_loop())
+
+    return asyncio.run(wrapper())
 
 
 def request(method, url, output="text", **kwargs):
