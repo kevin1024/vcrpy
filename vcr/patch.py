@@ -386,10 +386,7 @@ class ConnectionRemover:
             while pool.pool and not pool.pool.empty() and connections:
                 connection = pool.pool.get()
                 if isinstance(connection, self._connection_class):
-                    try:
-                        connections.remove(connection)
-                    except KeyError:
-                        pass
+                    connections.remove(connection)
                     connection.close()
                 else:
                     readd_connections.append(connection)
