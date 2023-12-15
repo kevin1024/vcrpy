@@ -51,8 +51,14 @@ class DoSyncRequest(BaseDoRequest):
             return self.client.request(*args, timeout=60, **kwargs)
 
     def stream(self, *args, **kwargs):
-        with self.client.stream(*args, **kwargs) as response:
-            return b"".join(response.iter_bytes())
+        if hasattr(self, "_client"):
+            with self.client.stream(*args, **kwargs) as response:
+                return b"".join(response.iter_bytes())
+
+        # Use one-time context and dispose of the client afterwards
+        with self:
+            with self.client.stream(*args, **kwargs) as response:
+                return b"".join(response.iter_bytes())
 
 
 class DoAsyncRequest(BaseDoRequest):
