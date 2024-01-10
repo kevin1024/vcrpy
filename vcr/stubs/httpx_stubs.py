@@ -35,7 +35,12 @@ def _transform_headers(httpx_response):
 
 def _to_serialized_response(httpx_response):
     try:
-        content = httpx_response.content.decode("utf-8")
+        try:
+            content = httpx_response.content
+        except httpx.ResponseNotRead:
+            content = httpx_response.read()
+
+        content = content.decode("utf-8")
     except UnicodeDecodeError:
         content = httpx_response.content
 
