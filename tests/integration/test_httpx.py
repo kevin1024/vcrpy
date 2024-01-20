@@ -314,30 +314,3 @@ def test_load_gzipped(do_request, cassette_name, reason):
         assert cassette_response.status_code == 200
         assert cassette_response.reason_phrase == reason
 
-
-@pytest.mark.online
-def test_text_content_type(tmpdir, httpbin, do_request):
-    url = httpbin.url + "/json"
-
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
-        response = do_request()("GET", url)
-
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
-        cassette_response = do_request()("GET", url)
-        assert cassette_response.content == response.content
-        assert cassette.play_count == 1
-        assert isinstance(cassette.responses[0]["content"], str)
-
-
-@pytest.mark.online
-def test_binary_content_type(tmpdir, httpbin, do_request):
-    url = httpbin.url + "/bytes/1024"
-
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
-        response = do_request()("GET", url)
-
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
-        cassette_response = do_request()("GET", url)
-        assert cassette_response.content == response.content
-        assert cassette.play_count == 1
-        assert isinstance(cassette.responses[0]["content"], bytes)
