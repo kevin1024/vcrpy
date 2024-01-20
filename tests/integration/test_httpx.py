@@ -1,5 +1,5 @@
 import pytest
-
+import os
 import vcr
 
 asyncio = pytest.importorskip("asyncio")
@@ -218,8 +218,8 @@ def test_work_with_gzipped_data(httpbin, do_request, yml):
     with vcr.use_cassette(yml) as cassette:
         cassette_response = do_request(headers=headers)("GET", url)
 
-        assert cassette_response.headers["content-encoding"] == "gzip"
-        assert cassette_response.read()
+        # Show we can read the content of the cassette.
+        assert cassette_response.json()['gzipped'] == True
         assert cassette.play_count == 1
 
 
@@ -285,6 +285,34 @@ def test_stream(tmpdir, httpbin, do_request):
         assert cassette_content == response_content
         assert len(cassette_content) == 512
         assert cassette.play_count == 1
+
+
+# Regular cassette formats support the status reason,
+# but the old HTTPX cassette format does not.
+@pytest.mark.parametrize(
+    "cassette_name,reason",
+    [
+        ("requests", "great"),
+        ("httpx_old_format", "OK"),
+    ],
+)
+def test_load_gzipped(do_request, cassette_name, reason):
+    mydir = os.path.dirname(os.path.realpath(__file__))
+    yml = f"{mydir}/cassettes/gzip_{cassette_name}.yaml"
+    url = "https://httpbin.org/gzip"
+
+    with vcr.use_cassette(yml) as cassette:
+        cassette_response = do_request()("GET", url)
+        assert str(cassette_response.request.url) == url
+        assert cassette.play_count == 1
+
+        # Should be able to load up the JSON inside,
+        # regardless whether the content is the gzipped
+        # in the cassette or not.
+        json = cassette_response.json()
+        assert json["method"] == "GET", json
+        assert cassette_response.status_code == 200
+        assert cassette_response.reason_phrase == reason
 
 
 @pytest.mark.online
