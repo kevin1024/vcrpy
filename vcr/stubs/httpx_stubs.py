@@ -7,6 +7,8 @@ import httpx
 
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request as VcrRequest
+from vcr.filters import decode_response
+from vcr.serializers.compat import convert_body_to_bytes
 
 _httpx_signature = inspect.signature(httpx.Client.request)
 
@@ -62,17 +64,30 @@ def _from_serialized_headers(headers):
 @patch("httpx.Response.close", MagicMock())
 @patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
-    content = serialized_response.get("content")
-    if isinstance(content, str):
-        content = content.encode("utf-8")
+
+    # HTTPX cassette format.
+    if "status_code" in serialized_response:
+        serialized_response = decode_response(convert_body_to_bytes({
+            'headers': serialized_response['headers'],
+            'body': {'string': serialized_response['content']},
+            'status': {'code': serialized_response['status_code']},
+        }))
+        # We don't store the reason phrase in this format.
+        extensions = None
+
+    # Cassette format that all other stubs use.
+    else:
+        extensions = {"reason_phrase": serialized_response["status"]["message"].encode()}
+
     response = httpx.Response(
-        status_code=serialized_response.get("status_code"),
+        status_code=serialized_response["status"]["code"],
         request=request,
-        headers=_from_serialized_headers(serialized_response.get("headers")),
-        content=content,
+        headers=_from_serialized_headers(serialized_response["headers"]),
+        content=serialized_response["body"]["string"],
         history=history or [],
+        extensions=extensions,
     )
-    response._content = content
+
     return response
 
 
