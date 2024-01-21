@@ -38,17 +38,27 @@ def _transform_headers(httpx_response):
 
 async def _to_serialized_response(resp, aread):
 
-    if aread:
-        await resp.aread()
-    else:
-        resp.read()
+    # The content shouldn't already have been read in by HTTPX.
+    assert not hasattr(resp, "_decoder")
 
-    return {
+    # Retrieve the content, but without decoding it.
+    with patch.dict(resp.headers, {"Content-Encoding": ""}):
+        if aread:
+            await resp.aread()
+        else:
+            resp.read()
+
+    result = {
         "status": dict(code=resp.status_code, message=resp.reason_phrase),
         "headers": _transform_headers(resp),
         "body": {"string": resp.content},
     }
 
+    # As the content wasn't decoded, we restore the response to a state which
+    # will be capable of decoding the content for the consumer.
+    del resp._decoder
+    resp._content = resp._get_content_decoder().decode(resp.content)
+    return result
 
 def _from_serialized_headers(headers):
     """
