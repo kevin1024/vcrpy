@@ -1,11 +1,14 @@
-import pytest
 import os
+
+import pytest
+
 import vcr
+
+from ..assertions import assert_is_json_bytes
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
 
-from ..assertions import assert_is_json_bytes
 
 @pytest.fixture(params=["https", "http"])
 def scheme(request):

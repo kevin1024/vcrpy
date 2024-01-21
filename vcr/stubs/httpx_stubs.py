@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 import httpx
 
 from vcr.errors import CannotOverwriteExistingCassetteException
-from vcr.request import Request as VcrRequest
 from vcr.filters import decode_response
+from vcr.request import Request as VcrRequest
 from vcr.serializers.compat import convert_body_to_bytes
 
 _httpx_signature = inspect.signature(httpx.Client.request)
@@ -37,7 +37,6 @@ def _transform_headers(httpx_response):
 
 
 async def _to_serialized_response(resp, aread):
-
     # The content shouldn't already have been read in by HTTPX.
     assert not hasattr(resp, "_decoder")
 
@@ -49,7 +48,7 @@ async def _to_serialized_response(resp, aread):
             resp.read()
 
     result = {
-        "status": dict(code=resp.status_code, message=resp.reason_phrase),
+        "status": {"code": resp.status_code, "message": resp.reason_phrase},
         "headers": _transform_headers(resp),
         "body": {"string": resp.content},
     }
@@ -59,6 +58,7 @@ async def _to_serialized_response(resp, aread):
     del resp._decoder
     resp._content = resp._get_content_decoder().decode(resp.content)
     return result
+
 
 def _from_serialized_headers(headers):
     """
@@ -75,16 +75,19 @@ def _from_serialized_headers(headers):
 @patch("httpx.Response.close", MagicMock())
 @patch("httpx.Response.read", MagicMock())
 def _from_serialized_response(request, serialized_response, history=None):
-
     # Cassette format generated for HTTPX requests by older versions of
     # vcrpy. We restructure the content to resemble what a regular
     # cassette looks like.
     if "status_code" in serialized_response:
-        serialized_response = decode_response(convert_body_to_bytes({
-            'headers': serialized_response['headers'],
-            'body': {'string': serialized_response['content']},
-            'status': {'code': serialized_response['status_code']},
-        }))
+        serialized_response = decode_response(
+            convert_body_to_bytes(
+                {
+                    "headers": serialized_response["headers"],
+                    "body": {"string": serialized_response["content"]},
+                    "status": {"code": serialized_response["status_code"]},
+                },
+            ),
+        )
         extensions = None
     else:
         extensions = {"reason_phrase": serialized_response["status"]["message"].encode()}
