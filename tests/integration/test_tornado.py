@@ -160,7 +160,6 @@ def test_post(get_client, tmpdir, scheme):
     assert 1 == cass.play_count
 
 
-@pytest.mark.online
 @pytest.mark.gen_test
 def test_redirects(get_client, tmpdir, httpbin):
     """Ensure that we can handle redirects"""
