@@ -10,10 +10,7 @@ addopts = [
     "--strict-markers",
 ]
 markers = ["online"]
-filterwarnings = [
-    "error",
-    '''ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated and scheduled for removal in a future version.*:DeprecationWarning''',
-]
+filterwarnings = ["error"]
 
 [tool.ruff]
 select = [
