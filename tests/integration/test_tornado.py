@@ -162,9 +162,9 @@ def test_post(get_client, tmpdir, scheme):
 
 @pytest.mark.online
 @pytest.mark.gen_test
-def test_redirects(get_client, tmpdir, scheme):
+def test_redirects(get_client, tmpdir, httpbin):
     """Ensure that we can handle redirects"""
-    url = scheme + "://mockbin.org/redirect/301?url=bytes/1024"
+    url = httpbin + "/redirect-to?url=bytes/1024&status_code=301"
     with vcr.use_cassette(str(tmpdir.join("requests.yaml"))):
         content = (yield get(get_client(), url)).body
 
