@@ -4,7 +4,7 @@ from logging import NullHandler
 from .config import VCR
 from .record_mode import RecordMode as mode  # noqa: F401
 
-__version__ = "5.1.0"
+__version__ = "6.0.0"
 
 logging.getLogger(__name__).addHandler(NullHandler())
 

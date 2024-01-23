@@ -7,6 +7,14 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  6.0.0
+    - BREAKING: Fix issue with httpx support (thanks @parkerhancock) in #784. NOTE: You may have to recreate some of your cassettes produced in previous releases due to the binary format being saved incorrectly in previous releases
+    - BREAKING: Drop support for `boto` (vcrpy still supports boto3, but is dropping the deprecated `boto` support in this release. (thanks @jairhenrique)
+    - Fix compatibility issue with Python 3.12 (thanks @hartwork)
+    - Drop simplejson (fixes some compatibility issues) (thanks @jairhenrique)
+    - Run CI on Python 3.12 and PyPy 3.9-3.10 (thanks @mgorny)
+    - Various linting and docs improvements (thanks @jairhenrique)
+    - Tornado fixes (thanks @graingert)
 -  5.1.0
     - Use ruff for linting (instead of current flake8/isort/pyflakes) - thanks @jairhenrique
     - Enable rule B (flake8-bugbear) on ruff - thanks @jairhenrique
