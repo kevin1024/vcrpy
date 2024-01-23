@@ -17,6 +17,12 @@ http = pytest.importorskip("tornado.httpclient")
 supports_raise_error = tornado.version_info >= (4,)
 
 
+@pytest.fixture(params=["https", "http"])
+def scheme(request):
+    """Fixture that returns both http and https."""
+    return request.param
+
+
 @pytest.fixture(params=["simple", "curl", "default"])
 def get_client(request):
     if request.param == "simple":
