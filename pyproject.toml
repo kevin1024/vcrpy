@@ -13,10 +13,6 @@ markers = ["online"]
 filterwarnings = [
     "error",
     '''ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated and scheduled for removal in a future version.*:DeprecationWarning''',
-    '''ignore:There is no current event loop:DeprecationWarning''',
-    '''ignore:make_current is deprecated; start the event loop first:DeprecationWarning''',
-    '''ignore:clear_current is deprecated:DeprecationWarning''',
-    '''ignore:the \(type, exc, tb\) signature of throw\(\) is deprecated, use the single-arg signature instead.:DeprecationWarning''',
 ]
 
 [tool.ruff]
