@@ -15,6 +15,7 @@ http = pytest.importorskip("tornado.httpclient")
 # whether the current version of Tornado supports the raise_error argument for
 # fetch().
 supports_raise_error = tornado.version_info >= (4,)
+raise_error_for_response_code_only = tornado.version_info >= (6,)
 
 
 @pytest.fixture(params=["https", "http"])
@@ -239,6 +240,10 @@ def test_unsupported_features_raises_in_future(get_client, tmpdir):
 
 
 @pytest.mark.skipif(not supports_raise_error, reason="raise_error unavailable in tornado <= 3")
+@pytest.mark.skipif(
+    raise_error_for_response_code_only,
+    reason="raise_error only ignores HTTPErrors due to response code",
+)
 @pytest.mark.gen_test
 def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
     """Ensure that the exception for an AsyncHTTPClient feature not being
@@ -274,6 +279,10 @@ def test_cannot_overwrite_cassette_raises_in_future(get_client, tmpdir):
 
 
 @pytest.mark.skipif(not supports_raise_error, reason="raise_error unavailable in tornado <= 3")
+@pytest.mark.skipif(
+    raise_error_for_response_code_only,
+    reason="raise_error only ignores HTTPErrors due to response code",
+)
 @pytest.mark.gen_test
 def test_cannot_overwrite_cassette_raise_error_disabled(get_client, tmpdir):
     """Ensure that CannotOverwriteExistingCassetteException is not raised if
