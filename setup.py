@@ -67,6 +67,7 @@ extras_require = {
         "pytest-asyncio",
         "pytest-cov",
         "pytest-httpbin",
+        "pytest-tornado",
         "pytest",
         "requests>=2.22.0",
         "tornado",

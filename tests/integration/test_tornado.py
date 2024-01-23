@@ -15,6 +15,13 @@ http = pytest.importorskip("tornado.httpclient")
 # whether the current version of Tornado supports the raise_error argument for
 # fetch().
 supports_raise_error = tornado.version_info >= (4,)
+raise_error_for_response_code_only = tornado.version_info >= (6,)
+
+
+@pytest.fixture(params=["https", "http"])
+def scheme(request):
+    """Fixture that returns both http and https."""
+    return request.param
 
 
 @pytest.fixture(params=["simple", "curl", "default"])
@@ -44,6 +51,7 @@ def post(client, url, data=None, **kwargs):
     return client.fetch(http.HTTPRequest(url, method="POST", **kwargs))
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_status_code(get_client, scheme, tmpdir):
     """Ensure that we can read the status code"""
@@ -56,6 +64,7 @@ def test_status_code(get_client, scheme, tmpdir):
         assert 1 == cass.play_count
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_headers(get_client, scheme, tmpdir):
     """Ensure that we can read the headers back"""
@@ -68,6 +77,7 @@ def test_headers(get_client, scheme, tmpdir):
         assert 1 == cass.play_count
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_body(get_client, tmpdir, scheme):
     """Ensure the responses are all identical enough"""
@@ -94,6 +104,7 @@ def test_effective_url(get_client, tmpdir, httpbin):
         assert 1 == cass.play_count
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_auth(get_client, tmpdir, scheme):
     """Ensure that we can handle basic auth"""
@@ -109,6 +120,7 @@ def test_auth(get_client, tmpdir, scheme):
         assert 1 == cass.play_count
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_auth_failed(get_client, tmpdir, scheme):
     """Ensure that we can save failed auth statuses"""
@@ -132,6 +144,7 @@ def test_auth_failed(get_client, tmpdir, scheme):
         assert 1 == cass.play_count
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_post(get_client, tmpdir, scheme):
     """Ensure that we can post and cache the results"""
@@ -148,9 +161,9 @@ def test_post(get_client, tmpdir, scheme):
 
 
 @pytest.mark.gen_test
-def test_redirects(get_client, tmpdir, scheme):
+def test_redirects(get_client, tmpdir, httpbin):
     """Ensure that we can handle redirects"""
-    url = scheme + "://mockbin.org/redirect/301?url=bytes/1024"
+    url = httpbin + "/redirect-to?url=bytes/1024&status_code=301"
     with vcr.use_cassette(str(tmpdir.join("requests.yaml"))):
         content = (yield get(get_client(), url)).body
 
@@ -159,6 +172,7 @@ def test_redirects(get_client, tmpdir, scheme):
         assert cass.play_count == 1
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_cross_scheme(get_client, tmpdir, scheme):
     """Ensure that requests between schemes are treated separately"""
@@ -178,6 +192,7 @@ def test_cross_scheme(get_client, tmpdir, scheme):
         assert cass.play_count == 2
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_gzip(get_client, tmpdir, scheme):
     """
@@ -203,6 +218,7 @@ def test_gzip(get_client, tmpdir, scheme):
         assert 1 == cass.play_count
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_https_with_cert_validation_disabled(get_client, tmpdir):
     cass_path = str(tmpdir.join("cert_validation_disabled.yaml"))
@@ -233,6 +249,10 @@ def test_unsupported_features_raises_in_future(get_client, tmpdir):
 
 
 @pytest.mark.skipif(not supports_raise_error, reason="raise_error unavailable in tornado <= 3")
+@pytest.mark.skipif(
+    raise_error_for_response_code_only,
+    reason="raise_error only ignores HTTPErrors due to response code",
+)
 @pytest.mark.gen_test
 def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
     """Ensure that the exception for an AsyncHTTPClient feature not being
@@ -252,6 +272,7 @@ def test_unsupported_features_raise_error_disabled(get_client, tmpdir):
     assert "not yet supported by VCR" in str(response.error)
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_cannot_overwrite_cassette_raises_in_future(get_client, tmpdir):
     """Ensure that CannotOverwriteExistingCassetteException is raised inside
@@ -268,6 +289,10 @@ def test_cannot_overwrite_cassette_raises_in_future(get_client, tmpdir):
 
 
 @pytest.mark.skipif(not supports_raise_error, reason="raise_error unavailable in tornado <= 3")
+@pytest.mark.skipif(
+    raise_error_for_response_code_only,
+    reason="raise_error only ignores HTTPErrors due to response code",
+)
 @pytest.mark.gen_test
 def test_cannot_overwrite_cassette_raise_error_disabled(get_client, tmpdir):
     """Ensure that CannotOverwriteExistingCassetteException is not raised if
@@ -303,6 +328,7 @@ def test_tornado_exception_can_be_caught(get_client):
         assert e.code == 404
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_existing_references_get_patched(tmpdir):
     from tornado.httpclient import AsyncHTTPClient
@@ -316,6 +342,7 @@ def test_existing_references_get_patched(tmpdir):
         assert cass.play_count == 1
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_existing_instances_get_patched(get_client, tmpdir):
     """Ensure that existing instances of AsyncHTTPClient get patched upon
@@ -331,6 +358,7 @@ def test_existing_instances_get_patched(get_client, tmpdir):
         assert cass.play_count == 1
 
 
+@pytest.mark.online
 @pytest.mark.gen_test
 def test_request_time_is_set(get_client, tmpdir):
     """Ensures that the request_time on HTTPResponses is set."""

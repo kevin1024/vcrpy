@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import urllib.parse
 
@@ -14,10 +13,10 @@ from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
 
 
 def run_in_loop(fn):
-    with contextlib.closing(asyncio.new_event_loop()) as loop:
-        asyncio.set_event_loop(loop)
-        task = loop.create_task(fn(loop))
-        return loop.run_until_complete(task)
+    async def wrapper():
+        return await fn(asyncio.get_running_loop())
+
+    return asyncio.run(wrapper())
 
 
 def request(method, url, output="text", **kwargs):
@@ -258,6 +257,12 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     response_json = loop.run_until_complete(response.json())
     assert response_json is None
     assert cassette.play_count == 1
+
+
+def test_cleanup_from_pytest_asyncio():
+    # work around https://github.com/pytest-dev/pytest-asyncio/issues/724
+    asyncio.get_event_loop().close()
+    asyncio.set_event_loop(None)
 
 
 @pytest.mark.online

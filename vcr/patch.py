@@ -372,10 +372,6 @@ class ConnectionRemover:
         if isinstance(connection, self._connection_class):
             self._connection_pool_to_connections.setdefault(pool, set()).add(connection)
 
-    def remove_connection_to_pool_entry(self, pool, connection):
-        if isinstance(connection, self._connection_class):
-            self._connection_pool_to_connections[self._connection_class].remove(connection)
-
     def __enter__(self):
         return self
 
@@ -386,10 +382,13 @@ class ConnectionRemover:
                 connection = pool.pool.get()
                 if isinstance(connection, self._connection_class):
                     connections.remove(connection)
+                    connection.close()
                 else:
                     readd_connections.append(connection)
             for connection in readd_connections:
                 pool._put_conn(connection)
+            for connection in connections:
+                connection.close()
 
 
 def reset_patchers():
