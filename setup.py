@@ -57,24 +57,29 @@ install_requires = [
     "urllib3 <2; platform_python_implementation =='PyPy'",
 ]
 
-tests_require = [
-    "aiohttp",
-    "boto3",
-    "httplib2",
-    "httpx",
-    "pytest",
-    "pytest-aiohttp",
-    "pytest-httpbin",
-    "requests>=2.16.2",
-    "tornado",
-    # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
-    # this pin and the dependency itself can be removed, provided
-    # that the related bug in httpbin has been fixed:
-    # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
-    # https://github.com/postmanlabs/httpbin/issues/673
-    # https://github.com/postmanlabs/httpbin/pull/674
-    "Werkzeug==2.0.3",
-]
+extras_require = {
+    "tests": [
+        "aiohttp",
+        "boto3",
+        "httplib2",
+        "httpx",
+        "pytest-aiohttp",
+        "pytest-asyncio",
+        "pytest-cov",
+        "pytest-httpbin",
+        "pytest",
+        "requests>=2.22.0",
+        "tornado",
+        "urllib3",
+        # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
+        # this pin and the dependency itself can be removed, provided
+        # that the related bug in httpbin has been fixed:
+        # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
+        # https://github.com/postmanlabs/httpbin/issues/673
+        # https://github.com/postmanlabs/httpbin/pull/674
+        "Werkzeug==2.0.3",
+    ],
+}
 
 setup(
     name="vcrpy",
@@ -89,7 +94,8 @@ setup(
     python_requires=">=3.8",
     install_requires=install_requires,
     license="MIT",
-    tests_require=tests_require,
+    extras_require=extras_require,
+    tests_require=extras_require["tests"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",

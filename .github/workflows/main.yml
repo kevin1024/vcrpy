@@ -13,7 +13,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.8", "pypy-3.9", "pypy-3.10"]
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "pypy-3.8"
+          - "pypy-3.9"
+          - "pypy-3.10"
+        urllib3-requirement:
+          - "urllib3>=2"
+          - "urllib3<2"
+
+        exclude:
+          - python-version: "3.8"
+            urllib3-requirement: "urllib3>=2"
+          - python-version: "pypy-3.8"
+            urllib3-requirement: "urllib3>=2"
+          - python-version: "3.9"
+            urllib3-requirement: "urllib3>=2"
+          - python-version: "pypy-3.9"
+            urllib3-requirement: "urllib3>=2"
+          - python-version: "pypy-3.10"
+            urllib3-requirement: "urllib3>=2"
 
     steps:
       - uses: actions/checkout@v4
@@ -22,22 +45,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - name: Install project dependencies
         run: |
-          pip3 install --upgrade pip
-          pip3 install codecov tox tox-gh-actions
+          pip install --upgrade pip
+          pip install codecov '.[tests]' '${{ matrix.urllib3-requirement }}'
+          pip check
 
-      - name: Run online tests with tox
-        run: tox -- -m online
+      - name: Run online tests
+        run: ./runtests.sh --cov=./vcr --cov-branch --cov-report=xml --cov-append -m online
 
-      - name: Run offline tests with tox with no access to the Internet
+      - name: Run offline tests with no access to the Internet
         run: |
           # We're using unshare to take Internet access
-          # away from tox so that we'll notice whenever some new test
+          # away so that we'll notice whenever some new test
           # is missing @pytest.mark.online decoration in the future
           unshare --map-root-user --net -- \
-              sh -c 'ip link set lo up; tox -- -m "not online"'
+              sh -c 'ip link set lo up; ./runtests.sh --cov=./vcr --cov-branch --cov-report=xml --cov-append -m "not online"'
 
       - name: Run coverage
         run: codecov
