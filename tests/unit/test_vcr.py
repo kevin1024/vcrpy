@@ -372,3 +372,19 @@ def test_path_class_as_cassette():
     )
     with use_cassette(path):
         pass
+
+
+def test_use_cassette_generator_return():
+    ret_val = object()
+
+    vcr = VCR()
+
+    @vcr.use_cassette("test")
+    def gen():
+        return ret_val
+        yield
+
+    with pytest.raises(StopIteration) as exc_info:
+        next(gen())
+
+    assert exc_info.value.value is ret_val

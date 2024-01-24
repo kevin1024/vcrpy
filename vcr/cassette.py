@@ -125,7 +125,7 @@ class CassetteContextDecorator:
         duration of the generator.
         """
         with self as cassette:
-            yield from fn(cassette)
+            return (yield from fn(cassette))
 
     def _handle_function(self, fn):
         with self as cassette:
