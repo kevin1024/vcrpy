@@ -7,6 +7,8 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  6.0.1
+    - Bugfix with to Tornado cassette generator (thanks @graingert)
 -  6.0.0
     - BREAKING: Fix issue with httpx support (thanks @parkerhancock) in #784. NOTE: You may have to recreate some of your cassettes produced in previous releases due to the binary format being saved incorrectly in previous releases
     - BREAKING: Drop support for `boto` (vcrpy still supports boto3, but is dropping the deprecated `boto` support in this release. (thanks @jairhenrique)
