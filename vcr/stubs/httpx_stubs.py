@@ -105,7 +105,11 @@ def _from_serialized_response(request, serialized_response, history=None):
 
 
 def _make_vcr_request(httpx_request, **kwargs):
-    body = httpx_request.read().decode("utf-8", "ignore")
+    try:
+        body = httpx_request.read().decode("utf-8")
+    except UnicodeDecodeError:
+        body = httpx_request.read().decode("ISO-8859-1").encode("utf-8")
+
     uri = str(httpx_request.url)
     headers = dict(httpx_request.headers)
     return VcrRequest(httpx_request.method, uri, body, headers)
