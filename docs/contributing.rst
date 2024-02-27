@@ -115,8 +115,8 @@ in this example::
     pyenv local 3.12.0 pypy3.10
 
     # Run the whole test suite
-    pip install .[test]
-    ./run_tests.sh
+    pip install .[tests]
+    ./runtests.sh
 
 
 Troubleshooting on MacOSX
