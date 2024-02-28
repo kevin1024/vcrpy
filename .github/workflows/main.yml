@@ -35,8 +35,6 @@ jobs:
             urllib3-requirement: "urllib3>=2"
           - python-version: "pypy-3.9"
             urllib3-requirement: "urllib3>=2"
-          - python-version: "pypy-3.10"
-            urllib3-requirement: "urllib3>=2"
 
     steps:
       - uses: actions/checkout@v4
