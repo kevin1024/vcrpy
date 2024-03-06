@@ -1,4 +1,5 @@
 """Stubs for aiohttp HTTP clients"""
+
 import asyncio
 import functools
 import json

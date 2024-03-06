@@ -1,4 +1,5 @@
 """Test requests' interaction with vcr"""
+
 import asyncio
 import functools
 import inspect

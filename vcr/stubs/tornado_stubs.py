@@ -1,4 +1,5 @@
 """Stubs for tornado HTTP clients"""
+
 import functools
 from io import BytesIO
 
