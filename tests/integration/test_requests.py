@@ -1,4 +1,5 @@
 """Test requests' interaction with vcr"""
+
 import pytest
 
 import vcr

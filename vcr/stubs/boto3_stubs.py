@@ -1,4 +1,5 @@
 """Stubs for boto3"""
+
 from botocore.awsrequest import AWSHTTPConnection as HTTPConnection
 from botocore.awsrequest import AWSHTTPSConnection as VerifiedHTTPSConnection
 
