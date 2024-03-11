@@ -52,7 +52,7 @@ install_requires = [
     # so this block and the dependency can be dropped at some point
     # in the future. For more Details:
     # https://github.com/kevin1024/vcrpy/pull/699#issuecomment-1551439663
-    "urllib3 <2; python_version <'3.10'",
+    "urllib3 <3; python_version <'3.10'",
     # https://github.com/kevin1024/vcrpy/pull/775#issuecomment-1847849962
     "urllib3 <2; platform_python_implementation =='PyPy'",
     # Workaround for Poetry with CPython >= 3.10, problem description at:
