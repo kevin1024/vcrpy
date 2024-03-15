@@ -38,25 +38,34 @@ def _transform_headers(httpx_response):
 
 async def _to_serialized_response(resp, aread):
     # The content shouldn't already have been read in by HTTPX.
-    assert not hasattr(resp, "_decoder")
 
-    # Retrieve the content, but without decoding it.
-    with patch.dict(resp.headers, {"Content-Encoding": ""}):
-        if aread:
-            await resp.aread()
-        else:
-            resp.read()
+    if not hasattr(resp, "_decoder"):
+        # Retrieve the content, but without decoding it.
+        with patch.dict(resp.headers, {"Content-Encoding": ""}):
+            if aread:
+                await resp.aread()
+            else:
+                resp.read()
 
-    result = {
-        "status": {"code": resp.status_code, "message": resp.reason_phrase},
-        "headers": _transform_headers(resp),
-        "body": {"string": resp.content},
-    }
+        result = {
+            "status": {"code": resp.status_code, "message": resp.reason_phrase},
+            "headers": _transform_headers(resp),
+            "body": {"string": resp.content},
+        }
 
-    # As the content wasn't decoded, we restore the response to a state which
-    # will be capable of decoding the content for the consumer.
-    del resp._decoder
-    resp._content = resp._get_content_decoder().decode(resp.content)
+        # As the content wasn't decoded, we restore the response to a state which
+        # will be capable of decoding the content for the consumer.
+        del resp._decoder
+        resp._content = resp._get_content_decoder().decode(resp.content)
+    else:
+        # The content has already been read in by HTTPX. Record it without an Encoding header.
+        with patch.dict(resp.headers, {"Content-Encoding": ""}):
+            result = {
+                "status": {"code": resp.status_code, "message": resp.reason_phrase},
+                "headers": _transform_headers(resp),
+                "body": {"string": resp.content},
+            }
+
     return result
 
 
@@ -174,7 +183,17 @@ def _sync_vcr_send(cassette, real_send, *args, **kwargs):
         return response
 
     real_response = real_send(*args, **kwargs)
-    asyncio.run(_record_responses(cassette, vcr_request, real_response, aread=False))
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None:
+        loop.create_task(_record_responses(cassette, vcr_request, real_response, aread=False))
+    else:
+        asyncio.run(_record_responses(cassette, vcr_request, real_response, aread=False))
+
     return real_response
 
 
