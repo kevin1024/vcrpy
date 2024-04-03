@@ -3,6 +3,7 @@ import functools
 import inspect
 import logging
 from unittest.mock import MagicMock, patch
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 
@@ -166,6 +167,17 @@ def async_vcr_send(cassette, real_send):
     return _inner_send
 
 
+def run_async_from_sync(func, *args, **kwargs):
+    """
+    Utility function to run an async function from sync code using a ThreadPoolExecutor.
+    """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    with ThreadPoolExecutor() as executor:
+        future = executor.submit(loop.run_until_complete, func(*args, **kwargs))
+        return future.result()
+
+
 def _sync_vcr_send(cassette, real_send, *args, **kwargs):
     vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
     if response:
@@ -174,7 +186,7 @@ def _sync_vcr_send(cassette, real_send, *args, **kwargs):
         return response
 
     real_response = real_send(*args, **kwargs)
-    asyncio.run(_record_responses(cassette, vcr_request, real_response, aread=False))
+    run_async_from_sync(_record_responses, cassette, vcr_request, real_response, aread=False)
     return real_response
 
 
