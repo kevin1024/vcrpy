@@ -1,4 +1,5 @@
 import asyncio
+from datetime import timedelta
 import functools
 import inspect
 import logging
@@ -100,6 +101,7 @@ def _from_serialized_response(request, serialized_response, history=None):
         history=history or [],
         extensions=extensions,
     )
+    response.elapsed = timedelta(seconds=1)
 
     return response
 
