@@ -5,6 +5,8 @@ on:
     branches:
       - master
   pull_request:
+  schedule:
+    - cron: '0 16 * * 5'  # Every Friday 4pm
   workflow_dispatch:
 
 jobs:
@@ -49,7 +51,7 @@ jobs:
 
       - name: Install project dependencies
         run: |
-          pip install --upgrade pip
+          pip install --upgrade pip setuptools
           pip install codecov '.[tests]' '${{ matrix.urllib3-requirement }}'
           pip check
 
