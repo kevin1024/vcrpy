@@ -31,8 +31,12 @@ def _transform_headers(httpx_response):
     out = {}
     for key, var in httpx_response.headers.raw:
         decoded_key = key.decode("utf-8")
+        decoded_var = var.decode("utf-8")
+        # response already body decompresed by httpx, no need decompression in vcr filter
+        if decoded_key.lower() == "content-encoding" and decoded_var in ("gzip", "deflate"):
+            continue
         out.setdefault(decoded_key, [])
-        out[decoded_key].append(var.decode("utf-8"))
+        out[decoded_key].append(decoded_var)
     return out
 
 
