@@ -252,6 +252,14 @@ class VCRConnection:
 
     def getresponse(self, _=False, **kwargs):
         """Retrieve the response"""
+        # Some file-like objects or iterators can only be consumed once
+        if hasattr(self._vcr_request.body, "read"):
+            self._vcr_request.body = self._vcr_request.body.read()
+        elif hasattr(self._vcr_request.body, "__iter__") and not isinstance(
+            self._vcr_request.body,
+            (str, bytes, bytearray, list),
+        ):
+            self._vcr_request.body = list(self._vcr_request.body)
         # Check to see if the cassette has a response for this request. If so,
         # then return it
         if self.cassette.can_play_response_for(self._vcr_request):
