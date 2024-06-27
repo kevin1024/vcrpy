@@ -3,7 +3,7 @@ import warnings
 from io import BytesIO
 from urllib.parse import parse_qsl, urlparse
 
-from .util import CaseInsensitiveDict
+from .util import CaseInsensitiveDict, _is_nonsequence_iterator
 
 log = logging.getLogger(__name__)
 
@@ -17,8 +17,11 @@ class Request:
         self.method = method
         self.uri = uri
         self._was_file = hasattr(body, "read")
+        self._was_iter = _is_nonsequence_iterator(body)
         if self._was_file:
             self.body = body.read()
+        elif self._was_iter:
+            self.body = list(body)
         else:
             self.body = body
         self.headers = headers
@@ -36,7 +39,11 @@ class Request:
 
     @property
     def body(self):
-        return BytesIO(self._body) if self._was_file else self._body
+        if self._was_file:
+            return BytesIO(self._body)
+        if self._was_iter:
+            return iter(self._body)
+        return self._body
 
     @body.setter
     def body(self, value):
