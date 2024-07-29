@@ -1,3 +1,66 @@
+[tool.poetry]
+name = "vcrpy"
+version = "6.0.1"
+description = "Automatically mock your HTTP interactions to simplify and speed up testing"
+authors = ["Kevin McCarthy <me@kevinmccarthy.org>"]
+readme = "README.rst"
+packages = [
+    { include = 'vcr' },
+]
+license = "MIT"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP",
+    "License :: OSI Approved :: MIT License"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+pyyaml = "^6.0.1"
+wrapt = "^1.16.0"
+yarl = "^1.9.4"
+urllib3 = [
+    { version = "<2", markers = "python_version < '3.10'" },
+    { version = "<2", markers = "platform_python_implementation == 'PyPy'" },
+    { version = ">=2.2.2", markers = "python_version >= '3.10' and platform_python_implementation != 'PyPy'" }
+]
+
+[tool.poetry.extras]
+tests = [
+    "aiohttp",
+    "boto3",
+    "httplib2",
+    "httpx",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-httpbin",
+    "pytest",
+    "tornado",
+    "urllib3",
+]
+
+[tool.poetry.dev-dependencies]
+Werkzeug = "==2.0.3"
+requests = ">=2.22.0"
+
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
@@ -14,6 +77,10 @@ filterwarnings = [
     "error",
     '''ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated and scheduled for removal in a future version.*:DeprecationWarning''',
 ]
+
+[tool.mypy]
+strict = true
+warn_unused_configs = true
 
 [tool.ruff]
 select = [
@@ -34,3 +101,22 @@ target-version = "py38"
 
 [tool.ruff.isort]
 known-first-party = ["vcr"]
+
+[tool.coverage.report]
+fail_under = 50
+show_missing = true
+
+[tool.coverage.run]
+branch = true
+omit = ["tests/*"]
+source = ["."]
+
+[tool.coverage.xml]
+output = "cov.xml"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[virtualenvs]
+in-project = true
