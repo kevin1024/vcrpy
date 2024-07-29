@@ -6,7 +6,6 @@ import re
 import sys
 
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
 
 long_description = open("README.rst").read()
 here = os.path.abspath(os.path.dirname(__file__))
@@ -26,20 +25,6 @@ def find_version(*file_paths):
         return version_match.group(1)
 
     raise RuntimeError("Unable to find version string.")
-
-
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
 
 
 install_requires = [
