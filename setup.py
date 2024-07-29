@@ -3,10 +3,8 @@
 import codecs
 import os
 import re
-import sys
 
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
 
 long_description = open("README.rst").read()
 here = os.path.abspath(os.path.dirname(__file__))
@@ -28,20 +26,6 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
-
-
 install_requires = [
     "PyYAML",
     "wrapt",
@@ -60,30 +44,6 @@ install_requires = [
     "urllib3; platform_python_implementation !='PyPy' and python_version >='3.10'",
 ]
 
-extras_require = {
-    "tests": [
-        "aiohttp",
-        "boto3",
-        "httplib2",
-        "httpx",
-        "pytest-aiohttp",
-        "pytest-asyncio",
-        "pytest-cov",
-        "pytest-httpbin",
-        "pytest",
-        "requests>=2.22.0",
-        "tornado",
-        "urllib3",
-        # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
-        # this pin and the dependency itself can be removed, provided
-        # that the related bug in httpbin has been fixed:
-        # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
-        # https://github.com/postmanlabs/httpbin/issues/673
-        # https://github.com/postmanlabs/httpbin/pull/674
-        "Werkzeug==2.0.3",
-    ],
-}
-
 setup(
     name="vcrpy",
     version=find_version("vcr", "__init__.py"),
@@ -97,8 +57,6 @@ setup(
     python_requires=">=3.8",
     install_requires=install_requires,
     license="MIT",
-    extras_require=extras_require,
-    tests_require=extras_require["tests"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
