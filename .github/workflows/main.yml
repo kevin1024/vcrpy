@@ -21,6 +21,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
           - "pypy-3.8"
           - "pypy-3.9"
           - "pypy-3.10"
@@ -48,11 +49,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+          allow-prereleases: true
 
       - name: Install project dependencies
         run: |
           pip install --upgrade pip setuptools
-          pip install codecov '.[tests]' '${{ matrix.urllib3-requirement }}'
+          pip install codecov 'pytest-httpbin @ https://github.com/kevin1024/pytest-httpbin/archive/refs/heads/test-on-3-13-and-pypy-3-10.zip' 'httpbin @ https://github.com/graingert/httpbin/archive/refs/heads/patch-1.zip' '.[tests]' '${{ matrix.urllib3-requirement }}'
           pip check
 
       - name: Run online tests
