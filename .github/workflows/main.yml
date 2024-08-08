@@ -54,7 +54,7 @@ jobs:
       - name: Install project dependencies
         run: |
           pip install --upgrade pip setuptools
-          pip install codecov 'cffi>=1.17.0rc1' 'pytest-httpbin @ https://github.com/kevin1024/pytest-httpbin/archive/refs/heads/test-on-3-13-and-pypy-3-10.zip' 'httpbin @ https://github.com/graingert/httpbin/archive/refs/heads/patch-1.zip' '.[tests]' '${{ matrix.urllib3-requirement }}'
+          pip install 'pytest-httpbin @ https://github.com/kevin1024/pytest-httpbin/archive/refs/heads/test-on-3-13-and-pypy-3-10.zip' 'httpbin @ https://github.com/graingert/httpbin/archive/refs/heads/patch-1.zip' '.[tests]' '${{ matrix.urllib3-requirement }}'
           pip check
 
       - name: Run online tests
