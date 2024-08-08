@@ -16,6 +16,7 @@ class Request:
     def __init__(self, method, uri, body, headers):
         self.method = method
         self.uri = uri
+        self.parsed_uri = urlparse(self.uri)
         self._was_file = hasattr(body, "read")
         self._was_iter = _is_nonsequence_iterator(body)
         if self._was_file:
@@ -61,30 +62,29 @@ class Request:
 
     @property
     def scheme(self):
-        return urlparse(self.uri).scheme
+        return self.parsed_uri.scheme
 
     @property
     def host(self):
-        return urlparse(self.uri).hostname
+        return self.parsed_uri.hostname
 
     @property
     def port(self):
-        parse_uri = urlparse(self.uri)
-        port = parse_uri.port
+        port = self.parsed_uri.port
         if port is None:
             try:
-                port = {"https": 443, "http": 80}[parse_uri.scheme]
+                port = {"https": 443, "http": 80}[self.parsed_uri.scheme]
             except KeyError:
                 pass
         return port
 
     @property
     def path(self):
-        return urlparse(self.uri).path
+        return self.parsed_uri.path
 
     @property
     def query(self):
-        q = urlparse(self.uri).query
+        q = self.parsed_uri.query
         return sorted(parse_qsl(q))
 
     # alias for backwards compatibility
