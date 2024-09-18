@@ -1,9 +1,9 @@
 import logging
-import os
 import ssl
 import urllib.parse
 
 import pytest
+import pytest_httpbin.certs
 
 import vcr
 
@@ -13,9 +13,7 @@ aiohttp = pytest.importorskip("aiohttp")
 
 from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
 
-ssl_ca_location = os.environ["REQUESTS_CA_BUNDLE"]
-
-HTTPBIN_SSL_CONTEXT = ssl.create_default_context(cafile=ssl_ca_location)
+HTTPBIN_SSL_CONTEXT = ssl.create_default_context(cafile=pytest_httpbin.certs.where())
 
 
 def run_in_loop(fn):
