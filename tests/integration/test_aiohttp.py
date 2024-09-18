@@ -14,11 +14,8 @@ aiohttp = pytest.importorskip("aiohttp")
 from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
 
 ssl_ca_location = os.environ["REQUESTS_CA_BUNDLE"]
-ssl_cert_location = os.environ["REQUESTS_CA_BUNDLE"].replace("cacert.pem", "cert.pem")
-ssl_key_location = os.environ["REQUESTS_CA_BUNDLE"].replace("cacert.pem", "key.pem")
 
 HTTPBIN_SSL_CONTEXT = ssl.create_default_context(cafile=ssl_ca_location)
-HTTPBIN_SSL_CONTEXT.load_cert_chain(ssl_cert_location, ssl_key_location)
 
 
 def run_in_loop(fn):
