@@ -229,7 +229,10 @@ class Cassette:
         response = self._before_record_response(response)
         if response is None:
             return
+
         self.data.append((request, response))
+        self.play_counts[len(self.data) - 1] += 1
+
         self.dirty = True
 
     def filter_request(self, request):
@@ -280,6 +283,7 @@ class Cassette:
 
     def rewind(self):
         self.play_counts = collections.Counter()
+        self.rewound = True
 
     def find_requests_with_most_matches(self, request):
         """
@@ -331,7 +335,7 @@ class Cassette:
             for request, response in zip(requests, responses):
                 self.append(request, response)
             self.dirty = False
-            self.rewound = True
+            self.rewind()
         except (CassetteDecodeError, CassetteNotFoundError):
             pass
 
