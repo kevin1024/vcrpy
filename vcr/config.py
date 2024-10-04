@@ -3,6 +3,7 @@ import functools
 import inspect
 import os
 import types
+import re
 from collections import abc as collections_abc
 from pathlib import Path
 
@@ -231,8 +232,10 @@ class VCR:
 
     @staticmethod
     def _build_ignore_hosts(hosts_to_ignore):
+        hosts_to_ignore_re = re.compile("(" + ")|(".join(hosts_to_ignore) + ")")
+
         def filter_ignored_hosts(request):
-            if hasattr(request, "host") and request.host in hosts_to_ignore:
+            if hasattr(request, "host") and bool(hosts_to_ignore_re.match(request.host)):
                 return
             return request
 
