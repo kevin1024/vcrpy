@@ -7,6 +7,11 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  6.0.2
+    - Ensure body is consumed only once (#846) - thanks @sathieu
+    - Permit urllib3 2.x for non-PyPy Python >=3.10
+    - Fix typos in test commands - thanks @chuckwondo
+    - Several test and workflow improvements - thanks @hartwork and @graingert
 -  6.0.1
     - Bugfix with to Tornado cassette generator (thanks @graingert)
 -  6.0.0
