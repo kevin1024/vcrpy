@@ -16,6 +16,10 @@ filterwarnings = [
 ]
 
 [tool.ruff]
+line-length = 110
+target-version = "py39"
+
+[tool.ruff.lint]
 select = [
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
@@ -29,8 +33,6 @@ select = [
     "UP",  # pyupgrade
     "W",   # pycodestyle warning
 ]
-line-length = 110
-target-version = "py39"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["vcr"]
