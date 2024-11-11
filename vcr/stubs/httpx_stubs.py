@@ -119,7 +119,7 @@ def _shared_vcr_send(cassette, real_send, *args, **kwargs):
     if cassette.can_play_response_for(vcr_request):
         return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0], kwargs)
 
-    if cassette.write_protected and cassette.filter_request(vcr_request):
+    if cassette.write_protected and vcr_request in cassette:
         raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
     _logger.info("%s not in cassette, sending to real server", vcr_request)
