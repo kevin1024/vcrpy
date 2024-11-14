@@ -2,6 +2,7 @@ import asyncio
 import functools
 import inspect
 import logging
+import warnings
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -105,7 +106,12 @@ def _from_serialized_response(request, serialized_response, history=None):
 
 
 def _make_vcr_request(httpx_request, **kwargs):
-    body = httpx_request.read().decode("utf-8")
+    try:
+        body = httpx_request.read().decode("utf-8")
+    except UnicodeDecodeError e: 
+        body = httpx_request.read().decode("utf-8", errors="ignore")
+        warnings.warn(f"Could not decode full request payload as UTF8, recording may have lost bytes. {e}")
+
     uri = str(httpx_request.url)
     headers = dict(httpx_request.headers)
     return VcrRequest(httpx_request.method, uri, body, headers)
