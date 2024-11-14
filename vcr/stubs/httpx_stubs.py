@@ -108,7 +108,7 @@ def _from_serialized_response(request, serialized_response, history=None):
 def _make_vcr_request(httpx_request, **kwargs):
     try:
         body = httpx_request.read().decode("utf-8")
-    except UnicodeDecodeError e: 
+    except UnicodeDecodeError as e: 
         body = httpx_request.read().decode("utf-8", errors="ignore")
         warnings.warn(f"Could not decode full request payload as UTF8, recording may have lost bytes. {e}")
 
