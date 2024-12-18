@@ -166,6 +166,22 @@ def async_vcr_send(cassette, real_send):
     return _inner_send
 
 
+def _run_async_function(sync_func, *args, **kwargs):
+    """
+    Safely run an asynchronous function from a synchronous context.
+    Handles both cases:
+    - An event loop is already running.
+    - No event loop exists yet.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(sync_func(*args, **kwargs))
+    else:
+        # If inside a running loop, create a task and wait for it
+        return asyncio.ensure_future(sync_func(*args, **kwargs))
+
+
 def _sync_vcr_send(cassette, real_send, *args, **kwargs):
     vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
     if response:
@@ -174,7 +190,7 @@ def _sync_vcr_send(cassette, real_send, *args, **kwargs):
         return response
 
     real_response = real_send(*args, **kwargs)
-    asyncio.run(_record_responses(cassette, vcr_request, real_response, aread=False))
+    _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
     return real_response
 
 
