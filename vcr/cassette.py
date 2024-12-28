@@ -215,7 +215,7 @@ class Cassette:
 
     @property
     def write_protected(self):
-        return self.rewound and self.record_mode == RecordMode.ONCE or self.record_mode == RecordMode.NONE
+        return (self.rewound and self.record_mode == RecordMode.ONCE) or self.record_mode == RecordMode.NONE
 
     def append(self, request, response):
         """Add a request, response pair to this cassette"""
