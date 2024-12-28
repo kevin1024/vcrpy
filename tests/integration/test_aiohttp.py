@@ -4,6 +4,7 @@ import urllib.parse
 
 import pytest
 import pytest_httpbin.certs
+import yarl
 
 import vcr
 
@@ -403,7 +404,7 @@ def test_cookies_redirect(httpbin_both, tmpdir):
             async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
                 cookies_resp = await session.get(cookies_url, ssl=HTTPBIN_SSL_CONTEXT)
                 assert not cookies_resp.cookies
-                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                cookies = session.cookie_jar.filter_cookies(yarl.URL(cookies_url))
                 assert cookies["Cookie_1"].value == "Val_1"
                 assert cassette.play_count == 0
 
@@ -414,7 +415,7 @@ def test_cookies_redirect(httpbin_both, tmpdir):
             async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
                 cookies_resp = await session.get(cookies_url, ssl=HTTPBIN_SSL_CONTEXT)
                 assert not cookies_resp.cookies
-                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                cookies = session.cookie_jar.filter_cookies(yarl.URL(cookies_url))
                 assert cookies["Cookie_1"].value == "Val_1"
                 assert cassette.play_count == 2
 
@@ -428,7 +429,7 @@ def test_cookies_redirect(httpbin_both, tmpdir):
             async with aiohttp.ClientSession(loop=loop, cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
                 cookies_resp = await session.get(cookies_url, ssl=HTTPBIN_SSL_CONTEXT)
                 assert not cookies_resp.cookies
-                cookies = session.cookie_jar.filter_cookies(cookies_url)
+                cookies = session.cookie_jar.filter_cookies(yarl.URL(cookies_url))
                 assert cookies["Cookie_1"].value == "Val_1"
 
     run_in_loop(run)
