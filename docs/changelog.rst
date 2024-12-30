@@ -7,6 +7,11 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  7.0.0
+    - Drop support for python 3.8 (major version bump) - thanks @jairhenrique
+    - Various linting and test fixes - thanks @jairhenrique
+    - Bugfix for urllib2>=2.3.0 - missing version_string (#888)
+    - Bugfix for asyncio.run - thanks @alekeik1
 -  6.0.2
     - Ensure body is consumed only once (#846) - thanks @sathieu
     - Permit urllib3 2.x for non-PyPy Python >=3.10
