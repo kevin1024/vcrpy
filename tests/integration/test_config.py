@@ -82,6 +82,7 @@ def test_dont_record_on_exception(tmpdir):
 
     assert not os.path.exists(str(tmpdir.join("dontsave2.yml")))
 
+
 def test_set_drop_unused_requests(tmpdir, httpbin):
     my_vcr = vcr.VCR(drop_unused_requests=True)
     file = str(tmpdir.join("test.yaml"))

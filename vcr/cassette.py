@@ -348,8 +348,10 @@ class Cassette:
         """List of new HTTP interactions (request/response tuples)"""
         new_interactions = []
         for request, response in self.data:
-            if all(not requests_match(request, old_request, self._match_on)
-                   for old_request, _ in self._old_interactions):
+            if all(
+                not requests_match(request, old_request, self._match_on)
+                for old_request, _ in self._old_interactions
+            ):
                 new_interactions.append((request, response))
         return new_interactions
 
@@ -363,7 +365,7 @@ class Cassette:
         return {"requests": requests, "responses": responses}
 
     def _save(self, force=False):
-        if (len(self._played_interactions) < len(self._old_interactions)):
+        if len(self._played_interactions) < len(self._old_interactions):
             force = True
         if force or self.dirty:
             self._persister.save_cassette(self._path, self._as_dict(), serializer=self._serializer)

@@ -401,7 +401,7 @@ def test_used_interactions(tmpdir):
     interactions = [
         {"request": {"body": "", "uri": "foo1", "method": "GET", "headers": {}}, "response": "bar1"},
         {"request": {"body": "", "uri": "foo2", "method": "GET", "headers": {}}, "response": "bar2"},
-        {"request": {"body": "", "uri": "foo3", "method": "GET", "headers": {}}, "response": "bar3"}
+        {"request": {"body": "", "uri": "foo3", "method": "GET", "headers": {}}, "response": "bar3"},
     ]
     file = tmpdir.join("test_cassette.yml")
     file.write(yaml.dump({"interactions": [interactions[0], interactions[1]]}))
