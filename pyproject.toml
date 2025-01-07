@@ -1,19 +1,11 @@
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
-#
-# ignore-words-list = ''
 
 [tool.pytest.ini_options]
-addopts = [
-    "--strict-config",
-    "--strict-markers",
-]
+addopts = ["--strict-config", "--strict-markers"]
+asyncio_default_fixture_loop_scope = "function"
 markers = ["online"]
-filterwarnings = [
-    "error",
-    '''ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated and scheduled for removal in a future version.*:DeprecationWarning''',
-]
 
 [tool.ruff]
 line-length = 110
