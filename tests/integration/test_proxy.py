@@ -82,7 +82,7 @@ def test_use_proxy(tmpdir, httpbin, proxy_server):
     with vcr.use_cassette(str(tmpdir.join("proxy.yaml"))):
         response = requests.get(httpbin.url, proxies={"http": proxy_server})
 
-    with vcr.use_cassette(str(tmpdir.join("proxy.yaml")), mode="once") as cassette:
+    with vcr.use_cassette(str(tmpdir.join("proxy.yaml")), mode="none") as cassette:
         cassette_response = requests.get(httpbin.url, proxies={"http": proxy_server})
 
     for key in set(cassette_response.headers.keys()) & set(response.headers.keys()):
@@ -96,7 +96,7 @@ def test_use_https_proxy(tmpdir, httpbin_secure, proxy_server):
     with vcr.use_cassette(str(tmpdir.join("proxy.yaml"))):
         response = requests.get(httpbin_secure.url, proxies={"https": proxy_server})
 
-    with vcr.use_cassette(str(tmpdir.join("proxy.yaml")), mode="once") as cassette:
+    with vcr.use_cassette(str(tmpdir.join("proxy.yaml")), mode="none") as cassette:
         cassette_response = requests.get(
             httpbin_secure.url,
             proxies={"https": proxy_server},
