@@ -187,22 +187,34 @@ class VCRConnection:
         """
         Returns empty string for the default port and ':port' otherwise
         """
-        port = self.real_connection.port
+        port = (
+            self.real_connection.port
+            if not self.real_connection._tunnel_host
+            else self.real_connection._tunnel_port
+        )
         default_port = {"https": 443, "http": 80}[self._protocol]
         return f":{port}" if port != default_port else ""
+
+    def _real_host(self):
+        """Returns the request host"""
+        if self.real_connection._tunnel_host:
+            # The real connection is to an HTTPS proxy
+            return self.real_connection._tunnel_host
+        else:
+            return self.real_connection.host
 
     def _uri(self, url):
         """Returns request absolute URI"""
         if url and not url.startswith("/"):
             # Then this must be a proxy request.
             return url
-        uri = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}{url}"
+        uri = f"{self._protocol}://{self._real_host()}{self._port_postfix()}{url}"
         log.debug("Absolute URI: %s", uri)
         return uri
 
     def _url(self, uri):
         """Returns request selector url from absolute URI"""
-        prefix = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}"
+        prefix = f"{self._protocol}://{self._real_host()}{self._port_postfix()}"
         return uri.replace(prefix, "", 1)
 
     def request(self, method, url, body=None, headers=None, *args, **kwargs):
