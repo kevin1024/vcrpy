@@ -365,7 +365,7 @@ class Cassette:
         return {"requests": requests, "responses": responses}
 
     def _save(self, force=False):
-        if len(self._played_interactions) < len(self._old_interactions):
+        if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
             force = True
         if force or self.dirty:
             self._persister.save_cassette(self._path, self._as_dict(), serializer=self._serializer)
