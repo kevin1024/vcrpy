@@ -438,4 +438,4 @@ option to ``True``, VCR will not save old HTTP interactions if they are not used
 
     my_vcr = VCR(drop_unused_requests=True)
     with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
-        # your http here
+        ...  # your HTTP interactions here
