@@ -177,6 +177,7 @@ class Cassette:
         custom_patches=(),
         inject=False,
         allow_playback_repeats=False,
+        drop_unused_requests=False,
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -189,12 +190,17 @@ class Cassette:
         self.record_mode = record_mode
         self.custom_patches = custom_patches
         self.allow_playback_repeats = allow_playback_repeats
+        self.drop_unused_requests = drop_unused_requests
 
         # self.data is the list of (req, resp) tuples
         self.data = []
         self.play_counts = collections.Counter()
         self.dirty = False
         self.rewound = False
+
+        # Subsets of self.data to store old and played interactions
+        self._old_interactions = []
+        self._played_interactions = []
 
     @property
     def play_count(self):
@@ -257,6 +263,7 @@ class Cassette:
         for index, response in self._responses(request):
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 self.play_counts[index] += 1
+                self._played_interactions.append((request, response))
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
@@ -317,12 +324,36 @@ class Cassette:
 
         return final_best_matches
 
+    def _new_interactions(self):
+        """List of new HTTP interactions (request/response tuples)"""
+        new_interactions = []
+        for request, response in self.data:
+            if all(
+                not requests_match(request, old_request, self._match_on)
+                for old_request, _ in self._old_interactions
+            ):
+                new_interactions.append((request, response))
+        return new_interactions
+
     def _as_dict(self):
         return {"requests": self.requests, "responses": self.responses}
 
+    def _build_used_interactions_dict(self):
+        interactions = self._played_interactions + self._new_interactions()
+        cassete_dict = {
+            "requests": [request for request, _ in interactions],
+            "responses": [response for _, response in interactions],
+        }
+        return cassete_dict
+
     def _save(self, force=False):
+        if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
+            cassete_dict = self._build_used_interactions_dict()
+            force = True
+        else:
+            cassete_dict = self._as_dict()
         if force or self.dirty:
-            self._persister.save_cassette(self._path, self._as_dict(), serializer=self._serializer)
+            self._persister.save_cassette(self._path, cassete_dict, serializer=self._serializer)
             self.dirty = False
 
     def _load(self):
@@ -330,6 +361,7 @@ class Cassette:
             requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
             for request, response in zip(requests, responses):
                 self.append(request, response)
+                self._old_interactions.append((request, response))
             self.dirty = False
             self.rewound = True
         except (CassetteDecodeError, CassetteNotFoundError):

@@ -5,6 +5,7 @@ from urllib.request import urlopen
 import pytest
 
 import vcr
+from vcr.cassette import Cassette
 
 
 @pytest.mark.online
@@ -85,3 +86,21 @@ def test_dont_record_on_exception(tmpdir, httpbin):
             assert b"Not in content" in urlopen(httpbin.url).read()
 
     assert not os.path.exists(str(tmpdir.join("dontsave2.yml")))
+
+
+def test_set_drop_unused_requests(tmpdir, httpbin):
+    my_vcr = vcr.VCR(drop_unused_requests=True)
+    file = str(tmpdir.join("test.yaml"))
+
+    with my_vcr.use_cassette(file):
+        urlopen(httpbin.url)
+        urlopen(httpbin.url + "/get")
+
+    cassette = Cassette.load(path=file)
+    assert len(cassette) == 2
+
+    with my_vcr.use_cassette(file):
+        urlopen(httpbin.url)
+
+    cassette = Cassette.load(path=file)
+    assert len(cassette) == 1

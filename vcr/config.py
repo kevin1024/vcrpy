@@ -48,6 +48,7 @@ class VCR:
         func_path_generator=None,
         decode_compressed_response=False,
         record_on_exception=True,
+        drop_unused_requests=False,
     ):
         self.serializer = serializer
         self.match_on = match_on
@@ -81,6 +82,7 @@ class VCR:
         self.decode_compressed_response = decode_compressed_response
         self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
+        self.drop_unused_requests = drop_unused_requests
 
     def _get_serializer(self, serializer_name):
         try:
@@ -151,6 +153,7 @@ class VCR:
             "func_path_generator": func_path_generator,
             "allow_playback_repeats": kwargs.get("allow_playback_repeats", False),
             "record_on_exception": record_on_exception,
+            "drop_unused_requests": kwargs.get("drop_unused_requests", self.drop_unused_requests),
         }
         path = kwargs.get("path")
         if path:
