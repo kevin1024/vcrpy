@@ -51,6 +51,13 @@ jobs:
           pip install codecov '.[tests]' '${{ matrix.urllib3-requirement }}'
           pip check
 
+      - name: Allow creation of user namespaces (e.g. to the unshare command)
+        run: |
+          # .. so that we don't get error:
+          # unshare: write failed /proc/self/uid_map: Operation not permitted
+          # Idea from https://github.com/YoYoGames/GameMaker-Bugs/issues/6015#issuecomment-2135552784 .
+          sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
+
       - name: Run online tests
         run: ./runtests.sh --cov=./vcr --cov-branch --cov-report=xml --cov-append -m online
 
