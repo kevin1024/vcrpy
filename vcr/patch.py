@@ -122,6 +122,7 @@ class CassettePatcherBuilder:
             self._tornado(),
             self._aiohttp(),
             self._httpx(),
+            self._docker(),
             self._build_patchers_from_mock_triples(self._cassette.custom_patches),
         )
 
@@ -249,6 +250,42 @@ class CassettePatcherBuilder:
         from .stubs import urllib3_stubs
 
         return self._urllib3_patchers(cpool, conn, urllib3_stubs)
+
+    def _docker(self):
+        try:
+            import docker.transport.unixconn as conn
+            import docker.transport.unixconn as cpool
+        except ImportError:  # pragma: no cover
+            return ()
+
+        from .stubs import docker_stubs as stubs
+
+        http_connection_remover = ConnectionRemover(
+            self._get_cassette_subclass(stubs.VCRRequestsUnixHTTPConnection),
+        )
+        mock_triples = (
+            (conn, "UnixHTTPConnection", stubs.VCRRequestsUnixHTTPConnection),
+            (cpool.UnixHTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsUnixHTTPConnection),
+        )
+        # These handle making sure that sessions only use the
+        # connections of the appropriate type.
+        mock_triples += (
+            (
+                cpool.UnixHTTPConnectionPool,
+                "_get_conn",
+                self._patched_get_conn(cpool.UnixHTTPConnectionPool, lambda: cpool.UnixHTTPConnection),
+            ),
+            (
+                cpool.UnixHTTPConnectionPool,
+                "_new_conn",
+                self._patched_new_conn(cpool.UnixHTTPConnectionPool, http_connection_remover),
+            ),
+        )
+
+        return itertools.chain(
+            self._build_patchers_from_mock_triples(mock_triples),
+            (http_connection_remover,),
+        )
 
     @_build_patchers_from_mock_triples_decorator
     def _httplib2(self):
