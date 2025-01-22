@@ -470,7 +470,6 @@ def test_filter_query_parameters(tmpdir, httpbin):
 
 
 @pytest.mark.online
-@pytest.mark.asyncio
 def test_use_cassette_with_io(tmpdir, caplog, httpbin):
     url = httpbin.url + "/post"
 
