@@ -136,9 +136,7 @@ async def _record_responses(cassette, vcr_request, real_response, aread):
         # final redirect value
         vcr_request = _make_vcr_request(real_response.request)
 
-    should_save_response = cassette._before_record_request(vcr_request) is not None
-    if should_save_response:
-        cassette.append(vcr_request, await _to_serialized_response(real_response, aread))
+    cassette.append(vcr_request, await _to_serialized_response(real_response, aread))
     return real_response
 
 
