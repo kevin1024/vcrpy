@@ -310,3 +310,13 @@ def test_post_unicode_match_on_body(tmpdir, httpbin_both):
         req2 = requests.post(url, data).content
 
     assert req1 == req2
+
+
+def test_duplicate_get_allow_playback_repeats(tmpdir, httpbin_both):
+    """Ensure that duplicate requests are not included in the cassette on record."""
+    with vcr.use_cassette(str(tmpdir.join("allow_repeats.yaml")), allow_playback_repeats=True) as cass:
+        requests.get(httpbin_both + "/same")
+        requests.get(httpbin_both + "/different")
+        requests.get(httpbin_both + "/same")
+
+        assert len(cass) == 2
