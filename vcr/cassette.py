@@ -3,7 +3,7 @@ import contextlib
 import copy
 import inspect
 import logging
-from asyncio import iscoroutinefunction
+from inspect import iscoroutinefunction
 
 import wrapt
 
