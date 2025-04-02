@@ -19,7 +19,12 @@ class Request:
         self._was_file = hasattr(body, "read")
         self._was_iter = _is_nonsequence_iterator(body)
         if self._was_file:
-            self.body = body.read()
+            if hasattr(body, "tell"):
+                tell = body.tell()
+                self.body = body.read()
+                body.seek(tell)
+            else:
+                self.body = body.read()
         elif self._was_iter:
             self.body = list(body)
         else:
