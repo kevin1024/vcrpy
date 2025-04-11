@@ -30,18 +30,6 @@ install_requires = [
     "PyYAML",
     "wrapt",
     "yarl",
-    # Support for urllib3 >=2 needs CPython >=3.10
-    # so we need to block urllib3 >=2 for Python <3.10 and PyPy for now.
-    # Note that vcrpy would work fine without any urllib3 around,
-    # so this block and the dependency can be dropped at some point
-    # in the future. For more Details:
-    # https://github.com/kevin1024/vcrpy/pull/699#issuecomment-1551439663
-    "urllib3 <2; python_version <'3.10'",
-    # https://github.com/kevin1024/vcrpy/pull/775#issuecomment-1847849962
-    "urllib3 <2; platform_python_implementation =='PyPy'",
-    # Workaround for Poetry with CPython >= 3.10, problem description at:
-    # https://github.com/kevin1024/vcrpy/pull/826
-    "urllib3; platform_python_implementation !='PyPy' and python_version >='3.10'",
 ]
 
 extras_require = {
