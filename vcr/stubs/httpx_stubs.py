@@ -127,6 +127,8 @@ def _shared_vcr_send(cassette, real_send, *args, **kwargs):
 
 
 async def _record_responses(cassette, vcr_request, real_response, aread):
+    if not cassette.filter_request(vcr_request):
+        return real_response
     for past_real_response in real_response.history:
         past_vcr_request = _make_vcr_request(past_real_response.request)
         cassette.append(past_vcr_request, await _to_serialized_response(past_real_response, aread))
