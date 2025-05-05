@@ -176,12 +176,12 @@ def _run_async_function(sync_func, *args, **kwargs):
     - No event loop exists yet.
     """
     try:
-        asyncio.get_running_loop()
+        loop = asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(sync_func(*args, **kwargs))
     else:
         # If inside a running loop, create a task and wait for it
-        return asyncio.ensure_future(sync_func(*args, **kwargs))
+        return loop.run_in_executor(None, functools.partial(sync_func, *args, **kwargs))
 
 
 def _sync_vcr_send(cassette, real_send, *args, **kwargs):
