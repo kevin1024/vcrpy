@@ -240,6 +240,10 @@ def _build_url_with_params(url_str: str, params: Mapping[str, Union[str, int, fl
     return url.with_query(q)
 
 
+async def _raise_for_status_stub(response: ClientResponse):
+    """Stub for the raise_for_status parameter in aiohttp requests."""
+
+
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
@@ -274,8 +278,25 @@ def vcr_request(cassette, real_request):
 
         log.info("%s not in cassette, sending to real server", vcr_request)
 
-        response = await real_request(self, method, url, **kwargs)
+        # Override the raise_for_status parameter to avoid raising an exception before we can record the
+        # response.
+        raise_for_status = kwargs.pop("raise_for_status", None)
+
+        response = await real_request(self, method, url, **kwargs, raise_for_status=_raise_for_status_stub)
         await record_responses(cassette, vcr_request, response)
+
+        # This mirrors the raise_for_status logic in
+        # https://github.com/aio-libs/aiohttp/blob/7d56ed37752d220ca3bfd2bc753341d3c47762d8/aiohttp/client.py#L832
+        if raise_for_status is None:
+            raise_for_status = self._raise_for_status
+
+        if raise_for_status is None:
+            pass
+        elif callable(raise_for_status):
+            await raise_for_status(response)
+        elif raise_for_status:
+            response.raise_for_status()
+
         return response
 
     return new_request
