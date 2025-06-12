@@ -466,3 +466,103 @@ def test_filter_query_parameters(tmpdir, httpbin):
         cassette_content = f.read()
         assert "password" not in cassette_content
         assert "secret" not in cassette_content
+
+
+def test_raise_for_status_enabled_client_session(tmpdir, httpbin):
+    async def run(loop):
+        url = httpbin + "/status/404"
+        path = str(tmpdir.join("raise_for_status.yaml"))
+
+        with vcr.use_cassette(path, record_mode=vcr.mode.ALL) as cassette:
+            async with aiohttp.ClientSession(loop=loop, raise_for_status=True) as session:
+                with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+                    await session.get(url)
+                assert exc_info.value.status == 404
+                assert cassette.play_count == 0
+
+        with vcr.use_cassette(path, record_mode=vcr.mode.NONE) as cassette:
+            async with aiohttp.ClientSession(loop=loop, raise_for_status=True) as session:
+                with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+                    await session.get(url)
+                assert exc_info.value.status == 404
+                assert cassette.play_count == 1
+
+    run_in_loop(run)
+
+
+def test_raise_for_status_custom_client_session(tmpdir, httpbin):
+    async def run(loop):
+        url = httpbin + "/status/404"
+        path = str(tmpdir.join("custom_raise_for_status.yaml"))
+
+        async def custom_raise_for_status(response):
+            if response.status == 404:
+                raise aiohttp.ClientResponseError(
+                    response.request_info,
+                    response.history,
+                    status=response.status,
+                    message="Custom error",
+                )
+
+        with vcr.use_cassette(path, record_mode=vcr.mode.ALL) as cassette:
+            async with aiohttp.ClientSession(loop=loop, raise_for_status=custom_raise_for_status) as session:
+                with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+                    await session.get(url)
+                assert exc_info.value.status == 404
+                assert exc_info.value.message == "Custom error"
+                assert cassette.play_count == 0
+
+        with vcr.use_cassette(path, record_mode=vcr.mode.NONE) as cassette:
+            async with aiohttp.ClientSession(loop=loop, raise_for_status=custom_raise_for_status) as session:
+                with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+                    await session.get(url)
+                assert exc_info.value.status == 404
+                assert exc_info.value.message == "Custom error"
+                assert cassette.play_count == 1
+
+    run_in_loop(run)
+
+
+def test_raise_for_status_enabled_request(tmpdir, httpbin):
+    url = httpbin + "/status/404"
+    path = str(tmpdir.join("raise_for_status.yaml"))
+
+    with vcr.use_cassette(path, record_mode=vcr.mode.ALL) as cassette:
+        with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+            get(url, raise_for_status=True)
+        assert exc_info.value.status == 404
+        assert cassette.play_count == 0
+
+    with vcr.use_cassette(path, record_mode=vcr.mode.NONE) as cassette:
+        with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+            get(url, raise_for_status=True)
+        assert exc_info.value.status == 404
+        assert cassette.play_count == 1
+
+
+def test_raise_for_status_custom_request(tmpdir, httpbin):
+    url = httpbin + "/status/404"
+    path = str(tmpdir.join("custom_raise_for_status.yaml"))
+
+    async def custom_raise_for_status(response):
+        if response.status == 404:
+            raise aiohttp.ClientResponseError(
+                response.request_info,
+                response.history,
+                status=response.status,
+                message="Custom error",
+            )
+
+    with vcr.use_cassette(path, record_mode=vcr.mode.ALL) as cassette:
+        with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+            get(url, raise_for_status=custom_raise_for_status)
+        assert exc_info.value.status == 404
+        assert exc_info.value.message == "Custom error"
+        assert cassette.play_count == 0
+
+    with vcr.use_cassette(path, record_mode=vcr.mode.NONE) as cassette:
+        with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+            get(url, raise_for_status=custom_raise_for_status)
+        assert exc_info.value.status == 404
+        assert exc_info.value.message == "Custom error"
+        assert cassette.play_count == 1
