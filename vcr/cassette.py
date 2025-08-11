@@ -247,6 +247,8 @@ class Cassette:
         the request.
         """
         request = self._before_record_request(request)
+        if request is None:
+            return
         for index, (stored_request, response) in enumerate(self.data):
             if requests_match(request, stored_request, self._match_on):
                 yield index, response
