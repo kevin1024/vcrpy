@@ -9,10 +9,16 @@ import pytest
 import yaml
 
 from vcr.cassette import Cassette
-from vcr.errors import UnhandledHTTPRequestError
+from vcr.errors import CannotOverwriteExistingCassetteException, UnhandledHTTPRequestError
 from vcr.patch import force_reset
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
+
+# Use the libYAML versions if possible
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 
 def test_cassette_load(tmpdir):
@@ -433,3 +439,42 @@ def test_used_interactions(tmpdir):
 
     used_interactions = cassette._played_interactions + cassette._new_interactions()
     assert len(used_interactions) == 2
+
+
+def test_metadata_write(tmpdir):
+    file = tmpdir.join("test_cassette.yml")
+    cassette = Cassette(path=str(file))
+
+    assert cassette.get_metadata("key", "value") == "value"
+    assert cassette.get_metadata("key", "default") == "value"
+    assert cassette.get_metadata("otherkey", "othervalue") == "othervalue"
+
+    cassette._save(force=False)
+    with open(file) as f:
+        assert yaml.load(f, Loader=Loader)["metadata"] == {
+            "key": "value",
+            "otherkey": "othervalue",
+        }
+
+
+def test_metadata_load(tmpdir):
+    file = tmpdir.join("test_cassette.yml")
+    file.write(
+        yaml.dump(
+            {
+                "interactions": [
+                    {
+                        "request": {"body": "", "uri": "foo1", "method": "GET", "headers": {}},
+                        "response": "bar1",
+                    },
+                ],
+                "metadata": {"key": "value"},
+            },
+        ),
+    )
+
+    cassette = Cassette.load(path=str(file))
+    assert cassette.get_metadata("key", "default") == "value"
+
+    with pytest.raises(CannotOverwriteExistingCassetteException):
+        cassette.get_metadata("otherkey", "default")
