@@ -106,11 +106,7 @@ def replace_post_data_parameters(request, replacements):
             request.body = new_body
         elif request.headers.get("Content-Type") == "application/json":
             json_data = json.loads(request.body)
-            print()
-            print(json_data)
-            print(replacements)
             recursive_filtering_body(request, json_data, replacements)
-            print(json_data)
             request.body = json.dumps(json_data).encode("utf-8")
         else:
             if isinstance(request.body, str):
