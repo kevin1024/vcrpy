@@ -69,6 +69,21 @@ def remove_query_parameters(request, query_parameters_to_remove):
     return replace_query_parameters(request, replacements)
 
 
+def recursive_filtering_body(request, body_data, replacements):
+    for k, ov in list(body_data.items()):
+        if isinstance(ov, dict):
+            recursive_filtering_body(request, ov, replacements)
+            if not ov:
+                body_data.pop(k)
+        if k in replacements:
+            body_data.pop(k)
+            rv = replacements[k]
+            if callable(rv):
+                rv = rv(key=k, value=ov, request=request)
+            if rv is not None:
+                body_data[k] = rv
+
+
 def replace_post_data_parameters(request, replacements):
     """Replace post data in request--either form data or json--according to replacements.
 
@@ -86,23 +101,11 @@ def replace_post_data_parameters(request, replacements):
     if request.method == "POST" and not isinstance(request.body, BytesIO):
         if isinstance(request.body, dict):
             new_body = request.body.copy()
-            for k, rv in replacements.items():
-                if k in new_body:
-                    ov = new_body.pop(k)
-                    if callable(rv):
-                        rv = rv(key=k, value=ov, request=request)
-                    if rv is not None:
-                        new_body[k] = rv
+            recursive_filtering_body(request, new_body, replacements)
             request.body = new_body
         elif request.headers.get("Content-Type") == "application/json":
             json_data = json.loads(request.body)
-            for k, rv in replacements.items():
-                if k in json_data:
-                    ov = json_data.pop(k)
-                    if callable(rv):
-                        rv = rv(key=k, value=ov, request=request)
-                    if rv is not None:
-                        json_data[k] = rv
+            recursive_filtering_body(request, json_data, replacements)
             request.body = json.dumps(json_data).encode("utf-8")
         else:
             if isinstance(request.body, str):
