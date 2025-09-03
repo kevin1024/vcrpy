@@ -202,6 +202,22 @@ def test_replace_json_post_data_parameters():
     assert request_data == expected_data
 
 
+def test_replace_nested_post_data_parameters():
+    body = b'{"one": {"key": "secret", "nested": "change"}, "two": "keep", "three": {"key": "secret"}}'
+    request = Request("POST", "http://google.com", body, {})
+    request.headers["Content-Type"] = "application/json"
+    replace_post_data_parameters(
+        request,
+        [
+            ("key", None),
+            ("nested", "aboba")
+        ],
+    )
+    request_data = json.loads(request.body)
+    expected_data = json.loads('{"one": {"nested": "aboba"}, "two": "keep"}')
+    assert request_data == expected_data
+
+
 def test_remove_json_post_data_parameters():
     # Test the backward-compatible API wrapper.
     body = b'{"id": "secret", "foo": "bar", "baz": "qux"}'
