@@ -203,18 +203,19 @@ def test_replace_json_post_data_parameters():
 
 
 def test_replace_nested_post_data_parameters():
-    body = b'{"one": {"key": "secret", "nested": "change"}, "two": "keep", "three": {"key": "secret"}}'
+    body = b'{"nested": "same", "another": "same", "one": {"key": "secret", "nested": {"key": "secret"}}}'
     request = Request("POST", "http://google.com", body, {})
     request.headers["Content-Type"] = "application/json"
     replace_post_data_parameters(
         request,
         [
             ("key", None),
-            ("nested", "aboba")
+            ("nested", "aboba"),
+            ("another", None)
         ],
     )
     request_data = json.loads(request.body)
-    expected_data = json.loads('{"one": {"nested": "aboba"}, "two": "keep"}')
+    expected_data = json.loads('{"nested": "aboba", "one": {"nested": "aboba"}}')
     assert request_data == expected_data
 
 
