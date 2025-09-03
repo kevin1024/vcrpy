@@ -70,18 +70,18 @@ def remove_query_parameters(request, query_parameters_to_remove):
 
 
 def recursive_filtering_body(request, body_data, replacements):
-    filtered_v = []
     for k, ov in list(body_data.items()):
+        if isinstance(ov, dict):
+            recursive_filtering_body(request, ov, replacements)
+            if not ov:
+                body_data.pop(k)
         if k in replacements:
-            filtered_v.append(body_data.pop(k))
             rv = replacements[k]
             if callable(rv):
                 rv = rv(key=k, value=ov, request=request)
             if rv is not None:
                 body_data[k] = rv
-        if isinstance(ov, dict) and ov not in filtered_v:
-            recursive_filtering_body(request, ov, replacements)
-            if not ov:
+            else:
                 body_data.pop(k)
 
 
