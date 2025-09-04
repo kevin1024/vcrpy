@@ -70,7 +70,7 @@ def remove_query_parameters(request, query_parameters_to_remove):
 
 
 def filtering_body(request, body_data, replacements):
-    """Filtering the request body by default to only high level keys"""
+    """Filtering the request body by default to only top level keys"""
     for k, rv in replacements.items():
         if k in body_data:
             ov = body_data.pop(k)

@@ -212,7 +212,7 @@ def test_replace_recursive_post_data_parameters():
             ("key", None),
             ("nested", "aboba"),
         ],
-        True
+        recursive=True
     )
     request_data = json.loads(request.body)
     expected_data = json.loads('{"nested": "aboba", "one": {"nested": "aboba"}}')
