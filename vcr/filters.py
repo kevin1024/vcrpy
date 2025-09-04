@@ -69,7 +69,19 @@ def remove_query_parameters(request, query_parameters_to_remove):
     return replace_query_parameters(request, replacements)
 
 
+def filtering_body(request, body_data, replacements):
+    """Filtering the request body by default to only high level keys"""
+    for k, rv in replacements.items():
+        if k in body_data:
+            ov = body_data.pop(k)
+            if callable(rv):
+                rv = rv(key=k, value=ov, request=request)
+            if rv is not None:
+                body_data[k] = rv
+
+
 def recursive_filtering_body(request, body_data, replacements):
+    """Recursive filtering the request body with nested keys"""
     for k, ov in list(body_data.items()):
         if isinstance(ov, dict):
             recursive_filtering_body(request, ov, replacements)
@@ -81,11 +93,11 @@ def recursive_filtering_body(request, body_data, replacements):
                 rv = rv(key=k, value=ov, request=request)
             if rv is not None:
                 body_data[k] = rv
-            else:
+            elif k in body_data:
                 body_data.pop(k)
 
 
-def replace_post_data_parameters(request, replacements):
+def replace_post_data_parameters(request, replacements, recursive=False):
     """Replace post data in request--either form data or json--according to replacements.
 
     The replacements should be a list of (key, value) pairs where the value can be any of:
@@ -102,11 +114,17 @@ def replace_post_data_parameters(request, replacements):
     if request.method == "POST" and not isinstance(request.body, BytesIO):
         if isinstance(request.body, dict):
             new_body = request.body.copy()
-            recursive_filtering_body(request, new_body, replacements)
+            if recursive:
+                recursive_filtering_body(request, new_body, replacements)
+            else:
+                filtering_body(request, new_body, replacements)
             request.body = new_body
         elif request.headers.get("Content-Type") == "application/json":
             json_data = json.loads(request.body)
-            recursive_filtering_body(request, json_data, replacements)
+            if recursive:
+                recursive_filtering_body(request, json_data, replacements)
+            else:
+                filtering_body(request, json_data, replacements)
             request.body = json.dumps(json_data).encode("utf-8")
         else:
             if isinstance(request.body, str):
