@@ -55,6 +55,8 @@ extras_require = {
         "pytest-cov",
         "pytest-httpbin",
         "pytest",
+        "pytest-timeout",
+        "docker",
         "requests>=2.22.0",
         "tornado",
         "urllib3",
