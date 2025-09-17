@@ -38,6 +38,7 @@ extras_require = {
         "boto3",
         "cryptography",
         "httpbin",
+        "httpcore",
         "httplib2",
         "httpx",
         "pycurl; platform_python_implementation !='PyPy'",
