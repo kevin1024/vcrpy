@@ -3,12 +3,13 @@ import contextlib
 import copy
 import inspect
 import logging
+import typing
 from inspect import iscoroutinefunction
 
 import wrapt
 
 from ._handle_coroutine import handle_coroutine
-from .errors import UnhandledHTTPRequestError
+from .errors import CannotOverwriteExistingCassetteException, UnhandledHTTPRequestError
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
@@ -17,6 +18,7 @@ from .serializers import yamlserializer
 from .util import partition_dict
 
 log = logging.getLogger(__name__)
+T = typing.TypeVar("T")
 
 
 class CassetteContextDecorator:
@@ -194,6 +196,7 @@ class Cassette:
 
         # self.data is the list of (req, resp) tuples
         self.data = []
+        self._metadata = {}
         self.play_counts = collections.Counter()
         self.dirty = False
         self.rewound = False
@@ -324,6 +327,15 @@ class Cassette:
 
         return final_best_matches
 
+    def get_metadata(self, key: str, default: T) -> T:
+        if key in self._metadata:
+            return self._metadata[key]
+        if self.write_protected:
+            raise CannotOverwriteExistingCassetteException(cassette=self, missing_metadata=key)
+        self.dirty = True
+        self._metadata[key] = default
+        return default
+
     def _new_interactions(self):
         """List of new HTTP interactions (request/response tuples)"""
         new_interactions = []
@@ -336,15 +348,20 @@ class Cassette:
         return new_interactions
 
     def _as_dict(self):
-        return {"requests": self.requests, "responses": self.responses}
+        cassette_dict = {"requests": self.requests, "responses": self.responses}
+        if self._metadata:
+            cassette_dict["metadata"] = self._metadata
+        return cassette_dict
 
     def _build_used_interactions_dict(self):
         interactions = self._played_interactions + self._new_interactions()
-        cassete_dict = {
+        cassette_dict = {
             "requests": [request for request, _ in interactions],
             "responses": [response for _, response in interactions],
         }
-        return cassete_dict
+        if self._metadata:
+            cassette_dict["metadata"] = self._metadata
+        return cassette_dict
 
     def _save(self, force=False):
         if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
@@ -358,12 +375,18 @@ class Cassette:
 
     def _load(self):
         try:
-            requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
+            loaded = self._persister.load_cassette(self._path, serializer=self._serializer)
+            if len(loaded) == 3:
+                requests, responses, metadata = loaded
+            else:
+                requests, responses = loaded
+                metadata = None
             for request, response in zip(requests, responses):
                 self.append(request, response)
                 self._old_interactions.append((request, response))
             self.dirty = False
             self.rewound = True
+            self._metadata = metadata or {}
         except (CassetteDecodeError, CassetteNotFoundError):
             pass
 
