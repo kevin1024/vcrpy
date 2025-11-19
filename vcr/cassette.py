@@ -359,7 +359,7 @@ class Cassette:
     def _load(self):
         try:
             requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
-            for request, response in zip(requests, responses):
+            for request, response in zip(requests, responses, strict=False):
                 self.append(request, response)
                 self._old_interactions.append((request, response))
             self.dirty = False

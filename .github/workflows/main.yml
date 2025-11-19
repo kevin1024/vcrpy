@@ -6,7 +6,7 @@ on:
       - master
   pull_request:
   schedule:
-    - cron: '0 16 * * 5'  # Every Friday 4pm
+    - cron: "0 16 * * 5" # Every Friday 4pm
   workflow_dispatch:
 
 jobs:
@@ -16,24 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
-          - "pypy-3.9"
           - "pypy-3.10"
-        urllib3-requirement:
-          - "urllib3>=2"
-          - "urllib3<2"
-
-        exclude:
-          - python-version: "3.9"
-            urllib3-requirement: "urllib3>=2"
-          - python-version: "pypy-3.9"
-            urllib3-requirement: "urllib3>=2"
-          - python-version: "pypy-3.10"
-            urllib3-requirement: "urllib3>=2"
+          - "pypy-3.11"
 
     steps:
       - uses: actions/checkout@v5
@@ -44,13 +32,12 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
           allow-prereleases: true
 
       - name: Install project dependencies
         run: |
           uv pip install --system --upgrade pip setuptools
-          uv pip install --system codecov '.[tests]' '${{ matrix.urllib3-requirement }}'
+          uv pip install --system codecov '.[tests]'
           uv pip check
 
       - name: Allow creation of user namespaces (e.g. to the unshare command)

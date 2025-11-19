@@ -2,14 +2,15 @@
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 addopts = ["--strict-config", "--strict-markers"]
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 markers = ["online"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [

@@ -42,17 +42,13 @@ def scheme(request):
     return request.param
 
 
-@pytest.fixture(params=["simple", "curl", "default"])
+@pytest.fixture(params=["curl", "default"])
 def get_client(request):
-    if request.param == "simple":
-        from tornado import simple_httpclient as simple
-
-        return lambda: simple.SimpleAsyncHTTPClient()
-    elif request.param == "curl":
+    if request.param == "curl":
         curl = pytest.importorskip("tornado.curl_httpclient")
         return lambda: curl.CurlAsyncHTTPClient()
-    else:
-        return lambda: http.AsyncHTTPClient()
+
+    return lambda: http.AsyncHTTPClient()
 
 
 def get(client, url, **kwargs):
@@ -192,7 +188,7 @@ def test_redirects(get_client, tmpdir, httpbin):
 
 @pytest.mark.online
 @gen_test
-def test_cross_scheme(get_client, tmpdir, scheme):
+def test_cross_scheme(get_client, tmpdir):
     """Ensure that requests between schemes are treated separately"""
     # First fetch a url under http, and then again under https and then
     # ensure that we haven't served anything out of cache, and we have two
