@@ -26,6 +26,9 @@ class VCRFakeSocket:
     def settimeout(self, *args, **kwargs):
         pass
 
+    def gettimeout(self, *args, **kwargs):
+        return 0
+
     def fileno(self):
         """
         This is kinda crappy.  requests will watch
@@ -33,6 +36,12 @@ class VCRFakeSocket:
         Return file descriptor 0 since that's stdin.
         """
         return 0  # wonder how bad this is....
+
+    def recv(self, *args, **kwargs):
+        return None
+
+    def type(self, *args, **kwargs):
+        return "fake"
 
 
 def parse_headers(header_list):

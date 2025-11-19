@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -20,15 +20,18 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
+          - "3.14t"
+          - "3.15"
           - "pypy-3.11"
         test-dependencies:
           - tests
           - tests-niquests
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.3.0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
@@ -41,6 +44,9 @@ jobs:
           uv pip install --system --upgrade pip setuptools
           uv pip install --system codecov '.[${{ matrix.test-dependencies }}]'
           uv pip check
+
+      - if: startsWith(matrix.python-version, '3.14') || startsWith(matrix.python-version, '3.15')
+        run: uv pip install --system cryptography>=46.0.3
 
       - name: Allow creation of user namespaces (e.g. to the unshare command)
         run: |
