@@ -193,9 +193,11 @@ def test_params_same_url_distinct_params(tmpdir, httpbin):
         assert cassette.play_count == 1
 
     other_params = {"other": "params"}
-    with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
-            get(url, output="text", params=other_params)
+    with (
+        vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette,
+        pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException),
+    ):
+        get(url, output="text", params=other_params)
 
 
 @pytest.mark.online

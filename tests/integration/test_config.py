@@ -62,9 +62,8 @@ def test_override_match_on(tmpdir, httpbin):
 def test_missing_matcher():
     my_vcr = vcr.VCR()
     my_vcr.register_matcher("awesome", object)
-    with pytest.raises(KeyError):
-        with my_vcr.use_cassette("test.yaml", match_on=["notawesome"]):
-            pass
+    with pytest.raises(KeyError), my_vcr.use_cassette("test.yaml", match_on=["notawesome"]):
+        pass
 
 
 @pytest.mark.online
@@ -81,9 +80,8 @@ def test_dont_record_on_exception(tmpdir, httpbin):
     assert not os.path.exists(str(tmpdir.join("dontsave.yml")))
 
     # Make sure context decorator has the same behavior
-    with pytest.raises(AssertionError):
-        with my_vcr.use_cassette(str(tmpdir.join("dontsave2.yml"))):
-            assert b"Not in content" in urlopen(httpbin.url).read()
+    with pytest.raises(AssertionError), my_vcr.use_cassette(str(tmpdir.join("dontsave2.yml"))):
+        assert b"Not in content" in urlopen(httpbin.url).read()
 
     assert not os.path.exists(str(tmpdir.join("dontsave2.yml")))
 

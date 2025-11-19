@@ -42,8 +42,13 @@ def scheme(request):
     return request.param
 
 
-@pytest.fixture(params=["curl", "default"])
+@pytest.fixture(params=["simple", "curl", "default"])
 def get_client(request):
+    if request.param == "simple":
+        from tornado import simple_httpclient as simple
+
+        return lambda: simple.SimpleAsyncHTTPClient()
+
     if request.param == "curl":
         curl = pytest.importorskip("tornado.curl_httpclient")
         return lambda: curl.CurlAsyncHTTPClient()
@@ -75,7 +80,7 @@ def test_status_code(get_client, scheme, tmpdir):
 
     with vcr.use_cassette(str(tmpdir.join("atts.yaml"))) as cass:
         assert status_code == (yield get(get_client(), url)).code
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @pytest.mark.online
@@ -88,7 +93,7 @@ def test_headers(get_client, scheme, tmpdir):
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))) as cass:
         assert headers == (yield get(get_client(), url)).headers
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @pytest.mark.online
@@ -102,7 +107,7 @@ def test_body(get_client, tmpdir, scheme):
 
     with vcr.use_cassette(str(tmpdir.join("body.yaml"))) as cass:
         assert content == (yield get(get_client(), url)).body
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @gen_test
@@ -115,7 +120,7 @@ def test_effective_url(get_client, tmpdir, httpbin):
 
     with vcr.use_cassette(str(tmpdir.join("url.yaml"))) as cass:
         assert effective_url == (yield get(get_client(), url)).effective_url
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @pytest.mark.online
@@ -131,7 +136,7 @@ def test_auth(get_client, tmpdir, scheme):
         two = yield get(get_client(), url, auth_username=auth[0], auth_password=auth[1])
         assert one.body == two.body
         assert one.code == two.code
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @pytest.mark.online
@@ -155,7 +160,7 @@ def test_auth_failed(get_client, tmpdir, scheme):
         assert exc_info.value.code == 401
         assert one.body == two.body
         assert one.code == two.code == 401
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @pytest.mark.online
@@ -171,7 +176,7 @@ def test_post(get_client, tmpdir, scheme):
         req2 = (yield post(get_client(), url, data)).body
 
     assert req1 == req2
-    assert 1 == cass.play_count
+    assert cass.play_count == 1
 
 
 @gen_test
@@ -229,7 +234,7 @@ def test_gzip(get_client, tmpdir, scheme):
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))) as cass:
         response = yield get(get_client(), url, **kwargs)
         assert_is_json_bytes(response.body)
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @pytest.mark.online
@@ -242,7 +247,7 @@ def test_https_with_cert_validation_disabled(get_client, tmpdir):
 
     with vcr.use_cassette(cass_path) as cass:
         yield get(get_client(), "https://httpbin.org", validate_cert=False)
-        assert 1 == cass.play_count
+        assert cass.play_count == 1
 
 
 @gen_test

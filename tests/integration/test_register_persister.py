@@ -83,6 +83,5 @@ def test_load_cassette_persister_exception_handling(tmpdir, httpbin):
     with my_vcr.use_cassette("bad/encoding") as cass:
         assert len(cass) == 0
 
-    with pytest.raises(ValueError):
-        with my_vcr.use_cassette("bad/buggy") as cass:
-            pass
+    with pytest.raises(ValueError), my_vcr.use_cassette("bad/buggy") as cass:
+        pass

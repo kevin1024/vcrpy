@@ -227,9 +227,11 @@ def test_nesting_cassette_context_managers(*args):
         assert_get_response_body_is("first_response")
 
         # Make sure a second cassette can supersede the first
-        with Cassette.use(path="test") as second_cassette:
-            with mock.patch.object(second_cassette, "play_response", return_value=second_response):
-                assert_get_response_body_is("second_response")
+        with (
+            Cassette.use(path="test") as second_cassette,
+            mock.patch.object(second_cassette, "play_response", return_value=second_response),
+        ):
+            assert_get_response_body_is("second_response")
 
         # Now the first cassette should be back in effect
         assert_get_response_body_is("first_response")
