@@ -53,7 +53,7 @@ def serialize(cassette_dict, serializer):
             "request": compat.convert_to_unicode(request._to_dict()),
             "response": compat.convert_to_unicode(response),
         }
-        for request, response in zip(cassette_dict["requests"], cassette_dict["responses"])
+        for request, response in zip(cassette_dict["requests"], cassette_dict["responses"], strict=False)
     ]
     data = {"version": CASSETTE_FORMAT_VERSION, "interactions": interactions}
     return serializer.serialize(data)

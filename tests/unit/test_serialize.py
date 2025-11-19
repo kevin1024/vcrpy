@@ -76,7 +76,7 @@ def test_deserialize_py2py3_yaml_cassette(tmpdir, req_body, expect):
     cfile = tmpdir.join("test_cassette.yaml")
     cfile.write(REQBODY_TEMPLATE.format(req_body=req_body))
     with open(str(cfile)) as f:
-        (requests, responses) = deserialize(f.read(), yamlserializer)
+        (requests, _) = deserialize(f.read(), yamlserializer)
     assert requests[0].body == expect
 
 

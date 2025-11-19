@@ -30,18 +30,6 @@ install_requires = [
     "PyYAML",
     "wrapt",
     "yarl",
-    # Support for urllib3 >=2 needs CPython >=3.10
-    # so we need to block urllib3 >=2 for Python <3.10 and PyPy for now.
-    # Note that vcrpy would work fine without any urllib3 around,
-    # so this block and the dependency can be dropped at some point
-    # in the future. For more Details:
-    # https://github.com/kevin1024/vcrpy/pull/699#issuecomment-1551439663
-    "urllib3 <2; python_version <'3.10'",
-    # https://github.com/kevin1024/vcrpy/pull/775#issuecomment-1847849962
-    "urllib3 <2; platform_python_implementation =='PyPy'",
-    # Workaround for Poetry with CPython >= 3.10, problem description at:
-    # https://github.com/kevin1024/vcrpy/pull/826
-    "urllib3; platform_python_implementation !='PyPy' and python_version >='3.10'",
 ]
 
 extras_require = {
@@ -49,22 +37,16 @@ extras_require = {
         "aiohttp",
         "boto3",
         "httplib2",
+        "httpbin",
         "httpx",
+        "pytest",
         "pytest-aiohttp",
         "pytest-asyncio",
         "pytest-cov",
         "pytest-httpbin",
-        "pytest",
         "requests>=2.22.0",
         "tornado",
         "urllib3",
-        # Needed to un-break httpbin 0.7.0. For httpbin >=0.7.1 and after,
-        # this pin and the dependency itself can be removed, provided
-        # that the related bug in httpbin has been fixed:
-        # https://github.com/kevin1024/vcrpy/issues/645#issuecomment-1562489489
-        # https://github.com/postmanlabs/httpbin/issues/673
-        # https://github.com/postmanlabs/httpbin/pull/674
-        "Werkzeug==2.0.3",
     ],
 }
 
@@ -78,7 +60,7 @@ setup(
     author_email="me@kevinmccarthy.org",
     url="https://github.com/kevin1024/vcrpy",
     packages=find_packages(exclude=["tests*"]),
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     install_requires=install_requires,
     license="MIT",
     extras_require=extras_require,
@@ -89,7 +71,6 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",

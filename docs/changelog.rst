@@ -7,6 +7,10 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+- Unreleased
+    - Drop support for Python 3.9
+    - Drop support for urllib3 < 2
+
 -  7.0.0
     - Drop support for python 3.8 (major version bump) - thanks @jairhenrique
     - Various linting and test fixes - thanks @jairhenrique
