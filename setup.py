@@ -3,10 +3,11 @@
 import codecs
 import os
 import re
+from pathlib import Path
 
 from setuptools import find_packages, setup
 
-long_description = open("README.rst").read()
+long_description = Path("README.rst").read_text()
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -29,16 +30,17 @@ def find_version(*file_paths):
 install_requires = [
     "PyYAML",
     "wrapt",
-    "yarl",
 ]
 
 extras_require = {
     "tests": [
         "aiohttp",
         "boto3",
-        "httplib2",
+        "cryptography",
         "httpbin",
+        "httplib2",
         "httpx",
+        "pycurl; platform_python_implementation !='PyPy'",
         "pytest",
         "pytest-aiohttp",
         "pytest-asyncio",
@@ -47,6 +49,7 @@ extras_require = {
         "requests>=2.22.0",
         "tornado",
         "urllib3",
+        "werkzeug==2.0.3",
     ],
 }
 

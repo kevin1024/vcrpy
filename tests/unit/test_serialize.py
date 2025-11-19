@@ -8,15 +8,13 @@ from vcr.serializers import compat, jsonserializer, yamlserializer
 
 
 def test_deserialize_old_yaml_cassette():
-    with open("tests/fixtures/migration/old_cassette.yaml") as f:
-        with pytest.raises(ValueError):
-            deserialize(f.read(), yamlserializer)
+    with open("tests/fixtures/migration/old_cassette.yaml") as f, pytest.raises(ValueError):
+        deserialize(f.read(), yamlserializer)
 
 
 def test_deserialize_old_json_cassette():
-    with open("tests/fixtures/migration/old_cassette.json") as f:
-        with pytest.raises(ValueError):
-            deserialize(f.read(), jsonserializer)
+    with open("tests/fixtures/migration/old_cassette.json") as f, pytest.raises(ValueError):
+        deserialize(f.read(), jsonserializer)
 
 
 def test_deserialize_new_yaml_cassette():

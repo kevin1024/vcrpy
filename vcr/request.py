@@ -1,5 +1,6 @@
 import logging
 import warnings
+from contextlib import suppress
 from io import BytesIO
 from urllib.parse import parse_qsl, urlparse
 
@@ -80,10 +81,9 @@ class Request:
     def port(self):
         port = self.parsed_uri.port
         if port is None:
-            try:
+            with suppress(KeyError):
                 port = {"https": 443, "http": 80}[self.parsed_uri.scheme]
-            except KeyError:
-                pass
+
         return port
 
     @property

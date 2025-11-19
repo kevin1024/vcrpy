@@ -1,6 +1,7 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
 import logging
+from contextlib import suppress
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
 
@@ -77,7 +78,7 @@ class VCRHTTPResponse(HTTPResponse):
         # libraries trying to process a chunked response.  By removing the
         # transfer-encoding: chunked header, this should cause the downstream
         # libraries to process this as a non-chunked response.
-        te_key = [h for h in headers.keys() if h.upper() == "TRANSFER-ENCODING"]
+        te_key = [h for h in headers if h.upper() == "TRANSFER-ENCODING"]
         if te_key:
             del headers[te_key[0]]
         self.headers = self.msg = parse_headers(headers)
@@ -370,12 +371,8 @@ class VCRConnection:
         TODO: Separately setting the attribute on the two instances is not
         ideal. We should switch to a proxying implementation.
         """
-        try:
+        with suppress(AttributeError):
             setattr(self.real_connection, name, value)
-        except AttributeError:
-            # raised if real_connection has not been set yet, such as when
-            # we're setting the real_connection itself for the first time
-            pass
 
         super().__setattr__(name, value)
 

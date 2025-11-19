@@ -25,6 +25,7 @@ select = [
     "RUF", # Ruff-specific rules
     "UP",  # pyupgrade
     "W",   # pycodestyle warning
+    "SIM",
 ]
 
 [tool.ruff.lint.isort]

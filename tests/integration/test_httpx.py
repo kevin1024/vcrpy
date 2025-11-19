@@ -60,9 +60,8 @@ class DoSyncRequest(BaseDoRequest):
                 return b"".join(response.iter_bytes())
 
         # Use one-time context and dispose of the client afterwards
-        with self:
-            with self.client.stream(*args, **kwargs) as response:
-                return b"".join(response.iter_bytes())
+        with self, self.client.stream(*args, **kwargs) as response:
+            return b"".join(response.iter_bytes())
 
 
 class DoAsyncRequest(BaseDoRequest):
@@ -195,9 +194,11 @@ def test_params_same_url_distinct_params(tmpdir, httpbin, do_request):
         assert cassette.play_count == 1
 
     params = {"other": "params"}
-    with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
-            do_request()("GET", url, params=params, headers=headers)
+    with (
+        vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette,
+        pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException),
+    ):
+        do_request()("GET", url, params=params, headers=headers)
 
 
 @pytest.mark.online
