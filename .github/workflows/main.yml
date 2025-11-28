@@ -20,6 +20,8 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
+          - "3.14t"
           - "pypy-3.11"
 
     steps:
@@ -38,6 +40,9 @@ jobs:
           uv pip install --system --upgrade pip setuptools
           uv pip install --system codecov '.[tests]'
           uv pip check
+
+      - if: startsWith(matrix.python-version, '3.14')
+        run: uv pip install --system cryptography>=46.0.3 Werkzeug==3.1.3
 
       - name: Allow creation of user namespaces (e.g. to the unshare command)
         run: |
