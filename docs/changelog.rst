@@ -7,9 +7,21 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
-- Unreleased
-    - Drop support for Python 3.9
-    - Drop support for urllib3 < 2
+-  8.0.0
+    - BREAKING: Drop support for Python 3.9 (major version bump) - thanks @jairhenrique
+    - BREAKING: Drop support for urllib3 < 2 - fixes CVE warnings from urllib3 1.x (#926, #880) - thanks @jairhenrique
+    - New feature: ``drop_unused_requests`` option to remove unused interactions from cassettes (#763) - thanks @danielnsilva
+    - Rewrite httpx support to patch httpcore instead of httpx (#943) - thanks @seowalex
+        - Fixes ``httpx.ResponseNotRead`` exceptions (#832, #834)
+        - Fixes ``KeyError: 'follow_redirects'`` (#945)
+        - Adds support for custom httpx transports
+    - Fix HTTPS proxy handling - proxy address no longer ends up in cassette URIs (#809, #914) - thanks @alga
+    - Fix ``iscoroutinefunction`` deprecation warning on Python 3.14 - thanks @kloczek
+    - Only log message if response is appended - thanks @talfus-laddus
+    - Optimize urllib.parse calls - thanks @Martin-Brunthaler
+    - Fix CI for Ubuntu 24.04 - thanks @hartwork
+    - Various CI improvements: migrate to uv, update GitHub Actions - thanks @jairhenrique
+    - Various linting and test improvements - thanks @jairhenrique and @hartwork
 
 -  7.0.0
     - Drop support for python 3.8 (major version bump) - thanks @jairhenrique
