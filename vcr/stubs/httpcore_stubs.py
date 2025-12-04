@@ -190,7 +190,6 @@ def _run_async_function(sync_func, *args, **kwargs):
     else:
         # If inside a running loop, run the task in a separated
         # event loop in a new thread.
-        print("Yep, inside loop")
         result = None
         error = None
 
@@ -210,21 +209,17 @@ def _run_async_function(sync_func, *args, **kwargs):
 
 
 def _vcr_handle_request(cassette, real_handle_request, self, real_request):
-    print("Handling synchronous request")
     vcr_request, vcr_response = _run_async_function(
         _vcr_request,
         cassette,
         real_request,
     )
-    print("Got a VCR response:", vcr_response)
 
     if vcr_response:
         return vcr_response
 
     real_response = real_handle_request(self, real_request)
-    print("Got a real response:", real_response)
     _run_async_function(_record_responses, cassette, vcr_request, real_response)
-    print("Recorded the response in the cassette")
 
     return real_response
 
