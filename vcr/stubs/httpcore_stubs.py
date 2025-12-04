@@ -187,8 +187,12 @@ def _run_async_function(sync_func, *args, **kwargs):
     except RuntimeError:
         return asyncio.run(sync_func(*args, **kwargs))
     else:
-        # If inside a running loop, create a task and wait for it
-        return asyncio.ensure_future(sync_func(*args, **kwargs))
+        # If inside a running loop, we can't use asyncio.run() or block on the current loop
+        # Run the coroutine in a separate thread with its own event loop
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(asyncio.run, sync_func(*args, **kwargs))
+            return future.result()
 
 
 def _vcr_handle_request(cassette, real_handle_request, self, real_request):
