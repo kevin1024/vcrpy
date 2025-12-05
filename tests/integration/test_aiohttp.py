@@ -1,3 +1,4 @@
+import io
 import logging
 import ssl
 import urllib.parse
@@ -462,3 +463,19 @@ def test_filter_query_parameters(tmpdir, httpbin):
         cassette_content = f.read()
         assert "password" not in cassette_content
         assert "secret" not in cassette_content
+
+
+@pytest.mark.online
+def test_use_cassette_with_io(tmpdir, caplog, httpbin):
+    url = httpbin.url + "/post"
+
+    # test without cassettes
+    data = io.BytesIO(b"hello")
+    _, response_json = request("POST", url, output="json", data=data)
+    assert response_json["data"] == "hello"
+
+    # test with cassettes
+    data = io.BytesIO(b"hello")
+    with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
+        _, response_json = request("POST", url, output="json", data=data)
+        assert response_json["data"] == "hello"
