@@ -3,6 +3,7 @@ from logging import NullHandler
 
 from .config import VCR
 from .record_mode import RecordMode as mode  # noqa: F401
+from .request import Request
 
 __version__ = "8.0.0"
 
