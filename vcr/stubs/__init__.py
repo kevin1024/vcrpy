@@ -1,6 +1,7 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
 import logging
+from contextlib import suppress
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
 
@@ -66,6 +67,7 @@ class VCRHTTPResponse(HTTPResponse):
         self.reason = recorded_response["status"]["message"]
         self.status = self.code = recorded_response["status"]["code"]
         self.version = None
+        self.version_string = None
         self._content = BytesIO(self.recorded_response["body"]["string"])
         self._closed = False
         self._original_response = self  # for requests.session.Session cookie extraction
@@ -76,7 +78,7 @@ class VCRHTTPResponse(HTTPResponse):
         # libraries trying to process a chunked response.  By removing the
         # transfer-encoding: chunked header, this should cause the downstream
         # libraries to process this as a non-chunked response.
-        te_key = [h for h in headers.keys() if h.upper() == "TRANSFER-ENCODING"]
+        te_key = [h for h in headers if h.upper() == "TRANSFER-ENCODING"]
         if te_key:
             del headers[te_key[0]]
         self.headers = self.msg = parse_headers(headers)
@@ -186,22 +188,34 @@ class VCRConnection:
         """
         Returns empty string for the default port and ':port' otherwise
         """
-        port = self.real_connection.port
+        port = (
+            self.real_connection.port
+            if not self.real_connection._tunnel_host
+            else self.real_connection._tunnel_port
+        )
         default_port = {"https": 443, "http": 80}[self._protocol]
         return f":{port}" if port != default_port else ""
+
+    def _real_host(self):
+        """Returns the request host"""
+        if self.real_connection._tunnel_host:
+            # The real connection is to an HTTPS proxy
+            return self.real_connection._tunnel_host
+        else:
+            return self.real_connection.host
 
     def _uri(self, url):
         """Returns request absolute URI"""
         if url and not url.startswith("/"):
             # Then this must be a proxy request.
             return url
-        uri = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}{url}"
+        uri = f"{self._protocol}://{self._real_host()}{self._port_postfix()}{url}"
         log.debug("Absolute URI: %s", uri)
         return uri
 
     def _url(self, uri):
         """Returns request selector url from absolute URI"""
-        prefix = f"{self._protocol}://{self.real_connection.host}{self._port_postfix()}"
+        prefix = f"{self._protocol}://{self._real_host()}{self._port_postfix()}"
         return uri.replace(prefix, "", 1)
 
     def request(self, method, url, body=None, headers=None, *args, **kwargs):
@@ -357,12 +371,8 @@ class VCRConnection:
         TODO: Separately setting the attribute on the two instances is not
         ideal. We should switch to a proxying implementation.
         """
-        try:
+        with suppress(AttributeError):
             setattr(self.real_connection, name, value)
-        except AttributeError:
-            # raised if real_connection has not been set yet, such as when
-            # we're setting the real_connection itself for the first time
-            pass
 
         super().__setattr__(name, value)
 

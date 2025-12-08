@@ -1,4 +1,5 @@
 """Stubs for tornado HTTP clients"""
+
 import functools
 from io import BytesIO
 
@@ -73,7 +74,7 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                 return callback(response)
 
             def new_callback(response):
-                headers = [(k, response.headers.get_list(k)) for k in response.headers.keys()]
+                headers = [(k, response.headers.get_list(k)) for k in response.headers]
 
                 vcr_response = {
                     "status": {"code": response.code, "message": response.reason},

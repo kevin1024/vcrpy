@@ -1,13 +1,18 @@
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
-#
-# ignore-words-list = ''
 
-[tool.pytest.ini_options]
+[tool.pytest]
+addopts = ["--strict-config", "--strict-markers"]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 markers = ["online"]
 
 [tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
 select = [
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
@@ -20,9 +25,8 @@ select = [
     "RUF", # Ruff-specific rules
     "UP",  # pyupgrade
     "W",   # pycodestyle warning
+    "SIM",
 ]
-line-length = 110
-target-version = "py38"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["vcr"]

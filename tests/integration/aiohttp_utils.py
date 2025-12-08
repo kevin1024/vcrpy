@@ -5,24 +5,24 @@ import aiohttp
 
 
 async def aiohttp_request(loop, method, url, output="text", encoding="utf-8", content_type=None, **kwargs):
-    session = aiohttp.ClientSession(loop=loop)
-    response_ctx = session.request(method, url, **kwargs)
+    async with aiohttp.ClientSession(loop=loop) as session:
+        response_ctx = session.request(method, url, **kwargs)
 
-    response = await response_ctx.__aenter__()
-    if output == "text":
-        content = await response.text()
-    elif output == "json":
-        content_type = content_type or "application/json"
-        content = await response.json(encoding=encoding, content_type=content_type)
-    elif output == "raw":
-        content = await response.read()
-    elif output == "stream":
-        content = await response.content.read()
+        response = await response_ctx.__aenter__()
+        if output == "text":
+            content = await response.text()
+        elif output == "json":
+            content_type = content_type or "application/json"
+            content = await response.json(encoding=encoding, content_type=content_type)
+        elif output == "raw":
+            content = await response.read()
+        elif output == "stream":
+            content = await response.content.read()
 
-    response_ctx._resp.close()
-    await session.close()
+        response_ctx._resp.close()
+        await session.close()
 
-    return response, content
+        return response, content
 
 
 def aiohttp_app():

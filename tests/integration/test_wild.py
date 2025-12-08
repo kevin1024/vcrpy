@@ -62,8 +62,7 @@ def test_flickr_should_respond_with_200(tmpdir):
 
 def test_cookies(tmpdir, httpbin):
     testfile = str(tmpdir.join("cookies.yml"))
-    with vcr.use_cassette(testfile):
-        s = requests.Session()
+    with vcr.use_cassette(testfile), requests.Session() as s:
         s.get(httpbin.url + "/cookies/set?k1=v1&k2=v2")
         assert s.cookies.keys() == ["k1", "k2"]
 

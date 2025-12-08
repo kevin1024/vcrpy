@@ -1,4 +1,5 @@
 """Utilities for patching in cassettes"""
+
 import contextlib
 import functools
 import http.client as httplib
@@ -91,12 +92,12 @@ else:
 
 
 try:
-    import httpx
+    import httpcore
 except ImportError:  # pragma: no cover
     pass
 else:
-    _HttpxSyncClient_send_single_request = httpx.Client._send_single_request
-    _HttpxAsyncClient_send_single_request = httpx.AsyncClient._send_single_request
+    _HttpcoreConnectionPool_handle_request = httpcore.ConnectionPool.handle_request
+    _HttpcoreAsyncConnectionPool_handle_async_request = httpcore.AsyncConnectionPool.handle_async_request
 
 
 class CassettePatcherBuilder:
@@ -120,7 +121,7 @@ class CassettePatcherBuilder:
             self._httplib2(),
             self._tornado(),
             self._aiohttp(),
-            self._httpx(),
+            self._httpcore(),
             self._build_patchers_from_mock_triples(self._cassette.custom_patches),
         )
 
@@ -303,19 +304,22 @@ class CassettePatcherBuilder:
             yield client.ClientSession, "_request", new_request
 
     @_build_patchers_from_mock_triples_decorator
-    def _httpx(self):
+    def _httpcore(self):
         try:
-            import httpx
+            import httpcore
         except ImportError:  # pragma: no cover
             return
         else:
-            from .stubs.httpx_stubs import async_vcr_send, sync_vcr_send
+            from .stubs.httpcore_stubs import vcr_handle_async_request, vcr_handle_request
 
-            new_async_client_send = async_vcr_send(self._cassette, _HttpxAsyncClient_send_single_request)
-            yield httpx.AsyncClient, "_send_single_request", new_async_client_send
+            new_handle_async_request = vcr_handle_async_request(
+                self._cassette,
+                _HttpcoreAsyncConnectionPool_handle_async_request,
+            )
+            yield httpcore.AsyncConnectionPool, "handle_async_request", new_handle_async_request
 
-            new_sync_client_send = sync_vcr_send(self._cassette, _HttpxSyncClient_send_single_request)
-            yield httpx.Client, "_send_single_request", new_sync_client_send
+            new_handle_request = vcr_handle_request(self._cassette, _HttpcoreConnectionPool_handle_request)
+            yield httpcore.ConnectionPool, "handle_request", new_handle_request
 
     def _urllib3_patchers(self, cpool, conn, stubs):
         http_connection_remover = ConnectionRemover(
@@ -372,10 +376,6 @@ class ConnectionRemover:
         if isinstance(connection, self._connection_class):
             self._connection_pool_to_connections.setdefault(pool, set()).add(connection)
 
-    def remove_connection_to_pool_entry(self, pool, connection):
-        if isinstance(connection, self._connection_class):
-            self._connection_pool_to_connections[self._connection_class].remove(connection)
-
     def __enter__(self):
         return self
 
@@ -386,10 +386,13 @@ class ConnectionRemover:
                 connection = pool.pool.get()
                 if isinstance(connection, self._connection_class):
                     connections.remove(connection)
+                    connection.close()
                 else:
                     readd_connections.append(connection)
             for connection in readd_connections:
                 pool._put_conn(connection)
+            for connection in connections:
+                connection.close()
 
 
 def reset_patchers():

@@ -1,4 +1,5 @@
 """Integration tests with httplib2"""
+
 from urllib.parse import urlencode
 
 import pytest

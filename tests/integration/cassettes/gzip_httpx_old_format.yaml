@@ -1,0 +1,41 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      host:
+      - httpbin.org
+      user-agent:
+      - python-httpx/0.23.0
+    method: GET
+    uri: https://httpbin.org/gzip
+  response:
+    content: "{\n  \"gzipped\": true, \n  \"headers\": {\n    \"Accept\": \"*/*\",
+      \n    \"Accept-Encoding\": \"gzip, deflate, br\", \n    \"Host\": \"httpbin.org\",
+      \n    \"User-Agent\": \"python-httpx/0.23.0\", \n    \"X-Amzn-Trace-Id\": \"Root=1-62a62a8d-5f39b5c50c744da821d6ea99\"\n
+      \ }, \n  \"method\": \"GET\", \n  \"origin\": \"146.200.25.115\"\n}\n"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Length:
+      - '230'
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 12 Jun 2022 18:03:57 GMT
+      Server:
+      - gunicorn/19.9.0
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

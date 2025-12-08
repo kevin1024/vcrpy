@@ -427,3 +427,16 @@ If you want to save the cassette only when the test succeeds, set the Cassette
 
     # Since there was an exception, the cassette file hasn't been created.
     assert not os.path.exists('fixtures/vcr_cassettes/synopsis.yaml')
+
+Drop unused requests
+--------------------
+
+Even if any HTTP request is changed or removed from tests, previously recorded
+interactions remain in the cassette file.  If set the ``drop_unused_requests``
+option to ``True``, VCR will not save old HTTP interactions if they are not used.
+
+.. code:: python
+
+    my_vcr = VCR(drop_unused_requests=True)
+    with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
+        ...  # your HTTP interactions here

@@ -16,12 +16,12 @@ permissions:
 jobs:
   pre_commit_detect_outdated:
     name: Detect outdated pre-commit hooks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: 3.12
 
@@ -41,7 +41,7 @@ jobs:
 
       - name: Create pull request from changes (if any)
         id: create-pull-request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           author: 'pre-commit <pre-commit@tools.invalid>'
           base: master

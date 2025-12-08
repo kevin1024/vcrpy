@@ -7,6 +7,42 @@ For a full list of triaged issues, bugs and PRs and what release they are target
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  8.0.0
+    - BREAKING: Drop support for Python 3.9 (major version bump) - thanks @jairhenrique
+    - BREAKING: Drop support for urllib3 < 2 - fixes CVE warnings from urllib3 1.x (#926, #880) - thanks @jairhenrique
+    - New feature: ``drop_unused_requests`` option to remove unused interactions from cassettes (#763) - thanks @danielnsilva
+    - Rewrite httpx support to patch httpcore instead of httpx (#943) - thanks @seowalex
+        - Fixes ``httpx.ResponseNotRead`` exceptions (#832, #834)
+        - Fixes ``KeyError: 'follow_redirects'`` (#945)
+        - Adds support for custom httpx transports
+    - Fix HTTPS proxy handling - proxy address no longer ends up in cassette URIs (#809, #914) - thanks @alga
+    - Fix ``iscoroutinefunction`` deprecation warning on Python 3.14 - thanks @kloczek
+    - Only log message if response is appended - thanks @talfus-laddus
+    - Optimize urllib.parse calls - thanks @Martin-Brunthaler
+    - Fix CI for Ubuntu 24.04 - thanks @hartwork
+    - Various CI improvements: migrate to uv, update GitHub Actions - thanks @jairhenrique
+    - Various linting and test improvements - thanks @jairhenrique and @hartwork
+
+-  7.0.0
+    - Drop support for python 3.8 (major version bump) - thanks @jairhenrique
+    - Various linting and test fixes - thanks @jairhenrique
+    - Bugfix for urllib2>=2.3.0 - missing version_string (#888)
+    - Bugfix for asyncio.run - thanks @alekeik1
+-  6.0.2
+    - Ensure body is consumed only once (#846) - thanks @sathieu
+    - Permit urllib3 2.x for non-PyPy Python >=3.10
+    - Fix typos in test commands - thanks @chuckwondo
+    - Several test and workflow improvements - thanks @hartwork and @graingert
+-  6.0.1
+    - Bugfix with to Tornado cassette generator (thanks @graingert)
+-  6.0.0
+    - BREAKING: Fix issue with httpx support (thanks @parkerhancock) in #784. NOTE: You may have to recreate some of your cassettes produced in previous releases due to the binary format being saved incorrectly in previous releases
+    - BREAKING: Drop support for `boto` (vcrpy still supports boto3, but is dropping the deprecated `boto` support in this release. (thanks @jairhenrique)
+    - Fix compatibility issue with Python 3.12 (thanks @hartwork)
+    - Drop simplejson (fixes some compatibility issues) (thanks @jairhenrique)
+    - Run CI on Python 3.12 and PyPy 3.9-3.10 (thanks @mgorny)
+    - Various linting and docs improvements (thanks @jairhenrique)
+    - Tornado fixes (thanks @graingert)
 -  5.1.0
     - Use ruff for linting (instead of current flake8/isort/pyflakes) - thanks @jairhenrique
     - Enable rule B (flake8-bugbear) on ruff - thanks @jairhenrique

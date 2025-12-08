@@ -11,6 +11,7 @@ import yaml
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset
+from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 
 
@@ -226,9 +227,11 @@ def test_nesting_cassette_context_managers(*args):
         assert_get_response_body_is("first_response")
 
         # Make sure a second cassette can supersede the first
-        with Cassette.use(path="test") as second_cassette:
-            with mock.patch.object(second_cassette, "play_response", return_value=second_response):
-                assert_get_response_body_is("second_response")
+        with (
+            Cassette.use(path="test") as second_cassette,
+            mock.patch.object(second_cassette, "play_response", return_value=second_response),
+        ):
+            assert_get_response_body_is("second_response")
 
         # Now the first cassette should be back in effect
         assert_get_response_body_is("first_response")
@@ -410,3 +413,25 @@ def test_find_requests_with_most_matches_many_similar_requests(mock_get_matchers
         (1, ["method", "path"], [("query", "failed : query")]),
         (3, ["method", "path"], [("query", "failed : query")]),
     ]
+
+
+def test_used_interactions(tmpdir):
+    interactions = [
+        {"request": {"body": "", "uri": "foo1", "method": "GET", "headers": {}}, "response": "bar1"},
+        {"request": {"body": "", "uri": "foo2", "method": "GET", "headers": {}}, "response": "bar2"},
+        {"request": {"body": "", "uri": "foo3", "method": "GET", "headers": {}}, "response": "bar3"},
+    ]
+    file = tmpdir.join("test_cassette.yml")
+    file.write(yaml.dump({"interactions": [interactions[0], interactions[1]]}))
+
+    cassette = Cassette.load(path=str(file))
+    request = Request._from_dict(interactions[1]["request"])
+    cassette.play_response(request)
+    assert len(cassette._played_interactions) < len(cassette._old_interactions)
+
+    request = Request._from_dict(interactions[2]["request"])
+    cassette.append(request, interactions[2]["response"])
+    assert len(cassette._new_interactions()) == 1
+
+    used_interactions = cassette._played_interactions + cassette._new_interactions()
+    assert len(used_interactions) == 2

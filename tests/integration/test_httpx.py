@@ -1,6 +1,10 @@
+import os
+
 import pytest
 
 import vcr
+
+from ..assertions import assert_is_json_bytes
 
 asyncio = pytest.importorskip("asyncio")
 httpx = pytest.importorskip("httpx")
@@ -28,24 +32,35 @@ class DoSyncRequest(BaseDoRequest):
     _client_class = httpx.Client
 
     def __enter__(self):
+        self._client = self._make_client()
         return self
 
     def __exit__(self, *args):
-        pass
+        self._client.close()
+        del self._client
 
     @property
     def client(self):
         try:
             return self._client
-        except AttributeError:
-            self._client = self._make_client()
-            return self._client
+        except AttributeError as e:
+            raise ValueError('To access sync client, use "with do_request() as client"') from e
 
     def __call__(self, *args, **kwargs):
-        return self.client.request(*args, timeout=60, **kwargs)
+        if hasattr(self, "_client"):
+            return self.client.request(*args, timeout=60, **kwargs)
+
+        # Use one-time context and dispose of the client afterwards
+        with self:
+            return self.client.request(*args, timeout=60, **kwargs)
 
     def stream(self, *args, **kwargs):
-        with self.client.stream(*args, **kwargs) as response:
+        if hasattr(self, "_client"):
+            with self.client.stream(*args, **kwargs) as response:
+                return b"".join(response.iter_bytes())
+
+        # Use one-time context and dispose of the client afterwards
+        with self, self.client.stream(*args, **kwargs) as response:
             return b"".join(response.iter_bytes())
 
 
@@ -179,9 +194,11 @@ def test_params_same_url_distinct_params(tmpdir, httpbin, do_request):
         assert cassette.play_count == 1
 
     params = {"other": "params"}
-    with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
-        with pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException):
-            do_request()("GET", url, params=params, headers=headers)
+    with (
+        vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette,
+        pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException),
+    ):
+        do_request()("GET", url, params=params, headers=headers)
 
 
 @pytest.mark.online
@@ -205,22 +222,6 @@ def test_redirect(httpbin, yml, do_request):
     assert cassette_response.request.url == response.request.url
     assert cassette_response.request.method == response.request.method
     assert cassette_response.request.headers.items() == response.request.headers.items()
-
-
-@pytest.mark.online
-def test_work_with_gzipped_data(httpbin, do_request, yml):
-    url = httpbin.url + "/gzip?foo=bar"
-    headers = {"accept-encoding": "deflate, gzip"}
-
-    with vcr.use_cassette(yml):
-        do_request(headers=headers)("GET", url)
-
-    with vcr.use_cassette(yml) as cassette:
-        cassette_response = do_request(headers=headers)("GET", url)
-
-        assert cassette_response.headers["content-encoding"] == "gzip"
-        assert cassette_response.read()
-        assert cassette.play_count == 1
 
 
 @pytest.mark.online
@@ -287,29 +288,75 @@ def test_stream(tmpdir, httpbin, do_request):
         assert cassette.play_count == 1
 
 
-@pytest.mark.online
-def test_text_content_type(tmpdir, httpbin, do_request):
-    url = httpbin.url + "/json"
+# Regular cassette formats support the status reason,
+# but the old HTTPX cassette format does not.
+@pytest.mark.parametrize(
+    "cassette_name,reason",
+    [
+        ("requests", "great"),
+        ("httpx_old_format", "OK"),
+    ],
+)
+def test_load_cassette_format(do_request, cassette_name, reason):
+    mydir = os.path.dirname(os.path.realpath(__file__))
+    yml = f"{mydir}/cassettes/gzip_{cassette_name}.yaml"
+    url = "https://httpbin.org/gzip"
 
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
-        response = do_request()("GET", url)
-
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
+    with vcr.use_cassette(yml) as cassette:
         cassette_response = do_request()("GET", url)
-        assert cassette_response.content == response.content
+        assert str(cassette_response.request.url) == url
         assert cassette.play_count == 1
-        assert isinstance(cassette.responses[0]["content"], str)
+
+        # Should be able to load up the JSON inside,
+        # regardless whether the content is the gzipped
+        # in the cassette or not.
+        json = cassette_response.json()
+        assert json["method"] == "GET", json
+        assert cassette_response.status_code == 200
+        assert cassette_response.reason_phrase == reason
 
 
-@pytest.mark.online
-def test_binary_content_type(tmpdir, httpbin, do_request):
-    url = httpbin.url + "/bytes/1024"
+def test_gzip__decode_compressed_response_false(tmpdir, httpbin, do_request):
+    """
+    Ensure that httpx is able to automatically decompress the response body.
+    """
+    for _ in range(2):  # one for recording, one for re-playing
+        with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))) as cassette:
+            response = do_request()("GET", httpbin + "/gzip")
+            assert response.headers["content-encoding"] == "gzip"  # i.e. not removed
+            # The content stored in the cassette should be gzipped.
+            assert cassette.responses[0]["body"]["string"][:2] == b"\x1f\x8b"
+            assert_is_json_bytes(response.content)  # i.e. uncompressed bytes
 
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))):
-        response = do_request()("GET", url)
 
-    with vcr.use_cassette(str(tmpdir.join("json_type.yaml"))) as cassette:
-        cassette_response = do_request()("GET", url)
-        assert cassette_response.content == response.content
-        assert cassette.play_count == 1
-        assert isinstance(cassette.responses[0]["content"], bytes)
+def test_gzip__decode_compressed_response_true(do_request, tmpdir, httpbin):
+    url = httpbin + "/gzip"
+
+    expected_response = do_request()("GET", url)
+    expected_content = expected_response.content
+    assert expected_response.headers["content-encoding"] == "gzip"  # self-test
+
+    with vcr.use_cassette(
+        str(tmpdir.join("decode_compressed.yaml")),
+        decode_compressed_response=True,
+    ) as cassette:
+        r = do_request()("GET", url)
+        assert r.headers["content-encoding"] == "gzip"  # i.e. not removed
+        content_length = r.headers["content-length"]
+        assert r.content == expected_content
+
+    # Has the cassette body been decompressed?
+    cassette_response_body = cassette.responses[0]["body"]["string"]
+    assert isinstance(cassette_response_body, str)
+
+    # Content should be JSON.
+    assert cassette_response_body[0:1] == "{"
+
+    with vcr.use_cassette(str(tmpdir.join("decode_compressed.yaml")), decode_compressed_response=True):
+        r = httpx.get(url)
+        assert "content-encoding" not in r.headers  # i.e. removed
+        assert r.content == expected_content
+
+        # As the content is uncompressed, it should have a bigger
+        # length than the compressed version.
+        assert r.headers["content-length"] > content_length

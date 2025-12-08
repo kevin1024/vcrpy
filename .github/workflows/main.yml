@@ -5,39 +5,57 @@ on:
     branches:
       - master
   pull_request:
+  schedule:
+    - cron: "0 16 * * 5" # Every Friday 4pm
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.8", "pypy-3.9", "pypy-3.10"]
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "pypy-3.11"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
       - name: Install project dependencies
         run: |
-          pip3 install --upgrade pip
-          pip3 install codecov tox tox-gh-actions
+          uv pip install --system --upgrade pip setuptools
+          uv pip install --system codecov '.[tests]'
+          uv pip check
 
-      - name: Run online tests with tox
-        run: tox -- -m online
+      - name: Allow creation of user namespaces (e.g. to the unshare command)
+        run: |
+          # .. so that we don't get error:
+          # unshare: write failed /proc/self/uid_map: Operation not permitted
+          # Idea from https://github.com/YoYoGames/GameMaker-Bugs/issues/6015#issuecomment-2135552784 .
+          sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
 
-      - name: Run offline tests with tox with no access to the Internet
+      - name: Run online tests
+        run: ./runtests.sh --cov=./vcr --cov-branch --cov-report=xml --cov-append -m online
+
+      - name: Run offline tests with no access to the Internet
         run: |
           # We're using unshare to take Internet access
-          # away from tox so that we'll notice whenever some new test
+          # away so that we'll notice whenever some new test
           # is missing @pytest.mark.online decoration in the future
           unshare --map-root-user --net -- \
-              sh -c 'ip link set lo up; tox -- -m "not online"'
+              sh -c 'ip link set lo up; ./runtests.sh --cov=./vcr --cov-branch --cov-report=xml --cov-append -m "not online"'
 
       - name: Run coverage
         run: codecov
