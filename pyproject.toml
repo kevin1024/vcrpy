@@ -1,3 +1,72 @@
+[project]
+name = "vcrpy"
+authors = [{name = "Kevin McCarthy", email = "me@kevinmccarthy.org"}]
+license = {text = "MIT"}
+description = "Automatically mock your HTTP interactions to simplify and speed up testing"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP",
+    "License :: OSI Approved :: MIT License",
+]
+urls = {Homepage = "https://github.com/kevin1024/vcrpy"}
+requires-python = ">=3.10"
+dependencies = [
+    "PyYAML",
+    "wrapt",
+]
+dynamic = ["version"]
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.optional-dependencies]
+tests = [
+    "aiohttp",
+    "boto3",
+    "cryptography",
+    "httpbin",
+    "httpcore",
+    "httplib2",
+    "httpx",
+    "pycurl; platform_python_implementation !='PyPy'",
+    "pytest",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-httpbin",
+    "requests>=2.22.0",
+    "tornado",
+    "urllib3",
+    "werkzeug==2.0.3",
+]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+version = {attr = "vcr.__version__"}
+
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
