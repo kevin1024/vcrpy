@@ -263,7 +263,8 @@ class Cassette:
         for index, response in self._responses(request):
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 self.play_counts[index] += 1
-                self._played_interactions.append((request, response))
+                # Use stored (possibly modified) request, not the raw incoming request
+                self._played_interactions.append((self.data[index][0], response))
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(

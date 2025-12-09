@@ -435,3 +435,40 @@ def test_used_interactions(tmpdir):
 
     used_interactions = cassette._played_interactions + cassette._new_interactions()
     assert len(used_interactions) == 2
+
+    # Also verify that we can account for request modification
+    file2 = tmpdir.join("test_cassette2.yml")
+    file2.write(yaml.dump({"interactions": [interactions[0]]}))
+
+    def filter_auth_header(request: Request) -> Request:
+        request = copy.deepcopy(request)
+        if "Authorization" in request.headers:
+            del request.headers["Authorization"]
+        return request
+
+    # Play response with a raw request that has header to be filtered
+    cassette2 = Cassette.load(
+        path=str(file2),
+        before_record_request=filter_auth_header,
+        drop_unused_requests=True,
+    )
+    cassette2.play_response(
+        Request._from_dict(
+            {
+                "body": "",
+                "uri": "foo1",
+                "method": "GET",
+                "headers": {"Authorization": "Bearer secret-token"},
+            },
+        ),
+    )
+    assert len(cassette2._played_interactions) == 1
+    played_request, _ = cassette2._played_interactions[0]
+    assert "Authorization" not in played_request.headers, "Expected played request's header to be filtered"
+
+    # Save and verify the cassette doesn't contain Authorization
+    cassette2._save(force=True)
+    with file2.open() as f:
+        saved_content = f.read()
+    assert "Authorization" not in saved_content
+    assert "secret-token" not in saved_content
