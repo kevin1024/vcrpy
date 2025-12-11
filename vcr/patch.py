@@ -99,6 +99,15 @@ else:
     _HttpcoreConnectionPool_handle_request = httpcore.ConnectionPool.handle_request
     _HttpcoreAsyncConnectionPool_handle_async_request = httpcore.AsyncConnectionPool.handle_async_request
 
+try:
+    # Import session first to avoid circular import issues in aiobotocore
+    import aiobotocore.session  # noqa: F401
+    import aiobotocore.httpsession
+except ImportError:  # pragma: no cover
+    pass
+else:
+    _AiobotocoreHTTPSession_send = aiobotocore.httpsession.AIOHTTPSession.send
+
 
 class CassettePatcherBuilder:
     def _build_patchers_from_mock_triples_decorator(function):
@@ -122,6 +131,7 @@ class CassettePatcherBuilder:
             self._tornado(),
             self._aiohttp(),
             self._httpcore(),
+            self._aiobotocore(),
             self._build_patchers_from_mock_triples(self._cassette.custom_patches),
         )
 
@@ -320,6 +330,20 @@ class CassettePatcherBuilder:
 
             new_handle_request = vcr_handle_request(self._cassette, _HttpcoreConnectionPool_handle_request)
             yield httpcore.ConnectionPool, "handle_request", new_handle_request
+
+    @_build_patchers_from_mock_triples_decorator
+    def _aiobotocore(self):
+        try:
+            # Import session first to avoid circular import issues in aiobotocore
+            import aiobotocore.session  # noqa: F401
+            import aiobotocore.httpsession
+        except ImportError:  # pragma: no cover
+            return
+        else:
+            from .stubs.aiobotocore_stubs import vcr_send
+
+            new_send = vcr_send(self._cassette, _AiobotocoreHTTPSession_send)
+            yield aiobotocore.httpsession.AIOHTTPSession, "send", new_send
 
     def _urllib3_patchers(self, cpool, conn, stubs):
         http_connection_remover = ConnectionRemover(
