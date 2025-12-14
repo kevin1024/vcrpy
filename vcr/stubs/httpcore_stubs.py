@@ -3,6 +3,7 @@ import functools
 import logging
 from collections import defaultdict
 from collections.abc import AsyncIterable, Iterable
+from concurrent.futures import ThreadPoolExecutor
 
 from httpcore import Response
 from httpcore._models import ByteStream
@@ -185,10 +186,17 @@ def _run_async_function(sync_func, *args, **kwargs):
     try:
         asyncio.get_running_loop()
     except RuntimeError:
+        # No event loop running, create one
         return asyncio.run(sync_func(*args, **kwargs))
     else:
-        # If inside a running loop, create a task and wait for it
-        return asyncio.ensure_future(sync_func(*args, **kwargs))
+        # Event loop is already running (e.g., pytest-asyncio)
+        # Run the coroutine in a new thread with its own event loop
+        def run_in_thread():
+            return asyncio.run(sync_func(*args, **kwargs))
+
+        with ThreadPoolExecutor() as pool:
+            future = pool.submit(run_in_thread)
+            return future.result()
 
 
 def _vcr_handle_request(cassette, real_handle_request, self, real_request):
