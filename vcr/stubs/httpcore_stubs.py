@@ -3,6 +3,7 @@ import functools
 import logging
 from collections import defaultdict
 from collections.abc import AsyncIterable, Iterable
+from concurrent.futures import ThreadPoolExecutor
 
 from httpcore import Response
 from httpcore._models import ByteStream
@@ -182,8 +183,6 @@ def _run_async_function(sync_func, *args, **kwargs):
     - An event loop is already running.
     - No event loop exists yet.
     """
-    import concurrent.futures
-
     try:
         asyncio.get_running_loop()
     except RuntimeError:
@@ -195,7 +194,7 @@ def _run_async_function(sync_func, *args, **kwargs):
         def run_in_thread():
             return asyncio.run(sync_func(*args, **kwargs))
 
-        with concurrent.futures.ThreadPoolExecutor() as pool:
+        with ThreadPoolExecutor() as pool:
             future = pool.submit(run_in_thread)
             return future.result()
 
