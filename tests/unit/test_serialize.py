@@ -8,15 +8,13 @@ from vcr.serializers import compat, jsonserializer, yamlserializer
 
 
 def test_deserialize_old_yaml_cassette():
-    with open("tests/fixtures/migration/old_cassette.yaml") as f:
-        with pytest.raises(ValueError):
-            deserialize(f.read(), yamlserializer)
+    with open("tests/fixtures/migration/old_cassette.yaml") as f, pytest.raises(ValueError):
+        deserialize(f.read(), yamlserializer)
 
 
 def test_deserialize_old_json_cassette():
-    with open("tests/fixtures/migration/old_cassette.json") as f:
-        with pytest.raises(ValueError):
-            deserialize(f.read(), jsonserializer)
+    with open("tests/fixtures/migration/old_cassette.json") as f, pytest.raises(ValueError):
+        deserialize(f.read(), jsonserializer)
 
 
 def test_deserialize_new_yaml_cassette():
@@ -76,7 +74,7 @@ def test_deserialize_py2py3_yaml_cassette(tmpdir, req_body, expect):
     cfile = tmpdir.join("test_cassette.yaml")
     cfile.write(REQBODY_TEMPLATE.format(req_body=req_body))
     with open(str(cfile)) as f:
-        (requests, responses) = deserialize(f.read(), yamlserializer)
+        (requests, _) = deserialize(f.read(), yamlserializer)
     assert requests[0].body == expect
 
 

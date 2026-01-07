@@ -1,15 +1,85 @@
+[project]
+name = "vcrpy"
+authors = [{name = "Kevin McCarthy", email = "me@kevinmccarthy.org"}]
+license = {text = "MIT"}
+description = "Automatically mock your HTTP interactions to simplify and speed up testing"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP",
+    "License :: OSI Approved :: MIT License",
+]
+urls = {Homepage = "https://github.com/kevin1024/vcrpy"}
+requires-python = ">=3.10"
+dependencies = [
+    "PyYAML",
+    "wrapt",
+]
+dynamic = ["version"]
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.optional-dependencies]
+tests = [
+    "aiohttp",
+    "boto3",
+    "cryptography",
+    "httpbin",
+    "httpcore",
+    "httplib2",
+    "httpx",
+    "pycurl; platform_python_implementation !='PyPy'",
+    "pytest",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-httpbin",
+    "requests>=2.22.0",
+    "tornado",
+    "urllib3",
+    "werkzeug==2.0.3",
+]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+version = {attr = "vcr.__version__"}
+
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
 [tool.codespell]
 skip = '.git,*.pdf,*.svg,.tox'
 ignore-regex = "\\\\[fnrstv]"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 addopts = ["--strict-config", "--strict-markers"]
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 markers = ["online"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
@@ -24,6 +94,7 @@ select = [
     "RUF", # Ruff-specific rules
     "UP",  # pyupgrade
     "W",   # pycodestyle warning
+    "SIM",
 ]
 
 [tool.ruff.lint.isort]

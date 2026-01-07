@@ -162,7 +162,7 @@ def _get_transformers(request):
 
 
 def requests_match(r1, r2, matchers):
-    successes, failures = get_matchers_results(r1, r2, matchers)
+    _, failures = get_matchers_results(r1, r2, matchers)
     if failures:
         log.debug(f"Requests {r1} and {r2} differ.\nFailure details:\n{failures}")
     return len(failures) == 0

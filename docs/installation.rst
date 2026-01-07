@@ -22,6 +22,7 @@ The following HTTP libraries are supported:
 -  ``urllib2``
 -  ``urllib3``
 -  ``httpx``
+-  ``httpcore``
 
 Speed
 -----

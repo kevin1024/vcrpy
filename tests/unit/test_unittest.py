@@ -178,7 +178,7 @@ def test_testcase_playback(tmpdir):
             return str(cassette_dir)
 
     test = run_testcase(MyTest)[0][0]
-    assert b"illustrative examples" in test.response
+    assert b"Example Domain" in test.response
     assert len(test.cassette.requests) == 1
     assert test.cassette.play_count == 0
 
@@ -186,7 +186,7 @@ def test_testcase_playback(tmpdir):
 
     test2 = run_testcase(MyTest)[0][0]
     assert test.cassette is not test2.cassette
-    assert b"illustrative examples" in test.response
+    assert b"Example Domain" in test.response
     assert len(test2.cassette.requests) == 1
     assert test2.cassette.play_count == 1
 

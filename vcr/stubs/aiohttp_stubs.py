@@ -6,7 +6,6 @@ import json
 import logging
 from collections.abc import Mapping
 from http.cookies import CookieError, Morsel, SimpleCookie
-from typing import Union
 
 from aiohttp import ClientConnectionError, ClientResponse, CookieJar, RequestInfo, hdrs, streams
 from aiohttp.helpers import strip_auth_from_url
@@ -230,7 +229,7 @@ def _build_cookie_header(session, cookies, cookie_header, url):
     return c.output(header="", sep=";").strip()
 
 
-def _build_url_with_params(url_str: str, params: Mapping[str, Union[str, int, float]]) -> URL:
+def _build_url_with_params(url_str: str, params: Mapping[str, str | int | float]) -> URL:
     # This code is basically a copy&paste of aiohttp.
     # https://github.com/aio-libs/aiohttp/blob/master/aiohttp/client_reqrep.py#L225
     url = URL(url_str)
@@ -246,7 +245,11 @@ def vcr_request(cassette, real_request):
         headers = kwargs.get("headers")
         auth = kwargs.get("auth")
         headers = self._prepare_headers(headers)
-        data = kwargs.get("data", kwargs.get("json"))
+        data = kwargs.get("data")
+        if data is None:
+            data = kwargs.get("json")
+        elif kwargs.get("json") is not None:
+            raise ValueError("data and json parameters can not be used at the same time")
         params = kwargs.get("params")
         cookies = kwargs.get("cookies")
 

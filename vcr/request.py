@@ -1,5 +1,6 @@
 import logging
 import warnings
+from contextlib import suppress
 from io import BytesIO
 from urllib.parse import parse_qsl, urlparse
 
@@ -19,7 +20,12 @@ class Request:
         self._was_file = hasattr(body, "read")
         self._was_iter = _is_nonsequence_iterator(body)
         if self._was_file:
-            self.body = body.read()
+            if hasattr(body, "tell"):
+                tell = body.tell()
+                self.body = body.read()
+                body.seek(tell)
+            else:
+                self.body = body.read()
         elif self._was_iter:
             self.body = list(body)
         else:
@@ -80,10 +86,9 @@ class Request:
     def port(self):
         port = self.parsed_uri.port
         if port is None:
-            try:
+            with suppress(KeyError):
                 port = {"https": 443, "http": 80}[self.parsed_uri.scheme]
-            except KeyError:
-                pass
+
         return port
 
     @property

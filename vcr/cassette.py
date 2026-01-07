@@ -228,10 +228,10 @@ class Cassette:
 
     def append(self, request, response):
         """Add a request, response pair to this cassette"""
-        log.info("Appending request %s and response %s", request, response)
         request = self._before_record_request(request)
         if not request:
             return
+        log.info("Appending request %s and response %s", request, response)
         # Deepcopy is here because mutation of `response` will corrupt the
         # real response.
         response = copy.deepcopy(response)
@@ -381,7 +381,7 @@ class Cassette:
             else:
                 requests, responses = loaded
                 metadata = None
-            for request, response in zip(requests, responses):
+            for request, response in zip(requests, responses, strict=False):
                 self.append(request, response)
                 self._old_interactions.append((request, response))
             self.dirty = False
