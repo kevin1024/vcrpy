@@ -278,7 +278,8 @@ def vcr_request(cassette, real_request):
         log.info("%s not in cassette, sending to real server", vcr_request)
 
         response = await real_request(self, method, url, **kwargs)
-        await record_responses(cassette, vcr_request, response)
+        if cassette.filter_request(vcr_request):
+            await record_responses(cassette, vcr_request, response)
         return response
 
     return new_request

@@ -500,3 +500,21 @@ def test_use_cassette_with_io(tmpdir, caplog, httpbin):
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
         _, response_json = request("POST", url, output="json", data=data)
         assert response_json["data"] == "hello"
+
+
+@pytest.mark.online
+def test_ignore_localhost_does_not_consume_response_body(tmpdir, httpbin):
+    """When ignore_localhost=True, VCR should not consume the response body.
+
+    Previously, record_responses() would call response.read() to capture the
+    body before cassette.append() checked filter_request(). For ignored hosts,
+    the response was never saved but the body was already consumed, causing
+    IncompleteReadError for callers that later tried to read the response.
+    """
+    url = f"http://localhost:{httpbin.port}/get"
+
+    with vcr.use_cassette(str(tmpdir.join("ignore.yaml")), ignore_localhost=True) as cass:
+        response, response_text = get(url, output="text")
+        assert response.status == 200
+        assert len(response_text) > 0
+        assert len(cass) == 0
