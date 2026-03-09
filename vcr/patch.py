@@ -212,8 +212,8 @@ class CassettePatcherBuilder:
         get_conn = connection_pool_class._get_conn
 
         @functools.wraps(get_conn)
-        def patched_get_conn(pool, timeout=None):
-            connection = get_conn(pool, timeout)
+        def patched_get_conn(pool, timeout=None, **kwargs):
+            connection = get_conn(pool, timeout, **kwargs)
             connection_class = (
                 pool.ConnectionCls if hasattr(pool, "ConnectionCls") else connection_class_getter()
             )
@@ -224,7 +224,7 @@ class CassettePatcherBuilder:
             # class) around. This while loop will terminate because
             # eventually the pool will run out of connections.
             while not isinstance(connection, connection_class):
-                connection = get_conn(pool, timeout)
+                connection = get_conn(pool, timeout, **kwargs)
             return connection
 
         return patched_get_conn
@@ -233,8 +233,8 @@ class CassettePatcherBuilder:
         new_conn = connection_pool_class._new_conn
 
         @functools.wraps(new_conn)
-        def patched_new_conn(pool):
-            new_connection = new_conn(pool)
+        def patched_new_conn(pool, **kwargs):
+            new_connection = new_conn(pool, **kwargs)
             connection_remover.add_connection_to_pool_entry(pool, new_connection)
             return new_connection
 
