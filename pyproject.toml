@@ -52,6 +52,14 @@ tests = [
     "urllib3",
     "werkzeug==2.0.3",
 ]
+tests-niquests = [
+    "pytest",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-httpbin",
+    "niquests",
+]
 
 [tool.setuptools]
 include-package-data = false
