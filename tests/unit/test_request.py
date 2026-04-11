@@ -25,7 +25,8 @@ def test_headers():
 
 def test_add_header_deprecated():
     req = Request("GET", "http://go.com/", "", {})
-    pytest.deprecated_call(req.add_header, "foo", "bar")
+    with pytest.deprecated_call():
+        req.add_header("foo", "bar")
     assert req.headers == {"foo": "bar"}
 
 
