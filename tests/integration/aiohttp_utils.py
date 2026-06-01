@@ -18,6 +18,8 @@ async def aiohttp_request(loop, method, url, output="text", encoding="utf-8", co
             content = await response.read()
         elif output == "stream":
             content = await response.content.read()
+        elif output == "stream_chunked":
+            content = b"".join([chunk async for chunk in response.content.iter_chunked(1024)])
 
         response_ctx._resp.close()
         await session.close()

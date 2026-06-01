@@ -137,6 +137,21 @@ def test_stream(tmpdir, httpbin):
         assert cassette.play_count == 1
 
 
+@pytest.mark.online
+def test_stream_chunked(tmpdir, httpbin):
+    # Exercises the async-iteration surface (``content.iter_chunked``) that
+    # ``MockStream`` must keep providing across aiohttp versions.
+    url = httpbin.url
+
+    with vcr.use_cassette(str(tmpdir.join("stream.yaml"))):
+        _, body = get(url, output="raw")  # Do not use stream here, as the stream is exhausted by vcr
+
+    with vcr.use_cassette(str(tmpdir.join("stream.yaml"))) as cassette:
+        _, cassette_body = get(url, output="stream_chunked")
+        assert cassette_body == body
+        assert cassette.play_count == 1
+
+
 POST_DATA = {"key1": "value1", "key2": "value2"}
 
 
