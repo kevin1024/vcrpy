@@ -2,10 +2,12 @@
 
 import asyncio
 import functools
+import inspect
 import json
 import logging
 from collections.abc import Mapping
 from http.cookies import CookieError, Morsel, SimpleCookie
+from types import SimpleNamespace
 
 from aiohttp import ClientConnectionError, ClientResponse, CookieJar, RequestInfo, hdrs, streams
 from aiohttp.helpers import strip_auth_from_url
@@ -17,13 +19,35 @@ from vcr.request import Request
 
 log = logging.getLogger(__name__)
 
+# aiohttp 3.14 made ``stream_writer`` a required ClientResponse argument and,
+# when ``writer`` is None, reads ``stream_writer.output_size``. A replayed
+# response has already been "sent", so a zero-sized writer is accurate. Older
+# aiohttp doesn't accept the argument at all.
+_CLIENT_RESPONSE_PARAMS = inspect.signature(ClientResponse.__init__).parameters
+_CLIENT_RESPONSE_ACCEPTS_STREAM_WRITER = "stream_writer" in _CLIENT_RESPONSE_PARAMS
 
-class MockStream(asyncio.StreamReader, streams.AsyncStreamReaderMixin):
-    pass
+
+class MockStream(asyncio.StreamReader):
+    # aiohttp added the async-iteration helpers below to its response stream via
+    # ``streams.AsyncStreamReaderMixin``, which aiohttp 3.14 removed (folding the
+    # helpers into its own ``StreamReader``). This stub builds on
+    # ``asyncio.StreamReader`` instead, so provide the helpers directly to keep the
+    # streaming surface stable across aiohttp versions.
+    def iter_chunked(self, n):
+        return streams.AsyncStreamIterator(lambda: self.read(n))
+
+    def iter_any(self):
+        return streams.AsyncStreamIterator(self.readany)
+
+    def iter_chunks(self):
+        return streams.ChunkTupleAsyncStreamIterator(self)
 
 
 class MockClientResponse(ClientResponse):
     def __init__(self, method, url, request_info=None):
+        extra = {}
+        if _CLIENT_RESPONSE_ACCEPTS_STREAM_WRITER:
+            extra["stream_writer"] = SimpleNamespace(output_size=0)
         super().__init__(
             method=method,
             url=url,
@@ -34,6 +58,7 @@ class MockClientResponse(ClientResponse):
             traces=None,
             loop=asyncio.get_event_loop(),
             session=None,
+            **extra,
         )
 
     async def json(self, *, encoding="utf-8", loads=json.loads, **kwargs):
