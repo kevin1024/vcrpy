@@ -19,7 +19,7 @@ The following HTTP libraries are supported:
 -  ``httplib2``
 -  ``requests`` (>=2.16.2 versions)
 -  ``tornado.httpclient``
--  ``urllib2``
+-  ``urllib.request``
 -  ``urllib3``
 -  ``httpx``
 -  ``httpcore``
