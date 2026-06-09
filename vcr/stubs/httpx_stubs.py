@@ -2,8 +2,8 @@ import functools
 import logging
 from collections import defaultdict
 
-from httpcore import Response
-from httpcore._models import ByteStream
+from httpx import ByteStream, Response
+from httpx._exceptions import request_context
 
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.filters import decode_response
@@ -21,21 +21,15 @@ def _serialize_headers(real_response):
 
     headers = defaultdict(list)
 
-    for name, value in real_response.headers:
-        headers[name.decode("ascii")].append(value.decode("ascii"))
+    for name, value in real_response.headers.multi_items():
+        headers[name].append(value)
 
     return dict(headers)
 
 
 def _serialize_response(real_response, real_response_content):
-    # The reason_phrase may not exist
-    try:
-        reason_phrase = real_response.extensions["reason_phrase"].decode("ascii")
-    except KeyError:
-        reason_phrase = None
-
     return {
-        "status": {"code": real_response.status, "message": reason_phrase},
+        "status": {"code": real_response.status_code, "message": real_response.reason_phrase},
         "headers": _serialize_headers(real_response),
         "body": {"string": real_response_content},
     }
@@ -43,12 +37,10 @@ def _serialize_response(real_response, real_response_content):
 
 def _deserialize_headers(headers):
     """
-    httpcore accepts headers as list of tuples of header key and value.
+    httpx accepts headers as list of tuples of header key and value.
     """
 
-    return [
-        (name.encode("ascii"), value.encode("ascii")) for name, values in headers.items() for value in values
-    ]
+    return [(name, value) for name, values in headers.items() for value in values]
 
 
 def _deserialize_response(vcr_response):
@@ -67,32 +59,20 @@ def _deserialize_response(vcr_response):
         )
         extensions = None
     else:
-        extensions = (
-            {"reason_phrase": vcr_response["status"]["message"].encode("ascii")}
-            if vcr_response["status"]["message"]
-            else None
-        )
+        extensions = {"reason_phrase": vcr_response["status"]["message"].encode("ascii")}
 
     return Response(
         vcr_response["status"]["code"],
         headers=_deserialize_headers(vcr_response["headers"]),
-        content=vcr_response["body"]["string"],
+        # Don't use content, because that closes the response,
+        # which we do not want as the real response is unclosed
+        stream=ByteStream(vcr_response["body"]["string"]),
         extensions=extensions,
     )
 
 
 def _make_vcr_request(real_request, real_request_body):
-    uri = bytes(real_request.url).decode("ascii")
-
-    # As per HTTPX: If there are multiple headers with the same key, then we concatenate them with commas
-    headers = defaultdict(list)
-
-    for name, value in real_request.headers:
-        headers[name.decode("ascii")].append(value.decode("ascii"))
-
-    headers = {name: ", ".join(values) for name, values in headers.items()}
-
-    return VcrRequest(real_request.method.decode("ascii"), uri, real_request_body, headers)
+    return VcrRequest(real_request.method, str(real_request.url), real_request_body, real_request.headers)
 
 
 def _vcr_request(cassette, real_request, real_request_body):
@@ -131,9 +111,13 @@ async def _vcr_handle_async_request(cassette, real_handle_async_request, self, r
         return vcr_response
 
     real_response = await real_handle_async_request(self, real_request)
-
-    # Reading the response stream consumes the iterator, so we need to restore it afterwards
     real_response_content = b"".join([part async for part in real_response.stream])
+
+    # Close the original stream so that the connection is released back to the connection pool
+    with request_context(request=real_response._request):
+        await real_response.stream.aclose()
+
+    # Reading the response stream consumes the iterator, so we need to restore it
     real_response.stream = ByteStream(real_response_content)
 
     _record_responses(cassette, vcr_request, real_response, real_response_content)
@@ -160,9 +144,13 @@ def _vcr_handle_request(cassette, real_handle_request, self, real_request):
         return vcr_response
 
     real_response = real_handle_request(self, real_request)
-
-    # Reading the response stream consumes the iterator, so we need to restore it afterwards
     real_response_content = b"".join(real_response.stream)
+
+    # Close the original stream so that the connection is released back to the connection pool
+    with request_context(request=real_response._request):
+        real_response.stream.close()
+
+    # Reading the response stream consumes the iterator, so we need to restore it
     real_response.stream = ByteStream(real_response_content)
 
     _record_responses(cassette, vcr_request, real_response, real_response_content)
