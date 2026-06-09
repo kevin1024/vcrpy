@@ -11,10 +11,10 @@ a nice addition. Here's an example:
 .. code:: python
 
     import vcr
-    import urllib2
+    import urllib.request
 
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
-        response = urllib2.urlopen('http://www.zombo.com/').read()
+        response = urllib.request.urlopen('http://www.zombo.com/').read()
         # cass should have 1 request inside it
         assert len(cass) == 1
         # the request uri should have been http://www.zombo.com/
@@ -255,7 +255,7 @@ path.
 
     def scrub_login_request(request):
         if request.path == '/login':
-            request.uri, _ =  urllib.splitquery(request.uri)
+            request.uri = request.uri.split('?', 1)[0]
         return request
 
     my_vcr = vcr.VCR(
@@ -384,8 +384,11 @@ VCR.py allows to rewind a cassette in order to replay it inside the same functio
 
 .. code:: python
 
+    import vcr
+    import urllib.request
+
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
-        response = urllib2.urlopen('http://www.zombo.com/').read()
+        response = urllib.request.urlopen('http://www.zombo.com/').read()
         assert cass.all_played
         cass.rewind()
         assert not cass.all_played
@@ -401,9 +404,12 @@ the Cassette ``allow_playback_repeats`` option.
 
 .. code:: python
 
+    import vcr
+    import urllib.request
+
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml', allow_playback_repeats=True) as cass:
         for x in range(10):
-            response = urllib2.urlopen('http://www.zombo.com/').read()
+            response = urllib.request.urlopen('http://www.zombo.com/').read()
         assert cass.all_played
 
 Discards Cassette on Errors
@@ -417,10 +423,14 @@ If you want to save the cassette only when the test succeeds, set the Cassette
 
 .. code:: python
 
+    import os
+    import urllib.request
+    import vcr
+
     try:
-        my_vcr = VCR(record_on_exception=False)
+        my_vcr = vcr.VCR(record_on_exception=False)
         with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
-            response = urllib2.urlopen('http://www.zombo.com/').read()
+            response = urllib.request.urlopen('http://www.zombo.com/').read()
             raise RuntimeError("Oops, something happened")
     except RuntimeError:
         pass
