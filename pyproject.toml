@@ -41,6 +41,7 @@ tests = [
     "httplib2",
     "httpx",
     "httpx-curl-cffi",
+    "httpx2",
     "pycurl; platform_python_implementation != 'PyPy'",
     "pyreqwest; python_version >= '3.11'",
     "pytest",
