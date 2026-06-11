@@ -61,8 +61,10 @@ class VCRHTTPResponse(HTTPResponse):
     Stub response class that gets returned instead of a HTTPResponse
     """
 
-    def __init__(self, recorded_response):
+    def __init__(self, recorded_response, request_url=None):
         self.fp = None
+        if request_url:
+            self.url = request_url
         self.recorded_response = recorded_response
         self.reason = recorded_response["status"]["message"]
         self.status = self.code = recorded_response["status"]["code"]
@@ -271,7 +273,7 @@ class VCRConnection:
         if self.cassette.can_play_response_for(self._vcr_request):
             log.info(f"Playing response for {self._vcr_request} from cassette")
             response = self.cassette.play_response(self._vcr_request)
-            return VCRHTTPResponse(response)
+            return VCRHTTPResponse(response, self._vcr_request.uri)
         else:
             if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
                 raise CannotOverwriteExistingCassetteException(
@@ -306,7 +308,7 @@ class VCRConnection:
                 "body": {"string": response_data},
             }
             self.cassette.append(self._vcr_request, response)
-        return VCRHTTPResponse(response)
+        return VCRHTTPResponse(response, self._vcr_request.uri)
 
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
