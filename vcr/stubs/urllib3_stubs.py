@@ -10,7 +10,9 @@ from ..stubs import VCRHTTPConnection, VCRHTTPSConnection
 
 class VCRRequestsHTTPConnection(VCRHTTPConnection, HTTPConnection):
     _baseclass = HTTPConnection
+    is_multiplexed = False
 
 
 class VCRRequestsHTTPSConnection(VCRHTTPSConnection, VerifiedHTTPSConnection):
     _baseclass = VerifiedHTTPSConnection
+    is_multiplexed = False

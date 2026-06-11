@@ -92,7 +92,7 @@ class VCRHTTPResponse(HTTPResponse):
         # self.closed from the superclass
         return self._closed
 
-    def read(self, *args, **kwargs):
+    def read(self, *args, decode_content=None, **kwargs):
         return self._content.read(*args, **kwargs)
 
     def read1(self, *args, **kwargs):
@@ -401,6 +401,7 @@ class VCRHTTPConnection(VCRConnection):
     _protocol = "http"
     debuglevel = _baseclass.debuglevel
     _http_vsn = _baseclass._http_vsn
+    _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)
 
 
 class VCRHTTPSConnection(VCRConnection):
@@ -411,3 +412,4 @@ class VCRHTTPSConnection(VCRConnection):
     is_verified = True
     debuglevel = _baseclass.debuglevel
     _http_vsn = _baseclass._http_vsn
+    _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)

@@ -21,6 +21,9 @@ jobs:
           - "3.12"
           - "3.13"
           - "pypy-3.11"
+        test-dependencies:
+          - tests
+          - tests-niquests
 
     steps:
       - uses: actions/checkout@v6
@@ -36,7 +39,7 @@ jobs:
       - name: Install project dependencies
         run: |
           uv pip install --system --upgrade pip setuptools
-          uv pip install --system codecov '.[tests]'
+          uv pip install --system codecov '.[${{ matrix.test-dependencies }}]'
           uv pip check
 
       - name: Allow creation of user namespaces (e.g. to the unshare command)
