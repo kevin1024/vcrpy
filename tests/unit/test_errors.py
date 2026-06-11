@@ -52,6 +52,11 @@ from vcr.cassette import Cassette
             "query - assertion failure :\n"
             "failed : query 2\n",
         ),
+        # One matcher suceed, must be already played
+        (
+            [("similar request", ["method", "path", "query"], [])],
+            "Found 1 recorded request(s) matching ('request') but they have already been consumed.\n",
+        ),
     ],
 )
 def test_CannotOverwriteExistingCassetteException_get_message(
