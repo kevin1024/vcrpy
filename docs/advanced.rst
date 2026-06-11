@@ -440,3 +440,23 @@ option to ``True``, VCR will not save old HTTP interactions if they are not used
     my_vcr = VCR(drop_unused_requests=True)
     with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
         ...  # your HTTP interactions here
+
+Metadata
+--------------------
+
+Sometimes there are external factors that affect the HTTP interactions. In order
+to keep track of those, you can store custom metadata in a cassette. For example,
+this might be useful to store values generated outside the code, like the resulting
+values of a redirection to an external website, or to store seeds to deterministically
+generate values that are included in the HTTP requests.
+
+.. code:: python
+
+    my_vcr = VCR()
+    with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
+        seed = cass.get_metadata("seed", random.Random().getrandbits(128))
+        r = Random(seed)
+        with mock.patch("uuid.uuid4") as uuid4:
+            uuid4.side_effect = lambda: uuid.UUID(int=r.getrandbits(128), version=4)
+
+            ...  # your HTTP interactions here

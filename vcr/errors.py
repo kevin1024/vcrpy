@@ -1,8 +1,15 @@
 class CannotOverwriteExistingCassetteException(Exception):
     def __init__(self, *args, **kwargs):
         self.cassette = kwargs["cassette"]
-        self.failed_request = kwargs["failed_request"]
-        message = self._get_message(kwargs["cassette"], kwargs["failed_request"])
+        self.failed_request = kwargs.get("failed_request")
+        self.missing_metadata = kwargs.get("missing_metadata")
+        message = None
+        if self.failed_request:
+            message = self._get_message(self.cassette, self.failed_request)
+        if self.missing_metadata:
+            message = f'Missing metadata key "{self.missing_metadata}"'
+        if not message:
+            raise ValueError("Invalid kwargs, failed_request or missing_metadata must be supplied")
         super().__init__(message)
 
     @staticmethod
