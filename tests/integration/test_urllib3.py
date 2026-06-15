@@ -37,6 +37,16 @@ def test_status_code(httpbin_both, tmpdir, verify_pool_mgr):
         assert status_code == verify_pool_mgr.request("GET", url).status
 
 
+def test_url(httpbin_both, tmpdir, verify_pool_mgr):
+    """Ensure that we can read the URL"""
+    url = httpbin_both.url
+    with vcr.use_cassette(str(tmpdir.join("url.yaml"))):
+        url = verify_pool_mgr.request("GET", url).geturl()
+
+    with vcr.use_cassette(str(tmpdir.join("url.yaml"))):
+        assert url == verify_pool_mgr.request("GET", url).geturl()
+
+
 def test_headers(tmpdir, httpbin_both, verify_pool_mgr):
     """Ensure that we can read the headers back"""
     url = httpbin_both.url
