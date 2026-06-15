@@ -74,7 +74,7 @@ def proxy_server():
     with socketserver.ThreadingTCPServer(("", 0), Proxy) as httpd:
         proxy_process = threading.Thread(target=httpd.serve_forever)
         proxy_process.start()
-        yield "http://127.0.0.1:{}".format(httpd.server_address[1])
+        yield f"http://127.0.0.1:{httpd.server_address[1]}"
         httpd.shutdown()
         proxy_process.join()
 
