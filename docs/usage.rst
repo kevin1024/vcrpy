@@ -163,8 +163,9 @@ instead.
 Pytest Integration
 ------------------
 
-A Pytest plugin is available here : `pytest-vcr
-<https://github.com/ktosiek/pytest-vcr>`__.
+A Pytest plugin is available here : `pytest-recording
+<https://github.com/kiwicom/pytest-recording>`__. It provides fixtures for
+recording cassettes and also supports network access blocking.
 
-Alternative plugin, that also provides network access blocking: `pytest-recording
-<https://github.com/kiwicom/pytest-recording>`__.
+An older plugin, `pytest-vcr <https://github.com/ktosiek/pytest-vcr>`__, is no
+longer actively maintained and is kept here only for reference.
