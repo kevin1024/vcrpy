@@ -12,21 +12,26 @@ class CannotOverwriteExistingCassetteException(Exception):
         # have match the most with the request.
         best_matches = cassette.find_requests_with_most_matches(failed_request)
         if best_matches:
-            # Build a comprehensible message to put in the exception.
-            best_matches_msg = (
-                f"Found {len(best_matches)} similar requests "
-                f"with {len(best_matches[0][2])} different matcher(s) :\n"
-            )
-
-            for idx, best_match in enumerate(best_matches, start=1):
-                request, succeeded_matchers, failed_matchers_assertion_msgs = best_match
-                best_matches_msg += (
-                    f"\n{idx} - ({request!r}).\n"
-                    f"Matchers succeeded : {succeeded_matchers}\n"
-                    "Matchers failed :\n"
+            if best_matches[0][2]:
+                best_matches_msg = (
+                    f"Found {len(best_matches)} similar requests "
+                    f"with {len(best_matches[0][2])} different matcher(s) :\n"
                 )
-                for failed_matcher, assertion_msg in failed_matchers_assertion_msgs:
-                    best_matches_msg += f"{failed_matcher} - assertion failure :\n{assertion_msg}\n"
+
+                for idx, best_match in enumerate(best_matches, start=1):
+                    request, succeeded_matchers, failed_matchers_assertion_msgs = best_match
+                    best_matches_msg += (
+                        f"\n{idx} - ({request!r}).\n"
+                        f"Matchers succeeded : {succeeded_matchers}\n"
+                        "Matchers failed :\n"
+                    )
+                    for failed_matcher, assertion_msg in failed_matchers_assertion_msgs:
+                        best_matches_msg += f"{failed_matcher} - assertion failure :\n{assertion_msg}\n"
+            else:
+                best_matches_msg = (
+                    f"Found {len(best_matches)} recorded request(s) matching ({failed_request!r}) "
+                    f"but they have already been consumed.\n"
+                )
         else:
             best_matches_msg = "No similar requests, that have not been played, found."
         return (
