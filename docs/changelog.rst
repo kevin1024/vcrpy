@@ -3,8 +3,17 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  8.1.2
+-  8.2.0
+    - Add support for httpx 2.x (#993) - thanks @dsfaccini
+    - Patch httpx transports instead of httpcore (#972) - thanks @seowalex
     - Fix aiohttp 3.14 compatibility: ``AsyncStreamReaderMixin`` removed and ``ClientResponse`` now requires ``stream_writer`` (#995) - thanks @dsfaccini
+    - Account for modified requests when storing played cassettes, so ``drop_unused_requests`` honours ``before_record_request`` filtering (#962) - thanks @jamesbraza
+    - Make the request URL available on ``VCRHTTPResponse`` (#976) - thanks @dAnjou
+    - Improve error message when a matching request has already been consumed (#985) - thanks @Polandia94
+    - Fix body check in ``convert_body_to_unicode`` to use an explicit type check (#982) - thanks @Polandia94
+    - Add env proxy cassette regression test (#994) - thanks @tine1117
+    - Remove milestone references from docs (#984) - thanks @Polandia94
+    - CI: bump sphinx-rtd-theme from 3.0.2 to 3.1.0 (#973)
 
 -  8.1.1
     - Fix sync requests in async contexts for HTTPX (#965) - thanks @seowalex
