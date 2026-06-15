@@ -9,7 +9,7 @@ from pathlib import Path
 from . import filters, matchers
 from .cassette import Cassette
 from .persisters.filesystem import FilesystemPersister
-from .record_mode import RecordMode
+from .record_mode import RecordMode, validate_record_mode
 from .serializers import jsonserializer, yamlserializer
 from .util import auto_decorate, compose
 
@@ -68,7 +68,7 @@ class VCR:
             "body": matchers.body,
         }
         self.persister = FilesystemPersister
-        self.record_mode = record_mode
+        self.record_mode = validate_record_mode(record_mode)
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
         self.filter_post_data_parameters = filter_post_data_parameters
@@ -144,7 +144,7 @@ class VCR:
             "serializer": self._get_serializer(serializer_name),
             "persister": self.persister,
             "match_on": self._get_matchers(tuple(matcher_names) + tuple(additional_matchers)),
-            "record_mode": kwargs.get("record_mode", self.record_mode),
+            "record_mode": validate_record_mode(kwargs.get("record_mode", self.record_mode)),
             "before_record_request": self._build_before_record_request(kwargs),
             "before_record_response": self._build_before_record_response(kwargs),
             "custom_patches": self._custom_patches + kwargs.get("custom_patches", ()),

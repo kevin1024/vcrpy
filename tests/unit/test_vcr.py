@@ -12,7 +12,7 @@ from vcr.stubs import VCRHTTPSConnection
 
 
 def test_vcr_use_cassette():
-    record_mode = mock.Mock()
+    record_mode = mode.ONCE
     test_vcr = VCR(record_mode=record_mode)
     with mock.patch(
         "vcr.cassette.Cassette.load",
@@ -25,20 +25,36 @@ def test_vcr_use_cassette():
 
         assert mock_cassette_load.call_count == 0
         function()
-        assert mock_cassette_load.call_args[1]["record_mode"] is record_mode
+        assert mock_cassette_load.call_args[1]["record_mode"] == record_mode
 
         # Make sure that calls to function now use cassettes with the
         # new filter_header_settings
-        test_vcr.record_mode = mock.Mock()
+        test_vcr.record_mode = mode.ALL
         function()
         assert mock_cassette_load.call_args[1]["record_mode"] == test_vcr.record_mode
 
         # Ensure that explicitly provided arguments still supersede
         # those on the vcr.
-        new_record_mode = mock.Mock()
+        new_record_mode = mode.NEW_EPISODES
 
     with test_vcr.use_cassette("test", record_mode=new_record_mode) as cassette:
         assert cassette.record_mode == new_record_mode
+
+
+def test_vcr_record_mode_validation():
+    # An invalid record mode raises a helpful error rather than silently
+    # behaving like ``new_episodes``.
+    with pytest.raises(ValueError, match="not a valid record_mode"):
+        VCR(record_mode="onec")
+
+    # Invalid mode supplied per-cassette is also rejected.
+    test_vcr = VCR()
+    with pytest.raises(ValueError, match="not a valid record_mode"):
+        test_vcr.use_cassette("test", record_mode="bogus").__enter__()
+
+    # Both the enum and its string value remain valid.
+    assert VCR(record_mode=mode.ALL).record_mode == mode.ALL
+    assert VCR(record_mode="all").record_mode == mode.ALL
 
 
 def test_vcr_before_record_request_params():
