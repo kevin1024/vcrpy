@@ -5,18 +5,10 @@ Contributing
    :alt: vcr.py logo
    :align: right
 
-🚀 Milestones
---------------
-For anyone interested in the roadmap and projected release milestones please see the following link:
-
-`MILESTONES <https://github.com/kevin1024/vcrpy/milestones>`_
-
-----
-
 🎁 Contributing Issues and PRs
 -------------------------------
 
- - Issues and PRs will get triaged and assigned to the appropriate milestone.
+ - Issues and PRs will get triaged.
  - PRs get priority over issues.
  - The maintainers have limited bandwidth and do so **voluntarily**.
 
