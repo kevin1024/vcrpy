@@ -4,7 +4,7 @@ import asyncio
 import http.server
 import socketserver
 import threading
-from urllib.request import urlopen
+from urllib.request import ProxyHandler, build_opener
 
 import pytest
 
@@ -12,6 +12,8 @@ import vcr
 
 # Conditional imports
 requests = pytest.importorskip("requests")
+
+_proxy_opener = build_opener(ProxyHandler({}))
 
 
 class Proxy(http.server.SimpleHTTPRequestHandler):
@@ -22,7 +24,7 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
     """
 
     def do_GET(self):
-        upstream_response = urlopen(self.path)
+        upstream_response = _proxy_opener.open(self.path)
         try:
             status = upstream_response.status
             headers = upstream_response.headers.items()
@@ -72,7 +74,7 @@ def proxy_server():
     with socketserver.ThreadingTCPServer(("", 0), Proxy) as httpd:
         proxy_process = threading.Thread(target=httpd.serve_forever)
         proxy_process.start()
-        yield "http://{}:{}".format(*httpd.server_address)
+        yield "http://127.0.0.1:{}".format(httpd.server_address[1])
         httpd.shutdown()
         proxy_process.join()
 
@@ -87,6 +89,25 @@ def test_use_proxy(tmpdir, httpbin, proxy_server):
 
     assert cassette_response.headers == response.headers
     assert cassette.play_count == 1
+
+
+def test_use_proxy_from_environment_records_origin_url(tmpdir, httpbin, proxy_server, monkeypatch):
+    """Ensure cassettes recorded through env proxies can replay without that proxy."""
+    monkeypatch.delenv("no_proxy", raising=False)
+    monkeypatch.delenv("NO_PROXY", raising=False)
+    monkeypatch.setenv("http_proxy", proxy_server)
+
+    with vcr.use_cassette(str(tmpdir.join("proxy.yaml"))):
+        response = requests.get(httpbin.url)
+
+    monkeypatch.delenv("http_proxy")
+
+    with vcr.use_cassette(str(tmpdir.join("proxy.yaml")), mode="none") as cassette:
+        cassette_response = requests.get(httpbin.url)
+
+    assert cassette_response.headers == response.headers
+    assert cassette.play_count == 1
+    assert cassette.requests[0].url == httpbin.url + "/"
 
 
 def test_use_https_proxy(tmpdir, httpbin_secure, proxy_server):
