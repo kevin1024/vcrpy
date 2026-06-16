@@ -12,6 +12,53 @@ def test_deserialize_old_yaml_cassette():
         deserialize(f.read(), yamlserializer)
 
 
+def test_deserialize_yaml_cassette_does_not_execute_python_object_tags(tmpdir):
+    # A malicious cassette must not be able to execute arbitrary code via
+    # PyYAML's ``!!python/object/apply`` tag when it is loaded.
+    marker = tmpdir.join("pwned")
+    malicious = (
+        "interactions:\n"
+        "- request:\n"
+        "    body: null\n"
+        "    headers: {}\n"
+        "    method: GET\n"
+        "    uri: http://example.com/\n"
+        "  response:\n"
+        "    body: {string: ok}\n"
+        "    headers: {}\n"
+        "    status: {code: 200, message: OK}\n"
+        f"_x: !!python/object/apply:os.system ['touch {marker}']\n"
+        "version: 1\n"
+    )
+    # The dangerous tag is rejected (surfaced as the existing old-format error)
+    # rather than executed.
+    with pytest.raises(ValueError):
+        deserialize(malicious, yamlserializer)
+    assert not marker.check(), "malicious cassette executed code during load"
+
+
+def test_deserialize_yaml_cassette_allows_safe_python_tuple_and_str():
+    # Legitimate cassettes (e.g. from the tornado stub) contain benign
+    # ``!!python/tuple``/``!!python/unicode`` tags that must still load.
+    yaml_str = (
+        "interactions:\n"
+        "- request:\n"
+        "    body: null\n"
+        "    headers: !!python/tuple\n"
+        "    - !!python/unicode 'Accept'\n"
+        "    - ['*/*']\n"
+        "    method: GET\n"
+        "    uri: http://example.com/\n"
+        "  response:\n"
+        "    body: {string: ok}\n"
+        "    headers: {}\n"
+        "    status: {code: 200, message: OK}\n"
+        "version: 1\n"
+    )
+    data = yamlserializer.deserialize(yaml_str)
+    assert isinstance(data["interactions"][0]["request"]["headers"], tuple)
+
+
 def test_deserialize_old_json_cassette():
     with open("tests/fixtures/migration/old_cassette.json") as f, pytest.raises(ValueError):
         deserialize(f.read(), jsonserializer)
