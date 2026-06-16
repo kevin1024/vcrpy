@@ -37,7 +37,7 @@ tests = [
     "aiohttp",
     "boto3",
     "cryptography",
-    "httpbin",
+    "httpbin>=0.10.3",
     "httplib2",
     "httpx",
     "httpx-curl-cffi",
@@ -52,9 +52,9 @@ tests = [
     "requests>=2.22.0",
     "tornado",
     "urllib3",
-    "werkzeug==2.0.3",
 ]
 tests-niquests = [
+    "httpbin>=0.10.3",
     "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
