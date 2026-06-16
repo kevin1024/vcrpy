@@ -480,11 +480,30 @@ class CassettePatcherBuilder:
         https_connection_remover = ConnectionRemover(
             self._get_cassette_subclass(stubs.VCRRequestsHTTPSConnection),
         )
+
+        real_is_connection_dropped = cpool.is_connection_dropped
+
+        def is_connection_dropped(connection):
+            # vcrpy swaps urllib3's connection classes for socketless stubs.
+            # During playback a stub has no live socket, so urllib3's normal
+            # check would treat it as dropped and discard it -- originally a
+            # Windows playback fix (#116). But a stub that is *recording* wraps a
+            # real connection, and we must still run urllib3's real check against
+            # that underlying connection. Otherwise urllib3 reuses a keep-alive
+            # connection the server has already closed and raises a "Connection
+            # aborted" ProtocolError (the intermittent BrokenPipe in CI).
+            real_connection = getattr(connection, "real_connection", None)
+            if real_connection is None:
+                return real_is_connection_dropped(connection)
+            if getattr(real_connection, "sock", None) is None:
+                return False
+            return real_is_connection_dropped(real_connection)
+
         mock_triples = (
             (conn, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
             (conn, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
             (conn, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
-            (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
+            (cpool, "is_connection_dropped", is_connection_dropped),
             (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
             (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
         )
