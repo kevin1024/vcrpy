@@ -253,7 +253,12 @@ class Cassette:
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        return request and request in self and self.record_mode != RecordMode.ALL and self.rewound
+        return (
+            request
+            and request in self
+            and self.record_mode != RecordMode.ALL
+            and (self.rewound or self.allow_playback_repeats)
+        )
 
     def play_response(self, request):
         """
