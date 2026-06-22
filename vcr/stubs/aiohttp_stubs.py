@@ -326,20 +326,22 @@ def vcr_request(cassette, real_request):
             for redirect in response.history:
                 self._cookie_jar.update_cookies(redirect.cookies, redirect.url)
             self._cookie_jar.update_cookies(response.cookies, response.url)
+        else:
+            if cassette.write_protected and cassette.filter_request(vcr_request):
+                raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
-            await _raise_for_status(self, raise_for_status, response)
+            log.info("%s not in cassette, sending to real server", vcr_request)
 
-            return response
-
-        if cassette.write_protected and cassette.filter_request(vcr_request):
-            raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
-
-        log.info("%s not in cassette, sending to real server", vcr_request)
-
-        # Override the raise_for_status parameter to avoid raising an exception before we can record the
-        # response.
-        response = await real_request(self, method, url, **kwargs, raise_for_status=_raise_for_status_stub)
-        await record_responses(cassette, vcr_request, response)
+            # Override the raise_for_status parameter to avoid raising an exception before we can record the
+            # response.
+            response = await real_request(
+                self,
+                method,
+                url,
+                **kwargs,
+                raise_for_status=_raise_for_status_stub,
+            )
+            await record_responses(cassette, vcr_request, response)
 
         await _raise_for_status(self, raise_for_status, response)
 
