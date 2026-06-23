@@ -4,11 +4,14 @@ import zlib
 from io import BytesIO
 from unittest import mock
 
+import pytest
+
 from vcr.filters import (
     decode_response,
     remove_headers,
     remove_post_data_parameters,
     remove_query_parameters,
+    replace_body_parameters,
     replace_headers,
     replace_post_data_parameters,
     replace_query_parameters,
@@ -114,7 +117,8 @@ def test_remove_query_parameters():
     assert request.uri == "http://g.com/?q=cowboys"
 
 
-def test_replace_post_data_parameters():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "DELETE"])
+def test_replace_body_parameters_form_encoded(method):
     # This tests all of:
     #   1. keeping a parameter
     #   2. removing a parameter
@@ -123,8 +127,8 @@ def test_replace_post_data_parameters():
     #   5. removing a parameter using a callable
     #   6. replacing a parameter that doesn't exist
     body = b"one=keep&two=lose&three=change&four=shout&five=whisper"
-    request = Request("POST", "http://google.com", body, {})
-    replace_post_data_parameters(
+    request = Request(method, "http://google.com", body, {})
+    replace_body_parameters(
         request,
         [
             ("two", None),
@@ -137,46 +141,47 @@ def test_replace_post_data_parameters():
     assert request.body == b"one=keep&three=tada&four=SHOUT"
 
 
-def test_replace_post_data_parameters_empty_body():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_replace_body_parameters_form_encoded_empty_body(method):
     # This test ensures replace_post_data_parameters doesn't throw exception when body is empty.
-    body = None
-    request = Request("POST", "http://google.com", body, {})
-    replace_post_data_parameters(
+    request = Request(method, "http://google.com", None, {})
+    replace_body_parameters(
         request,
         [
             ("two", None),
             ("three", "tada"),
-            ("four", lambda key, value, request: value.upper()),
-            ("five", lambda key, value, request: None),
-            ("six", "doesntexist"),
         ],
     )
     assert request.body is None
 
 
-def test_remove_post_data_parameters():
-    # Test the backward-compatible API wrapper.
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_remove_body_parameters_form_encoded(method):
     body = b"id=secret&foo=bar"
-    request = Request("POST", "http://google.com", body, {})
-    remove_post_data_parameters(request, ["id"])
+    request = Request(method, "http://google.com", body, {})
+    replacements = [("id", None)]
+    replace_body_parameters(request, replacements)
     assert request.body == b"foo=bar"
 
 
-def test_preserve_multiple_post_data_parameters():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_preserve_multiple_body_parameters(method):
     body = b"id=secret&foo=bar&foo=baz"
-    request = Request("POST", "http://google.com", body, {})
-    replace_post_data_parameters(request, [("id", None)])
+    request = Request(method, "http://google.com", body, {})
+    replace_body_parameters(request, [("id", None)])
     assert request.body == b"foo=bar&foo=baz"
 
 
-def test_remove_all_post_data_parameters():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_remove_all_body_parameters_form_encoded(method):
     body = b"id=secret&foo=bar"
-    request = Request("POST", "http://google.com", body, {})
-    replace_post_data_parameters(request, [("id", None), ("foo", None)])
+    request = Request(method, "http://google.com", body, {})
+    replace_body_parameters(request, [("id", None), ("foo", None)])
     assert request.body == b""
 
 
-def test_replace_json_post_data_parameters():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_replace_body_parameters_json(method):
     # This tests all of:
     #   1. keeping a parameter
     #   2. removing a parameter
@@ -185,9 +190,9 @@ def test_replace_json_post_data_parameters():
     #   5. removing a parameter using a callable
     #   6. replacing a parameter that doesn't exist
     body = b'{"one": "keep", "two": "lose", "three": "change", "four": "shout", "five": "whisper"}'
-    request = Request("POST", "http://google.com", body, {})
+    request = Request(method, "http://google.com", body, {})
     request.headers["Content-Type"] = "application/json"
-    replace_post_data_parameters(
+    replace_body_parameters(
         request,
         [
             ("two", None),
@@ -202,26 +207,28 @@ def test_replace_json_post_data_parameters():
     assert request_data == expected_data
 
 
-def test_remove_json_post_data_parameters():
-    # Test the backward-compatible API wrapper.
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_remove_body_parameters_json(method):
     body = b'{"id": "secret", "foo": "bar", "baz": "qux"}'
-    request = Request("POST", "http://google.com", body, {})
+    request = Request(method, "http://google.com", body, {})
     request.headers["Content-Type"] = "application/json"
-    remove_post_data_parameters(request, ["id"])
+    replace_body_parameters(request, [("id", None)])
     request_body_json = json.loads(request.body)
     expected_json = json.loads(b'{"foo": "bar", "baz": "qux"}')
     assert request_body_json == expected_json
 
 
-def test_remove_all_json_post_data_parameters():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_remove_all_body_parameters_json(method):
     body = b'{"id": "secret", "foo": "bar"}'
-    request = Request("POST", "http://google.com", body, {})
+    request = Request(method, "http://google.com", body, {})
     request.headers["Content-Type"] = "application/json"
-    replace_post_data_parameters(request, [("id", None), ("foo", None)])
+    replace_body_parameters(request, [("id", None), ("foo", None)])
     assert request.body == b"{}"
 
 
-def test_replace_dict_post_data_parameters():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_replace_body_parameters_dict(method):
     # This tests all of:
     #   1. keeping a parameter
     #   2. removing a parameter
@@ -230,9 +237,9 @@ def test_replace_dict_post_data_parameters():
     #   5. removing a parameter using a callable
     #   6. replacing a parameter that doesn't exist
     body = {"one": "keep", "two": "lose", "three": "change", "four": "shout", "five": "whisper"}
-    request = Request("POST", "http://google.com", body, {})
+    request = Request(method, "http://google.com", body, {})
     request.headers["Content-Type"] = "application/x-www-form-urlencoded"
-    replace_post_data_parameters(
+    replace_body_parameters(
         request,
         [
             ("two", None),
@@ -246,22 +253,54 @@ def test_replace_dict_post_data_parameters():
     assert request.body == expected_data
 
 
-def test_remove_dict_post_data_parameters():
-    # Test the backward-compatible API wrapper.
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_remove_body_parameters_dict(method):
     body = {"id": "secret", "foo": "bar", "baz": "qux"}
-    request = Request("POST", "http://google.com", body, {})
+    request = Request(method, "http://google.com", body, {})
     request.headers["Content-Type"] = "application/x-www-form-urlencoded"
-    remove_post_data_parameters(request, ["id"])
+    replace_body_parameters(request, [("id", None)])
     expected_data = {"foo": "bar", "baz": "qux"}
     assert request.body == expected_data
 
 
-def test_remove_all_dict_post_data_parameters():
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+def test_remove_all_body_parameters_dict(method):
     body = {"id": "secret", "foo": "bar"}
-    request = Request("POST", "http://google.com", body, {})
+    request = Request(method, "http://google.com", body, {})
     request.headers["Content-Type"] = "application/x-www-form-urlencoded"
-    replace_post_data_parameters(request, [("id", None), ("foo", None)])
+    replace_body_parameters(request, [("id", None), ("foo", None)])
     assert request.body == {}
+
+
+def test_replace_post_data_parameters_delegates_for_post():
+    # Test the backward-compatible API wrapper.
+    body = b"one=keep&two=lose&three=change"
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(
+        request,
+        [
+            ("two", None),
+            ("three", "tada"),
+        ],
+    )
+    assert request.body == b"one=keep&three=tada"
+
+
+@pytest.mark.parametrize("method", ["PUT", "PATCH", "DELETE", "OPTIONS"])
+def test_replace_post_data_parameters_ignores_non_post(method):
+    # Test the backward-compatible API wrapper.
+    body = b"one=keep&two=lose"
+    request = Request(method, "http://google.com", body, {})
+    replace_post_data_parameters(request, [("two", None)])
+    assert request.body == b"one=keep&two=lose"
+
+
+def test_remove_post_data_parameters():
+    # Test the backward-compatible API wrapper.
+    body = b"id=secret&foo=bar"
+    request = Request("POST", "http://google.com", body, {})
+    remove_post_data_parameters(request, ["id"])
+    assert request.body == b"foo=bar"
 
 
 def test_decode_response_uncompressed():
