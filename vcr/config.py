@@ -208,7 +208,7 @@ class VCR:
         if filter_post_data_parameters:
             replacements = [p if isinstance(p, tuple) else (p, None) for p in filter_post_data_parameters]
             filter_functions.append(
-                functools.partial(filters.replace_post_data_parameters, replacements=replacements),
+                functools.partial(filters.replace_body_parameters, replacements=replacements),
             )
 
         hosts_to_ignore = set(ignore_hosts)
