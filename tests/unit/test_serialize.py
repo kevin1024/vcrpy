@@ -30,11 +30,35 @@ def test_deserialize_yaml_cassette_does_not_execute_python_object_tags(tmpdir):
         f"_x: !!python/object/apply:os.system ['touch {marker}']\n"
         "version: 1\n"
     )
-    # The dangerous tag is rejected (surfaced as the existing old-format error)
-    # rather than executed.
+    # The dangerous tag is rejected with a ValueError rather than executed.
     with pytest.raises(ValueError):
         deserialize(malicious, yamlserializer)
     assert not marker.check(), "malicious cassette executed code during load"
+
+
+def test_deserialize_yaml_cassette_unknown_tag_gives_clear_error():
+    # A cassette with an unrecognized Python object tag (e.g. a custom class)
+    # used to raise "Your cassette files were generated in an older version of
+    # VCR", even for freshly re-recorded cassettes. It should now raise a
+    # clear, descriptive ValueError instead.
+    cassette_with_custom_tag = (
+        "interactions:\n"
+        "- request:\n"
+        "    body: !!python/object/new:some.custom.Object\n"
+        "      state: [hello]\n"
+        "    headers: {}\n"
+        "    method: GET\n"
+        "    uri: http://example.com/\n"
+        "  response:\n"
+        "    body: {string: ok}\n"
+        "    headers: {}\n"
+        "    status: {code: 200, message: OK}\n"
+        "version: 1\n"
+    )
+    with pytest.raises(ValueError, match="There was a problem loading the cassette") as excinfo:
+        deserialize(cassette_with_custom_tag, yamlserializer)
+    # The old misleading message must not appear
+    assert "older version of VCR" not in excinfo.exconly()
 
 
 def test_deserialize_yaml_cassette_allows_safe_python_tuple_and_str():
