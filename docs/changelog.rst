@@ -3,6 +3,10 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Refuse to save a cassette that embeds a Python object the safe loader could not read back, turning a silent record-now/fail-later footgun into an immediate, actionable error (#1007)
+    - Add ``vcr.serializers.yamlserializer.register_constructor`` as a public API for teaching the safe cassette loader to construct custom YAML tags (#1007)
+
 -  8.2.1
     - SECURITY: Load cassettes with a safe YAML loader, preventing arbitrary code execution when a cassette from an untrusted source is loaded (GHSA-rpj2-4hq8-938g) - thanks @RamiAltai and @EQSTLab
     - Validate ``record_mode`` and raise a clear error on an invalid value (#208)

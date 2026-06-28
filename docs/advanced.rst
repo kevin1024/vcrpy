@@ -90,6 +90,31 @@ Finally, register your class with VCR to use your new serializer.
     with my_vcr.use_cassette('test.bogo'):
         # your http here
 
+Load cassettes containing custom Python objects
+-----------------------------------------------
+
+For security, VCR.py loads YAML cassettes with a *safe* loader that refuses
+the ``!!python/object`` family of tags (loading them could execute arbitrary
+code from an untrusted cassette). If a cassette legitimately contains a custom
+Python object, deserializing it raises a ``ValueError`` explaining that the
+loader refused to construct the object.
+
+You can teach the loader how to rebuild your object by registering a
+constructor for its tag:
+
+.. code:: python
+
+    from vcr.serializers import yamlserializer
+
+    def construct_my_object(loader, node):
+        mapping = loader.construct_mapping(node, deep=True)
+        return MyObject(**mapping)
+
+    yamlserializer.register_constructor(
+        "tag:yaml.org,2002:python/object/new:my.module.MyObject",
+        construct_my_object,
+    )
+
 Register your own request matcher
 ---------------------------------
 
