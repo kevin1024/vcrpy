@@ -1,10 +1,16 @@
+from io import BytesIO
 from unittest import mock
 
 import pytest
+import yaml
 
 from vcr.request import Request
 from vcr.serialize import deserialize, serialize
 from vcr.serializers import compat, jsonserializer, yamlserializer
+
+
+class _CustomHeader:
+    """A stand-in for a custom Python object that might end up in a header."""
 
 
 def test_deserialize_old_yaml_cassette():
@@ -35,6 +41,64 @@ def test_deserialize_yaml_cassette_does_not_execute_python_object_tags(tmpdir):
     with pytest.raises(ValueError):
         deserialize(malicious, yamlserializer)
     assert not marker.check(), "malicious cassette executed code during load"
+
+
+def test_deserialize_yaml_cassette_allows_registered_custom_constructor():
+    # Once a constructor is registered for a custom tag, the cassette loads.
+    tag = "tag:yaml.org,2002:python/object/new:some.module.CustomBody"
+    yamlserializer.register_constructor(tag, lambda loader, node: "custom-body")
+    try:
+        cassette = (
+            "interactions:\n"
+            "- request:\n"
+            "    body: !!python/object/new:some.module.CustomBody {}\n"
+            "    headers: {}\n"
+            "    method: GET\n"
+            "    uri: http://example.com/\n"
+            "  response:\n"
+            "    body: {string: ok}\n"
+            "    headers: {}\n"
+            "    status: {code: 200, message: OK}\n"
+            "version: 1\n"
+        )
+        (requests, _) = deserialize(cassette, yamlserializer)
+        assert requests[0].body == b"custom-body"
+    finally:
+        del yamlserializer._CassetteLoader.yaml_constructors[tag]
+
+
+def test_serialize_refuses_unloadable_python_object():
+    # A cassette must not be *saved* if it embeds a Python object the safe
+    # loader couldn't read back, otherwise recording succeeds but replay fails
+    request = Request(method="POST", uri="http://localhost/", headers={"X-Custom": _CustomHeader()}, body="")
+    with pytest.raises(yaml.representer.RepresenterError, match="register_constructor"):
+        serialize({"requests": [request], "responses": [{}]}, yamlserializer)
+
+
+def test_serialize_allows_registered_python_object():
+    # If a constructor is registered for the object's tag, the loader can read
+    # it back, so saving it is allowed too (the two sides stay symmetric).
+    tag = f"tag:yaml.org,2002:python/object:{_CustomHeader.__module__}.{_CustomHeader.__qualname__}"
+    yamlserializer.register_constructor(tag, lambda loader, node: _CustomHeader())
+    try:
+        request = Request(
+            method="POST",
+            uri="http://localhost/",
+            headers={"X-Custom": _CustomHeader()},
+            body="",
+        )
+        serialize({"requests": [request], "responses": [{}]}, yamlserializer)
+    finally:
+        del yamlserializer._CassetteLoader.yaml_constructors[tag]
+
+
+def test_serialize_allows_bytesio_body_and_round_trips():
+    # A BytesIO body uses a tag the loader knows about, so it must serialize
+    # without tripping the guard and load back to the same bytes.
+    request = Request(method="POST", uri="http://localhost/", body=BytesIO(b"payload"), headers={})
+    cassette = serialize({"requests": [request], "responses": [{}]}, yamlserializer)
+    (requests, _) = deserialize(cassette, yamlserializer)
+    assert requests[0].body.read() == b"payload"
 
 
 def test_deserialize_yaml_cassette_allows_safe_python_tuple_and_str():
