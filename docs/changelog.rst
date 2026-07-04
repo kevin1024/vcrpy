@@ -3,6 +3,9 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  8.2.2
+    - Fix aiohttp not recording error responses when ``raise_for_status`` is used - thanks @andrescollares
+
 -  8.2.1
     - SECURITY: Load cassettes with a safe YAML loader, preventing arbitrary code execution when a cassette from an untrusted source is loaded (GHSA-rpj2-4hq8-938g) - thanks @RamiAltai and @EQSTLab
     - Validate ``record_mode`` and raise a clear error on an invalid value (#208)
