@@ -293,7 +293,7 @@ class VCRConnection:
                 self.real_connection.request(
                     method=self._vcr_request.method,
                     url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body,
+                    body=self._vcr_request.body_bytes,
                     headers=self._vcr_request.headers,
                 )
 
