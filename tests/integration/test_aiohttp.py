@@ -303,6 +303,31 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     assert cassette.play_count == 1
 
 
+def test_aiohttp_test_client_raw_headers(aiohttp_client, tmpdir):
+    loop = asyncio.get_event_loop()
+    app = aiohttp_app()
+    url = "/"
+    client = loop.run_until_complete(aiohttp_client(app))
+
+    with vcr.use_cassette(str(tmpdir.join("get.yaml"))):
+        response = loop.run_until_complete(client.get(url))
+
+    real_raw_headers = response.raw_headers
+    assert real_raw_headers is not None
+
+    with vcr.use_cassette(str(tmpdir.join("get.yaml"))) as cassette:
+        cassette_response = loop.run_until_complete(client.get(url))
+
+    assert cassette.play_count == 1
+    # A replayed response must expose ``raw_headers`` just like a real one,
+    # both as raw bytes and consistent with the decoded ``headers``.
+    assert cassette_response.raw_headers is not None
+    assert all(isinstance(k, bytes) and isinstance(v, bytes) for k, v in cassette_response.raw_headers)
+    assert {(k.decode(), v.decode()) for k, v in cassette_response.raw_headers} == set(
+        cassette_response.headers.items(),
+    )
+
+
 @pytest.mark.online
 def test_redirect(tmpdir, httpbin):
     url = httpbin.url + "/redirect/2"
