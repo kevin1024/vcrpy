@@ -160,6 +160,9 @@ def play_responses(cassette, vcr_request, kwargs):
         # VCR request saved to the cassette. This feels a little hacky and
         # may have edge cases based on the headers we're providing (e.g. if
         # there's a matcher that is used to filter by headers).
+        # Convert file-like objects to bytes to avoid pickle errors
+        if hasattr(data, 'read'):
+            data = data.read()
         vcr_request = Request("GET", str(next_url), None, _serialize_headers(response.request_info.headers))
         vcr_requests = cassette.find_requests_with_most_matches(vcr_request)
         for vcr_request, *_ in vcr_requests:
