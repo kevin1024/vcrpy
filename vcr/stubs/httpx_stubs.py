@@ -87,7 +87,7 @@ def _vcr_request(cassette, real_request, real_request_body, httpx):
     if cassette.can_play_response_for(vcr_request):
         return vcr_request, _play_responses(cassette, vcr_request, httpx)
 
-    if cassette.write_protected and cassette.filter_request(vcr_request):
+    if cassette.write_protected and vcr_request in cassette:
         raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
     _logger.info("%s not in cassette, sending to real server", vcr_request)
