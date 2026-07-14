@@ -2,12 +2,13 @@
 
 # coding=utf-8
 
+from collections.abc import Mapping
+
 import pytest
 import pytest_httpbin
 
 import vcr
 from vcr.patch import force_reset
-from vcr.stubs.compat import get_headers
 
 from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
@@ -52,10 +53,12 @@ def test_headers(tmpdir, httpbin_both, verify_pool_mgr):
     url = httpbin_both.url
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         headers = verify_pool_mgr.request("GET", url).headers
+        assert isinstance(headers, Mapping)
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         new_headers = verify_pool_mgr.request("GET", url).headers
-        assert sorted(get_headers(headers)) == sorted(get_headers(new_headers))
+        assert isinstance(new_headers, Mapping)
+        assert sorted(headers.items()) == sorted(new_headers.items())
 
 
 def test_body(tmpdir, httpbin_both, verify_pool_mgr):
