@@ -150,22 +150,31 @@ def replace_post_data_parameters(request, replacements):
         else:
             if isinstance(request.body, str):
                 request.body = request.body.encode("utf-8")
-            splits = [p.partition(b"=") for p in request.body.split(b"&")]
-            new_splits = []
-            for k, sep, ov in splits:
-                if sep is None:
-                    new_splits.append((k, sep, ov))
-                else:
-                    rk = k.decode("utf-8")
-                    if rk not in replacements:
+            try:
+                splits = [p.partition(b"=") for p in request.body.split(b"&")]
+                new_splits = []
+                for k, sep, ov in splits:
+                    if sep is None:
                         new_splits.append((k, sep, ov))
                     else:
-                        rv = replacements[rk]
-                        if callable(rv):
-                            rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
-                        if rv is not None:
-                            new_splits.append((k, sep, rv.encode("utf-8")))
-            request.body = b"&".join(k if sep is None else b"".join([k, sep, v]) for k, sep, v in new_splits)
+                        rk = k.decode("utf-8")
+                        if rk not in replacements:
+                            new_splits.append((k, sep, ov))
+                        else:
+                            rv = replacements[rk]
+                            if callable(rv):
+                                rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
+                            if rv is not None:
+                                new_splits.append((k, sep, rv.encode("utf-8")))
+                new_body = b"&".join(k if sep is None else b"".join([k, sep, v]) for k, sep, v in new_splits)
+            except UnicodeDecodeError:
+                # The body is not UTF-8 form-encoded data, e.g. raw binary bytes
+                # from a file upload passed directly as bytes instead of via a
+                # BytesIO. Such a body has no form parameters to replace, so it
+                # is left untouched instead of crashing. See issue #660.
+                pass
+            else:
+                request.body = new_body
     return request
 
 
