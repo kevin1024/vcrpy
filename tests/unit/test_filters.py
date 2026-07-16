@@ -137,6 +137,16 @@ def test_replace_post_data_parameters():
     assert request.body == b"one=keep&three=tada&four=SHOUT"
 
 
+def test_replace_post_data_parameters_binary_body():
+    # A raw binary body (e.g. an image upload passed as bytes rather than a
+    # BytesIO) must not raise UnicodeDecodeError; it has no form parameters to
+    # replace, so it is left untouched. Regression test for issue #660.
+    body = b"\xff\xd8\xff\xe1\x00\x08Exif=\x00\x00MM*"
+    request = Request("POST", "http://google.com", body, {"Content-Type": "image/jpeg"})
+    replace_post_data_parameters(request, [("session", "REDACTED")])
+    assert request.body == body
+
+
 def test_replace_post_data_parameters_empty_body():
     # This test ensures replace_post_data_parameters doesn't throw exception when body is empty.
     body = None
