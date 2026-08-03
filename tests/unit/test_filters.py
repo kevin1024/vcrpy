@@ -137,6 +137,30 @@ def test_replace_post_data_parameters():
     assert request.body == b"one=keep&three=tada&four=SHOUT"
 
 
+def test_replace_post_data_parameters_binary_body():
+    """
+    Regression test for
+    https://github.com/kevin1024/vcrpy/issues/660
+
+    Genuinely binary POST data passed as raw bytes/bytearray (e.g. a
+    file upload, as opposed to text wrapped in a BytesIO) commonly
+    contains a b"=" byte purely by chance, which previously caused
+    replace_post_data_parameters() to attempt (and fail) to decode
+    the surrounding bytes as UTF-8 form-encoded key=value data. The
+    body must be left unchanged instead of raising UnicodeDecodeError.
+    """
+    # Genuinely invalid UTF-8 bytes that happen to contain a literal
+    # b"=" byte, simulating unlucky binary content (e.g. part of a
+    # JPEG or other binary file upload).
+    binary_body = bytes([0xFF, 0xFE, 0x3D, 0x01, 0x02, 0x3D, 0xC0, 0xC1])
+    assert b"=" in binary_body
+
+    request = Request("POST", "http://google.com", binary_body, {})
+    replace_post_data_parameters(request, [("somekey", "REDACTED")])
+
+    assert request.body == binary_body
+
+
 def test_replace_post_data_parameters_empty_body():
     # This test ensures replace_post_data_parameters doesn't throw exception when body is empty.
     body = None

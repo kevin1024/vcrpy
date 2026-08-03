@@ -150,22 +150,38 @@ def replace_post_data_parameters(request, replacements):
         else:
             if isinstance(request.body, str):
                 request.body = request.body.encode("utf-8")
-            splits = [p.partition(b"=") for p in request.body.split(b"&")]
-            new_splits = []
-            for k, sep, ov in splits:
-                if sep is None:
-                    new_splits.append((k, sep, ov))
-                else:
-                    rk = k.decode("utf-8")
-                    if rk not in replacements:
+            try:
+                splits = [p.partition(b"=") for p in request.body.split(b"&")]
+                new_splits = []
+                for k, sep, ov in splits:
+                    if sep is None:
                         new_splits.append((k, sep, ov))
                     else:
-                        rv = replacements[rk]
-                        if callable(rv):
-                            rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
-                        if rv is not None:
-                            new_splits.append((k, sep, rv.encode("utf-8")))
-            request.body = b"&".join(k if sep is None else b"".join([k, sep, v]) for k, sep, v in new_splits)
+                        rk = k.decode("utf-8")
+                        if rk not in replacements:
+                            new_splits.append((k, sep, ov))
+                        else:
+                            rv = replacements[rk]
+                            if callable(rv):
+                                rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
+                            if rv is not None:
+                                new_splits.append((k, sep, rv.encode("utf-8")))
+                request.body = b"&".join(
+                    k if sep is None else b"".join([k, sep, v]) for k, sep, v in new_splits
+                )
+            except UnicodeDecodeError:
+                # request.body isn't actually form-encoded data (e.g. it's
+                # genuinely binary content -- a file upload passed as raw
+                # bytes/bytearray rather than wrapped in a BytesIO, which
+                # is the only type explicitly exempted above). Such binary
+                # data commonly contains a b"=" byte somewhere, so it can
+                # reach this far, but it was never meant to be parsed as
+                # "key=value&key=value" form data in the first place.
+                # Leave the body untouched rather than crashing -- we
+                # simply can't safely apply the requested filtering to
+                # data that was never form-encoded to begin with.
+                # See GH #660.
+                pass
     return request
 
 
