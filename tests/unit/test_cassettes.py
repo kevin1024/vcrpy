@@ -46,6 +46,16 @@ def test_cassette_load_invalid_encoding(tmpdir):
     assert len(a_cassette) == 0
 
 
+def test_cassette_load_invalid_encoding_warns(tmpdir, caplog):
+    a_file = tmpdir.join("invalid_encoding.yml")
+    with open(a_file, "wb") as fd:
+        fd.write(b"\xda")
+    with caplog.at_level("WARNING", logger="vcr.cassette"):
+        a_cassette = Cassette.load(path=str(a_file))
+    assert len(a_cassette) == 0
+    assert any("Failed to decode the cassette" in record.message for record in caplog.records)
+
+
 def test_cassette_not_played():
     a = Cassette("test")
     assert not a.play_count

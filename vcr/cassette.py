@@ -365,8 +365,19 @@ class Cassette:
                 self._old_interactions.append((request, response))
             self.dirty = False
             self.rewound = True
-        except (CassetteDecodeError, CassetteNotFoundError):
+        except CassetteNotFoundError:
+            # The cassette does not exist yet; this is expected on first use
+            # and we simply start with an empty cassette.
             pass
+        except CassetteDecodeError:
+            # The cassette file exists but cannot be decoded (e.g. broken
+            # encoding or an unsupported YAML tag). Warn about it instead of
+            # failing silently so users understand why they got an empty
+            # cassette.
+            log.warning(
+                "Failed to decode the cassette at %s. Continuing with an empty cassette.",
+                self._path,
+            )
 
     def __str__(self):
         return f"<Cassette containing {len(self)} recorded response(s)>"
