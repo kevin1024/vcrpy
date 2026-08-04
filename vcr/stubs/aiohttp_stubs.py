@@ -97,6 +97,13 @@ def build_response(vcr_request, vcr_response, history):
     response._body = vcr_response["body"].get("string", b"")
     response.reason = vcr_response["status"]["message"]
     response._headers = _deserialize_headers(vcr_response["headers"])
+    # aiohttp exposes the wire headers as ``raw_headers`` (a tuple of
+    # ``(name, value)`` byte pairs). Replayed responses must populate it too,
+    # otherwise consumers that read ``response.raw_headers`` (e.g. the
+    # httpx-aiohttp adapter) break with an ``AttributeError``/``None``. See #970.
+    response._raw_headers = tuple(
+        (k.encode("utf-8"), v.encode("utf-8")) for k, v in response._headers.items()
+    )
     response._history = tuple(history)
     # cookies
     for hdr in response.headers.getall(hdrs.SET_COOKIE, ()):
