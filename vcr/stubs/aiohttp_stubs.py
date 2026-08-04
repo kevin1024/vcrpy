@@ -287,6 +287,11 @@ def vcr_request(cassette, real_request):
         if cookie_header:
             headers[hdrs.COOKIE] = cookie_header
 
+        # Convert file-like data to bytes to avoid pickle errors (GH#737)
+        if hasattr(data, 'read'):
+            import warnings as _w
+            _w.warn("vcrpy: converting file-like request body to bytes", stacklevel=2)
+            data = data.read()
         vcr_request = Request(method, str(request_url), data, _serialize_headers(headers))
 
         if cassette.can_play_response_for(vcr_request):
