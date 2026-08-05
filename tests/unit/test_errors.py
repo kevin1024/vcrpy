@@ -1,7 +1,10 @@
+import os
 from unittest import mock
+from urllib.request import urlopen
 
 import pytest
 
+import vcr
 from vcr import errors
 from vcr.cassette import Cassette
 
@@ -75,3 +78,28 @@ def test_CannotOverwriteExistingCassetteException_get_message(
         f"{expected_message}"
     )
     assert exception_message == expected
+
+
+def test_none_record_mode_missing_cassette_message(tmpdir):
+    """Regression test for #838.
+
+    When the cassette does not exist and the record mode forbids recording
+    (e.g. ``none``), the raised ``CannotOverwriteExistingCassetteException``
+    must not claim we are "overwriting an existing cassette" — there is no
+    cassette to overwrite. The message should explain that the cassette is
+    missing and the current record mode does not allow recording a new one.
+    """
+    path = str(tmpdir.join("does_not_exist.yml"))
+    assert not os.path.exists(path)
+
+    with (
+        pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException) as excinfo,
+        vcr.use_cassette(path, record_mode=vcr.mode.NONE),
+    ):
+        # The exception is raised before any network access happens, so a
+        # non-routable URL is sufficient and keeps the test offline.
+        urlopen("http://vcr-regression-test.invalid/")
+
+    message = str(excinfo.value)
+    assert "does not exist" in message
+    assert "overwrite existing cassette" not in message
