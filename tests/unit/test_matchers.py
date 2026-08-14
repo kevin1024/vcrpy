@@ -337,3 +337,22 @@ def test_requests_match(mock_get_matchers_results, successes, failures, expected
     r2 = request.Request("GET", "http://host.com/p?a=b", "", {})
     match = matchers.requests_match(r1, r2, [matchers.method, matchers.path])
     assert match is expected_match
+
+
+def test_path_matcher_treats_empty_and_root_as_equal():
+    # httpx live requests use path=""; recorded cassettes often have path="/"
+    r1 = request.Request("POST", "https://example.com", b"{}", {})
+    r2 = request.Request("POST", "https://example.com/", b"{}", {})
+    assert matchers.path(r1, r2) is None
+    assert matchers.path(r2, r1) is None
+    assert matchers.uri(r1, r2) is None
+    assert matchers.uri(r2, r1) is None
+
+
+def test_path_matcher_still_distinguishes_non_root_trailing_slash():
+    r1 = request.Request("GET", "https://example.com/foo", "", {})
+    r2 = request.Request("GET", "https://example.com/foo/", "", {})
+    with pytest.raises(AssertionError):
+        matchers.path(r1, r2)
+    with pytest.raises(AssertionError):
+        matchers.uri(r1, r2)
