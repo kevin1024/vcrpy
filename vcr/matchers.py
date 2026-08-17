@@ -148,10 +148,13 @@ _checker_transformer_pairs = (
     (_header_checker("chunked", header="Transfer-Encoding"), _dechunk),
     (
         _header_checker("application/x-www-form-urlencoded"),
-        lambda body: urllib.parse.parse_qs(body.decode("ascii")),
+        lambda body: None if body is None else urllib.parse.parse_qs(body.decode("ascii")),
     ),
     (_header_checker("application/json"), _transform_json),
-    (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc.client.loads),
+    (
+        lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request),
+        lambda body: None if body is None else xmlrpc.client.loads(body),
+    ),
 )
 
 
