@@ -55,7 +55,9 @@ from vcr.cassette import Cassette
         # One matcher succeeded, must be already played
         (
             [("similar request", ["method", "path", "query"], [])],
-            "Found 1 recorded request(s) matching ('request') but they have already been consumed.\n",
+            "Found 1 recorded request(s) matching ('request') but they have already been consumed.\n"
+            "If you expect a recorded request to be played back more than once, "
+            "set allow_playback_repeats=True.\n",
         ),
     ],
 )

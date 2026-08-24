@@ -31,6 +31,8 @@ class CannotOverwriteExistingCassetteException(Exception):
                 best_matches_msg = (
                     f"Found {len(best_matches)} recorded request(s) matching ({failed_request!r}) "
                     f"but they have already been consumed.\n"
+                    "If you expect a recorded request to be played back more than once, "
+                    "set allow_playback_repeats=True.\n"
                 )
         else:
             best_matches_msg = "No similar requests, that have not been played, found."
