@@ -2,7 +2,11 @@ class CannotOverwriteExistingCassetteException(Exception):
     def __init__(self, *args, **kwargs):
         self.cassette = kwargs["cassette"]
         self.failed_request = kwargs["failed_request"]
-        message = self._get_message(kwargs["cassette"], kwargs["failed_request"])
+        # Allow callers to override the generated message (e.g. when the
+        # cassette file does not exist yet, the default "Can't overwrite
+        # existing cassette" wording is misleading).
+        self.message = kwargs.get("message")
+        message = self.message or self._get_message(kwargs["cassette"], kwargs["failed_request"])
         super().__init__(message)
 
     @staticmethod

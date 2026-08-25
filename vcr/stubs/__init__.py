@@ -1,6 +1,7 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
 import logging
+import os
 from contextlib import suppress
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
@@ -276,9 +277,23 @@ class VCRConnection:
             return VCRHTTPResponse(response, self._vcr_request.uri)
         else:
             if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
+                if os.path.exists(self.cassette._path):
+                    raise CannotOverwriteExistingCassetteException(
+                        cassette=self.cassette,
+                        failed_request=self._vcr_request,
+                    )
+                # The cassette file does not exist yet, so "overwriting" is
+                # the wrong frame: the real problem is that the current
+                # record mode forbids recording a new cassette.
                 raise CannotOverwriteExistingCassetteException(
                     cassette=self.cassette,
                     failed_request=self._vcr_request,
+                    message=(
+                        f"The cassette ({self.cassette._path!r}) does not exist and "
+                        f"your current record mode ({self.cassette.record_mode!r}) "
+                        f"does not allow recording new requests.\n"
+                        f"No match for the request ({self._vcr_request!r}) was found.\n"
+                    ),
                 )
 
             # Otherwise, we should send the request, then get the response

@@ -1,7 +1,10 @@
+import os
 from unittest import mock
+from urllib.request import urlopen
 
 import pytest
 
+import vcr
 from vcr import errors
 from vcr.cassette import Cassette
 
@@ -15,24 +18,28 @@ from vcr.cassette import Cassette
         # One matcher failed
         (
             [("similar request", ["method", "path"], [("query", "failed : query")])],
-            "Found 1 similar requests with 1 different matcher(s) :\n"
-            "\n1 - ('similar request').\n"
-            "Matchers succeeded : ['method', 'path']\n"
-            "Matchers failed :\n"
-            "query - assertion failure :\n"
-            "failed : query\n",
+            (
+                "Found 1 similar requests with 1 different matcher(s) :\n"
+                "\n1 - ('similar request').\n"
+                "Matchers succeeded : ['method', 'path']\n"
+                "Matchers failed :\n"
+                "query - assertion failure :\n"
+                "failed : query\n"
+            ),
         ),
         # Multiple failed matchers
         (
             [("similar request", ["method"], [("query", "failed : query"), ("path", "failed : path")])],
-            "Found 1 similar requests with 2 different matcher(s) :\n"
-            "\n1 - ('similar request').\n"
-            "Matchers succeeded : ['method']\n"
-            "Matchers failed :\n"
-            "query - assertion failure :\n"
-            "failed : query\n"
-            "path - assertion failure :\n"
-            "failed : path\n",
+            (
+                "Found 1 similar requests with 2 different matcher(s) :\n"
+                "\n1 - ('similar request').\n"
+                "Matchers succeeded : ['method']\n"
+                "Matchers failed :\n"
+                "query - assertion failure :\n"
+                "failed : query\n"
+                "path - assertion failure :\n"
+                "failed : path\n"
+            ),
         ),
         # Multiple similar requests
         (
@@ -40,17 +47,19 @@ from vcr.cassette import Cassette
                 ("similar request", ["method"], [("query", "failed : query")]),
                 ("similar request 2", ["method"], [("query", "failed : query 2")]),
             ],
-            "Found 2 similar requests with 1 different matcher(s) :\n"
-            "\n1 - ('similar request').\n"
-            "Matchers succeeded : ['method']\n"
-            "Matchers failed :\n"
-            "query - assertion failure :\n"
-            "failed : query\n"
-            "\n2 - ('similar request 2').\n"
-            "Matchers succeeded : ['method']\n"
-            "Matchers failed :\n"
-            "query - assertion failure :\n"
-            "failed : query 2\n",
+            (
+                "Found 2 similar requests with 1 different matcher(s) :\n"
+                "\n1 - ('similar request').\n"
+                "Matchers succeeded : ['method']\n"
+                "Matchers failed :\n"
+                "query - assertion failure :\n"
+                "failed : query\n"
+                "\n2 - ('similar request 2').\n"
+                "Matchers succeeded : ['method']\n"
+                "Matchers failed :\n"
+                "query - assertion failure :\n"
+                "failed : query 2\n"
+            ),
         ),
         # One matcher succeeded, must be already played
         (
@@ -75,3 +84,28 @@ def test_CannotOverwriteExistingCassetteException_get_message(
         f"{expected_message}"
     )
     assert exception_message == expected
+
+
+def test_none_record_mode_missing_cassette_message(tmpdir):
+    """Regression test for #838.
+
+    When the cassette does not exist and the record mode forbids recording
+    (e.g. ``none``), the raised ``CannotOverwriteExistingCassetteException``
+    must not claim we are "overwriting an existing cassette" — there is no
+    cassette to overwrite. The message should explain that the cassette is
+    missing and the current record mode does not allow recording a new one.
+    """
+    path = str(tmpdir.join("does_not_exist.yml"))
+    assert not os.path.exists(path)
+
+    with (
+        pytest.raises(vcr.errors.CannotOverwriteExistingCassetteException) as excinfo,
+        vcr.use_cassette(path, record_mode=vcr.mode.NONE),
+    ):
+        # The exception is raised before any network access happens, so a
+        # non-routable URL is sufficient and keeps the test offline.
+        urlopen("http://vcr-regression-test.invalid/")
+
+    message = str(excinfo.value)
+    assert "does not exist" in message
+    assert "overwrite existing cassette" not in message
