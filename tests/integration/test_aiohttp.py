@@ -8,6 +8,8 @@ import pytest_httpbin.certs
 import yarl
 
 import vcr
+from vcr.request import Request
+from vcr.stubs.aiohttp_stubs import build_response
 
 asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")
@@ -69,6 +71,23 @@ def test_headers(tmpdir, auth, httpbin):
         assert cassette.play_count == 1
         assert "istr" not in cassette.data[0]
         assert "yarl.URL" not in cassette.data[0]
+
+
+def test_replayed_response_exposes_raw_headers():
+    vcr_request = Request("GET", "https://example.com", None, {})
+    vcr_response = {
+        "status": {"code": 200, "message": "OK"},
+        "headers": {"Content-Type": ["text/plain"], "X-Repeated": ["first", "second"]},
+        "body": {"string": b"response"},
+    }
+
+    response = build_response(vcr_request, vcr_response, [])
+
+    assert response.raw_headers == (
+        (b"Content-Type", b"text/plain"),
+        (b"X-Repeated", b"first"),
+        (b"X-Repeated", b"second"),
+    )
 
 
 @pytest.mark.online

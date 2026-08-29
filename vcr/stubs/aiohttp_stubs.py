@@ -97,6 +97,13 @@ def build_response(vcr_request, vcr_response, history):
     response._body = vcr_response["body"].get("string", b"")
     response.reason = vcr_response["status"]["message"]
     response._headers = _deserialize_headers(vcr_response["headers"])
+    response._raw_headers = tuple(
+        (
+            name.encode("utf-8", "surrogateescape"),
+            value.encode("utf-8", "surrogateescape"),
+        )
+        for name, value in response._headers.items()
+    )
     response._history = tuple(history)
     # cookies
     for hdr in response.headers.getall(hdrs.SET_COOKIE, ()):
