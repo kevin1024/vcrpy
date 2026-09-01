@@ -1,6 +1,7 @@
 import copy
 import functools
 import inspect
+import logging
 import os
 import types
 from collections import abc as collections_abc
@@ -12,6 +13,8 @@ from .persisters.filesystem import FilesystemPersister
 from .record_mode import RecordMode, validate_record_mode
 from .serializers import jsonserializer, yamlserializer
 from .util import auto_decorate, compose
+
+log = logging.getLogger(__name__)
 
 
 class VCR:
@@ -223,7 +226,7 @@ class VCR:
             filter_functions.extend(before_record_request)
 
         def before_record_request(request):
-            request = copy.deepcopy(request)
+            request = self._copy_request(request)
             for function in filter_functions:
                 if request is None:
                     break
@@ -231,6 +234,22 @@ class VCR:
             return request
 
         return before_record_request
+
+    @staticmethod
+    def _copy_request(request):
+        """Copy a request so that filter functions never mutate the original.
+
+        A request body can hold objects that refuse to be copied -- e.g. an
+        open file being uploaded -- in which case filtering the request in
+        place is far better than failing to record or play it back at all.
+
+        Fixes #737.
+        """
+        try:
+            return copy.deepcopy(request)
+        except (AttributeError, TypeError, ValueError, copy.Error):
+            log.warning("Could not copy request %s, filtering it in place", request)
+            return request
 
     @staticmethod
     def _build_ignore_hosts(hosts_to_ignore):
