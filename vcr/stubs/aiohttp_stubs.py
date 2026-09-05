@@ -254,6 +254,32 @@ def _build_cookie_header(session, cookies, cookie_header, url):
     return c.output(header="", sep=";").strip()
 
 
+def _read_open_files(data):
+    """Read any file-like values out of a form-data mapping.
+
+    ``aiohttp`` accepts things like ``data={"file": open(path, "rb")}`` and
+    only reads the handle when the request is actually sent, well after this
+    stub has already built a :class:`~vcr.request.Request` out of ``data`` for
+    matching/recording. An open file object can't be deep-copied or dumped to
+    a cassette, so replace any such value with its bytes content here. The
+    caller's original ``kwargs`` (and thus the handle passed to the real
+    request) is left untouched, and the handle's position is restored so the
+    real request still reads from the start.
+    """
+    if not isinstance(data, Mapping):
+        return data
+    result = {}
+    for key, value in data.items():
+        if hasattr(value, "read"):
+            pos = value.tell() if hasattr(value, "tell") else None
+            result[key] = value.read()
+            if pos is not None:
+                value.seek(pos)
+        else:
+            result[key] = value
+    return result
+
+
 def _build_url_with_params(url_str: str, params: Mapping[str, str | int | float]) -> URL:
     # This code is basically a copy&paste of aiohttp.
     # https://github.com/aio-libs/aiohttp/blob/master/aiohttp/client_reqrep.py#L225
@@ -287,7 +313,7 @@ def vcr_request(cassette, real_request):
         if cookie_header:
             headers[hdrs.COOKIE] = cookie_header
 
-        vcr_request = Request(method, str(request_url), data, _serialize_headers(headers))
+        vcr_request = Request(method, str(request_url), _read_open_files(data), _serialize_headers(headers))
 
         if cassette.can_play_response_for(vcr_request):
             log.info(f"Playing response for {vcr_request} from cassette")

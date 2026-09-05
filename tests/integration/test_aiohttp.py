@@ -515,3 +515,29 @@ def test_use_cassette_with_io(tmpdir, caplog, httpbin):
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
         _, response_json = request("POST", url, output="json", data=data)
         assert response_json["data"] == "hello"
+
+
+def test_upload_file_object_in_form_data(tmpdir, httpbin):
+    # A dict passed as `data` can hold an open file (multipart upload), not
+    # just plain values. Recording that used to crash because vcrpy tries to
+    # deepcopy the request body for its filters, and file handles aren't
+    # deepcopy-able. See GH #737.
+    url = httpbin.url + "/post"
+    upload_path = str(tmpdir.join("upload.txt"))
+    with open(upload_path, "w") as f:
+        f.write("hello world")
+
+    cassette_path = str(tmpdir.join("upload.yaml"))
+
+    with vcr.use_cassette(cassette_path) as cassette:
+        with open(upload_path, "rb") as fh:
+            _, response_json = request("POST", url, output="json", data={"file": fh})
+        assert "hello world" in response_json["files"]["file"]
+        assert cassette.play_count == 0
+
+    # and it should replay correctly too, without ever touching the file again
+    with vcr.use_cassette(cassette_path) as cassette:
+        with open(upload_path, "rb") as fh:
+            _, response_json = request("POST", url, output="json", data={"file": fh})
+        assert "hello world" in response_json["files"]["file"]
+        assert cassette.play_count == 1
