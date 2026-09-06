@@ -54,17 +54,17 @@ def test_status(tmpdir, httpbin):
 
 
 @pytest.mark.online
-@pytest.mark.parametrize("auth", [None, aiohttp.BasicAuth("vcrpy", "test")])
-def test_headers(tmpdir, auth, httpbin):
+@pytest.mark.parametrize("headers", [None, {"Authorization": aiohttp.encode_basic_auth("vcrpy", "test")}])
+def test_headers(tmpdir, headers, httpbin):
     url = httpbin.url
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
-        response, _ = get(url, auth=auth)
+        response, _ = get(url, headers=headers)
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))) as cassette:
-        if auth is not None:
+        if headers is not None:
             request = cassette.requests[0]
             assert "AUTHORIZATION" in request.headers
-        cassette_response, _ = get(url, auth=auth)
+        cassette_response, _ = get(url, headers=headers)
         assert cassette_response.headers.items() == response.headers.items()
         assert cassette.play_count == 1
         assert "istr" not in cassette.data[0]
