@@ -200,6 +200,28 @@ def test_before_record_response():
     assert cassette.responses[0] == "mutated"
 
 
+def test_before_record_response_is_called_when_loading_existing_cassette(tmpdir):
+    file = tmpdir.join("test_cassette.yml")
+    file.write(
+        yaml.dump(
+            {
+                "interactions": [
+                    {
+                        "request": {"body": "", "uri": "foo", "method": "GET", "headers": {}},
+                        "response": "bar",
+                    },
+                ],
+            },
+        ),
+    )
+
+    before_record_response = mock.Mock(return_value="baz")
+    cassette = Cassette.load(path=str(file), before_record_response=before_record_response)
+
+    before_record_response.assert_called_once_with("bar")
+    assert cassette.responses[0] == "baz"
+
+
 def assert_get_response_body_is(value):
     conn = httplib.HTTPConnection("www.python.org")
     conn.request("GET", "/index.html")
