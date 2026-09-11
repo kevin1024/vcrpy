@@ -119,6 +119,39 @@ def test_all_record_mode(tmpdir, httpbin):
         # the source and bypass the cassette.
         assert cass.play_count == 0
 
+    with vcr.use_cassette(testfile, record_mode=vcr.mode.NONE) as cass:
+        assert len(cass) == 3
+
+
+@pytest.mark.parametrize("record_mode", ["replace", vcr.mode.REPLACE])
+@pytest.mark.parametrize("drop_unused_requests", [False, True])
+def test_replace_record_mode(tmpdir, httpbin, record_mode, drop_unused_requests):
+    testfile = str(tmpdir.join("recordmode.yml"))
+    url = httpbin.url + "/bytes/1024"
+    unused_url = httpbin.url + "/get"
+    with vcr.use_cassette(testfile):
+        urlopen(url).read()
+        urlopen(unused_url).read()
+
+    with vcr.use_cassette(
+        testfile,
+        record_mode=record_mode,
+        drop_unused_requests=drop_unused_requests,
+        allow_playback_repeats=True,
+    ) as cass:
+        assert len(cass) == 0
+        first_response = urlopen(url).read()
+        second_response = urlopen(url).read()
+        assert cass.play_count == 0
+        assert len(cass) == 2
+
+    with vcr.use_cassette(testfile, record_mode=vcr.mode.NONE) as cass:
+        assert urlopen(url).read() == first_response
+        assert urlopen(url).read() == second_response
+        assert cass.all_played
+        with pytest.raises(CannotOverwriteExistingCassetteException):
+            urlopen(unused_url).read()
+
 
 def test_none_record_mode(tmpdir, httpbin):
     # Cassette file doesn't exist, yet we are trying to make a request.
