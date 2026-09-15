@@ -3,7 +3,7 @@
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 3b3f7c3f57fe9925356faf5fe6230835138be230  # frozen: v0.15.17
+    rev: e8f7d69b957a30acb2c875078d5fd012de24b64c  # frozen: v0.16.7
     hooks:
       - id: ruff
         args: ["--output-format=full"]
