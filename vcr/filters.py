@@ -150,22 +150,32 @@ def replace_post_data_parameters(request, replacements):
         else:
             if isinstance(request.body, str):
                 request.body = request.body.encode("utf-8")
-            splits = [p.partition(b"=") for p in request.body.split(b"&")]
-            new_splits = []
-            for k, sep, ov in splits:
-                if sep is None:
-                    new_splits.append((k, sep, ov))
-                else:
-                    rk = k.decode("utf-8")
-                    if rk not in replacements:
+            try:
+                splits = [p.partition(b"=") for p in request.body.split(b"&")]
+                new_splits = []
+                for k, sep, ov in splits:
+                    if sep is None:
                         new_splits.append((k, sep, ov))
                     else:
-                        rv = replacements[rk]
-                        if callable(rv):
-                            rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
-                        if rv is not None:
-                            new_splits.append((k, sep, rv.encode("utf-8")))
-            request.body = b"&".join(k if sep is None else b"".join([k, sep, v]) for k, sep, v in new_splits)
+                        rk = k.decode("utf-8")
+                        if rk not in replacements:
+                            new_splits.append((k, sep, ov))
+                        else:
+                            rv = replacements[rk]
+                            if callable(rv):
+                                rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
+                            if rv is not None:
+                                new_splits.append((k, sep, rv.encode("utf-8")))
+                request.body = b"&".join(
+                    k if sep is None else b"".join([k, sep, v]) for k, sep, v in new_splits
+                )
+            except UnicodeDecodeError:
+                # request.body isn't actually application/x-www-form-urlencoded data
+                # (e.g. raw binary or multipart/form-data posted as bytes/bytearray
+                # instead of a BytesIO, which is handled separately above). There's
+                # nothing sensible to filter here, so leave the body untouched rather
+                # than crash the whole recording.
+                pass
     return request
 
 
