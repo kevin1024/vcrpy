@@ -3,6 +3,19 @@ import io
 from vcr.stubs import VCRHTTPResponse
 
 
+def test_replayed_response_can_release_connection():
+    response = VCRHTTPResponse(
+        {
+            "status": {"message": "OK", "code": 200},
+            "headers": {},
+            "body": {"string": b"recorded body"},
+        },
+    )
+
+    assert response.read() == b"recorded body"
+    assert response.release_conn() is None
+
+
 def test_response_should_have_headers_field():
     recorded_response = {
         "status": {"message": "OK", "code": 200},
