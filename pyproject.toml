@@ -9,7 +9,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -21,7 +20,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 urls = {Homepage = "https://github.com/kevin1024/vcrpy"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "PyYAML",
     "wrapt",
@@ -43,7 +42,7 @@ tests = [
     "httpx-curl-cffi",
     "httpx2",
     "pycurl; platform_python_implementation != 'PyPy'",
-    "pyreqwest; python_version >= '3.11'",
+    "pyreqwest",
     "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
@@ -89,7 +88,7 @@ markers = ["online"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
