@@ -291,6 +291,33 @@ def test_cassette_library_dir_with_path_transformer():
     function_name()
 
 
+@pytest.mark.parametrize("library_dir_type", [str, Path])
+@pytest.mark.parametrize("path_type", [str, Path])
+@pytest.mark.parametrize("cassette_name", ["custom_name", os.path.join("/library_dir", "custom_name")])
+def test_cassette_library_dir_accepts_pathlike(library_dir_type, path_type, cassette_name):
+    vcr = VCR(inject_cassette=True, cassette_library_dir=library_dir_type("/library_dir"))
+
+    @vcr.use_cassette(path_type(cassette_name))
+    def function_name(cassette):
+        assert cassette._path == os.path.join("/library_dir", "custom_name")
+
+    function_name()
+
+
+def test_cassette_library_dir_with_pathlike_func_path_generator():
+    vcr = VCR(
+        inject_cassette=True,
+        cassette_library_dir="/library_dir",
+        func_path_generator=lambda function: Path(function.__name__),
+    )
+
+    @vcr.use_cassette
+    def function_name(cassette):
+        assert cassette._path == os.path.join("/library_dir", "function_name")
+
+    function_name()
+
+
 def test_use_cassette_with_no_extra_invocation():
     vcr = VCR(inject_cassette=True, cassette_library_dir="/")
 
@@ -327,6 +354,16 @@ def test_ensure_suffix():
     @vcr.use_cassette
     def function_name(cassette):
         assert cassette._path == os.path.join(os.path.dirname(__file__), "function_name.yaml")
+
+    function_name()
+
+
+def test_ensure_suffix_with_pathlike():
+    vcr = VCR(inject_cassette=True, path_transformer=VCR.ensure_suffix(".yaml"))
+
+    @vcr.use_cassette(Path("custom_name"))
+    def function_name(cassette):
+        assert cassette._path == "custom_name.yaml"
 
     function_name()
 
