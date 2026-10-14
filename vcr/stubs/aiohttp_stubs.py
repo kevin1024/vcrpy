@@ -27,20 +27,32 @@ _CLIENT_RESPONSE_PARAMS = inspect.signature(ClientResponse.__init__).parameters
 _CLIENT_RESPONSE_ACCEPTS_STREAM_WRITER = "stream_writer" in _CLIENT_RESPONSE_PARAMS
 
 
-class MockStream(asyncio.StreamReader):
-    # aiohttp added the async-iteration helpers below to its response stream via
-    # ``streams.AsyncStreamReaderMixin``, which aiohttp 3.14 removed (folding the
-    # helpers into its own ``StreamReader``). This stub builds on
-    # ``asyncio.StreamReader`` instead, so provide the helpers directly to keep the
-    # streaming surface stable across aiohttp versions.
-    def iter_chunked(self, n):
-        return streams.AsyncStreamIterator(lambda: self.read(n))
+class _NoConnection:
+    # Stands in for the protocol that aiohttp's ``StreamReader`` expects. A
+    # ``MockStream`` gets its whole body up front, so there is no connection to
+    # pause, resume or wait on.
+    _reading_paused = False
+    connected = False
 
-    def iter_any(self):
-        return streams.AsyncStreamIterator(self.readany)
+    def pause_reading(self):
+        pass
 
-    def iter_chunks(self):
-        return streams.ChunkTupleAsyncStreamIterator(self)
+    def resume_reading(self, resume_parser=True):
+        pass
+
+
+class MockStream(streams.StreamReader):
+    # aiohttp's own ``StreamReader``, holding a body known up front, so ``response.content``
+    # offers its whole API (``iter_any``, ``iter_chunks``, ``readuntil``, ``is_eof``, ...)
+    # with aiohttp's behavior, whatever the aiohttp version.
+    def __init__(self, body):
+        body = body or b""
+        # aiohttp refuses lines longer than twice ``limit``, which a live session sets
+        # from its ``read_bufsize``. Size it from the body, so no line in it is refused.
+        limit = max(len(body), 2**16)
+        super().__init__(_NoConnection(), limit, loop=asyncio.get_running_loop())
+        self.feed_data(body)
+        self.feed_eof()
 
 
 class MockClientResponse(ClientResponse):
@@ -77,13 +89,6 @@ class MockClientResponse(ClientResponse):
     def release(self):
         pass
 
-    @property
-    def content(self):
-        s = MockStream()
-        s.feed_data(self._body)
-        s.feed_eof()
-        return s
-
 
 def build_response(vcr_request, vcr_response, history):
     request_info = RequestInfo(
@@ -112,6 +117,10 @@ def build_response(vcr_request, vcr_response, history):
             log.warning("Can not load response cookies: %s", exc)
 
     response.close()
+    # Like aiohttp, give the response a single stream, so successive reads (e.g. a
+    # ``readline()`` loop) advance through the body. Set it after ``close()``: the first
+    # ``close()`` marks the response's stream as closed, and later ones leave it alone.
+    response.content = MockStream(response._body)
     return response
 
 
@@ -184,6 +193,12 @@ async def record_response(cassette, vcr_request, response):
     # there is no body. We can use this to know to not write one.
     except ClientConnectionError:
         body = {}
+    else:
+        # Reading the body for the cassette drained the response's stream, so give
+        # the caller a fresh one to stream from. An empty body leaves aiohttp's own
+        # stream in place: it is already at EOF, and behaves as it would without vcr.
+        if body["string"]:
+            response.content = MockStream(body["string"])
 
     vcr_response = {
         "status": {"code": response.status, "message": response.reason},

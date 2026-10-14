@@ -13,7 +13,7 @@ asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")
 
 
-from .aiohttp_utils import aiohttp_app, aiohttp_request  # noqa: E402
+from .aiohttp_utils import LONG_LINE_BODY, aiohttp_app, aiohttp_request  # noqa: E402
 
 HTTPBIN_SSL_CONTEXT = ssl.create_default_context(cafile=pytest_httpbin.certs.where())
 
@@ -125,30 +125,59 @@ def test_binary(tmpdir, httpbin):
 
 
 @pytest.mark.online
-def test_stream(tmpdir, httpbin):
-    url = httpbin.url
-
-    with vcr.use_cassette(str(tmpdir.join("stream.yaml"))):
-        _, body = get(url, output="raw")  # Do not use stream here, as the stream is exhausted by vcr
+@pytest.mark.parametrize(
+    "output",
+    ["stream", "stream_chunked", "stream_any", "stream_chunks", "stream_lines", "stream_until"],
+)
+@pytest.mark.parametrize(
+    "path",
+    [
+        "",
+        # One 100 KiB line (``/range`` has no newlines), past the 64 KiB line
+        # limit of ``asyncio.StreamReader``.
+        "/range/102400",
+    ],
+)
+def test_stream(tmpdir, httpbin, output, path):
+    # Exercises the streaming surface (``content.read``, ``readline``, ``readuntil``
+    # and the ``iter_*`` helpers) that ``MockStream`` must keep providing across
+    # aiohttp versions, both while recording and on replay.
+    url = httpbin.url + path
 
     with vcr.use_cassette(str(tmpdir.join("stream.yaml"))) as cassette:
-        _, cassette_body = get(url, output="stream")
+        response, body = get(url, output=output)
+        assert response.status == 200
+        assert body
+        assert body == cassette.responses[0]["body"]["string"]
+        assert isinstance(response.content, aiohttp.StreamReader)
+
+    with vcr.use_cassette(str(tmpdir.join("stream.yaml"))) as cassette:
+        response, cassette_body = get(url, output=output)
         assert cassette_body == body
         assert cassette.play_count == 1
+        assert isinstance(response.content, aiohttp.StreamReader)
 
 
 @pytest.mark.online
-def test_stream_chunked(tmpdir, httpbin):
-    # Exercises the async-iteration surface (``content.iter_chunked``) that
-    # ``MockStream`` must keep providing across aiohttp versions.
-    url = httpbin.url
+@pytest.mark.parametrize("method, path", [("GET", "/status/204"), ("GET", "/status/304"), ("HEAD", "/get")])
+def test_bodiless_response_content_after_close(tmpdir, httpbin, method, path):
+    # aiohttp gives bodiless responses a stream that stays readable (b"") after
+    # the response is closed; recording must not swap it for one that raises.
+    url = httpbin.url + path
 
-    with vcr.use_cassette(str(tmpdir.join("stream.yaml"))):
-        _, body = get(url, output="raw")  # Do not use stream here, as the stream is exhausted by vcr
+    def read_content(response):
+        async def go(loop):
+            return await response.content.read()
 
-    with vcr.use_cassette(str(tmpdir.join("stream.yaml"))) as cassette:
-        _, cassette_body = get(url, output="stream_chunked")
-        assert cassette_body == body
+        return run_in_loop(go)
+
+    with vcr.use_cassette(str(tmpdir.join("bodiless.yaml"))):
+        response, _ = request(method, url, output="raw")
+        assert read_content(response) == b""
+
+    with vcr.use_cassette(str(tmpdir.join("bodiless.yaml"))) as cassette:
+        response, _ = request(method, url, output="raw")
+        assert read_content(response) == b""
         assert cassette.play_count == 1
 
 
@@ -301,6 +330,24 @@ def test_aiohttp_test_client_json(aiohttp_client, tmpdir):
     response_json = loop.run_until_complete(response.json())
     assert response_json is None
     assert cassette.play_count == 1
+
+
+def test_aiohttp_test_client_long_line(aiohttp_client, tmpdir):
+    # Clients such as google-genai raise ``read_bufsize`` to read long lines of
+    # server-sent events. Recorded and replayed bodies must not refuse them.
+    loop = asyncio.get_event_loop()
+    client = loop.run_until_complete(aiohttp_client(aiohttp_app(), read_bufsize=2**20))
+
+    async def read_lines():
+        response = await client.get("/long-line")
+        return b"".join([line async for line in response.content])
+
+    with vcr.use_cassette(str(tmpdir.join("long_line.yaml"))):
+        assert loop.run_until_complete(read_lines()) == LONG_LINE_BODY
+
+    with vcr.use_cassette(str(tmpdir.join("long_line.yaml"))) as cassette:
+        assert loop.run_until_complete(read_lines()) == LONG_LINE_BODY
+        assert cassette.play_count == 1
 
 
 @pytest.mark.online

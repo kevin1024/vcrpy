@@ -3,6 +3,12 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Fix aiohttp response bodies being empty when streamed from ``response.content`` while recording a cassette (#502, #1055) - thanks @pylaterreur
+    - Fix aiohttp ``response.content`` restarting from the start of the body on each access when replaying, which made ``readline()`` loops (e.g. google-genai streaming) never end (#927, #1055) - thanks @pylaterreur
+    - Make ``response.content`` an aiohttp ``StreamReader`` when replaying aiohttp responses, as it is when recording: ``iter_any()`` and ``iter_chunks()`` no longer raise ``AttributeError``, lines over 64 KiB are no longer refused, and ``readuntil()``, ``is_eof()``, ``total_bytes`` and the rest of its API work (#1055) - thanks @pylaterreur
+    - If your tests patch ``vcr.stubs.aiohttp_stubs`` to work around #502 or #927 (e.g. overriding ``MockClientResponse.content``, or putting the recorded body back with ``unread_data()``), remove the patch: it is no longer needed, and no longer works (#1055)
+
 -  8.3.0
     - Add support for niquests (#980) - thanks @ionelmc
     - Refuse to record a cassette containing a Python object the safe YAML loader could not read back, so recording fails fast instead of producing a cassette that breaks on replay (#1007, #1009) - thanks @Polandia94
