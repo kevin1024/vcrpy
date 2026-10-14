@@ -174,6 +174,10 @@ class VCRHTTPResponse(HTTPResponse):
     def drain_conn(self):
         pass
 
+    def release_conn(self):
+        # A replayed response has no connection to return to a pool.
+        pass
+
     def stream(self, amt=65536, decode_content=None):
         while True:
             b = self._content.read(amt)
