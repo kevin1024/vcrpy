@@ -154,6 +154,22 @@ def test_replace_post_data_parameters_empty_body():
     assert request.body is None
 
 
+def test_replace_post_data_parameters_binary_body():
+    # This tests that filtering doesn't crash when the POST body is raw
+    # binary data (e.g. multipart/form-data posted as bytes/bytearray
+    # instead of a BytesIO) that isn't actually urlencoded key=value pairs,
+    # even if it happens to contain a b"=" byte before a b"&" split point.
+    body = b"field1=value1&\xff\xfe=somevalue&field3=value3"
+    request = Request(
+        "POST",
+        "http://example.com",
+        body,
+        {"Content-Type": "multipart/form-data; boundary=boundary"},
+    )
+    replace_post_data_parameters(request, [("secret", "REDACTED")])
+    assert request.body == body
+
+
 def test_remove_post_data_parameters():
     # Test the backward-compatible API wrapper.
     body = b"id=secret&foo=bar"
