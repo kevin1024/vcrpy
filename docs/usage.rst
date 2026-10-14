@@ -46,7 +46,7 @@ for more details.
 Record Modes
 ------------
 
-VCR supports 4 record modes (with the same behavior as Ruby's VCR):
+VCR supports the following record modes:
 
 once
 ~~~~
@@ -83,11 +83,23 @@ none
 all
 ~~~
 
--  Record new interactions.
--  Never replay previously recorded interactions. This can be
-   temporarily used to force VCR to re-record a cassette (i.e. to ensure
-   the responses are not out of date) or can be used when you simply
-   want to log all HTTP requests.
+-  Record new interactions, appending them to any existing cassette.
+-  Never replay previously recorded interactions. Use this mode to log
+   all HTTP requests without removing existing recordings.
+
+replace
+~~~~~~~
+
+-  Ignore any existing cassette and record all new interactions.
+-  Never replay interactions, including ones recorded in the same context.
+-  Replace the cassette when the context exits, even if no interactions
+   were recorded or all interactions were filtered out.
+
+Use ``record_mode='replace'`` to regenerate a cassette without manually
+deleting it. Existing interactions are not loaded or passed to recording
+filters. The existing cassette remains unchanged until the normal save
+step. With ``record_on_exception=False``, it is preserved if the context
+exits with an exception.
 
 Unittest Integration
 --------------------

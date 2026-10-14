@@ -14,6 +14,7 @@ class RecordMode(str, Enum):
     `NONE`: No requests are recorded.
     `ONCE`:  First set of requests is recorded, all others are replayed.
     Attempting to add a new episode fails.
+    `REPLACE`: Every request is recorded, replacing any existing cassette.
     """
 
     ALL = "all"
@@ -21,6 +22,7 @@ class RecordMode(str, Enum):
     NEW_EPISODES = "new_episodes"
     NONE = "none"
     ONCE = "once"
+    REPLACE = "replace"
 
 
 def validate_record_mode(record_mode):

@@ -253,7 +253,12 @@ class Cassette:
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        return request and request in self and self.record_mode != RecordMode.ALL and self.rewound
+        return (
+            request
+            and request in self
+            and self.record_mode not in (RecordMode.ALL, RecordMode.REPLACE)
+            and self.rewound
+        )
 
     def play_response(self, request):
         """
@@ -358,6 +363,11 @@ class Cassette:
             self.dirty = False
 
     def _load(self):
+        if self.record_mode == RecordMode.REPLACE:
+            # Save even an empty replacement rather than retaining old interactions.
+            self.dirty = True
+            return
+
         try:
             requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
             for request, response in zip(requests, responses, strict=False):
