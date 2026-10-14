@@ -72,7 +72,8 @@ class VCRHTTPResponse(HTTPResponse):
         self.version_string = None
         self._content = BytesIO(self.recorded_response["body"]["string"])
         self._closed = False
-        self._original_response = self  # for requests.session.Session cookie extraction
+        if recorded_response.get("has_original_response", True):
+            self._original_response = self  # for requests.session.Session cookie extraction
 
         headers = self.recorded_response["headers"]
         # Since we are loading a response that has already been serialized, our
@@ -299,6 +300,7 @@ class VCRConnection:
 
             # get the response
             response = self.real_connection.getresponse()
+            has_original_response = bool(getattr(response, "_original_response", None))
             response_data = response.data if hasattr(response, "data") else response.read()
 
             # put the response into the cassette
@@ -306,6 +308,7 @@ class VCRConnection:
                 "status": {"code": response.status, "message": response.reason},
                 "headers": serialize_headers(response),
                 "body": {"string": response_data},
+                "has_original_response": has_original_response,
             }
             self.cassette.append(self._vcr_request, response)
         return VCRHTTPResponse(response, self._vcr_request.uri)
