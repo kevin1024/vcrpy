@@ -9,6 +9,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Add ``vcr.serializers.yamlserializer.with_custom_tags`` to build a YAML serializer supporting custom Python object tags on both record and replay, registered per VCR instance via ``register_serializer`` (#1007, #1009) - thanks @Polandia94
     - Clearer error when a cassette contains an unsupported YAML tag, and remove the stale git.io migration link (#1007, #1008) - thanks @gaoflow
     - Fix stale keep-alive connection reuse across cassettes; unpin werkzeug (#1001)
+    - Return urllib3 response headers as ``HTTPHeaderDict`` instead of ``HTTPMessage`` (#841) - thanks @Sanjays2402
 
 -  8.2.1
     - SECURITY: Load cassettes with a safe YAML loader, preventing arbitrary code execution when a cassette from an untrusted source is loaded (GHSA-rpj2-4hq8-938g) - thanks @RamiAltai and @EQSTLab
