@@ -3,6 +3,9 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Make the urllib3 POST test send its form fields again: since urllib3 2.0 it sent the dict as a chunked body, which the local httpbin server rejects, so the test failed now and then with ``BrokenPipeError`` - thanks @pylaterreur
+
 -  8.3.0
     - Add support for niquests (#980) - thanks @ionelmc
     - Refuse to record a cassette containing a Python object the safe YAML loader could not read back, so recording fails fast instead of producing a cassette that breaks on replay (#1007, #1009) - thanks @Polandia94
