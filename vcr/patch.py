@@ -14,6 +14,14 @@ log = logging.getLogger(__name__)
 _HTTPConnection = httplib.HTTPConnection
 _HTTPSConnection = httplib.HTTPSConnection
 
+try:
+    from curl_cffi import requests as curl_requests
+except ImportError:
+    pass
+else:
+    _CurlSession_request = curl_requests.Session.request
+    _CurlAsyncSession_request = curl_requests.AsyncSession.request
+
 # Try to save the original types for boto3
 try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
@@ -160,6 +168,7 @@ class CassettePatcherBuilder:
             self._aiohttp(),
             self._httpx(),
             self._httpx2(),
+            self._curl_cffi(),
             self._build_patchers_from_mock_triples(self._cassette.custom_patches),
         )
 
@@ -342,6 +351,17 @@ class CassettePatcherBuilder:
             yield client.ClientSession, "_request", new_request
 
     @_build_patchers_from_mock_triples_decorator
+    def _curl_cffi(self):
+        try:
+            from curl_cffi import requests as curl_requests
+        except ImportError:
+            return
+        from .stubs.curl_cffi_stubs import vcr_request
+
+        yield curl_requests.Session, "request", vcr_request(self._cassette, _CurlSession_request)
+        yield curl_requests.AsyncSession, "request", vcr_request(self._cassette, _CurlAsyncSession_request)
+
+    @_build_patchers_from_mock_triples_decorator
     def _httpx(self):
         try:
             import httpx
@@ -385,14 +405,19 @@ class CassettePatcherBuilder:
         except ImportError:  # pragma: no cover
             pass
         else:
+            from .stubs.curl_cffi_stubs import _without_native_cassette
             from .stubs.httpx_stubs import vcr_handle_async_request, vcr_handle_request
 
-            new_handle_request = vcr_handle_request(self._cassette, _HttpxCurlTransport_handle_request, httpx)
+            new_handle_request = vcr_handle_request(
+                self._cassette,
+                _without_native_cassette(_HttpxCurlTransport_handle_request),
+                httpx,
+            )
             yield httpx_curl_cffi.CurlTransport, "handle_request", new_handle_request
 
             new_handle_async_request = vcr_handle_async_request(
                 self._cassette,
-                _HttpxAsyncCurlTransport_handle_async_request,
+                _without_native_cassette(_HttpxAsyncCurlTransport_handle_async_request),
                 httpx,
             )
             yield httpx_curl_cffi.AsyncCurlTransport, "handle_async_request", new_handle_async_request
@@ -569,6 +594,14 @@ class ConnectionRemover:
 def reset_patchers():
     yield mock.patch.object(httplib, "HTTPConnection", _HTTPConnection)
     yield mock.patch.object(httplib, "HTTPSConnection", _HTTPSConnection)
+
+    try:
+        from curl_cffi import requests as curl_requests
+    except ImportError:
+        pass
+    else:
+        yield mock.patch.object(curl_requests.Session, "request", _CurlSession_request)
+        yield mock.patch.object(curl_requests.AsyncSession, "request", _CurlAsyncSession_request)
 
     try:
         import urllib3.connection as conn

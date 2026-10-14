@@ -15,6 +15,7 @@ The following HTTP libraries are supported:
 
 -  ``aiohttp``
 -  ``boto3``
+-  ``curl_cffi`` (0.16.3, native ``Session`` and ``AsyncSession``)
 -  ``http.client``
 -  ``httplib2``
 -  ``requests`` (>=2.16.2 versions)
@@ -23,6 +24,17 @@ The following HTTP libraries are supported:
 -  ``urllib3``
 -  ``httpx``
 -  ``httpx2``
+
+Native ``curl_cffi`` streaming responses are buffered while recording and
+replaying. Their complete content is available through the usual synchronous
+and asynchronous iterators and streaming context managers; chunk boundaries
+and timing are not preserved.
+
+Native request matching supports base URLs, parameters, explicit headers,
+cookies, HTTP Basic authentication, referrers, form and JSON bodies, and raw
+buffers or seekable binary files. Multipart and iterated uploads, response
+callbacks, and fingerprint-specific or low-level curl options are outside
+this integration's request-option coverage.
 
 Speed
 -----
