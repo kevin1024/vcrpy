@@ -16,9 +16,25 @@ def method(r1, r2):
         raise AssertionError(f"{r1.method} != {r2.method}")
 
 
+def _normalized_path(path):
+    """RFC 3986 section 6.2.3: an empty path is equivalent to "/"."""
+    return path if path else "/"
+
+
 def uri(r1, r2):
-    if r1.uri != r2.uri:
-        raise AssertionError(f"{r1.uri} != {r2.uri}")
+    if r1.uri == r2.uri:
+        return
+    # httpx records bare-host URLs as https://example.com; cassettes often
+    # store the RFC-canonical https://example.com/. Treat those as the same.
+    if (
+        _normalized_path(r1.path) == _normalized_path(r2.path)
+        and r1.scheme == r2.scheme
+        and r1.host == r2.host
+        and r1.port == r2.port
+        and r1.query == r2.query
+    ):
+        return
+    raise AssertionError(f"{r1.uri} != {r2.uri}")
 
 
 def host(r1, r2):
@@ -37,7 +53,7 @@ def port(r1, r2):
 
 
 def path(r1, r2):
-    if r1.path != r2.path:
+    if _normalized_path(r1.path) != _normalized_path(r2.path):
         raise AssertionError(f"{r1.path} != {r2.path}")
 
 
