@@ -108,6 +108,42 @@ def test_vcr_before_record_request_params():
         assert cassette.filter_request(request_get) is not None
 
 
+def test_vcr_before_record_request_with_undeepcopyable_body(tmp_path):
+    """
+    Regression test for
+    https://github.com/kevin1024/vcrpy/issues/737
+
+    A request body can contain something that isn't deepcopy-able,
+    most commonly a raw, open file handle (e.g. aiohttp file uploads
+    passed directly as part of the request body rather than pre-read
+    into bytes). filter_request()/before_record_request() must not
+    crash in that case.
+    """
+    test_vcr = VCR(filter_headers=[("Authorization", "REDACTED")])
+
+    upload_path = tmp_path / "upload.txt"
+    upload_path.write_text("some file content")
+
+    with test_vcr.use_cassette(str(tmp_path / "cassette.yaml")) as cassette:
+        with open(upload_path, "rb") as f:
+            request = Request(
+                "POST",
+                "http://whatever.test/upload",
+                {"file": f},
+                {"Authorization": "secret-token"},
+            )
+            filtered = cassette.filter_request(request)
+
+        assert filtered is not None
+        # The (still-working) filtering itself must still take effect.
+        assert filtered.headers.get("Authorization") == "REDACTED"
+        # The original request object passed in must be unaffected by
+        # the fallback (VCR's own internal representation, not the
+        # live network request, so mutating it in place is safe, but
+        # the caller's own reference should still reflect that).
+        assert request.headers.get("Authorization") == "REDACTED"
+
+
 def test_vcr_before_record_response_iterable():
     # Regression test for #191
 

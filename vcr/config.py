@@ -223,7 +223,20 @@ class VCR:
             filter_functions.extend(before_record_request)
 
         def before_record_request(request):
-            request = copy.deepcopy(request)
+            try:
+                request = copy.deepcopy(request)
+            except TypeError:
+                # request.body can contain something that isn't
+                # deepcopy-able, most commonly a raw, open file handle
+                # (e.g. aiohttp file uploads passed directly as part of
+                # the request body, rather than pre-read into bytes).
+                # `request` here is VCR's own internal representation
+                # (not a reference to the live, actual network request),
+                # so filter functions mutating it in place instead of a
+                # copy is safe -- it's still far better than crashing
+                # and preventing the upload/recording from working at
+                # all. See GH #737.
+                pass
             for function in filter_functions:
                 if request is None:
                     break
