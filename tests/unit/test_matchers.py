@@ -234,6 +234,16 @@ def test_query_matcher():
     assert matchers.query(req1, req3) is None
 
 
+def test_query_matcher_preserves_blank_values():
+    req1 = request.Request("GET", "http://host.com/?flag=&a=b", "", {})
+    req2 = request.Request("GET", "http://host.com/?a=b&flag=", "", {})
+    assert matchers.query(req1, req2) is None
+
+    without_blank_value = request.Request("GET", "http://host.com/?a=b", "", {})
+    with pytest.raises(AssertionError):
+        matchers.query(req1, without_blank_value)
+
+
 def test_matchers():
     assert_matcher("method")
     assert_matcher("scheme")

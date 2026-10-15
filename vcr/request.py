@@ -98,7 +98,7 @@ class Request:
     @property
     def query(self):
         q = self.parsed_uri.query
-        return sorted(parse_qsl(q))
+        return sorted(parse_qsl(q, keep_blank_values=True))
 
     # alias for backwards compatibility
     @property
