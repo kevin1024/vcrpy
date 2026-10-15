@@ -8,6 +8,7 @@ Contents
 
    installation
    usage
+   server_mode
    configuration
    advanced
    api

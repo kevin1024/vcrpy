@@ -3,6 +3,11 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - New feature: server mode. Pass ``base_url`` to record and replay through a real local HTTP server
+      (``cassette.url``) instead of patching HTTP libraries. New options: ``base_url``, ``server_host``,
+      ``server_port``, ``verify_upstream_ssl`` and ``upstream_timeout``. See the "Server Mode" docs.
+
 -  8.3.0
     - Add support for niquests (#980) - thanks @ionelmc
     - Refuse to record a cassette containing a Python object the safe YAML loader could not read back, so recording fails fast instead of producing a cassette that breaks on replay (#1007, #1009) - thanks @Polandia94

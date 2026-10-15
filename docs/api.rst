@@ -49,3 +49,10 @@ API
 .. automodule:: vcr.patch
    :members:
    :special-members: __init__
+
+:mod:`~vcr.server`
+------------------
+
+.. automodule:: vcr.server
+   :members:
+   :special-members: __init__

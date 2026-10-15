@@ -47,6 +47,20 @@ VCR.py will detect the absence of a cassette file and once again record
 all HTTP interactions, which will update them to correspond to the new
 API.
 
+Server mode
+-----------
+
+If you prefer not to patch HTTP libraries, VCR.py can also run a real local
+HTTP server that records and replays traffic for a given base URL. Point
+your client at the server instead of the real API:
+
+.. code:: python
+
+    with vcr.use_cassette("users.yaml", base_url="https://api.example.com") as cass:
+        requests.get(cass.url + "/users")  # recorded once, then replayed
+
+See the "Server Mode" section of the documentation for details.
+
 Usage with Pytest
 -----------------
 

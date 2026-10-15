@@ -11,6 +11,7 @@ from .cassette import Cassette
 from .persisters.filesystem import FilesystemPersister
 from .record_mode import RecordMode, validate_record_mode
 from .serializers import jsonserializer, yamlserializer
+from .server import validate_base_url
 from .util import auto_decorate, compose
 
 
@@ -49,6 +50,11 @@ class VCR:
         decode_compressed_response=False,
         record_on_exception=True,
         drop_unused_requests=False,
+        base_url=None,
+        server_host="127.0.0.1",
+        server_port=0,
+        verify_upstream_ssl=True,
+        upstream_timeout=None,
     ):
         self.serializer = serializer
         self.match_on = match_on
@@ -83,6 +89,11 @@ class VCR:
         self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
         self.drop_unused_requests = drop_unused_requests
+        self.base_url = validate_base_url(base_url) if base_url else None
+        self.server_host = server_host
+        self.server_port = server_port
+        self.verify_upstream_ssl = verify_upstream_ssl
+        self.upstream_timeout = upstream_timeout
 
     def _get_serializer(self, serializer_name):
         try:
@@ -126,6 +137,7 @@ class VCR:
         cassette_library_dir = kwargs.get("cassette_library_dir", self.cassette_library_dir)
         additional_matchers = kwargs.get("additional_matchers", ())
         record_on_exception = kwargs.get("record_on_exception", self.record_on_exception)
+        base_url = kwargs.get("base_url", self.base_url)
 
         if cassette_library_dir:
 
@@ -154,6 +166,11 @@ class VCR:
             "allow_playback_repeats": kwargs.get("allow_playback_repeats", False),
             "record_on_exception": record_on_exception,
             "drop_unused_requests": kwargs.get("drop_unused_requests", self.drop_unused_requests),
+            "base_url": validate_base_url(base_url) if base_url else None,
+            "server_host": kwargs.get("server_host", self.server_host),
+            "server_port": kwargs.get("server_port", self.server_port),
+            "verify_upstream_ssl": kwargs.get("verify_upstream_ssl", self.verify_upstream_ssl),
+            "upstream_timeout": kwargs.get("upstream_timeout", self.upstream_timeout),
         }
         path = kwargs.get("path")
         if path:

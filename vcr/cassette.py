@@ -14,6 +14,7 @@ from .patch import CassettePatcherBuilder
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 from .record_mode import RecordMode
 from .serializers import yamlserializer
+from .server import VCRServer
 from .util import partition_dict
 
 log = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class CassetteContextDecorator:
         self._args_getter = args_getter
         self.__finish = None
         self.__cassette = None
+        self.__server_mode = False
 
     def _patch_generator(self, cassette):
         with contextlib.ExitStack() as exit_stack:
@@ -61,6 +63,23 @@ class CassetteContextDecorator:
             log.debug(log_format.format(action="Entering", path=cassette._path))
             yield cassette
             log.debug(log_format.format(action="Exiting", path=cassette._path))
+
+    def _server_generator(self, cassette):
+        server = VCRServer(
+            cassette,
+            cassette.base_url,
+            host=cassette.server_host,
+            port=cassette.server_port,
+            verify_upstream_ssl=cassette.verify_upstream_ssl,
+            upstream_timeout=cassette.upstream_timeout,
+        )
+        cassette._server = server.start()
+        log.debug("Serving cassette at %s on %s.", cassette._path, server.url)
+        try:
+            yield cassette
+        finally:
+            server.stop()
+            log.debug("Stopped server for cassette at %s.", cassette._path)
 
     def __enter__(self):
         # This assertion is here to prevent the dangerous behavior
@@ -80,12 +99,19 @@ class CassetteContextDecorator:
             transformer = other_kwargs["path_transformer"]
             cassette_kwargs["path"] = transformer(cassette_kwargs["path"])
         self.__cassette = self.cls.load(**cassette_kwargs)
-        self.__finish = self._patch_generator(self.__cassette)
+        self.__server_mode = bool(cassette_kwargs.get("base_url"))
+        if self.__server_mode:
+            self.__finish = self._server_generator(self.__cassette)
+        else:
+            self.__finish = self._patch_generator(self.__cassette)
         return next(self.__finish)
 
     def __exit__(self, *exc_info):
         exception_was_raised = any(exc_info)
         record_on_exception = self._args_getter().get("record_on_exception", True)
+        if self.__server_mode:
+            self._exit_server_mode(exception_was_raised, record_on_exception)
+            return
         if record_on_exception or not exception_was_raised:
             self.__cassette._save()
             self.__cassette = None
@@ -97,6 +123,21 @@ class CassetteContextDecorator:
         # be called until much later.
         next(self.__finish, None)
         self.__finish = None
+
+    def _exit_server_mode(self, exception_was_raised, record_on_exception):
+        cassette = self.__cassette
+        # Stop serving before saving so no request can modify the cassette
+        # while it is being written.
+        next(self.__finish, None)
+        self.__finish = None
+        self.__cassette = None
+        if record_on_exception or not exception_was_raised:
+            cassette._save()
+        if cassette.errors and not exception_was_raised:
+            # Errors happened inside the server thread, where they could only
+            # be reported to the client as an error response. Re-raise the
+            # first one here so the test fails loudly.
+            raise cassette.errors[0]
 
     @wrapt.decorator
     def __call__(self, function, instance, args, kwargs):
@@ -178,6 +219,11 @@ class Cassette:
         inject=False,
         allow_playback_repeats=False,
         drop_unused_requests=False,
+        base_url=None,
+        server_host="127.0.0.1",
+        server_port=0,
+        verify_upstream_ssl=True,
+        upstream_timeout=None,
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -191,6 +237,14 @@ class Cassette:
         self.custom_patches = custom_patches
         self.allow_playback_repeats = allow_playback_repeats
         self.drop_unused_requests = drop_unused_requests
+        self.base_url = base_url
+        self.server_host = server_host
+        self.server_port = server_port
+        self.verify_upstream_ssl = verify_upstream_ssl
+        self.upstream_timeout = upstream_timeout
+        self._server = None
+        # Exceptions raised while serving requests in server mode
+        self.errors = []
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -201,6 +255,11 @@ class Cassette:
         # Subsets of self.data to store old and played interactions
         self._old_interactions = []
         self._played_interactions = []
+
+    @property
+    def url(self):
+        """URL of the local server in server mode (``None`` otherwise)."""
+        return self._server.url if self._server else None
 
     @property
     def play_count(self):
