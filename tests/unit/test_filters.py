@@ -154,6 +154,21 @@ def test_replace_post_data_parameters_empty_body():
     assert request.body is None
 
 
+def test_replace_post_data_parameters_with_encoded_names():
+    # The urlencoded form of {"api:key": "secret", "clé": "secret", "user name": "bob", "foo": "bar"}
+    body = b"api%3Akey=secret&cl%C3%A9=secret&user+name=bob&foo=bar"
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(request, [("api:key", None), ("clé", None), ("user name", "alice")])
+    assert request.body == b"user+name=alice&foo=bar"
+
+
+def test_replace_post_data_parameters_with_already_encoded_names():
+    body = b"api%3Akey=secret&foo=bar"
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(request, [("api%3Akey", None)])
+    assert request.body == b"foo=bar"
+
+
 def test_remove_post_data_parameters():
     # Test the backward-compatible API wrapper.
     body = b"id=secret&foo=bar"
