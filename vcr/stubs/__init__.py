@@ -47,6 +47,26 @@ def parse_headers(header_list):
     return compat.get_httpmessage(header_string)
 
 
+def _build_headers_dict(message):
+    """
+    Build the ``headers`` attribute for stub responses.
+
+    Real urllib3 responses expose ``headers`` as an ``HTTPHeaderDict``,
+    a multidict whose ``items()`` yields every header value.  Exposing
+    the raw ``HTTPMessage`` instead loses values whenever a header
+    appears more than once (e.g. two ``Link`` or ``Set-Cookie``
+    headers): consumers that read the headers through mapping-style
+    access, such as requests building its ``CaseInsensitiveDict``,
+    only ever see the first value.  Fall back to the message itself
+    when urllib3 is not installed.
+    """
+    try:
+        from urllib3._collections import HTTPHeaderDict
+    except ImportError:  # pragma: no cover
+        return message
+    return HTTPHeaderDict(compat.get_header_items(message))
+
+
 def serialize_headers(response):
     headers = response.headers if response.msg is None else response.msg
     out = {}
@@ -83,7 +103,8 @@ class VCRHTTPResponse(HTTPResponse):
         te_key = [h for h in headers if h.upper() == "TRANSFER-ENCODING"]
         if te_key:
             del headers[te_key[0]]
-        self.headers = self.msg = parse_headers(headers)
+        self.msg = parse_headers(headers)
+        self.headers = _build_headers_dict(self.msg)
 
         self.length = compat.get_header(self.msg, "content-length") or None
 

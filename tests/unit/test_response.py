@@ -22,7 +22,7 @@ def test_response_should_have_headers_field():
     assert response.headers is not None
 
 
-def test_response_headers_should_be_equal_to_msg():
+def test_response_headers_should_match_msg():
     recorded_response = {
         "status": {"message": b"OK", "code": 200},
         "headers": {
@@ -35,7 +35,39 @@ def test_response_headers_should_be_equal_to_msg():
     }
     response = VCRHTTPResponse(recorded_response)
 
-    assert response.headers == response.msg
+    # ``headers`` is a multidict (like the ``HTTPHeaderDict`` on a real
+    # urllib3 response), not the ``HTTPMessage`` itself, but it must
+    # carry exactly the headers the message carries.
+    for key, values in recorded_response["headers"].items():
+        assert response.headers.getlist(key) == values
+        assert response.msg.get_all(key) == values
+
+
+def test_response_headers_preserve_duplicate_values():
+    # Regression test for https://github.com/kevin1024/vcrpy/issues/947
+    # Repeated headers were stored correctly in the cassette, but only
+    # the first value survived on the stub response's ``headers`` when
+    # read back through mapping-style access (e.g. by requests).
+    recorded_response = {
+        "status": {"message": "OK", "code": 200},
+        "headers": {
+            "content-length": ["2"],
+            "link": ['<foo>; rel="foo"', '<bar>; rel="bar"'],
+            "set-cookie": ["a=1; Path=/", "b=2; Path=/"],
+        },
+        "body": {"string": b"{}"},
+    }
+    response = VCRHTTPResponse(recorded_response)
+
+    assert response.headers.getlist("link") == ['<foo>; rel="foo"', '<bar>; rel="bar"']
+    assert response.headers.getlist("set-cookie") == ["a=1; Path=/", "b=2; Path=/"]
+    assert response.headers["link"] == '<foo>; rel="foo", <bar>; rel="bar"'
+    assert sorted(v for k, v in response.headers.items() if k.lower() == "link") == [
+        '<bar>; rel="bar"',
+        '<foo>; rel="foo"',
+    ]
+    assert response.getheader("link") == '<foo>; rel="foo", <bar>; rel="bar"'
+    assert response.msg.get_all("link") == ['<foo>; rel="foo"', '<bar>; rel="bar"']
 
 
 def test_response_headers_should_have_correct_values():
