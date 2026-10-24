@@ -16,6 +16,7 @@ from yarl import URL
 
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
+from vcr.util import _is_async_iterator, _is_nonsequence_iterator, _join_body_chunks
 
 log = logging.getLogger(__name__)
 
@@ -280,6 +281,38 @@ def vcr_request(cassette, real_request):
 
         if auth is not None:
             headers["AUTHORIZATION"] = auth.encode()
+
+        # Generator bodies are single-use and cannot be copied, so a
+        # request carrying one cannot simply be recorded after the real
+        # request consumed it (and recording deepcopies the request,
+        # which raises on generators). Buffer the body to bytes once,
+        # up front, and use the buffered bytes for both the VCR request
+        # and the real request, so the body is sent *and* recorded.
+        if _is_async_iterator(data):
+            chunks = [chunk async for chunk in data]
+            try:
+                data = _join_body_chunks(chunks)
+            except ValueError:
+                # Chunks that are not bytes-like (e.g. form fields) can't
+                # be joined; replay them to the real request from the
+                # buffered list instead of the exhausted generator.
+                async def _replay(chunks=chunks):
+                    for chunk in chunks:
+                        yield chunk
+
+                kwargs["data"] = _replay()
+                data = chunks
+            else:
+                kwargs["data"] = data
+        elif _is_nonsequence_iterator(data) and not hasattr(data, "read"):
+            chunks = list(data)
+            try:
+                data = _join_body_chunks(chunks)
+            except ValueError:
+                kwargs["data"] = iter(chunks)
+                data = chunks
+            else:
+                kwargs["data"] = data
 
         request_url = URL(url) if not params else _build_url_with_params(url, params)
         c_header = headers.pop(hdrs.COOKIE, None)
