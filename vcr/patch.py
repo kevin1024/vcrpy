@@ -137,6 +137,36 @@ else:
     _Httpx2MockTransport_handle_async_request = httpx2.MockTransport.handle_async_request
 
 
+# Names of the patcher groups built by CassettePatcherBuilder.build().
+# These are the accepted values for the ``skip_patchers`` option, which
+# lets users turn off patching for individual HTTP libraries -- for
+# example, skipping "httpx" when a layered client (such as httpx-aiohttp)
+# would otherwise be recorded twice: once by the httpx patcher and once
+# by the patcher for the transport library underneath it.
+PATCHER_NAMES = (
+    "httplib",
+    "requests",
+    "boto3",
+    "urllib3",
+    "httplib2",
+    "tornado",
+    "aiohttp",
+    "httpx",
+    "httpx2",
+)
+
+
+def validate_skip_patchers(skip_patchers):
+    skip_patchers = tuple(skip_patchers)
+    unknown = sorted(set(skip_patchers) - set(PATCHER_NAMES))
+    if unknown:
+        raise ValueError(
+            f"Unknown patcher(s) in skip_patchers: {', '.join(unknown)}. "
+            f"Valid patcher names are: {', '.join(PATCHER_NAMES)}"
+        )
+    return skip_patchers
+
+
 class CassettePatcherBuilder:
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
@@ -150,16 +180,20 @@ class CassettePatcherBuilder:
         self._class_to_cassette_subclass = {}
 
     def build(self):
+        skip = set(getattr(self._cassette, "skip_patchers", ()))
+        groups = (
+            ("httplib", self._httplib),
+            ("requests", self._requests),
+            ("boto3", self._boto3),
+            ("urllib3", self._urllib3),
+            ("httplib2", self._httplib2),
+            ("tornado", self._tornado),
+            ("aiohttp", self._aiohttp),
+            ("httpx", self._httpx),
+            ("httpx2", self._httpx2),
+        )
         return itertools.chain(
-            self._httplib(),
-            self._requests(),
-            self._boto3(),
-            self._urllib3(),
-            self._httplib2(),
-            self._tornado(),
-            self._aiohttp(),
-            self._httpx(),
-            self._httpx2(),
+            *(builder() for name, builder in groups if name not in skip),
             self._build_patchers_from_mock_triples(self._cassette.custom_patches),
         )
 

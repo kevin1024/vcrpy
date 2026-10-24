@@ -10,7 +10,7 @@ import wrapt
 from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError
 from .matchers import get_matchers_results, method, requests_match, uri
-from .patch import CassettePatcherBuilder
+from .patch import CassettePatcherBuilder, validate_skip_patchers
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 from .record_mode import RecordMode
 from .serializers import yamlserializer
@@ -178,6 +178,7 @@ class Cassette:
         inject=False,
         allow_playback_repeats=False,
         drop_unused_requests=False,
+        skip_patchers=(),
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -191,6 +192,7 @@ class Cassette:
         self.custom_patches = custom_patches
         self.allow_playback_repeats = allow_playback_repeats
         self.drop_unused_requests = drop_unused_requests
+        self.skip_patchers = validate_skip_patchers(skip_patchers)
 
         # self.data is the list of (req, resp) tuples
         self.data = []

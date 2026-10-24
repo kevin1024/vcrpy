@@ -8,6 +8,7 @@ from pathlib import Path
 
 from . import filters, matchers
 from .cassette import Cassette
+from .patch import validate_skip_patchers
 from .persisters.filesystem import FilesystemPersister
 from .record_mode import RecordMode, validate_record_mode
 from .serializers import jsonserializer, yamlserializer
@@ -49,6 +50,7 @@ class VCR:
         decode_compressed_response=False,
         record_on_exception=True,
         drop_unused_requests=False,
+        skip_patchers=(),
     ):
         self.serializer = serializer
         self.match_on = match_on
@@ -83,6 +85,7 @@ class VCR:
         self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
         self.drop_unused_requests = drop_unused_requests
+        self.skip_patchers = validate_skip_patchers(skip_patchers)
 
     def _get_serializer(self, serializer_name):
         try:
@@ -154,6 +157,7 @@ class VCR:
             "allow_playback_repeats": kwargs.get("allow_playback_repeats", False),
             "record_on_exception": record_on_exception,
             "drop_unused_requests": kwargs.get("drop_unused_requests", self.drop_unused_requests),
+            "skip_patchers": validate_skip_patchers(kwargs.get("skip_patchers", self.skip_patchers)),
         }
         path = kwargs.get("path")
         if path:
