@@ -71,6 +71,16 @@ def test_filter_post_data(tmpdir, httpbin):
         assert b"id=secret" not in cass.requests[0].body
 
 
+def test_filter_post_data_with_encoded_name(tmpdir, httpbin):
+    url = httpbin.url + "/post"
+    data = urlencode({"api:key": "secret", "foo": "bar"}).encode("utf-8")
+    cass_file = str(tmpdir.join("filter_pd_encoded_name.yaml"))
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=["api:key"]):
+        urlopen(url, data)
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=["api:key"]) as cass:
+        assert cass.requests[0].body == b"foo=bar"
+
+
 def test_filter_json_post_data(tmpdir, httpbin):
     data = json.dumps({"id": "secret", "foo": "bar"}).encode("utf-8")
     request = Request(httpbin.url + "/post", data=data)

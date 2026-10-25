@@ -2,7 +2,7 @@ import copy
 import json
 import zlib
 from io import BytesIO
-from urllib.parse import urlencode, urlparse, urlunparse
+from urllib.parse import unquote_plus, urlencode, urlparse, urlunparse
 
 from .util import CaseInsensitiveDict
 
@@ -126,6 +126,9 @@ def _replace_urlencoded_parameters(body, replacements, request):
             new_splits.append((k, sep, ov))
         else:
             rk = k.decode("utf-8")
+            if rk not in replacements:
+                # Parameter names are urlencoded too, e.g. "api:key" is sent as "api%3Akey"
+                rk = unquote_plus(rk)
             if rk not in replacements:
                 new_splits.append((k, sep, ov))
             else:
