@@ -5,6 +5,8 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - Support Python 3.14 and 3.15, and test them in CI along with their free-threaded builds, 3.14t and 3.15t (#940) - thanks @pylaterreur
+    - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
+    - Make the urllib3 POST test send its form fields again: since urllib3 2.0 it sent the dict as a chunked body, which the local httpbin server rejects, so the test failed now and then with ``BrokenPipeError`` - thanks @pylaterreur
 
 -  8.3.0
     - Add support for niquests (#980) - thanks @ionelmc
