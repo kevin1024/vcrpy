@@ -3,6 +3,9 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Fix recording aiohttp requests that upload an open file as a form field (``data={"file": f}``), which crashed with ``TypeError: cannot pickle '_io.BufferedReader' object``. The file's contents are recorded and the whole file is still sent (#737) - thanks @LilSpazJoekp for the report
+
 -  8.4.0
     - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
     - Make the urllib3 POST test send its form fields again: since urllib3 2.0 it sent the dict as a chunked body, which the local httpbin server rejects, so the test failed now and then with ``BrokenPipeError`` - thanks @pylaterreur
