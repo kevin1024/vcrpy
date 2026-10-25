@@ -65,7 +65,11 @@ def _deserialize_response(vcr_response, httpx):
         )
         extensions = None
     else:
-        extensions = {"reason_phrase": vcr_response["status"]["message"].encode("ascii")}
+        # Cassettes recorded before 8.2.0 have no reason phrase. Leave
+        # extensions unset for those, as the httpcore stub that recorded them
+        # did, so httpx derives the phrase from the status code.
+        message = vcr_response["status"]["message"]
+        extensions = {"reason_phrase": message.encode("ascii")} if message else None
 
     return httpx.Response(
         vcr_response["status"]["code"],

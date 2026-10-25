@@ -88,6 +88,10 @@ all
    temporarily used to force VCR to re-record a cassette (i.e. to ensure
    the responses are not out of date) or can be used when you simply
    want to log all HTTP requests.
+-  A newly recorded interaction replaces any previously recorded
+   interaction it matches. Previously recorded interactions that were not
+   re-recorded are kept, unless ``drop_unused_requests`` is set, in which
+   case the cassette is replaced with only what was recorded this time.
 
 Unittest Integration
 --------------------

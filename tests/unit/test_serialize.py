@@ -1,10 +1,16 @@
+from io import BytesIO
 from unittest import mock
 
 import pytest
+import yaml
 
 from vcr.request import Request
 from vcr.serialize import deserialize, serialize
 from vcr.serializers import compat, jsonserializer, yamlserializer
+
+
+class CustomHeader(str):
+    """A stand-in for a custom str subclass used as a header value (#1007)."""
 
 
 def test_deserialize_old_yaml_cassette():
@@ -30,11 +36,35 @@ def test_deserialize_yaml_cassette_does_not_execute_python_object_tags(tmpdir):
         f"_x: !!python/object/apply:os.system ['touch {marker}']\n"
         "version: 1\n"
     )
-    # The dangerous tag is rejected (surfaced as the existing old-format error)
-    # rather than executed.
+    # The dangerous tag is rejected with a ValueError rather than executed.
     with pytest.raises(ValueError):
         deserialize(malicious, yamlserializer)
     assert not marker.check(), "malicious cassette executed code during load"
+
+
+def test_deserialize_yaml_cassette_unknown_tag_gives_clear_error():
+    # A cassette with an unrecognized Python object tag (e.g. a custom class)
+    # used to raise "Your cassette files were generated in an older version of
+    # VCR", even for freshly re-recorded cassettes. It should now raise a
+    # clear, descriptive ValueError instead.
+    cassette_with_custom_tag = (
+        "interactions:\n"
+        "- request:\n"
+        "    body: !!python/object/new:some.custom.Object\n"
+        "      state: [hello]\n"
+        "    headers: {}\n"
+        "    method: GET\n"
+        "    uri: http://example.com/\n"
+        "  response:\n"
+        "    body: {string: ok}\n"
+        "    headers: {}\n"
+        "    status: {code: 200, message: OK}\n"
+        "version: 1\n"
+    )
+    with pytest.raises(ValueError, match="There was a problem loading the cassette") as excinfo:
+        deserialize(cassette_with_custom_tag, yamlserializer)
+    # The old misleading message must not appear
+    assert "older version of VCR" not in excinfo.exconly()
 
 
 def test_deserialize_yaml_cassette_allows_safe_python_tuple_and_str():
@@ -57,6 +87,64 @@ def test_deserialize_yaml_cassette_allows_safe_python_tuple_and_str():
     )
     data = yamlserializer.deserialize(yaml_str)
     assert isinstance(data["interactions"][0]["request"]["headers"], tuple)
+
+
+def test_serialize_refuses_unloadable_python_object():
+    # A cassette must not be *saved* if it embeds a Python object the safe
+    # loader couldn't read back; otherwise recording succeeds and replay
+    # fails later with a confusing error (#1007).
+    request = Request(
+        method="GET",
+        uri="http://localhost/",
+        body="",
+        headers={"X-Custom": CustomHeader("my-value")},
+    )
+    with pytest.raises(yaml.representer.RepresenterError, match="with_custom_tags"):
+        serialize({"requests": [request], "responses": [{}]}, yamlserializer)
+
+
+def test_serialize_allows_bytesio_body_and_round_trips():
+    # A BytesIO body uses a tag the loader knows about, so it must serialize
+    # without tripping the dumper guard and load back to the same bytes.
+    request = Request(method="POST", uri="http://localhost/", body=BytesIO(b"payload"), headers={})
+    cassette = serialize({"requests": [request], "responses": [{}]}, yamlserializer)
+    (requests, _) = deserialize(cassette, yamlserializer)
+    assert requests[0].body.read() == b"payload"
+
+
+def test_with_custom_tags_round_trips_custom_object():
+    # A serializer built with with_custom_tags() can both save and load a
+    # cassette containing the custom object, symmetrically.
+    tag = f"tag:yaml.org,2002:python/object/new:{CustomHeader.__module__}.{CustomHeader.__qualname__}"
+    serializer = yamlserializer.with_custom_tags(
+        {tag: lambda loader, node: CustomHeader(loader.construct_sequence(node)[0])},
+    )
+    request = Request(
+        method="GET",
+        uri="http://localhost/",
+        body="",
+        headers={"X-Custom": CustomHeader("my-value")},
+    )
+    cassette = serialize({"requests": [request], "responses": [{}]}, serializer)
+    (requests, _) = deserialize(cassette, serializer)
+    assert requests[0].headers["X-Custom"] == "my-value"
+
+
+def test_with_custom_tags_does_not_affect_default_serializer():
+    # Building a custom-tag serializer must not loosen the default one: the
+    # module-level loader still refuses the tag and the dumper still refuses
+    # to save it.
+    tag = f"tag:yaml.org,2002:python/object/new:{CustomHeader.__module__}.{CustomHeader.__qualname__}"
+    yamlserializer.with_custom_tags({tag: lambda loader, node: CustomHeader("x")})
+    assert tag not in yamlserializer._CassetteLoader.yaml_constructors
+    request = Request(
+        method="GET",
+        uri="http://localhost/",
+        body="",
+        headers={"X-Custom": CustomHeader("my-value")},
+    )
+    with pytest.raises(yaml.representer.RepresenterError):
+        serialize({"requests": [request], "responses": [{}]}, yamlserializer)
 
 
 def test_deserialize_old_json_cassette():

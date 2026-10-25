@@ -4,10 +4,10 @@ import yaml
 
 # Use the libYAML versions if possible
 try:
-    from yaml import CDumper as Dumper
+    from yaml import CDumper as _BaseDumper
     from yaml import CSafeLoader as _BaseLoader
 except ImportError:
-    from yaml import Dumper
+    from yaml import Dumper as _BaseDumper
     from yaml import SafeLoader as _BaseLoader
 
 
@@ -67,9 +67,76 @@ _CassetteLoader.add_constructor("tag:yaml.org,2002:python/object/new:_io.BytesIO
 _CassetteLoader.add_constructor("tag:yaml.org,2002:python/object/apply:builtins.iter", _construct_iter)
 
 
+class _CassetteDumper(_BaseDumper):
+    """A YAML dumper that refuses to emit what the cassette loader can't read.
+
+    PyYAML's full dumper happily turns any Python object into a
+    ``!!python/object*`` tag, but the safe cassette loader refuses those tags,
+    so recording such a cassette would succeed and then fail to load on replay
+    (#1007). Refuse at record time instead, before anything is written. The
+    check uses the paired loader's constructor table, so any tag the loader
+    can construct is also dumpable and the two sides stay symmetric.
+    """
+
+    loader_class = _CassetteLoader
+
+    def represent_data(self, data):
+        node = super().represent_data(data)
+        tag = node.tag
+        if (
+            isinstance(tag, str)
+            and tag.startswith("tag:yaml.org,2002:python/")
+            and tag not in self.loader_class.yaml_constructors
+        ):
+            raise yaml.representer.RepresenterError(
+                "Cassette not saved: the request or response contains a Python "
+                f"object that the safe YAML loader would refuse to load back ({tag!r}). "
+                "Keep custom Python objects out of recorded requests/responses, or "
+                "register a serializer that supports this object on your VCR "
+                "instance:\n\n"
+                "    from vcr.serializers import yamlserializer\n\n"
+                '    my_vcr.register_serializer("yaml", yamlserializer.with_custom_tags({\n'
+                f"        {tag!r}: my_constructor,  # def my_constructor(loader, node): ...\n"
+                "    }))\n\n"
+                "See https://vcrpy.readthedocs.io/en/latest/advanced.html"
+                "#cassettes-containing-custom-python-objects",
+            )
+        return node
+
+
+def with_custom_tags(constructors):
+    """Build a YAML serializer that can record and replay custom Python objects.
+
+    ``constructors`` maps YAML tags to PyYAML constructor callables. The
+    returned serializer's loader knows how to construct those tags, and its
+    dumper therefore allows saving them; everything else stays as locked down
+    as the default serializer. Register the result on a VCR instance::
+
+        my_vcr.register_serializer("yaml", yamlserializer.with_custom_tags({
+            "tag:yaml.org,2002:python/object/new:myapp.CustomHeader":
+                lambda loader, node: CustomHeader(loader.construct_sequence(node)[0]),
+        }))
+    """
+    loader = type("_CustomTagCassetteLoader", (_CassetteLoader,), {})
+    for tag, constructor in constructors.items():
+        loader.add_constructor(tag, constructor)
+    dumper = type("_CustomTagCassetteDumper", (_CassetteDumper,), {"loader_class": loader})
+
+    class _CustomTagSerializer:
+        @staticmethod
+        def deserialize(cassette_string):
+            return yaml.load(cassette_string, Loader=loader)
+
+        @staticmethod
+        def serialize(cassette_dict):
+            return yaml.dump(cassette_dict, Dumper=dumper)
+
+    return _CustomTagSerializer()
+
+
 def deserialize(cassette_string):
     return yaml.load(cassette_string, Loader=_CassetteLoader)
 
 
 def serialize(cassette_dict):
-    return yaml.dump(cassette_dict, Dumper=Dumper)
+    return yaml.dump(cassette_dict, Dumper=_CassetteDumper)

@@ -26,6 +26,14 @@ class VCRFakeSocket:
     def settimeout(self, *args, **kwargs):
         pass
 
+    def gettimeout(self):
+        return None
+
+    def recv(self, *args, **kwargs):
+        # Nothing is ever waiting to be read. urllib3-future (niquests) peeks at
+        # idle pooled connections with a non-blocking read before reusing them.
+        raise BlockingIOError
+
     def fileno(self):
         """
         This is kinda crappy.  requests will watch
@@ -94,7 +102,7 @@ class VCRHTTPResponse(HTTPResponse):
         # self.closed from the superclass
         return self._closed
 
-    def read(self, *args, **kwargs):
+    def read(self, *args, decode_content=None, **kwargs):
         return self._content.read(*args, **kwargs)
 
     def read1(self, *args, **kwargs):
@@ -293,7 +301,7 @@ class VCRConnection:
                 self.real_connection.request(
                     method=self._vcr_request.method,
                     url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body,
+                    body=self._vcr_request.body_bytes,
                     headers=self._vcr_request.headers,
                 )
 
@@ -403,6 +411,7 @@ class VCRHTTPConnection(VCRConnection):
     _protocol = "http"
     debuglevel = _baseclass.debuglevel
     _http_vsn = _baseclass._http_vsn
+    _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)
 
 
 class VCRHTTPSConnection(VCRConnection):
@@ -413,3 +422,4 @@ class VCRHTTPSConnection(VCRConnection):
     is_verified = True
     debuglevel = _baseclass.debuglevel
     _http_vsn = _baseclass._http_vsn
+    _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)
