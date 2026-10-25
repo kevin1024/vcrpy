@@ -137,8 +137,8 @@ def _replace_urlencoded_parameters(body, replacements, request):
     return b"&".join(k if not sep else b"".join([k, sep, v]) for k, sep, v in new_splits)
 
 
-def replace_post_data_parameters(request, replacements):
-    """Replace post data in request--either form data or json--according to replacements.
+def replace_body_parameters(request, replacements):
+    """Replace body parameters in request--either form data or json--according to replacements.
 
     The replacements should be a list of (key, value) pairs where the value can be any of:
       1. A simple replacement string value.
@@ -150,39 +150,51 @@ def replace_post_data_parameters(request, replacements):
         # Nothing to replace
         return request
 
+    if isinstance(request.body, BytesIO):
+        return request
+
     replacements = dict(replacements)
-    if request.method == "POST" and not isinstance(request.body, BytesIO):
-        if isinstance(request.body, dict):
-            new_body = request.body.copy()
-            for k, rv in replacements.items():
-                if k in new_body:
-                    ov = new_body.pop(k)
-                    if callable(rv):
-                        rv = rv(key=k, value=ov, request=request)
-                    if rv is not None:
-                        new_body[k] = rv
-            request.body = new_body
-        elif request.headers.get("Content-Type") == "application/json":
-            json_data = json.loads(request.body)
-            for k, rv in replacements.items():
-                if k in json_data:
-                    ov = json_data.pop(k)
-                    if callable(rv):
-                        rv = rv(key=k, value=ov, request=request)
-                    if rv is not None:
-                        json_data[k] = rv
-            request.body = json.dumps(json_data).encode("utf-8")
-        else:
-            try:
-                body = request.body.encode("utf-8") if isinstance(request.body, str) else request.body
-                request.body = _replace_urlencoded_parameters(body, replacements, request)
-            except UnicodeError:
-                # The body isn't UTF-8 encoded text -- e.g. a binary file
-                # upload -- so it can't be urlencoded form data and there is
-                # nothing we can safely replace. Leave it untouched instead of
-                # blowing up while recording/replaying (#660).
-                pass
+    if isinstance(request.body, dict):
+        new_body = request.body.copy()
+        for k, rv in replacements.items():
+            if k in new_body:
+                ov = new_body.pop(k)
+                if callable(rv):
+                    rv = rv(key=k, value=ov, request=request)
+                if rv is not None:
+                    new_body[k] = rv
+        request.body = new_body
+    elif request.headers.get("Content-Type") == "application/json":
+        json_data = json.loads(request.body)
+        for k, rv in replacements.items():
+            if k in json_data:
+                ov = json_data.pop(k)
+                if callable(rv):
+                    rv = rv(key=k, value=ov, request=request)
+                if rv is not None:
+                    json_data[k] = rv
+        request.body = json.dumps(json_data).encode("utf-8")
+    else:
+        try:
+            body = request.body.encode("utf-8") if isinstance(request.body, str) else request.body
+            request.body = _replace_urlencoded_parameters(body, replacements, request)
+        except UnicodeError:
+            # The body isn't UTF-8 encoded text -- e.g. a binary file
+            # upload -- so it can't be urlencoded form data and there is
+            # nothing we can safely replace. Leave it untouched instead of
+            # blowing up while recording/replaying (#660).
+            pass
     return request
+
+
+def replace_post_data_parameters(request, replacements):
+    """
+    Wrap replace_body_parameters() for API backward compatibility: only filters POST requests.
+    """
+    if request.method != "POST":
+        return request
+
+    return replace_body_parameters(request, replacements)
 
 
 def remove_post_data_parameters(request, post_data_parameters_to_remove):

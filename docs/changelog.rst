@@ -7,6 +7,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Fix the ``body`` matcher crashing (e.g. with ``JSONDecodeError``) when a body doesn't parse as its headers say, such as invalid JSON sent as ``application/json`` or malformed XML-RPC. Such bodies are now compared as raw bytes
     - **Breaking:** drop support for Python 3.10, which reached its end of life on 2026-10-01 - thanks @pylaterreur
     - **Breaking:** aiohttp error responses are now recorded and replayed when ``raise_for_status`` is used, on the session or the request. Before, aiohttp raised before vcrpy could record the response, and a replayed error response didn't raise even with ``raise_for_status`` set. Tests that relied on either need updating (#635, #925) - thanks @andrescollares
+    - **Breaking:** ``filter_post_data_parameters`` now filters the body of requests with any method (``PUT``, ``PATCH``, ``DELETE``, ...), not just ``POST`` (#328, #1004). Requests are filtered before they're matched, so if you match on ``body``, re-record cassettes that have unfiltered bodies for those methods. ``vcr.filters.replace_post_data_parameters`` still only filters ``POST``; the new ``replace_body_parameters`` filters any method - thanks @andrescollares
 
 -  8.5.0
     - Fix ``filter_post_data_parameters`` crashing with ``UnicodeDecodeError`` on binary request bodies passed as ``bytes`` or ``bytearray``, which are now left untouched, and stop it mangling form segments without a ``=`` (#660) - thanks @philsong4-ai
