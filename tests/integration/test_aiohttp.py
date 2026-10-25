@@ -589,3 +589,54 @@ def test_use_cassette_with_io(tmpdir, caplog, httpbin):
     with vcr.use_cassette(str(tmpdir.join("post.yaml"))):
         _, response_json = request("POST", url, output="json", data=data)
         assert response_json["data"] == "hello"
+
+
+async def _post_generator_body(cassette_path, data_factory):
+    """POST a generator body to a local echo server, record it, then replay it."""
+    from aiohttp.test_utils import TestClient, TestServer
+
+    from vcr.util import read_body
+
+    async def echo(request):
+        encoding = request.headers.get("Transfer-Encoding", "").encode()
+        return aiohttp.web.Response(body=encoding + b" " + await request.read())
+
+    app = aiohttp.web.Application()
+    app.router.add_post("/echo", echo)
+    client = TestClient(TestServer(app))
+    await client.start_server()
+    try:
+        with vcr.use_cassette(cassette_path) as cassette:
+            response = await client.post("/echo", data=data_factory())
+            # The server gets the whole body, sent chunked as without vcrpy.
+            assert await response.read() == b"chunked hello world"
+            assert read_body(cassette.requests[0]) == b"hello world"
+
+        with vcr.use_cassette(cassette_path) as cassette:
+            response = await client.post("/echo", data=data_factory())
+            assert await response.read() == b"chunked hello world"
+            assert cassette.play_count == 1
+    finally:
+        await client.close()
+
+
+def test_aiohttp_async_generator_body(tmpdir):
+    # Regression test for #974: recording a request whose body is an
+    # async generator (e.g. a streaming file upload) used to crash when
+    # cassette recording deepcopied the request.
+    async def body_gen():
+        yield b"hello "
+        yield b"world"
+
+    asyncio.run(_post_generator_body(str(tmpdir.join("async_gen.yaml")), body_gen))
+
+
+def test_aiohttp_sync_generator_body_is_rejected_as_without_vcr(tmpdir):
+    # aiohttp itself doesn't accept sync generator bodies, and vcrpy
+    # shouldn't make them work only under a cassette.
+    def body_gen():
+        yield b"hello "
+        yield b"world"
+
+    with pytest.raises(TypeError, match=r"Only io\.IOBase"):
+        asyncio.run(_post_generator_body(str(tmpdir.join("sync_gen.yaml")), body_gen))

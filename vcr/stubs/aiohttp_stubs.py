@@ -16,6 +16,7 @@ from yarl import URL
 
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
+from vcr.util import _is_async_iterator, _join_body_chunks
 
 log = logging.getLogger(__name__)
 
@@ -326,6 +327,23 @@ def vcr_request(cassette, real_request):
 
         if auth is not None:
             headers["AUTHORIZATION"] = auth.encode()
+
+        # An async generator body (e.g. a streaming upload) can only be read
+        # once and can't be copied, which recording needs to do. Read it here,
+        # record the joined chunks, and give aiohttp a generator that yields
+        # the same chunks, so the request goes out exactly as it would have.
+        if _is_async_iterator(data):
+            chunks = [chunk async for chunk in data]
+
+            async def _replay():
+                for chunk in chunks:
+                    yield chunk
+
+            kwargs["data"] = _replay()
+            try:
+                data = _join_body_chunks(chunks)
+            except ValueError:
+                data = chunks
 
         request_url = URL(url) if not params else _build_url_with_params(url, params)
         c_header = headers.pop(hdrs.COOKIE, None)
