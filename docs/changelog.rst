@@ -11,6 +11,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Fix aiohttp ``response.content`` restarting from the start of the body on each access when replaying, which made ``readline()`` loops (e.g. google-genai streaming) never end (#927, #1055) - thanks @pylaterreur
     - Make ``response.content`` an aiohttp ``StreamReader`` when replaying aiohttp responses, as it is when recording: ``iter_any()`` and ``iter_chunks()`` no longer raise ``AttributeError``, lines over 64 KiB are no longer refused, and ``readuntil()``, ``is_eof()``, ``total_bytes`` and the rest of its API work (#1055) - thanks @pylaterreur
     - If your tests patch ``vcr.stubs.aiohttp_stubs`` to work around #502 or #927 (e.g. overriding ``MockClientResponse.content``, or putting the recorded body back with ``unread_data()``), remove the patch: it is no longer needed, and no longer works (#1055)
+    - Support Python 3.14 and 3.15, and test them in CI along with their free-threaded builds, 3.14t and 3.15t (#940) - thanks @pylaterreur
 
 -  8.4.0
     - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
