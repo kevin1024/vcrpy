@@ -9,7 +9,7 @@ with pip::
 Compatibility
 -------------
 
-VCR.py supports Python 3.9+, and `pypy <http://pypy.org>`__.
+VCR.py supports Python 3.11+, and `pypy <http://pypy.org>`__.
 
 The following HTTP libraries are supported:
 
@@ -22,7 +22,7 @@ The following HTTP libraries are supported:
 -  ``urllib.request``
 -  ``urllib3``
 -  ``httpx``
--  ``httpcore``
+-  ``httpx2``
 
 Speed
 -----

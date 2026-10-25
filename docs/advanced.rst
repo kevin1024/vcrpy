@@ -90,6 +90,37 @@ Finally, register your class with VCR to use your new serializer.
     with my_vcr.use_cassette('test.bogo'):
         # your http here
 
+Cassettes containing custom Python objects
+------------------------------------------
+
+For security, VCR.py loads YAML cassettes with a *safe* loader that refuses
+the ``!!python/object`` family of tags (loading them could execute arbitrary
+code from an untrusted cassette), and it refuses to *record* a cassette
+containing such a tag so you find out at record time rather than on replay.
+
+If your requests or responses legitimately contain a custom Python object
+(say, a custom ``str`` subclass used as a header value), build a serializer
+that knows how to construct that object's tag and register it on your VCR
+instance:
+
+.. code:: python
+
+    import vcr
+    from vcr.serializers import yamlserializer
+
+    def construct_my_header(loader, node):
+        return MyHeader(loader.construct_sequence(node)[0])
+
+    my_vcr = vcr.VCR()
+    my_vcr.register_serializer("yaml", yamlserializer.with_custom_tags({
+        "tag:yaml.org,2002:python/object/new:myapp.MyHeader": construct_my_header,
+    }))
+
+Tags registered this way work symmetrically: the loader can construct them,
+so the dumper allows recording them. The default serializer stays locked
+down; the custom tags apply only to the VCR instance you registered the
+serializer on.
+
 Register your own request matcher
 ---------------------------------
 
@@ -151,6 +182,11 @@ Once the persister class is defined, register with VCR like so...
 
     my_vcr.register_persister(CustomPersister)
 
+You can also use a persister for a single cassette::
+
+    with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml', persister=CustomPersister):
+        ...
+
 Filter sensitive data from the request
 --------------------------------------
 
@@ -158,6 +194,46 @@ If you are checking your cassettes into source control, and are using
 some form of authentication in your tests, you can filter out that
 information so it won't appear in your cassette files. There are a few
 ways to do this:
+
+Replace secrets with placeholders
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``filter_sensitive_data`` configuration option to replace a
+secret with a placeholder wherever it appears in a recorded interaction:
+the URL, headers, and request and response bodies.
+
+.. code:: python
+
+    import os
+
+    my_vcr = vcr.VCR(
+        filter_sensitive_data={"<API_KEY>": os.environ.get("API_KEY", "fake-api-key")},
+    )
+
+The cassette file only ever contains ``<API_KEY>``. When the cassette is
+loaded, the placeholder is replaced with the value again, so:
+
+- requests made with the real value still match the recorded ones, and
+- your code gets the same responses whether they are recorded or played
+  back, including any part of a response that contained the secret.
+
+The value can also be a function that's called with the request and
+response of each interaction and returns the value to replace, or
+``None`` to leave that interaction alone. Values that aren't strings,
+like a port number, are matched as text. Values that are empty or
+``None`` are skipped, so in CI, where the real secret isn't set, give the
+same fallback value to your code and to ``filter_sensitive_data`` (like
+``"fake-api-key"`` above) so requests still match.
+
+A few things to keep in mind:
+
+- The replacement is plain text, so a value that is encoded differently
+  in part of the interaction (e.g. URL-encoded in a query string, or
+  escaped in JSON) needs its own entry with that encoded form.
+- Compressed response bodies are stored compressed unless you also set
+  ``decode_compressed_response=True``, so a secret inside one isn't found.
+- Choose placeholders and values that don't occur in the interactions by
+  chance; very short values could replace unrelated text.
 
 Filter information from HTTP Headers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,6 +364,120 @@ sensitive data from the response body:
     with my_vcr.use_cassette('test.yml'):
          # your http code here
 
+Save and load hooks
+~~~~~~~~~~~~~~~~~~~
+
+Two options let you change interactions as a cassette file is written
+and read:
+
+- ``before_save_interaction`` runs on each interaction when the cassette
+  is saved.
+- ``after_load_interaction`` runs on each interaction when the cassette is
+  loaded.
+
+Each hook is called with an interaction's request and response, and
+returns them, changed or not, or ``None`` to leave the interaction out:
+out of the saved file, or out of the interactions that can be played
+back.
+
+When to use them
+^^^^^^^^^^^^^^^^
+
+**To change a response based on its request.** ``before_record_response``
+only sees the response, so it can't tell which endpoint it came from.
+For example, to keep a login request in the cassette but scrub the token
+from its response:
+
+.. code:: python
+
+    import re
+
+    def scrub_login_token(request, response):
+        if request.path == '/login':
+            response['body']['string'] = re.sub(
+                rb'"token": "[^"]*"', b'"token": "<TOKEN>"', response['body']['string']
+            )
+        return request, response
+
+    my_vcr = vcr.VCR(before_save_interaction=scrub_login_token)
+
+**To keep cookies out of cassettes.** ``filter_headers`` only filters
+request headers. A save hook can drop both ``Cookie`` and ``Set-Cookie``
+(your code won't get those cookies when the cassette is played back):
+
+.. code:: python
+
+    def drop_cookies(request, response):
+        request.headers.pop('Cookie', None)
+        response['headers'] = {
+            name: values for name, values in response['headers'].items() if name.lower() != 'set-cookie'
+        }
+        return request, response
+
+**To filter only what's written to the file, exactly once.**
+``before_record_request`` also runs on every request before it's matched
+against the cassette, and both it and ``before_record_response`` run again
+on interactions loaded from a cassette, so they need to be safe to run
+more than once. Save and load hooks run once per interaction.
+
+**To replay part of a cassette and record the rest again.** A load hook
+that leaves interactions out, with the ``new_episodes`` record mode,
+replays the interactions it keeps and records the others again. For
+example, to replay only the first two:
+
+.. code:: python
+
+    import itertools
+
+    def keep_first(n):
+        loaded = itertools.count()
+
+        def hook(request, response):
+            return (request, response) if next(loaded) < n else None
+
+        return hook
+
+    with vcr.use_cassette('debug.yaml', record_mode='new_episodes', after_load_interaction=keep_first(2)):
+        ...
+
+**To use old cassettes after something changed.** If an API moved, or an
+upgrade changed how a URL is recorded, a load hook can rewrite the
+recorded requests so they match again, without re-recording:
+
+.. code:: python
+
+    def use_v2_urls(request, response):
+        request.uri = request.uri.replace('/v1/', '/v2/')
+        return request, response
+
+**To keep secrets out of cassettes.** Use ``filter_sensitive_data`` (see
+above), which is built on these hooks.
+
+Details
+^^^^^^^
+
+- Each option takes one function or a list of them, applied in order.
+- Save hooks get copies, so they don't change the requests and responses
+  your code sees while recording.
+- A hook that takes a third argument is also given the cassette, e.g. to
+  only change the interactions of some cassettes:
+
+  .. code:: python
+
+      def drop_health_checks(request, response, cassette):
+          if 'smoke_tests' in cassette.path and request.path == '/health':
+              return None
+          return request, response
+
+- ``filter_sensitive_data`` replaces values after your save hooks run and
+  restores them before your load hooks run, so your hooks always see the
+  real values, and a secret can't end up in the cassette file even if a
+  save hook copies it somewhere. This is the opposite order from
+  ``before_record_request`` and ``before_record_response``, which run
+  after the built-in filters (like ``filter_headers`` and
+  ``decode_compressed_response``) and so see already-filtered requests and
+  responses.
+
 
 Decode compressed response
 ---------------------------
@@ -311,7 +501,7 @@ in a few ways:
 
 -  Set the ``ignore_localhost`` option equal to True. This will not
    record any requests sent to (or responses from) localhost, 127.0.0.1,
-   or 0.0.0.0.
+   ::1 or 0.0.0.0.
 -  Set the ``ignore_hosts`` configuration option to a list of hosts to
    ignore
 -  Add a ``before_record_request`` or ``before_record_response`` callback
