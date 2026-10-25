@@ -3,7 +3,7 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  Unreleased
+-  9.1.0
     - Set ``raw_headers`` on replayed aiohttp responses, so code that reads them (e.g. httpx-aiohttp) works on replay (#970, #1034) - thanks @HostX0
     - Add ``release_conn()`` to replayed urllib3 responses, for code that releases pooled responses (#816, #1054) - thanks @cristianchiriac
     - Accept ``pathlib.Path`` and other path-like objects for cassette paths and ``cassette_library_dir`` (#567, #920, #1064) - thanks @fredrikblau
@@ -13,6 +13,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - ``ignore_localhost`` also ignores ``::1`` (#639) - thanks @dragonpaw for the report
     - Add ``json()`` to replayed urllib3 responses, as urllib3 2.x responses have (#774) - thanks @gschnellOnera for the report
     - Allow a ``persister`` option on ``use_cassette``, to use a custom persister for one cassette (#575) - thanks @gioele for the report
+    - Publish releases to PyPI from GitHub Actions with trusted publishing (#860, #1078)
 
 -  9.0.0
     - Fix the ``body`` matcher crashing (e.g. with ``JSONDecodeError``) when a body doesn't parse as its headers say, such as invalid JSON sent as ``application/json`` or malformed XML-RPC. Such bodies are now compared as raw bytes
