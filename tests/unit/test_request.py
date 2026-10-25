@@ -1,4 +1,3 @@
-import asyncio
 import copy
 
 import pytest
@@ -69,14 +68,6 @@ def _sync_body_generator():
     yield b"world"
 
 
-def _async_body_generator():
-    async def gen():
-        yield b"hello "
-        yield b"world"
-
-    return gen()
-
-
 def test_sync_generator_body_is_buffered_and_repeatable():
     req = Request("POST", "http://go.com/", _sync_body_generator(), {})
     assert read_body(req) == b"hello world"
@@ -90,47 +81,6 @@ def test_sync_generator_body_survives_deepcopy():
     copied = copy.deepcopy(req)
     assert read_body(copied) == b"hello world"
     assert read_body(req) == b"hello world"
-
-
-def test_async_generator_body_deepcopy_does_not_raise():
-    # Regression test for #974: cassette recording deepcopies the request
-    # (in vcr.config's before_record_request chain), and deepcopying an
-    # async generator raises "cannot pickle 'async_generator' object".
-    req = Request("POST", "http://go.com/", _async_body_generator(), {})
-    copied = copy.deepcopy(req)
-    # The unbuffered async body is shared with the copy, not copied.
-    assert copied.body is req.body
-
-
-def test_async_generator_body_buffering():
-    req = Request("POST", "http://go.com/", _async_body_generator(), {})
-
-    buffered = asyncio.run(req.buffer_async_body())
-
-    assert buffered == b"hello world"
-    assert req.body == b"hello world"
-    # After buffering, the body is repeatable, deepcopyable, and
-    # serializable like any other bytes body.
-    assert read_body(req) == b"hello world"
-    assert read_body(req) == b"hello world"
-    copied = copy.deepcopy(req)
-    assert read_body(copied) == b"hello world"
-    assert req._to_dict()["body"] == b"hello world"
-
-
-def test_async_generator_body_buffering_str_chunks():
-    async def gen():
-        yield "hello "
-        yield "world"
-
-    req = Request("POST", "http://go.com/", gen(), {})
-    assert asyncio.run(req.buffer_async_body()) == b"hello world"
-
-
-def test_buffer_async_body_is_noop_for_bytes_body():
-    req = Request("POST", "http://go.com/", b"hello", {})
-    assert asyncio.run(req.buffer_async_body()) == b"hello"
-    assert req.body == b"hello"
 
 
 def test_HeadersDict():

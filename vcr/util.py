@@ -120,17 +120,6 @@ def _join_body_chunks(chunks):
     raise ValueError(f"Body type {type(first)} not supported")
 
 
-async def _buffer_async_body(body):
-    """Drain an async iterator of body chunks into a single ``bytes``.
-
-    Async generators (e.g. streaming file uploads) are single-use and
-    cannot be copied, so the only way for a body to be both sent to the
-    real server and recorded is to buffer it exactly once, up front.
-    """
-    chunks = [chunk async for chunk in body]
-    return _join_body_chunks(chunks)
-
-
 def read_body(request):
     if hasattr(request.body, "read"):
         return request.body.read()

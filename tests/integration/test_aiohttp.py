@@ -545,17 +545,14 @@ def test_use_cassette_with_io(tmpdir, caplog, httpbin):
 
 
 async def _post_generator_body(cassette_path, data_factory):
-    """POST a generator body to a local echo server under a cassette.
-
-    Returns (recorded_or_played_body, cassette) for the record pass and
-    asserts playback inside the second pass.
-    """
+    """POST a generator body to a local echo server, record it, then replay it."""
     from aiohttp.test_utils import TestClient, TestServer
 
     from vcr.util import read_body
 
     async def echo(request):
-        return aiohttp.web.Response(body=await request.read())
+        encoding = request.headers.get("Transfer-Encoding", "").encode()
+        return aiohttp.web.Response(body=encoding + b" " + await request.read())
 
     app = aiohttp.web.Application()
     app.router.add_post("/echo", echo)
@@ -564,12 +561,13 @@ async def _post_generator_body(cassette_path, data_factory):
     try:
         with vcr.use_cassette(cassette_path) as cassette:
             response = await client.post("/echo", data=data_factory())
-            assert await response.read() == b"hello world"
+            # The server gets the whole body, sent chunked as without vcrpy.
+            assert await response.read() == b"chunked hello world"
             assert read_body(cassette.requests[0]) == b"hello world"
 
         with vcr.use_cassette(cassette_path) as cassette:
             response = await client.post("/echo", data=data_factory())
-            assert await response.read() == b"hello world"
+            assert await response.read() == b"chunked hello world"
             assert cassette.play_count == 1
     finally:
         await client.close()
@@ -578,8 +576,7 @@ async def _post_generator_body(cassette_path, data_factory):
 def test_aiohttp_async_generator_body(tmpdir):
     # Regression test for #974: recording a request whose body is an
     # async generator (e.g. a streaming file upload) used to crash when
-    # cassette recording deepcopied the request. The body must be
-    # buffered once so it can be both sent and recorded.
+    # cassette recording deepcopied the request.
     async def body_gen():
         yield b"hello "
         yield b"world"
@@ -587,12 +584,12 @@ def test_aiohttp_async_generator_body(tmpdir):
     asyncio.run(_post_generator_body(str(tmpdir.join("async_gen.yaml")), body_gen))
 
 
-def test_aiohttp_sync_generator_body(tmpdir):
-    # A sync generator body must survive too: constructing the VCR
-    # request must not consume the generator before the real request
-    # sends it.
+def test_aiohttp_sync_generator_body_is_rejected_as_without_vcr(tmpdir):
+    # aiohttp itself doesn't accept sync generator bodies, and vcrpy
+    # shouldn't make them work only under a cassette.
     def body_gen():
         yield b"hello "
         yield b"world"
 
-    asyncio.run(_post_generator_body(str(tmpdir.join("sync_gen.yaml")), body_gen))
+    with pytest.raises(TypeError, match=r"Only io\.IOBase"):
+        asyncio.run(_post_generator_body(str(tmpdir.join("sync_gen.yaml")), body_gen))

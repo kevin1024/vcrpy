@@ -1,16 +1,10 @@
-import copy
 import logging
 import warnings
 from contextlib import suppress
 from io import BytesIO
 from urllib.parse import parse_qsl, urlparse
 
-from .util import (
-    CaseInsensitiveDict,
-    _buffer_async_body,
-    _is_async_iterator,
-    _is_nonsequence_iterator,
-)
+from .util import CaseInsensitiveDict, _is_nonsequence_iterator
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +18,6 @@ class Request:
         self.method = method
         self.uri = uri
         self._was_file = hasattr(body, "read")
-        self._was_async_iter = _is_async_iterator(body)
         self._was_iter = _is_nonsequence_iterator(body)
         if self._was_file:
             if hasattr(body, "tell"):
@@ -33,53 +26,12 @@ class Request:
                 body.seek(tell)
             else:
                 self.body = body.read()
-        elif self._was_async_iter:
-            # An async generator body cannot be buffered synchronously
-            # (and cannot be copied at all), so keep it untouched until
-            # it is drained by `buffer_async_body`. Stubs that operate
-            # in an event loop (e.g. aiohttp) buffer it before the
-            # request is sent or recorded; see that method.
-            self.body = body
         elif self._was_iter:
             self.body = list(body)
         else:
             self.body = body
         self.headers = headers
         log.debug("Invoking Request %s", self.uri)
-
-    async def buffer_async_body(self):
-        """Drain an async-iterator body into ``bytes`` and store it.
-
-        After this call the body behaves like any other bytes body: it
-        can be read repeatedly, deepcopied (cassette recording deepcopies
-        requests before applying ``before_record_request`` filters), and
-        serialized into a cassette. Calling it on a request whose body
-        is not an unbuffered async iterator is a no-op that simply
-        returns the current body.
-        """
-        if not self._was_async_iter:
-            return self.body
-        buffered = await _buffer_async_body(self._body)
-        self._was_async_iter = False
-        self.body = buffered
-        return buffered
-
-    def __deepcopy__(self, memo):
-        # A plain deepcopy fails on an unbuffered async generator body
-        # ("cannot pickle 'async_generator' object"), which is how
-        # recording a request with a generator body used to crash.
-        # Share such a body with the copy instead of copying it; every
-        # other attribute is deepcopied as usual. Once the body has
-        # been buffered to bytes, copies are fully independent.
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for key, value in self.__dict__.items():
-            if key == "_body" and self._was_async_iter:
-                result.__dict__[key] = value
-            else:
-                result.__dict__[key] = copy.deepcopy(value, memo)
-        return result
 
     @property
     def uri(self):
