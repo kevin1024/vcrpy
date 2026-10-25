@@ -3,6 +3,17 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Fix ``filter_post_data_parameters`` crashing with ``UnicodeDecodeError`` on binary request bodies passed as ``bytes`` or ``bytearray``, which are now left untouched, and stop it mangling form segments without a ``=`` (#660) - thanks @philsong4-ai
+
+-  8.4.0
+    - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
+    - Make the urllib3 POST test send its form fields again: since urllib3 2.0 it sent the dict as a chunked body, which the local httpbin server rejects, so the test failed now and then with ``BrokenPipeError`` - thanks @pylaterreur
+    - Fix ``httpx`` and ``httpx2`` replay crashing on cassettes that store a null reason phrase, as those recorded before 8.2.0 do (#1028) - thanks @dgunning
+    - Fix bare-host URLs such as ``https://example.com`` not matching cassettes that recorded them as ``https://example.com/``, a regression in 8.2.0 (#1013, #1031) - thanks @DSeaStar
+    - Forward streaming (file-like or iterator) request bodies with ``Content-Length`` instead of chunked encoding, which some servers reject (#1002)
+    - Fix the ``all`` record mode: a re-recorded interaction now replaces the one it matches instead of being saved next to it, and with ``drop_unused_requests`` the cassette keeps what was just recorded instead of being saved empty (#578, #208). **Behavior change:** re-recording in ``all`` mode now removes every previously recorded interaction that matches a new one under your ``match_on`` setting, so with loose matchers (e.g. ``match_on=["method"]``) one new request can replace many old ones. Cassettes re-recorded with ``all`` also no longer accumulate responses across runs.
+
 -  8.3.0
     - Add support for niquests (#980) - thanks @ionelmc
     - Refuse to record a cassette containing a Python object the safe YAML loader could not read back, so recording fails fast instead of producing a cassette that breaks on replay (#1007, #1009) - thanks @Polandia94

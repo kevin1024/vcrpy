@@ -176,6 +176,37 @@ def test_remove_all_post_data_parameters():
     assert request.body == b""
 
 
+def test_replace_post_data_parameters_binary_body():
+    # A binary payload -- e.g. a file posted as raw bytes -- is not urlencoded
+    # form data, even though it may well contain b"=" and b"&". It must be left
+    # untouched instead of raising UnicodeDecodeError (#660).
+    body = b"\xff\xd8\xff\xe1\x00\xe8Exif=1&two=lose"
+    request = Request(
+        "POST",
+        "http://google.com",
+        body,
+        {"Content-Type": "application/octet-stream"},
+    )
+    replace_post_data_parameters(request, [("two", None)])
+    assert request.body == body
+
+
+def test_replace_post_data_parameters_binary_bytearray_body():
+    body = bytearray(b"\xff\xd8\xff\xe1=1&two=lose")
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(request, [("two", None)])
+    assert request.body == body
+
+
+def test_replace_post_data_parameters_keyless_segment():
+    # A segment without "=" is not a key/value pair, so it must not be treated
+    # as a parameter to replace.
+    body = b"two&one=keep"
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(request, [("two", "shout")])
+    assert request.body == b"two&one=keep"
+
+
 def test_replace_json_post_data_parameters():
     # This tests all of:
     #   1. keeping a parameter
