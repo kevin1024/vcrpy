@@ -3,6 +3,7 @@ import logging
 import urllib
 import xmlrpc.client
 from string import hexdigits
+from xml.parsers.expat import ExpatError
 
 from .util import read_body
 
@@ -75,11 +76,17 @@ def body(r1, r2):
 
     b1 = read_body(r1)
     b2 = read_body(r2)
-    for transform in transformers:
-        b1 = transform(b1)
-        b2 = transform(b2)
+    try:
+        t1, t2 = b1, b2
+        for transform in transformers:
+            t1 = transform(t1)
+            t2 = transform(t2)
+    except (ValueError, ExpatError):
+        # A body that doesn't parse as its headers say (e.g. invalid JSON sent
+        # as application/json) is compared as raw bytes instead.
+        t1, t2 = b1, b2
 
-    if b1 != b2:
+    if t1 != t2:
         raise AssertionError
 
 
