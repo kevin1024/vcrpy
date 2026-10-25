@@ -1,3 +1,4 @@
+import difflib
 import json
 import logging
 import urllib
@@ -64,9 +65,63 @@ def query(r1, r2):
         raise AssertionError(f"{r1.query} != {r2.query}")
 
 
+MAX_DIFF_LINES = 20
+MAX_DIFF_LINE_LENGTH = 200
+
+
+def _body_text(body):
+    """Text to diff for a body, or None for a body that isn't text."""
+    if body is None:
+        return ""
+    if isinstance(body, (bytes, bytearray)):
+        try:
+            return body.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+    if isinstance(body, str):
+        return body
+    # A parsed body (JSON, form data, XML-RPC): sorted keys show only real differences.
+    return json.dumps(body, indent=2, sort_keys=True, default=str)
+
+
+def _body_diff(new, recorded):
+    """A short diff explaining how two bodies differ, for matcher failure messages.
+
+    vcrpy calls matchers with the request being made first and the recorded one second.
+    """
+    new_text, recorded_text = _body_text(new), _body_text(recorded)
+    if new_text is None or recorded_text is None or new_text == recorded_text:
+        return f"the bodies differ ({_size(new)} in this request, {_size(recorded)} recorded)"
+    diff = list(
+        difflib.unified_diff(
+            recorded_text.splitlines(),
+            new_text.splitlines(),
+            "recorded",
+            "this request",
+            n=1,
+            lineterm="",
+        ),
+    )
+    lines = [
+        line if len(line) <= MAX_DIFF_LINE_LENGTH else line[:MAX_DIFF_LINE_LENGTH] + "…"
+        for line in diff[:MAX_DIFF_LINES]
+    ]
+    if len(diff) > MAX_DIFF_LINES:
+        lines.append(f"… ({len(diff) - MAX_DIFF_LINES} more lines)")
+    return "\n".join(lines)
+
+
+def _size(body):
+    try:
+        return f"{len(body)} bytes"
+    except TypeError:
+        return "no body" if body is None else type(body).__name__
+
+
 def raw_body(r1, r2):
-    if read_body(r1) != read_body(r2):
-        raise AssertionError
+    b1, b2 = read_body(r1), read_body(r2)
+    if b1 != b2:
+        raise AssertionError(_body_diff(b1, b2))
 
 
 def body(r1, r2):
@@ -87,7 +142,7 @@ def body(r1, r2):
         t1, t2 = b1, b2
 
     if t1 != t2:
-        raise AssertionError
+        raise AssertionError(_body_diff(t1, t2))
 
 
 def headers(r1, r2):

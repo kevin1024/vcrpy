@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - Fix the ``body`` matcher crashing (e.g. with ``JSONDecodeError``) when a body doesn't parse as its headers say, such as invalid JSON sent as ``application/json`` or malformed XML-RPC. Such bodies are now compared as raw bytes
+    - **Breaking:** rewrite the ``CannotOverwriteExistingCassetteException`` message. It now starts with what went wrong (the cassette doesn't exist, the matching interactions were already played back, or no recorded interaction matches), shows the cassette's settings and the closest recorded requests with how they differ, and ends with suggestions for fixing it. Body mismatches show a short diff instead of nothing, and the message stays short when a cassette holds many similar requests. Code that matched the old message text (e.g. ``"Can't overwrite existing cassette"``) needs updating; the exception class and its ``cassette`` and ``failed_request`` attributes are unchanged, and new ``reason`` and ``similar_requests`` attributes describe the failure (#516, #673, #837, #838, #840, #929). Thanks @philsong4-ai (#1027) and @ChrisJr404 (#1037) for the PRs that started this
 
 -  8.5.0
     - Fix ``filter_post_data_parameters`` crashing with ``UnicodeDecodeError`` on binary request bodies passed as ``bytes`` or ``bytearray``, which are now left untouched, and stop it mangling form segments without a ``=`` (#660) - thanks @philsong4-ai

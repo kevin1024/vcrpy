@@ -396,3 +396,50 @@ def test_uri_matcher_treats_empty_and_root_as_equal_with_query():
     r1 = request.Request("GET", "https://example.com?a=1", "", {})
     r2 = request.Request("GET", "https://example.com/?a=1", "", {})
     assert matchers.uri(r1, r2) is None
+
+
+def test_body_matcher_explains_the_difference():
+    headers = {"Content-Type": "application/json"}
+    new = request.Request("POST", "http://host.com/", '{"model": "x", "prompt": "hello!"}', headers)
+    recorded = request.Request("POST", "http://host.com/", '{"prompt": "hello", "model": "x"}', headers)
+    with pytest.raises(AssertionError) as exc_info:
+        matchers.body(new, recorded)
+    message = str(exc_info.value)
+    assert message.splitlines()[:2] == ["--- recorded", "+++ this request"]
+    assert '-  "prompt": "hello"' in message
+    assert '+  "prompt": "hello!"' in message
+    # Keys in a different order aren't reported as a difference.
+    assert '"model"' not in [line[1:].strip() for line in message.splitlines() if line[:1] in "+-"]
+
+
+def test_raw_body_matcher_explains_the_difference():
+    with pytest.raises(AssertionError, match=r"(?m)^-b$\n^\+c$"):
+        matchers.raw_body(
+            request.Request("POST", "http://host.com/", b"a\nc", {}),
+            request.Request("POST", "http://host.com/", b"a\nb", {}),
+        )
+
+
+def test_body_matcher_summarizes_binary_bodies():
+    with pytest.raises(
+        AssertionError,
+        match=r"the bodies differ \(3 bytes in this request, 4 bytes recorded\)",
+    ):
+        matchers.body(
+            request.Request("POST", "http://host.com/", b"\xff\x00a", {}),
+            request.Request("POST", "http://host.com/", b"\xff\x00ab", {}),
+        )
+
+
+def test_body_matcher_diff_is_capped():
+    new = "\n".join(f"line {i}" for i in range(100)) + "\n" + "x" * 500
+    recorded = "\n".join(f"line {i}!" for i in range(100)) + "\n" + "y" * 500
+    with pytest.raises(AssertionError) as exc_info:
+        matchers.body(
+            request.Request("POST", "http://host.com/", new, {}),
+            request.Request("POST", "http://host.com/", recorded, {}),
+        )
+    lines = str(exc_info.value).splitlines()
+    assert len(lines) == matchers.MAX_DIFF_LINES + 1
+    assert lines[-1].startswith("… (") and lines[-1].endswith(" more lines)")
+    assert all(len(line) <= matchers.MAX_DIFF_LINE_LENGTH + 1 for line in lines)
