@@ -182,6 +182,11 @@ Once the persister class is defined, register with VCR like so...
 
     my_vcr.register_persister(CustomPersister)
 
+You can also use a persister for a single cassette::
+
+    with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml', persister=CustomPersister):
+        ...
+
 Filter sensitive data from the request
 --------------------------------------
 
@@ -342,7 +347,7 @@ in a few ways:
 
 -  Set the ``ignore_localhost`` option equal to True. This will not
    record any requests sent to (or responses from) localhost, 127.0.0.1,
-   or 0.0.0.0.
+   ::1 or 0.0.0.0.
 -  Set the ``ignore_hosts`` configuration option to a list of hosts to
    ignore
 -  Add a ``before_record_request`` or ``before_record_response`` callback

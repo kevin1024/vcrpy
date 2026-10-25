@@ -1,5 +1,6 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
+import json
 import logging
 from contextlib import suppress
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
@@ -178,6 +179,10 @@ class VCRHTTPResponse(HTTPResponse):
     @property
     def data(self):
         return self._content.getbuffer().tobytes()
+
+    def json(self):
+        # urllib3 2.x responses can decode a JSON body themselves.
+        return json.loads(self.data.decode("utf-8"))
 
     def drain_conn(self):
         pass

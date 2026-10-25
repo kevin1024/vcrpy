@@ -7,6 +7,7 @@ import pytest
 
 from vcr import VCR, mode, use_cassette
 from vcr.patch import _HTTPConnection, force_reset
+from vcr.persisters.filesystem import CassetteNotFoundError
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 
@@ -55,6 +56,25 @@ def test_vcr_record_mode_validation():
     # Both the enum and its string value remain valid.
     assert VCR(record_mode=mode.ALL).record_mode == mode.ALL
     assert VCR(record_mode="all").record_mode == mode.ALL
+
+
+def test_ignore_localhost_includes_ipv6():
+    with VCR(ignore_localhost=True).use_cassette("test") as cassette:
+        assert cassette.filter_request(Request("GET", "http://[::1]:8000/", "", {})) is None
+
+
+def test_use_cassette_persister_option():
+    class CustomPersister:
+        @staticmethod
+        def load_cassette(cassette_path, serializer):
+            raise CassetteNotFoundError
+
+        @staticmethod
+        def save_cassette(cassette_path, cassette_dict, serializer):
+            pass
+
+    with VCR().use_cassette("test", persister=CustomPersister) as cassette:
+        assert cassette._persister is CustomPersister
 
 
 def test_vcr_before_record_request_params():

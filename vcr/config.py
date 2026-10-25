@@ -144,7 +144,7 @@ class VCR:
 
         merged_config = {
             "serializer": self._get_serializer(serializer_name),
-            "persister": self.persister,
+            "persister": kwargs.get("persister", self.persister),
             "match_on": self._get_matchers(tuple(matcher_names) + tuple(additional_matchers)),
             "record_mode": validate_record_mode(kwargs.get("record_mode", self.record_mode)),
             "before_record_request": self._build_before_record_request(kwargs),
@@ -215,7 +215,7 @@ class VCR:
 
         hosts_to_ignore = set(ignore_hosts)
         if ignore_localhost:
-            hosts_to_ignore.update(("localhost", "0.0.0.0", "127.0.0.1"))
+            hosts_to_ignore.update(("localhost", "0.0.0.0", "127.0.0.1", "::1"))
         if hosts_to_ignore:
             filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
 

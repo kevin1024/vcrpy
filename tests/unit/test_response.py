@@ -109,3 +109,15 @@ def test_response_parses_correctly_and_fp_attribute_error_is_not_thrown():
     handle = iter(handle)
     articles = list(handle)
     assert len(articles) > 1
+
+
+def test_replayed_response_decodes_json():
+    response = VCRHTTPResponse(
+        {
+            "status": {"message": "OK", "code": 200},
+            "headers": {"Content-Type": ["application/json"]},
+            "body": {"string": b'{"answer": 42}'},
+        },
+    )
+
+    assert response.json() == {"answer": 42}
