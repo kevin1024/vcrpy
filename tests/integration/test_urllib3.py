@@ -2,6 +2,7 @@
 
 # coding=utf-8
 
+import json
 from collections.abc import Mapping
 
 import pytest
@@ -104,11 +105,12 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
     data = {"key1": "value1", "key2": "value2"}
     url = httpbin_both.url + "/post"
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
-        req1 = verify_pool_mgr.request("POST", url, data).data
+        req1 = verify_pool_mgr.request("POST", url, fields=data).data
 
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
-        req2 = verify_pool_mgr.request("POST", url, data).data
+        req2 = verify_pool_mgr.request("POST", url, fields=data).data
 
+    assert json.loads(req1)["form"] == data
     assert req1 == req2
 
 
@@ -178,3 +180,14 @@ def test_urllib3_force_reset():
         assert conn.HTTPConnection is first_cassette_HTTPConnection
         assert conn.HTTPSConnection is first_cassette_HTTPSConnection
         assert conn.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection
+
+
+def test_repeated_headers(tmpdir, httpbin_both, verify_pool_mgr):
+    # A header sent more than once keeps every value (#947).
+    url = httpbin_both.url + "/response-headers?Link=a&Link=b"
+    with vcr.use_cassette(str(tmpdir.join("repeated_headers.yaml"))):
+        assert verify_pool_mgr.request("GET", url).headers.getlist("Link") == ["a", "b"]
+
+    with vcr.use_cassette(str(tmpdir.join("repeated_headers.yaml"))) as cassette:
+        assert verify_pool_mgr.request("GET", url).headers.getlist("Link") == ["a", "b"]
+        assert cassette.play_count == 1
