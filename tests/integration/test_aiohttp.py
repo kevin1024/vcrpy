@@ -82,7 +82,11 @@ def test_replayed_response_exposes_raw_headers():
         "body": {"string": b"response"},
     }
 
-    response = build_response(vcr_request, vcr_response, [])
+    async def build():
+        # A replayed response's stream needs a running event loop.
+        return build_response(vcr_request, vcr_response, [])
+
+    response = asyncio.run(build())
 
     assert response.raw_headers == (
         (b"Content-Type", b"text/plain"),
