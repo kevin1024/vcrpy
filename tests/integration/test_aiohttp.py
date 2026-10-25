@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 import ssl
 import urllib.parse
@@ -197,6 +198,32 @@ def test_post_data_plus_json_error(tmpdir, httpbin):
     ):
         post(url, data=POST_DATA, json=POST_DATA)
     assert cassette.requests == []
+
+
+@pytest.mark.online
+@pytest.mark.parametrize("as_pairs", [False, True], ids=["dict", "pairs"])
+def test_post_file_upload(tmpdir, httpbin, as_pairs):
+    # An open file as a form field value used to crash recording, since it
+    # can't be copied or written to the cassette (#737).
+    url = httpbin.url + "/post"
+    upload = tmpdir.join("upload.txt")
+    upload.write_binary(b"file contents")
+
+    def upload_file():
+        with upload.open("rb") as f:
+            data = [("file", f)] if as_pairs else {"file": f}
+            return post(url, data=data)
+
+    with vcr.use_cassette(str(tmpdir.join("upload.yaml"))):
+        _, response_json = upload_file()
+    # The whole file still reaches the server.
+    assert json.loads(response_json)["files"] == {"file": "file contents"}
+
+    with vcr.use_cassette(str(tmpdir.join("upload.yaml"))) as cassette:
+        assert dict(cassette.requests[0].body) == {"file": b"file contents"}
+        _, cassette_response_json = upload_file()
+        assert cassette_response_json == response_json
+        assert cassette.play_count == 1
 
 
 @pytest.mark.online
