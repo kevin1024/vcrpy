@@ -544,3 +544,14 @@ def test_filter_sensitive_data_skips_missing_values():
 
     requests, _ = _MemoryPersister.cassettes[path]
     assert requests[0].uri == "http://example.com/?key=s3cret"
+
+
+def test_filter_sensitive_data_accepts_non_string_values():
+    path = "sensitive-port"
+    cassette = Cassette(path, persister=_MemoryPersister, filter_sensitive_data={"<PORT>": 8080})
+    cassette.append(Request("GET", "http://example.com:8080/", "", {}), {"body": {"string": b"port 8080"}})
+    cassette._save()
+
+    requests, responses = _MemoryPersister.cassettes[path]
+    assert requests[0].uri == "http://example.com:<PORT>/"
+    assert responses[0]["body"]["string"] == b"port <PORT>"

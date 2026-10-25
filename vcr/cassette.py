@@ -415,6 +415,10 @@ class Cassette:
         for placeholder, value in self._sensitive_data:
             if callable(value):
                 value = value(request, response)
+            if value is None:
+                continue
+            # Non-string values, like a port number, are matched as text.
+            placeholder, value = str(placeholder), str(value)
             if not placeholder or not value:
                 continue
             text, replacement = (placeholder, value) if restore else (value, placeholder)

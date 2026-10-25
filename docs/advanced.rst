@@ -219,7 +219,8 @@ loaded, the placeholder is replaced with the value again, so:
 
 The value can also be a function that's called with the request and
 response of each interaction and returns the value to replace, or
-``None`` to leave that interaction alone. Values that are empty or
+``None`` to leave that interaction alone. Values that aren't strings,
+like a port number, are matched as text. Values that are empty or
 ``None`` are skipped, so in CI, where the real secret isn't set, give the
 same fallback value to your code and to ``filter_sensitive_data`` (like
 ``"fake-api-key"`` above) so requests still match.
