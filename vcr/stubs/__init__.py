@@ -26,6 +26,14 @@ class VCRFakeSocket:
     def settimeout(self, *args, **kwargs):
         pass
 
+    def gettimeout(self):
+        return None
+
+    def recv(self, *args, **kwargs):
+        # Nothing is ever waiting to be read. urllib3-future (niquests) peeks at
+        # idle pooled connections with a non-blocking read before reusing them.
+        raise BlockingIOError
+
     def fileno(self):
         """
         This is kinda crappy.  requests will watch
@@ -293,7 +301,7 @@ class VCRConnection:
                 self.real_connection.request(
                     method=self._vcr_request.method,
                     url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body,
+                    body=self._vcr_request.body_bytes,
                     headers=self._vcr_request.headers,
                 )
 

@@ -4,6 +4,8 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
+    - Make the urllib3 POST test send its form fields again: since urllib3 2.0 it sent the dict as a chunked body, which the local httpbin server rejects, so the test failed now and then with ``BrokenPipeError`` - thanks @pylaterreur
     - Fix aiohttp response bodies being empty when streamed from ``response.content`` while recording a cassette (#502, #1055) - thanks @pylaterreur
     - Fix aiohttp ``response.content`` restarting from the start of the body on each access when replaying, which made ``readline()`` loops (e.g. google-genai streaming) never end (#927, #1055) - thanks @pylaterreur
     - Make ``response.content`` an aiohttp ``StreamReader`` when replaying aiohttp responses, as it is when recording: ``iter_any()`` and ``iter_chunks()`` no longer raise ``AttributeError``, lines over 64 KiB are no longer refused, and ``readuntil()``, ``is_eof()``, ``total_bytes`` and the rest of its API work (#1055) - thanks @pylaterreur
