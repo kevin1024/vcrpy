@@ -2,6 +2,8 @@
 
 # coding=utf-8
 
+import json
+
 import pytest
 import pytest_httpbin
 
@@ -101,11 +103,12 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
     data = {"key1": "value1", "key2": "value2"}
     url = httpbin_both.url + "/post"
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
-        req1 = verify_pool_mgr.request("POST", url, data).data
+        req1 = verify_pool_mgr.request("POST", url, fields=data).data
 
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
-        req2 = verify_pool_mgr.request("POST", url, data).data
+        req2 = verify_pool_mgr.request("POST", url, fields=data).data
 
+    assert json.loads(req1)["form"] == data
     assert req1 == req2
 
 
