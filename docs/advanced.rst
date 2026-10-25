@@ -367,10 +367,8 @@ sensitive data from the response body:
 Save and load hooks
 ~~~~~~~~~~~~~~~~~~~
 
-``before_record_request`` and ``before_record_response`` change requests
-and responses as they're recorded, and ``before_record_request`` also runs
-on every request before it's matched against the cassette. For changes
-that should only affect the cassette file, use these two options instead:
+Two options let you change interactions as a cassette file is written
+and read:
 
 - ``before_save_interaction`` runs on each interaction when the cassette
   is saved.
@@ -380,23 +378,15 @@ that should only affect the cassette file, use these two options instead:
 Each hook is called with an interaction's request and response, and
 returns them, changed or not, or ``None`` to leave the interaction out:
 out of the saved file, or out of the interactions that can be played
-back. Save hooks get copies, so they don't change the requests and
-responses your code sees while recording. Each option takes one function
-or a list of them, applied in order.
+back.
 
-A hook that takes a third argument is also given the cassette, e.g. to
-only change the interactions of some cassettes:
+When to use them
+^^^^^^^^^^^^^^^^
 
-.. code:: python
-
-    def drop_health_checks(request, response, cassette):
-        if 'smoke_tests' in cassette.path and request.path == '/health':
-            return None
-        return request, response
-
-Because a hook sees the request and the response together, it can decide
-what to change in one based on the other. For example, to scrub tokens
-only from the responses of a login endpoint:
+**To change a response based on its request.** ``before_record_response``
+only sees the response, so it can't tell which endpoint it came from.
+For example, to keep a login request in the cassette but scrub the token
+from its response:
 
 .. code:: python
 
@@ -411,18 +401,82 @@ only from the responses of a login endpoint:
 
     my_vcr = vcr.VCR(before_save_interaction=scrub_login_token)
 
-``filter_sensitive_data`` is built on these hooks: it replaces values
-after your save hooks run and restores them before your load hooks run,
-so your hooks always see the real values, and a secret can't end up in
-the cassette file even if a save hook copies it somewhere. Note that this
-is the opposite order from ``before_record_request`` and
-``before_record_response``, which run after the built-in filters (like
-``filter_headers`` and ``decode_compressed_response``) and so see
-already-filtered requests and responses.
+**To keep cookies out of cassettes.** ``filter_headers`` only filters
+request headers. A save hook can drop both ``Cookie`` and ``Set-Cookie``
+(your code won't get those cookies when the cassette is played back):
 
-Unlike ``before_record_request``, which also runs on every request
-before it's matched against the cassette, these hooks run exactly once
-per interaction: when the cassette is saved, or when it's loaded.
+.. code:: python
+
+    def drop_cookies(request, response):
+        request.headers.pop('Cookie', None)
+        response['headers'] = {
+            name: values for name, values in response['headers'].items() if name.lower() != 'set-cookie'
+        }
+        return request, response
+
+**To filter only what's written to the file, exactly once.**
+``before_record_request`` also runs on every request before it's matched
+against the cassette, and both it and ``before_record_response`` run again
+on interactions loaded from a cassette, so they need to be safe to run
+more than once. Save and load hooks run once per interaction.
+
+**To replay part of a cassette and record the rest again.** A load hook
+that leaves interactions out, with the ``new_episodes`` record mode,
+replays the interactions it keeps and records the others again. For
+example, to replay only the first two:
+
+.. code:: python
+
+    import itertools
+
+    def keep_first(n):
+        loaded = itertools.count()
+
+        def hook(request, response):
+            return (request, response) if next(loaded) < n else None
+
+        return hook
+
+    with vcr.use_cassette('debug.yaml', record_mode='new_episodes', after_load_interaction=keep_first(2)):
+        ...
+
+**To use old cassettes after something changed.** If an API moved, or an
+upgrade changed how a URL is recorded, a load hook can rewrite the
+recorded requests so they match again, without re-recording:
+
+.. code:: python
+
+    def use_v2_urls(request, response):
+        request.uri = request.uri.replace('/v1/', '/v2/')
+        return request, response
+
+**To keep secrets out of cassettes.** Use ``filter_sensitive_data`` (see
+above), which is built on these hooks.
+
+Details
+^^^^^^^
+
+- Each option takes one function or a list of them, applied in order.
+- Save hooks get copies, so they don't change the requests and responses
+  your code sees while recording.
+- A hook that takes a third argument is also given the cassette, e.g. to
+  only change the interactions of some cassettes:
+
+  .. code:: python
+
+      def drop_health_checks(request, response, cassette):
+          if 'smoke_tests' in cassette.path and request.path == '/health':
+              return None
+          return request, response
+
+- ``filter_sensitive_data`` replaces values after your save hooks run and
+  restores them before your load hooks run, so your hooks always see the
+  real values, and a secret can't end up in the cassette file even if a
+  save hook copies it somewhere. This is the opposite order from
+  ``before_record_request`` and ``before_record_response``, which run
+  after the built-in filters (like ``filter_headers`` and
+  ``decode_compressed_response``) and so see already-filtered requests and
+  responses.
 
 
 Decode compressed response
