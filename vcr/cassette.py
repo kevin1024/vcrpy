@@ -9,12 +9,11 @@ import wrapt
 
 from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError
-from .filters import replace_text
+from .filters import sensitive_data_hooks
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 from .record_mode import RecordMode
-from .request import Request
 from .serializers import yamlserializer
 from .util import partition_dict
 
@@ -181,6 +180,8 @@ class Cassette:
         allow_playback_repeats=False,
         drop_unused_requests=False,
         filter_sensitive_data=(),
+        before_save_interaction=None,
+        after_load_interaction=None,
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -194,9 +195,15 @@ class Cassette:
         self.custom_patches = custom_patches
         self.allow_playback_repeats = allow_playback_repeats
         self.drop_unused_requests = drop_unused_requests
-        if isinstance(filter_sensitive_data, dict):
-            filter_sensitive_data = filter_sensitive_data.items()
-        self._sensitive_data = list(filter_sensitive_data)
+        # Hooks run on each interaction as the cassette is saved and loaded.
+        # filter_sensitive_data hides values after the user's save hooks and
+        # restores them before the user's load hooks, so those see real values.
+        self._before_save_interaction = _hooks(before_save_interaction)
+        self._after_load_interaction = _hooks(after_load_interaction)
+        if filter_sensitive_data:
+            hide, restore = sensitive_data_hooks(filter_sensitive_data)
+            self._before_save_interaction.append(hide)
+            self._after_load_interaction.insert(0, restore)
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -394,44 +401,31 @@ class Cassette:
             self.dirty = False
 
     def _persist(self, cassette_dict):
-        if self._sensitive_data:
-            pairs = zip(cassette_dict["requests"], cassette_dict["responses"], strict=True)
-            interactions = [
-                self._replace_sensitive_data(request, response, restore=False) for request, response in pairs
-            ]
+        if self._before_save_interaction:
+            interactions = []
+            for request, response in zip(cassette_dict["requests"], cassette_dict["responses"], strict=True):
+                # Hooks get copies, so they can't change the interactions in memory.
+                interaction = _run_hooks(
+                    self._before_save_interaction,
+                    copy.deepcopy(request),
+                    copy.deepcopy(response),
+                )
+                if interaction is not None:
+                    interactions.append(interaction)
             cassette_dict = {
                 "requests": [request for request, _ in interactions],
                 "responses": [response for _, response in interactions],
             }
         self._persister.save_cassette(self._path, cassette_dict, serializer=self._serializer)
 
-    def _replace_sensitive_data(self, request, response, restore):
-        """Swap sensitive values for their placeholders, or back when restoring.
-
-        Values are hidden when a cassette is saved and restored when it's
-        loaded, so the cassette file holds placeholders while requests are
-        matched, and responses played back, with the real values.
-        """
-        for placeholder, value in self._sensitive_data:
-            if callable(value):
-                value = value(request, response)
-            if value is None:
-                continue
-            # Non-string values, like a port number, are matched as text.
-            placeholder, value = str(placeholder), str(value)
-            if not placeholder or not value:
-                continue
-            text, replacement = (placeholder, value) if restore else (value, placeholder)
-            request = Request._from_dict(replace_text(request._to_dict(), text, replacement))
-            response = replace_text(response, text, replacement)
-        return request, response
-
     def _load(self):
         try:
             requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
             for request, response in zip(requests, responses, strict=False):
-                if self._sensitive_data:
-                    request, response = self._replace_sensitive_data(request, response, restore=True)
+                interaction = _run_hooks(self._after_load_interaction, request, response)
+                if interaction is None:
+                    continue
+                request, response = interaction
                 self.append(request, response)
                 self._old_interactions.append((request, response))
             self._loaded_count = len(self.data)
@@ -453,3 +447,22 @@ class Cassette:
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 return True
         return False
+
+
+def _hooks(hooks):
+    """A list of interaction hooks from None, one function, or several."""
+    if hooks is None:
+        return []
+    if callable(hooks):
+        return [hooks]
+    return list(hooks)
+
+
+def _run_hooks(hooks, request, response):
+    """Run interaction hooks in order. Returns None if one of them drops the interaction."""
+    for hook in hooks:
+        interaction = hook(request, response)
+        if interaction is None:
+            return None
+        request, response = interaction
+    return request, response

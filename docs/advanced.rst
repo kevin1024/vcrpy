@@ -364,6 +364,47 @@ sensitive data from the response body:
     with my_vcr.use_cassette('test.yml'):
          # your http code here
 
+Save and load hooks
+~~~~~~~~~~~~~~~~~~~
+
+``before_record_request`` and ``before_record_response`` change requests
+and responses as they're recorded, and ``before_record_request`` also runs
+on every request before it's matched against the cassette. For changes
+that should only affect the cassette file, use these two options instead:
+
+- ``before_save_interaction`` runs on each interaction when the cassette
+  is saved.
+- ``after_load_interaction`` runs on each interaction when the cassette is
+  loaded.
+
+Each hook is called with an interaction's request and response, and
+returns them, changed or not, or ``None`` to leave the interaction out:
+out of the saved file, or out of the interactions that can be played
+back. Save hooks get copies, so they don't change the requests and
+responses your code sees while recording. Each option takes one function
+or a list of them, applied in order.
+
+Because a hook sees the request and the response together, it can decide
+what to change in one based on the other. For example, to scrub tokens
+only from the responses of a login endpoint:
+
+.. code:: python
+
+    import re
+
+    def scrub_login_token(request, response):
+        if request.path == '/login':
+            response['body']['string'] = re.sub(
+                rb'"token": "[^"]*"', b'"token": "<TOKEN>"', response['body']['string']
+            )
+        return request, response
+
+    my_vcr = vcr.VCR(before_save_interaction=scrub_login_token)
+
+``filter_sensitive_data`` is built on these hooks: it replaces values
+after your save hooks run and restores them before your load hooks run,
+so your hooks always see the real values.
+
 
 Decode compressed response
 ---------------------------

@@ -555,3 +555,96 @@ def test_filter_sensitive_data_accepts_non_string_values():
     requests, responses = _MemoryPersister.cassettes[path]
     assert requests[0].uri == "http://example.com:<PORT>/"
     assert responses[0]["body"]["string"] == b"port <PORT>"
+
+
+def _hooked_cassette(path, **kwargs):
+    return Cassette(path, persister=_MemoryPersister, **kwargs)
+
+
+def _interaction(uri="http://example.com/", body=b"hello"):
+    return Request("GET", uri, "", {}), {"status": {"code": 200, "message": "OK"}, "body": {"string": body}}
+
+
+def test_before_save_interaction_changes_the_saved_cassette_only():
+    def shout(request, response):
+        response["body"]["string"] = response["body"]["string"].upper()
+        return request, response
+
+    cassette = _hooked_cassette("hooks-save", before_save_interaction=shout)
+    cassette.append(*_interaction())
+    cassette._save()
+
+    _, responses = _MemoryPersister.cassettes["hooks-save"]
+    assert responses[0]["body"]["string"] == b"HELLO"
+    # The hook got a copy: the interaction in memory is unchanged.
+    assert cassette.data[0][1]["body"]["string"] == b"hello"
+
+
+def test_before_save_interaction_can_drop_interactions():
+    def drop_secret_paths(request, response):
+        return None if request.path == "/secret" else (request, response)
+
+    cassette = _hooked_cassette("hooks-drop", before_save_interaction=drop_secret_paths)
+    cassette.append(*_interaction("http://example.com/secret"))
+    cassette.append(*_interaction("http://example.com/public"))
+    cassette._save()
+
+    requests, _ = _MemoryPersister.cassettes["hooks-drop"]
+    assert [r.path for r in requests] == ["/public"]
+
+
+def test_after_load_interaction_changes_and_skips_loaded_interactions():
+    _MemoryPersister.cassettes["hooks-load"] = (
+        [_interaction("http://example.com/a")[0], _interaction("http://example.com/b")[0]],
+        [_interaction()[1], _interaction()[1]],
+    )
+
+    def hooks(request, response):
+        if request.path == "/b":
+            return None
+        response["body"]["string"] = b"changed"
+        return request, response
+
+    cassette = Cassette.load(path="hooks-load", persister=_MemoryPersister, after_load_interaction=hooks)
+    assert [(r.path, resp["body"]["string"]) for r, resp in cassette.data] == [("/a", b"changed")]
+
+
+def test_interaction_hooks_run_in_order():
+    calls = []
+
+    def hook(name):
+        def run(request, response):
+            calls.append(name)
+            return request, response
+
+        return run
+
+    cassette = _hooked_cassette("hooks-order", before_save_interaction=[hook("first"), hook("second")])
+    cassette.append(*_interaction())
+    cassette._save()
+    assert calls == ["first", "second"]
+
+
+def test_interaction_hooks_see_real_values_around_filter_sensitive_data():
+    seen = {}
+
+    def on_save(request, response):
+        seen["save"] = request.uri
+        return request, response
+
+    def on_load(request, response):
+        seen["load"] = request.uri
+        return request, response
+
+    options = {
+        "filter_sensitive_data": {"<KEY>": "s3cret"},
+        "before_save_interaction": on_save,
+        "after_load_interaction": on_load,
+    }
+    cassette = _hooked_cassette("hooks-sensitive", **options)
+    cassette.append(*_interaction("http://example.com/?key=s3cret"))
+    cassette._save()
+    Cassette.load(path="hooks-sensitive", persister=_MemoryPersister, **options)
+
+    assert _MemoryPersister.cassettes["hooks-sensitive"][0][0].uri == "http://example.com/?key=<KEY>"
+    assert seen == {"save": "http://example.com/?key=s3cret", "load": "http://example.com/?key=s3cret"}

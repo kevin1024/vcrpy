@@ -461,3 +461,16 @@ def test_use_cassette_generator_return():
         next(gen())
 
     assert exc_info.value.value is ret_val
+
+
+def test_interaction_hook_options():
+    def on_save(request, response):
+        return request, response
+
+    def on_load(request, response):
+        return request, response
+
+    my_vcr = VCR(before_save_interaction=on_save)
+    with my_vcr.use_cassette("test", after_load_interaction=[on_load]) as cassette:
+        assert cassette._before_save_interaction == [on_save]
+        assert cassette._after_load_interaction == [on_load]

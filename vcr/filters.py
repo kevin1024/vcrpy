@@ -73,6 +73,43 @@ def replace_text(obj, text, replacement):
     return obj
 
 
+def sensitive_data_hooks(sensitive_data):
+    """Build the interaction hooks that implement ``filter_sensitive_data``.
+
+    ``sensitive_data`` maps placeholders to the values they stand for, as a
+    dict or as (placeholder, value) pairs. A value can be a function of the
+    interaction's request and response. Returns ``(hide, restore)``: ``hide``
+    replaces values with their placeholders, for ``before_save_interaction``,
+    and ``restore`` puts the values back, for ``after_load_interaction``.
+    """
+    if isinstance(sensitive_data, dict):
+        sensitive_data = sensitive_data.items()
+    sensitive_data = list(sensitive_data)
+
+    def replace(request, response, restore):
+        for placeholder, value in sensitive_data:
+            if callable(value):
+                value = value(request, response)
+            if value is None:
+                continue
+            # Non-string values, like a port number, are matched as text.
+            placeholder, value = str(placeholder), str(value)
+            if not placeholder or not value:
+                continue
+            text, replacement = (placeholder, value) if restore else (value, placeholder)
+            request = type(request)._from_dict(replace_text(request._to_dict(), text, replacement))
+            response = replace_text(response, text, replacement)
+        return request, response
+
+    def hide(request, response):
+        return replace(request, response, restore=False)
+
+    def restore(request, response):
+        return replace(request, response, restore=True)
+
+    return hide, restore
+
+
 def replace_headers(request, replacements):
     """Replace headers in request according to replacements.
     The replacements should be a list of (key, value) pairs where the value can be any of:
