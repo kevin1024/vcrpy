@@ -3,7 +3,7 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  Unreleased
+-  9.0.0
     - Fix the ``body`` matcher crashing (e.g. with ``JSONDecodeError``) when a body doesn't parse as its headers say, such as invalid JSON sent as ``application/json`` or malformed XML-RPC. Such bodies are now compared as raw bytes
     - **Breaking:** drop support for Python 3.10, which reached its end of life on 2026-10-01 - thanks @pylaterreur
     - **Breaking:** aiohttp error responses are now recorded and replayed when ``raise_for_status`` is used, on the session or the request. Before, aiohttp raised before vcrpy could record the response, and a replayed error response didn't raise even with ``raise_for_status`` set. Tests that relied on either need updating (#635, #925) - thanks @andrescollares
