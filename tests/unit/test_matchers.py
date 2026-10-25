@@ -241,6 +241,15 @@ def test_body_matcher_compares_unparseable_bodies_as_bytes(headers):
         matchers.body(req(b"not {valid"), req(b"not {valid!"))
 
 
+@pytest.mark.parametrize("checker, transformer", matchers._checker_transformer_pairs)
+def test_checker_transformer_pairs_handle_none_body(checker, transformer):
+    # Regression test for https://github.com/kevin1024/vcrpy/issues/913 :
+    # some real clients (e.g. twilio-python) send a Content-Type header
+    # (form-urlencoded or xmlrpc-over-text/xml) without an actual body
+    # (e.g. on GET requests), so every transformer must tolerate body=None.
+    assert transformer(None) is None
+
+
 def test_query_matcher():
     req1 = request.Request("GET", "http://host.com/?a=b&c=d", "", {})
     req2 = request.Request("GET", "http://host.com/?c=d&a=b", "", {})
