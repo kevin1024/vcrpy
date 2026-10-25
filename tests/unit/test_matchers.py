@@ -222,6 +222,25 @@ def test_body_match_does_not_match(r1, r2):
         matchers.body(r1, r2)
 
 
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {"Content-Type": "application/json"},
+        {"Transfer-Encoding": "chunked"},
+        {"Content-Type": "text/xml", "User-Agent": "xmlrpc"},
+    ],
+)
+def test_body_matcher_compares_unparseable_bodies_as_bytes(headers):
+    # A body that doesn't parse as its headers say must be compared as raw
+    # bytes instead of crashing the matcher.
+    def req(body):
+        return request.Request("POST", "http://host.com/", body, headers)
+
+    assert matchers.body(req(b"not {valid"), req(b"not {valid")) is None
+    with pytest.raises(AssertionError):
+        matchers.body(req(b"not {valid"), req(b"not {valid!"))
+
+
 def test_query_matcher():
     req1 = request.Request("GET", "http://host.com/?a=b&c=d", "", {})
     req2 = request.Request("GET", "http://host.com/?c=d&a=b", "", {})

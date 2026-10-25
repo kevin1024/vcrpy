@@ -4,7 +4,8 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
-    - Drop support for Python 3.10, which reached its end of life on 2026-10-01 - thanks @pylaterreur
+    - Fix the ``body`` matcher crashing (e.g. with ``JSONDecodeError``) when a body doesn't parse as its headers say, such as invalid JSON sent as ``application/json`` or malformed XML-RPC. Such bodies are now compared as raw bytes
+    - **Breaking:** drop support for Python 3.10, which reached its end of life on 2026-10-01 - thanks @pylaterreur
 
 -  8.5.0
     - Fix ``filter_post_data_parameters`` crashing with ``UnicodeDecodeError`` on binary request bodies passed as ``bytes`` or ``bytearray``, which are now left untouched, and stop it mangling form segments without a ``=`` (#660) - thanks @philsong4-ai
