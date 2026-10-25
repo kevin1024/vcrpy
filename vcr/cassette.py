@@ -201,6 +201,8 @@ class Cassette:
         # Subsets of self.data to store old and played interactions
         self._old_interactions = []
         self._played_interactions = []
+        # Number of entries at the start of self.data that came from the file
+        self._loaded_count = 0
 
     @property
     def play_count(self):
@@ -347,7 +349,35 @@ class Cassette:
         }
         return cassete_dict
 
+    def _rerecorded_interactions(self):
+        """Interactions to save in "all" mode.
+
+        Interactions recorded now replace the loaded ones they match, so
+        re-recording doesn't duplicate them. Loaded interactions that weren't
+        re-recorded are kept, unless drop_unused_requests is set.
+        """
+        loaded = self.data[: self._loaded_count]
+        recorded = self.data[self._loaded_count :]
+        if self.drop_unused_requests:
+            return recorded
+        kept = [
+            (old_request, old_response)
+            for old_request, old_response in loaded
+            if not any(requests_match(request, old_request, self._match_on) for request, _ in recorded)
+        ]
+        return kept + recorded
+
     def _save(self, force=False):
+        if self.record_mode == RecordMode.ALL:
+            if force or self.dirty:
+                interactions = self._rerecorded_interactions()
+                cassete_dict = {
+                    "requests": [request for request, _ in interactions],
+                    "responses": [response for _, response in interactions],
+                }
+                self._persister.save_cassette(self._path, cassete_dict, serializer=self._serializer)
+                self.dirty = False
+            return
         if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
             cassete_dict = self._build_used_interactions_dict()
             force = True
@@ -363,6 +393,7 @@ class Cassette:
             for request, response in zip(requests, responses, strict=False):
                 self.append(request, response)
                 self._old_interactions.append((request, response))
+            self._loaded_count = len(self.data)
             self.dirty = False
             self.rewound = True
         except (CassetteDecodeError, CassetteNotFoundError):
