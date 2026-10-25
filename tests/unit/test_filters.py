@@ -180,6 +180,37 @@ def test_remove_all_body_parameters_form_encoded(method):
     assert request.body == b""
 
 
+def test_replace_post_data_parameters_binary_body():
+    # A binary payload -- e.g. a file posted as raw bytes -- is not urlencoded
+    # form data, even though it may well contain b"=" and b"&". It must be left
+    # untouched instead of raising UnicodeDecodeError (#660).
+    body = b"\xff\xd8\xff\xe1\x00\xe8Exif=1&two=lose"
+    request = Request(
+        "POST",
+        "http://google.com",
+        body,
+        {"Content-Type": "application/octet-stream"},
+    )
+    replace_post_data_parameters(request, [("two", None)])
+    assert request.body == body
+
+
+def test_replace_post_data_parameters_binary_bytearray_body():
+    body = bytearray(b"\xff\xd8\xff\xe1=1&two=lose")
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(request, [("two", None)])
+    assert request.body == body
+
+
+def test_replace_post_data_parameters_keyless_segment():
+    # A segment without "=" is not a key/value pair, so it must not be treated
+    # as a parameter to replace.
+    body = b"two&one=keep"
+    request = Request("POST", "http://google.com", body, {})
+    replace_post_data_parameters(request, [("two", "shout")])
+    assert request.body == b"two&one=keep"
+
+
 @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
 def test_replace_body_parameters_json(method):
     # This tests all of:
@@ -388,3 +419,19 @@ def test_decode_response_gzip_already_decompressed():
     }
     decoded_response = decode_response(gzip_response)
     assert decoded_response["body"]["string"] == body
+
+
+def test_replace_post_data_parameters_still_only_filters_post():
+    # The old function keeps its POST-only behavior for code that calls it directly.
+    request = Request("PUT", "http://google.com", b"id=secret&foo=bar", {})
+    replace_post_data_parameters(request, [("id", None)])
+    assert request.body == b"id=secret&foo=bar"
+
+
+@pytest.mark.parametrize("method", ["PUT", "PATCH", "DELETE"])
+def test_filter_post_data_parameters_filters_every_method(method):
+    import vcr
+
+    before_record_request = vcr.VCR(filter_post_data_parameters=["id"])._build_before_record_request({})
+    request = Request(method, "http://google.com", b"id=secret&foo=bar", {})
+    assert before_record_request(request).body == b"foo=bar"

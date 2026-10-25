@@ -3,6 +3,7 @@ import logging
 import urllib
 import xmlrpc.client
 from string import hexdigits
+from xml.parsers.expat import ExpatError
 
 from .util import read_body
 
@@ -16,8 +17,25 @@ def method(r1, r2):
         raise AssertionError(f"{r1.method} != {r2.method}")
 
 
+def _normalized_path(path):
+    """RFC 3986 section 6.2.3: an empty path is equivalent to "/"."""
+    return path if path else "/"
+
+
+def _normalized_uri(r):
+    # httpx records bare-host URLs as https://example.com; cassettes often
+    # store the RFC-canonical https://example.com/. Insert the "/" so those
+    # compare equal, and compare everything else exactly.
+    if r.parsed_uri.path:
+        return r.uri
+    authority = f"{r.parsed_uri.scheme}://{r.parsed_uri.netloc}"
+    if not r.uri.startswith(authority):
+        return r.uri
+    return authority + "/" + r.uri[len(authority) :]
+
+
 def uri(r1, r2):
-    if r1.uri != r2.uri:
+    if _normalized_uri(r1) != _normalized_uri(r2):
         raise AssertionError(f"{r1.uri} != {r2.uri}")
 
 
@@ -37,7 +55,7 @@ def port(r1, r2):
 
 
 def path(r1, r2):
-    if r1.path != r2.path:
+    if _normalized_path(r1.path) != _normalized_path(r2.path):
         raise AssertionError(f"{r1.path} != {r2.path}")
 
 
@@ -58,11 +76,17 @@ def body(r1, r2):
 
     b1 = read_body(r1)
     b2 = read_body(r2)
-    for transform in transformers:
-        b1 = transform(b1)
-        b2 = transform(b2)
+    try:
+        t1, t2 = b1, b2
+        for transform in transformers:
+            t1 = transform(t1)
+            t2 = transform(t2)
+    except (ValueError, ExpatError):
+        # A body that doesn't parse as its headers say (e.g. invalid JSON sent
+        # as application/json) is compared as raw bytes instead.
+        t1, t2 = b1, b2
 
-    if b1 != b2:
+    if t1 != t2:
         raise AssertionError
 
 

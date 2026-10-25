@@ -90,6 +90,37 @@ Finally, register your class with VCR to use your new serializer.
     with my_vcr.use_cassette('test.bogo'):
         # your http here
 
+Cassettes containing custom Python objects
+------------------------------------------
+
+For security, VCR.py loads YAML cassettes with a *safe* loader that refuses
+the ``!!python/object`` family of tags (loading them could execute arbitrary
+code from an untrusted cassette), and it refuses to *record* a cassette
+containing such a tag so you find out at record time rather than on replay.
+
+If your requests or responses legitimately contain a custom Python object
+(say, a custom ``str`` subclass used as a header value), build a serializer
+that knows how to construct that object's tag and register it on your VCR
+instance:
+
+.. code:: python
+
+    import vcr
+    from vcr.serializers import yamlserializer
+
+    def construct_my_header(loader, node):
+        return MyHeader(loader.construct_sequence(node)[0])
+
+    my_vcr = vcr.VCR()
+    my_vcr.register_serializer("yaml", yamlserializer.with_custom_tags({
+        "tag:yaml.org,2002:python/object/new:myapp.MyHeader": construct_my_header,
+    }))
+
+Tags registered this way work symmetrically: the loader can construct them,
+so the dumper allows recording them. The default serializer stays locked
+down; the custom tags apply only to the VCR instance you registered the
+serializer on.
+
 Register your own request matcher
 ---------------------------------
 

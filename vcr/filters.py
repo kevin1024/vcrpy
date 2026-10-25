@@ -112,6 +112,31 @@ def remove_query_parameters(request, query_parameters_to_remove):
     return replace_query_parameters(request, replacements)
 
 
+def _replace_urlencoded_parameters(body, replacements, request):
+    """Replace parameters in a urlencoded form data body.
+
+    Raises UnicodeError if the body (or one of its keys/values) can not be
+    decoded as UTF-8, in which case it is not urlencoded form data.
+    """
+    splits = [p.partition(b"=") for p in body.split(b"&")]
+    new_splits = []
+    for k, sep, ov in splits:
+        if not sep:
+            # no "=" in this segment, so it is not a key/value pair
+            new_splits.append((k, sep, ov))
+        else:
+            rk = k.decode("utf-8")
+            if rk not in replacements:
+                new_splits.append((k, sep, ov))
+            else:
+                rv = replacements[rk]
+                if callable(rv):
+                    rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
+                if rv is not None:
+                    new_splits.append((k, sep, rv.encode("utf-8")))
+    return b"&".join(k if not sep else b"".join([k, sep, v]) for k, sep, v in new_splits)
+
+
 def replace_body_parameters(request, replacements):
     """Replace body parameters in request--either form data or json--according to replacements.
 
@@ -129,7 +154,6 @@ def replace_body_parameters(request, replacements):
         return request
 
     replacements = dict(replacements)
-
     if isinstance(request.body, dict):
         new_body = request.body.copy()
         for k, rv in replacements.items():
@@ -151,30 +175,21 @@ def replace_body_parameters(request, replacements):
                     json_data[k] = rv
         request.body = json.dumps(json_data).encode("utf-8")
     else:
-        if isinstance(request.body, str):
-            request.body = request.body.encode("utf-8")
-        splits = [p.partition(b"=") for p in request.body.split(b"&")]
-        new_splits = []
-        for k, sep, ov in splits:
-            if sep is None:
-                new_splits.append((k, sep, ov))
-            else:
-                rk = k.decode("utf-8")
-                if rk not in replacements:
-                    new_splits.append((k, sep, ov))
-                else:
-                    rv = replacements[rk]
-                    if callable(rv):
-                        rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
-                    if rv is not None:
-                        new_splits.append((k, sep, rv.encode("utf-8")))
-        request.body = b"&".join(k if sep is None else b"".join([k, sep, v]) for k, sep, v in new_splits)
+        try:
+            body = request.body.encode("utf-8") if isinstance(request.body, str) else request.body
+            request.body = _replace_urlencoded_parameters(body, replacements, request)
+        except UnicodeError:
+            # The body isn't UTF-8 encoded text -- e.g. a binary file
+            # upload -- so it can't be urlencoded form data and there is
+            # nothing we can safely replace. Leave it untouched instead of
+            # blowing up while recording/replaying (#660).
+            pass
     return request
 
 
 def replace_post_data_parameters(request, replacements):
     """
-    Wrap replace_body_parameters() for API backward compatibility.
+    Wrap replace_body_parameters() for API backward compatibility: only filters POST requests.
     """
     if request.method != "POST":
         return request
