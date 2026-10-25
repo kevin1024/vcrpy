@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
+    - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
 
 -  9.2.0
     - New ``before_save_interaction`` and ``after_load_interaction`` options: hooks that get each interaction's request and response (and the cassette, if they take a third argument) when a cassette is saved and loaded, and can change them or leave the interaction out. Cassettes also get a public ``path``. Like Ruby VCR's ``before_record`` and ``before_playback`` hooks (#527, #556) - thanks @tzturner and co-authors for #679, and @akaihola for #594, which explored this
