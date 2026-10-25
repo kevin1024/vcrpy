@@ -681,3 +681,29 @@ def test_interaction_hooks_can_take_the_cassette():
 
 def test_cassette_path():
     assert Cassette("path/to/cassette.yaml").path == "path/to/cassette.yaml"
+
+
+def test_interaction_hook_with_wrong_return_value():
+    def returns_only_the_response(request, response):
+        return response
+
+    cassette = _hooked_cassette("hooks-wrong-return", before_save_interaction=returns_only_the_response)
+    cassette.append(*_interaction())
+    with pytest.raises(
+        TypeError,
+        match=r"returns_only_the_response must return \(request, response\) or None, not dict",
+    ):
+        cassette._save()
+
+
+def test_interaction_hooks_accept_a_tuple():
+    calls = []
+
+    def hook(request, response):
+        calls.append(request.path)
+        return request, response
+
+    cassette = _hooked_cassette("hooks-tuple", before_save_interaction=(hook, hook))
+    cassette.append(*_interaction())
+    cassette._save()
+    assert calls == ["/", "/"]

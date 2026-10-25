@@ -1,4 +1,5 @@
 import collections
+import collections.abc
 import contextlib
 import copy
 import inspect
@@ -456,10 +457,14 @@ class Cassette:
 
 
 def _hooks(hooks):
-    """A list of interaction hooks from None, one function, or several."""
+    """A list of interaction hooks from None, one function, or several.
+
+    Like before_record_request and before_record_response, anything that
+    isn't iterable is a single hook.
+    """
     if hooks is None:
         return []
-    if callable(hooks):
+    if not isinstance(hooks, collections.abc.Iterable):
         return [hooks]
     return list(hooks)
 
@@ -486,5 +491,11 @@ def _run_hooks(hooks, request, response, cassette):
             interaction = hook(request, response)
         if interaction is None:
             return None
+        if not isinstance(interaction, (tuple, list)) or len(interaction) != 2:
+            name = getattr(hook, "__qualname__", repr(hook))
+            raise TypeError(
+                f"Interaction hook {name} must return (request, response) or None, "
+                f"not {type(interaction).__name__}",
+            )
         request, response = interaction
     return request, response

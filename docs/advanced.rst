@@ -413,7 +413,16 @@ only from the responses of a login endpoint:
 
 ``filter_sensitive_data`` is built on these hooks: it replaces values
 after your save hooks run and restores them before your load hooks run,
-so your hooks always see the real values.
+so your hooks always see the real values, and a secret can't end up in
+the cassette file even if a save hook copies it somewhere. Note that this
+is the opposite order from ``before_record_request`` and
+``before_record_response``, which run after the built-in filters (like
+``filter_headers`` and ``decode_compressed_response``) and so see
+already-filtered requests and responses.
+
+Unlike ``before_record_request``, which also runs on every request
+before it's matched against the cassette, these hooks run exactly once
+per interaction: when the cassette is saved, or when it's loaded.
 
 
 Decode compressed response
