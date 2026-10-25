@@ -3,6 +3,9 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
+
 -  9.2.0
     - New ``before_save_interaction`` and ``after_load_interaction`` options: hooks that get each interaction's request and response (and the cassette, if they take a third argument) when a cassette is saved and loaded, and can change them or leave the interaction out. Cassettes also get a public ``path``. Like Ruby VCR's ``before_record`` and ``before_playback`` hooks (#527, #556) - thanks @tzturner and co-authors for #679, and @akaihola for #594, which explored this
     - New ``filter_sensitive_data`` option: replace secrets with placeholders everywhere in recorded interactions (URL, headers and bodies), and put the real values back when a cassette is loaded, built on the new hooks, so requests still match and your code sees the same responses whether they're recorded or played back. Inspired by Ruby VCR's option of the same name (#527, #544, #912)
