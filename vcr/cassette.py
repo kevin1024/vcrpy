@@ -9,10 +9,12 @@ import wrapt
 
 from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError
+from .filters import replace_text
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 from .record_mode import RecordMode
+from .request import Request
 from .serializers import yamlserializer
 from .util import partition_dict
 
@@ -178,6 +180,7 @@ class Cassette:
         inject=False,
         allow_playback_repeats=False,
         drop_unused_requests=False,
+        filter_sensitive_data=(),
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -191,6 +194,9 @@ class Cassette:
         self.custom_patches = custom_patches
         self.allow_playback_repeats = allow_playback_repeats
         self.drop_unused_requests = drop_unused_requests
+        if isinstance(filter_sensitive_data, dict):
+            filter_sensitive_data = filter_sensitive_data.items()
+        self._sensitive_data = list(filter_sensitive_data)
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -375,7 +381,7 @@ class Cassette:
                     "requests": [request for request, _ in interactions],
                     "responses": [response for _, response in interactions],
                 }
-                self._persister.save_cassette(self._path, cassete_dict, serializer=self._serializer)
+                self._persist(cassete_dict)
                 self.dirty = False
             return
         if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
@@ -384,13 +390,44 @@ class Cassette:
         else:
             cassete_dict = self._as_dict()
         if force or self.dirty:
-            self._persister.save_cassette(self._path, cassete_dict, serializer=self._serializer)
+            self._persist(cassete_dict)
             self.dirty = False
+
+    def _persist(self, cassette_dict):
+        if self._sensitive_data:
+            pairs = zip(cassette_dict["requests"], cassette_dict["responses"], strict=True)
+            interactions = [
+                self._replace_sensitive_data(request, response, restore=False) for request, response in pairs
+            ]
+            cassette_dict = {
+                "requests": [request for request, _ in interactions],
+                "responses": [response for _, response in interactions],
+            }
+        self._persister.save_cassette(self._path, cassette_dict, serializer=self._serializer)
+
+    def _replace_sensitive_data(self, request, response, restore):
+        """Swap sensitive values for their placeholders, or back when restoring.
+
+        Values are hidden when a cassette is saved and restored when it's
+        loaded, so the cassette file holds placeholders while requests are
+        matched, and responses played back, with the real values.
+        """
+        for placeholder, value in self._sensitive_data:
+            if callable(value):
+                value = value(request, response)
+            if not placeholder or not value:
+                continue
+            text, replacement = (placeholder, value) if restore else (value, placeholder)
+            request = Request._from_dict(replace_text(request._to_dict(), text, replacement))
+            response = replace_text(response, text, replacement)
+        return request, response
 
     def _load(self):
         try:
             requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
             for request, response in zip(requests, responses, strict=False):
+                if self._sensitive_data:
+                    request, response = self._replace_sensitive_data(request, response, restore=True)
                 self.append(request, response)
                 self._old_interactions.append((request, response))
             self._loaded_count = len(self.data)

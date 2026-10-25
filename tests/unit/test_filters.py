@@ -15,6 +15,7 @@ from vcr.filters import (
     replace_headers,
     replace_post_data_parameters,
     replace_query_parameters,
+    replace_text,
 )
 from vcr.request import Request
 
@@ -450,3 +451,22 @@ def test_filter_post_data_parameters_filters_every_method(method):
     before_record_request = vcr.VCR(filter_post_data_parameters=["id"])._build_before_record_request({})
     request = Request(method, "http://google.com", b"id=secret&foo=bar", {})
     assert before_record_request(request).body == b"foo=bar"
+
+
+def test_replace_text():
+    original = {
+        "uri": "http://x/?key=SECRET",
+        "headers": {"Authorization": ["Bearer SECRET"], "X-SECRET": ["1"]},
+        "body": b"token=SECRET",
+        "nested": [("SECRET", BytesIO(b"SECRET!")), 42, None],
+    }
+    replaced = replace_text(original, "SECRET", "<KEY>")
+    assert replaced["uri"] == "http://x/?key=<KEY>"
+    assert replaced["headers"] == {"Authorization": ["Bearer <KEY>"], "X-<KEY>": ["1"]}
+    assert replaced["body"] == b"token=<KEY>"
+    assert replaced["nested"][0][0] == "<KEY>"
+    assert replaced["nested"][0][1].getvalue() == b"<KEY>!"
+    assert replaced["nested"][1:] == [42, None]
+    # The original is left untouched.
+    assert original["uri"] == "http://x/?key=SECRET"
+    assert original["body"] == b"token=SECRET"

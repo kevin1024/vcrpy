@@ -113,6 +113,31 @@ def test_filter_callback(tmpdir, httpbin):
         assert len(cass) == 0
 
 
+def test_filter_sensitive_data(tmpdir, httpbin):
+    secret = "s3cret-value"
+    url = httpbin.url + "/post?" + urlencode({"key": secret})
+    cass_file = str(tmpdir.join("sensitive_data.yaml"))
+    my_vcr = vcr.VCR(filter_sensitive_data={"<KEY>": secret})
+
+    def post():
+        request = Request(url, data=urlencode({"token": secret}).encode(), headers={"X-Api-Key": secret})
+        return json.loads(urlopen(request).read())
+
+    with my_vcr.use_cassette(cass_file):
+        recorded = post()
+    # The code saw the real values, but the cassette only has the placeholder.
+    assert recorded["args"]["key"] == recorded["form"]["token"] == recorded["headers"]["X-Api-Key"] == secret
+    with open(cass_file) as f:
+        cassette_text = f.read()
+    assert secret not in cassette_text
+    assert "<KEY>" in cassette_text
+
+    # On replay, the request matches and the real values are restored.
+    with my_vcr.use_cassette(cass_file, record_mode="none") as cass:
+        assert post() == recorded
+        assert cass.play_count == 1
+
+
 def test_decompress_gzip(tmpdir, httpbin):
     url = httpbin.url + "/gzip"
     request = Request(url, headers={"Accept-Encoding": ["gzip, deflate"]})

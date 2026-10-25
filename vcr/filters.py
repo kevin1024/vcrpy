@@ -50,6 +50,29 @@ if brotli is not None:
     AVAILABLE_DECOMPRESSORS["br"] = decompress_brotli
 
 
+def replace_text(obj, text, replacement):
+    """Return a copy of obj with every occurrence of text replaced by replacement.
+
+    Replaces in strings and bytes (encoded as UTF-8), and in the keys and
+    values of dicts and the items of lists and tuples, at any depth.
+    Anything else is returned unchanged.
+    """
+    if isinstance(obj, str):
+        return obj.replace(text, replacement)
+    if isinstance(obj, (bytes, bytearray)):
+        return bytes(obj).replace(text.encode("utf-8"), replacement.encode("utf-8"))
+    if isinstance(obj, BytesIO):
+        return BytesIO(replace_text(obj.getvalue(), text, replacement))
+    if isinstance(obj, dict):
+        return {
+            replace_text(key, text, replacement): replace_text(value, text, replacement)
+            for key, value in obj.items()
+        }
+    if isinstance(obj, (list, tuple)):
+        return type(obj)(replace_text(item, text, replacement) for item in obj)
+    return obj
+
+
 def replace_headers(request, replacements):
     """Replace headers in request according to replacements.
     The replacements should be a list of (key, value) pairs where the value can be any of:

@@ -3,6 +3,7 @@ import copy
 import http.client as httplib
 import inspect
 import os
+from typing import ClassVar
 from unittest import mock
 
 import pytest
@@ -11,6 +12,7 @@ import yaml
 from vcr.cassette import Cassette
 from vcr.errors import UnhandledHTTPRequestError
 from vcr.patch import force_reset
+from vcr.persisters.filesystem import CassetteNotFoundError
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 
@@ -472,3 +474,73 @@ def test_used_interactions(tmpdir):
         saved_content = f.read()
     assert "Authorization" not in saved_content
     assert "secret-token" not in saved_content
+
+
+class _MemoryPersister:
+    cassettes: ClassVar[dict] = {}
+
+    @classmethod
+    def load_cassette(cls, cassette_path, serializer):
+        if cassette_path not in cls.cassettes:
+            raise CassetteNotFoundError
+        return cls.cassettes[cassette_path]
+
+    @classmethod
+    def save_cassette(cls, cassette_path, cassette_dict, serializer):
+        cls.cassettes[cassette_path] = (cassette_dict["requests"], cassette_dict["responses"])
+
+
+def _secret_interaction(secret):
+    request = Request(
+        "POST",
+        f"http://example.com/?key={secret}",
+        f"token={secret}",
+        {"Authorization": secret},
+    )
+    response = {
+        "status": {"code": 200, "message": "OK"},
+        "headers": {"X-Echo": [secret]},
+        "body": {"string": f'{{"token": "{secret}"}}'.encode()},
+    }
+    return request, response
+
+
+@pytest.mark.parametrize(
+    "filter_sensitive_data",
+    [
+        {"<TOKEN>": "s3cret"},
+        [("<TOKEN>", "s3cret")],
+        {"<TOKEN>": lambda request, response: "s3cret"},
+    ],
+)
+def test_filter_sensitive_data_hides_on_save_and_restores_on_load(filter_sensitive_data):
+    path = f"sensitive-{id(filter_sensitive_data)}"
+    cassette = Cassette(path, persister=_MemoryPersister, filter_sensitive_data=filter_sensitive_data)
+    cassette.append(*_secret_interaction("s3cret"))
+    cassette._save()
+
+    requests, responses = _MemoryPersister.cassettes[path]
+    saved = repr([r._to_dict() for r in requests]) + repr(responses)
+    assert "s3cret" not in saved
+    assert saved.count("<TOKEN>") == 5
+
+    loaded = Cassette.load(path=path, persister=_MemoryPersister, filter_sensitive_data=filter_sensitive_data)
+    request, response = loaded.data[0]
+    expected_request, expected_response = _secret_interaction("s3cret")
+    assert request._to_dict() == expected_request._to_dict()
+    assert response == expected_response
+
+
+def test_filter_sensitive_data_skips_missing_values():
+    # e.g. an environment variable that isn't set in CI
+    path = "sensitive-missing"
+    cassette = Cassette(
+        path,
+        persister=_MemoryPersister,
+        filter_sensitive_data={"<TOKEN>": None, "": "s3cret"},
+    )
+    cassette.append(*_secret_interaction("s3cret"))
+    cassette._save()
+
+    requests, _ = _MemoryPersister.cassettes[path]
+    assert requests[0].uri == "http://example.com/?key=s3cret"

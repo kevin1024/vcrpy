@@ -195,6 +195,45 @@ some form of authentication in your tests, you can filter out that
 information so it won't appear in your cassette files. There are a few
 ways to do this:
 
+Replace secrets with placeholders
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``filter_sensitive_data`` configuration option to replace a
+secret with a placeholder wherever it appears in a recorded interaction:
+the URL, headers, and request and response bodies.
+
+.. code:: python
+
+    import os
+
+    my_vcr = vcr.VCR(
+        filter_sensitive_data={"<API_KEY>": os.environ.get("API_KEY", "fake-api-key")},
+    )
+
+The cassette file only ever contains ``<API_KEY>``. When the cassette is
+loaded, the placeholder is replaced with the value again, so:
+
+- requests made with the real value still match the recorded ones, and
+- your code gets the same responses whether they are recorded or played
+  back, including any part of a response that contained the secret.
+
+The value can also be a function that's called with the request and
+response of each interaction and returns the value to replace, or
+``None`` to leave that interaction alone. Values that are empty or
+``None`` are skipped, so in CI, where the real secret isn't set, give the
+same fallback value to your code and to ``filter_sensitive_data`` (like
+``"fake-api-key"`` above) so requests still match.
+
+A few things to keep in mind:
+
+- The replacement is plain text, so a value that is encoded differently
+  in part of the interaction (e.g. URL-encoded in a query string, or
+  escaped in JSON) needs its own entry with that encoded form.
+- Compressed response bodies are stored compressed unless you also set
+  ``decode_compressed_response=True``, so a secret inside one isn't found.
+- Choose placeholders and values that don't occur in the interactions by
+  chance; very short values could replace unrelated text.
+
 Filter information from HTTP Headers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
