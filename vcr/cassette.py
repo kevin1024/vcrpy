@@ -218,6 +218,11 @@ class Cassette:
         self._loaded_count = 0
 
     @property
+    def path(self):
+        """The path the cassette is saved to and loaded from."""
+        return self._path
+
+    @property
     def play_count(self):
         return sum(self.play_counts.values())
 
@@ -409,6 +414,7 @@ class Cassette:
                     self._before_save_interaction,
                     copy.deepcopy(request),
                     copy.deepcopy(response),
+                    self,
                 )
                 if interaction is not None:
                     interactions.append(interaction)
@@ -422,7 +428,7 @@ class Cassette:
         try:
             requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
             for request, response in zip(requests, responses, strict=False):
-                interaction = _run_hooks(self._after_load_interaction, request, response)
+                interaction = _run_hooks(self._after_load_interaction, request, response, self)
                 if interaction is None:
                     continue
                 request, response = interaction
@@ -458,10 +464,26 @@ def _hooks(hooks):
     return list(hooks)
 
 
-def _run_hooks(hooks, request, response):
-    """Run interaction hooks in order. Returns None if one of them drops the interaction."""
+def _accepts_cassette(hook):
+    """Whether an interaction hook takes the cassette as a third argument."""
+    try:
+        inspect.signature(hook).bind(None, None, None)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def _run_hooks(hooks, request, response, cassette):
+    """Run interaction hooks in order. Returns None if one of them drops the interaction.
+
+    Hooks are called with the request and response, and with the cassette
+    too if they accept a third argument.
+    """
     for hook in hooks:
-        interaction = hook(request, response)
+        if _accepts_cassette(hook):
+            interaction = hook(request, response, cassette)
+        else:
+            interaction = hook(request, response)
         if interaction is None:
             return None
         request, response = interaction

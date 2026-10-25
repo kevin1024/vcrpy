@@ -1,5 +1,6 @@
 import contextlib
 import copy
+import functools
 import http.client as httplib
 import inspect
 import os
@@ -648,3 +649,35 @@ def test_interaction_hooks_see_real_values_around_filter_sensitive_data():
 
     assert _MemoryPersister.cassettes["hooks-sensitive"][0][0].uri == "http://example.com/?key=<KEY>"
     assert seen == {"save": "http://example.com/?key=s3cret", "load": "http://example.com/?key=s3cret"}
+
+
+def test_interaction_hooks_can_take_the_cassette():
+    seen = []
+
+    def with_cassette(request, response, cassette):
+        seen.append(("save", cassette.path))
+        return request, response
+
+    def with_args(*args):
+        seen.append(("args", len(args)))
+        return args[:2]
+
+    class Hook:
+        def __call__(self, request, response):
+            seen.append(("callable", None))
+            return request, response
+
+    def with_prefix(prefix, request, response):
+        seen.append((prefix, None))
+        return request, response
+
+    hooks = [with_cassette, with_args, Hook(), functools.partial(with_prefix, "partial")]
+    cassette = _hooked_cassette("hooks-cassette", before_save_interaction=hooks)
+    cassette.append(*_interaction())
+    cassette._save()
+
+    assert seen == [("save", "hooks-cassette"), ("args", 3), ("callable", None), ("partial", None)]
+
+
+def test_cassette_path():
+    assert Cassette("path/to/cassette.yaml").path == "path/to/cassette.yaml"

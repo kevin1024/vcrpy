@@ -384,6 +384,16 @@ back. Save hooks get copies, so they don't change the requests and
 responses your code sees while recording. Each option takes one function
 or a list of them, applied in order.
 
+A hook that takes a third argument is also given the cassette, e.g. to
+only change the interactions of some cassettes:
+
+.. code:: python
+
+    def drop_health_checks(request, response, cassette):
+        if 'smoke_tests' in cassette.path and request.path == '/health':
+            return None
+        return request, response
+
 Because a hook sees the request and the response together, it can decide
 what to change in one based on the other. For example, to scrub tokens
 only from the responses of a login endpoint:
