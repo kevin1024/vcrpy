@@ -4,7 +4,6 @@ import inspect
 import os
 import types
 from collections import abc as collections_abc
-from pathlib import Path
 
 from . import filters, matchers
 from .cassette import Cassette
@@ -22,6 +21,7 @@ class VCR:
     @staticmethod
     def ensure_suffix(suffix):
         def ensure(path):
+            path = os.fspath(path)
             if not path.endswith(suffix):
                 return path + suffix
             return path
@@ -101,7 +101,7 @@ class VCR:
         return matchers
 
     def use_cassette(self, path=None, **kwargs):
-        if path is not None and not isinstance(path, (str, Path)):
+        if path is not None and not isinstance(path, (str, os.PathLike)):
             function = path
             # Assume this is an attempt to decorate a function
             return self._use_cassette(**kwargs)(function)
@@ -128,10 +128,12 @@ class VCR:
         record_on_exception = kwargs.get("record_on_exception", self.record_on_exception)
 
         if cassette_library_dir:
+            library_dir = os.fspath(cassette_library_dir)
 
             def add_cassette_library_dir(path):
-                if not path.startswith(cassette_library_dir):
-                    return os.path.join(cassette_library_dir, path)
+                path = os.fspath(path)
+                if not path.startswith(library_dir):
+                    return os.path.join(library_dir, path)
                 return path
 
             path_transformer = compose(add_cassette_library_dir, path_transformer)
