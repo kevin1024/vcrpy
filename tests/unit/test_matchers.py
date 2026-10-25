@@ -356,3 +356,24 @@ def test_path_matcher_still_distinguishes_non_root_trailing_slash():
         matchers.path(r1, r2)
     with pytest.raises(AssertionError):
         matchers.uri(r1, r2)
+
+
+@pytest.mark.parametrize(
+    ("uri1", "uri2"),
+    [
+        ("http://host.com/p?a=1&b=2", "http://host.com/p?b=2&a=1"),
+        ("http://host.com/p?a=1#x", "http://host.com/p?a=1#y"),
+        ("http://host.com?a=1&b=2", "http://host.com/?b=2&a=1"),
+    ],
+)
+def test_uri_matcher_stays_exact_apart_from_empty_path(uri1, uri2):
+    r1 = request.Request("GET", uri1, "", {})
+    r2 = request.Request("GET", uri2, "", {})
+    with pytest.raises(AssertionError):
+        matchers.uri(r1, r2)
+
+
+def test_uri_matcher_treats_empty_and_root_as_equal_with_query():
+    r1 = request.Request("GET", "https://example.com?a=1", "", {})
+    r2 = request.Request("GET", "https://example.com/?a=1", "", {})
+    assert matchers.uri(r1, r2) is None
