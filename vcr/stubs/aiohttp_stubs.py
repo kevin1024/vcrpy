@@ -264,6 +264,37 @@ def _build_url_with_params(url_str: str, params: Mapping[str, str | int | float]
     return url.with_query(q)
 
 
+def _is_seekable_file(value):
+    return hasattr(value, "read") and hasattr(value, "seekable") and value.seekable()
+
+
+def _read_and_rewind(file):
+    position = file.tell()
+    content = file.read()
+    file.seek(position)
+    return content
+
+
+def _recordable_data(data):
+    """Replace open files in form data with their contents for recording.
+
+    aiohttp accepts files as form field values (``data={"file": f}``). An
+    open file can't be copied or written to a cassette, so record its
+    contents instead and rewind it, so aiohttp still sends the whole file.
+    Data without seekable files is returned unchanged.
+    """
+    if isinstance(data, Mapping):
+        fields = list(data.items())
+    elif isinstance(data, (list, tuple)) and all(isinstance(f, tuple) and len(f) == 2 for f in data):
+        fields = list(data)
+    else:
+        return data
+    if not any(_is_seekable_file(value) for _, value in fields):
+        return data
+    fields = [(name, _read_and_rewind(v) if _is_seekable_file(v) else v) for name, v in fields]
+    return dict(fields) if type(data) is dict else fields
+
+
 def vcr_request(cassette, real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
@@ -287,7 +318,7 @@ def vcr_request(cassette, real_request):
         if cookie_header:
             headers[hdrs.COOKIE] = cookie_header
 
-        vcr_request = Request(method, str(request_url), data, _serialize_headers(headers))
+        vcr_request = Request(method, str(request_url), _recordable_data(data), _serialize_headers(headers))
 
         if cassette.can_play_response_for(vcr_request):
             log.info(f"Playing response for {vcr_request} from cassette")

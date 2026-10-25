@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - Fix ``filter_post_data_parameters`` crashing with ``UnicodeDecodeError`` on binary request bodies passed as ``bytes`` or ``bytearray``, which are now left untouched, and stop it mangling form segments without a ``=`` (#660) - thanks @philsong4-ai
+    - Fix recording aiohttp requests that upload an open file as a form field (``data={"file": f}``), which crashed with ``TypeError: cannot pickle '_io.BufferedReader' object``. The file's contents are recorded and the whole file is still sent (#737) - thanks @LilSpazJoekp for the report
 
 -  8.4.0
     - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
