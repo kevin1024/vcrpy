@@ -101,10 +101,10 @@ in this example::
     eval "$(pyenv init -)"
 
     # Install supported versions (at time of writing), this does not activate them
-    pyenv install 3.12.0 pypy3.10
+    pyenv install 3.12.0 pypy3.11
 
     # This activates them
-    pyenv local 3.12.0 pypy3.10
+    pyenv local 3.12.0 pypy3.11
 
     # Run the whole test suite
     pip install .[tests]
