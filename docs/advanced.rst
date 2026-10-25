@@ -364,6 +364,22 @@ sensitive data from the response body:
     with my_vcr.use_cassette('test.yml'):
          # your http code here
 
+.. note::
+
+    The callback is invoked not only when new responses are
+    recorded, but also every time an existing cassette is loaded
+    for replay: each stored interaction is passed through the
+    callback while the cassette is read from disk, even if no
+    requests are made afterwards.
+
+    As a result, keep the callback idempotent. When a cassette
+    is loaded, the stored responses have already been filtered once
+    during the original recording, so the callback runs against
+    already-filtered data during replay.
+
+    To filter only what's written to the cassette file, exactly once
+    per interaction, use the save and load hooks below instead.
+
 Save and load hooks
 ~~~~~~~~~~~~~~~~~~~
 
