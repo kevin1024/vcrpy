@@ -49,6 +49,9 @@ class VCR:
         decode_compressed_response=False,
         record_on_exception=True,
         drop_unused_requests=False,
+        filter_sensitive_data=(),
+        before_save_interaction=None,
+        after_load_interaction=None,
     ):
         self.serializer = serializer
         self.match_on = match_on
@@ -83,6 +86,9 @@ class VCR:
         self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
         self.drop_unused_requests = drop_unused_requests
+        self.filter_sensitive_data = filter_sensitive_data
+        self.before_save_interaction = before_save_interaction
+        self.after_load_interaction = after_load_interaction
 
     def _get_serializer(self, serializer_name):
         try:
@@ -156,6 +162,9 @@ class VCR:
             "allow_playback_repeats": kwargs.get("allow_playback_repeats", False),
             "record_on_exception": record_on_exception,
             "drop_unused_requests": kwargs.get("drop_unused_requests", self.drop_unused_requests),
+            "filter_sensitive_data": kwargs.get("filter_sensitive_data", self.filter_sensitive_data),
+            "before_save_interaction": kwargs.get("before_save_interaction", self.before_save_interaction),
+            "after_load_interaction": kwargs.get("after_load_interaction", self.after_load_interaction),
         }
         path = kwargs.get("path")
         if path:
