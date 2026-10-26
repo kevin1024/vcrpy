@@ -4,6 +4,8 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - ``allow_playback_repeats`` now also applies while recording: a request that matches one already recorded in the cassette gets the recorded response, instead of being sent again and recorded a second time. When played back, such requests got the first response anyway (#878, #879) - thanks @pyoor
+    - Fix ``drop_unused_requests`` saving an interaction once per playback when ``allow_playback_repeats`` is set
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
     - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
 
