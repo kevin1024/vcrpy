@@ -412,7 +412,8 @@ def vcr_request(cassette, real_request):
                 **kwargs,
                 raise_for_status=_raise_for_status_stub,
             )
-            await record_responses(cassette, vcr_request, response)
+            if cassette.filter_request(vcr_request):
+                await record_responses(cassette, vcr_request, response)
 
         await _raise_for_status(self, raise_for_status, response)
 
