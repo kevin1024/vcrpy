@@ -6,50 +6,59 @@ on:
       - master
   pull_request:
   schedule:
-    - cron: '0 16 * * 5'  # Every Friday 4pm
+    - cron: "0 16 * * 5" # Every Friday 4pm
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         python-version:
-          - "3.9"
-          - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
-          - "pypy-3.9"
-          - "pypy-3.10"
-        urllib3-requirement:
-          - "urllib3>=2"
-          - "urllib3<2"
-
+          - "3.14"
+          - "3.14t"
+          - "3.15"
+          - "3.15t"
+          - "pypy-3.11"
+        test-dependencies:
+          - tests
+          - tests-niquests
         exclude:
-          - python-version: "3.9"
-            urllib3-requirement: "urllib3>=2"
-          - python-version: "pypy-3.9"
-            urllib3-requirement: "urllib3>=2"
-          - python-version: "pypy-3.10"
-            urllib3-requirement: "urllib3>=2"
+          # niquests needs qh3, which has no free-threaded 3.15 wheel yet; built from
+          # source, it gives an abi3 wheel, which free-threaded Python can't load.
+          - python-version: "3.15t"
+            test-dependencies: tests-niquests
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+          # PyPy 8.0.0 refuses to resize a bytearray while a memoryview of it
+          # is waiting to be garbage collected, which tornado's IOStream does
+          # each time it takes data from its read buffer, so stay on PyPy 7.3.
+          python-version: ${{ matrix.python-version == 'pypy-3.11' && 'pypy3.11-v7.3.x' || matrix.python-version }}
           allow-prereleases: true
 
       - name: Install project dependencies
         run: |
-          pip install --upgrade pip setuptools
-          pip install codecov '.[tests]' '${{ matrix.urllib3-requirement }}'
-          pip check
+          uv pip install --system --upgrade pip setuptools
+          uv pip install --system codecov '.[${{ matrix.test-dependencies }}]'
+          uv pip check
+
+      - name: Allow creation of user namespaces (e.g. to the unshare command)
+        run: |
+          # .. so that we don't get error:
+          # unshare: write failed /proc/self/uid_map: Operation not permitted
+          # Idea from https://github.com/YoYoGames/GameMaker-Bugs/issues/6015#issuecomment-2135552784 .
+          sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
 
       - name: Run online tests
         run: ./runtests.sh --cov=./vcr --cov-branch --cov-report=xml --cov-append -m online
