@@ -1,202 +1,189 @@
-import asyncio
-import functools
-import inspect
-import logging
-from unittest.mock import MagicMock, patch
+"""VCR stubs for httpx transports.
 
-import httpx
+The httpx module to patch against is passed in (``httpx`` or its interoperable
+fork ``httpx2``) rather than imported at module level, so a single stub serves
+both. Only the ``Response`` / ``ByteStream`` classes and the ``request_context``
+helper differ between the two; everything else operates on the duck-typed
+request/response.
+"""
+
+import functools
+import logging
+from collections import defaultdict
+from contextlib import suppress
 
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.filters import decode_response
 from vcr.request import Request as VcrRequest
 from vcr.serializers.compat import convert_body_to_bytes
 
-_httpx_signature = inspect.signature(httpx.Client.request)
-
-try:
-    HTTPX_REDIRECT_PARAM = _httpx_signature.parameters["follow_redirects"]
-except KeyError:
-    HTTPX_REDIRECT_PARAM = _httpx_signature.parameters["allow_redirects"]
-
-
 _logger = logging.getLogger(__name__)
 
 
-def _transform_headers(httpx_response):
+def _serialize_headers(real_response):
     """
     Some headers can appear multiple times, like "Set-Cookie".
-    Therefore transform to every header key to list of values.
+    Therefore serialize every header key to a list of values.
     """
 
-    out = {}
-    for key, var in httpx_response.headers.raw:
-        decoded_key = key.decode("utf-8")
-        out.setdefault(decoded_key, [])
-        out[decoded_key].append(var.decode("utf-8"))
-    return out
+    headers = defaultdict(list)
+
+    for name, value in real_response.headers.multi_items():
+        headers[name].append(value)
+
+    return dict(headers)
 
 
-async def _to_serialized_response(resp, aread):
-    # The content shouldn't already have been read in by HTTPX.
-    assert not hasattr(resp, "_decoder")
-
-    # Retrieve the content, but without decoding it.
-    with patch.dict(resp.headers, {"Content-Encoding": ""}):
-        if aread:
-            await resp.aread()
-        else:
-            resp.read()
-
-    result = {
-        "status": {"code": resp.status_code, "message": resp.reason_phrase},
-        "headers": _transform_headers(resp),
-        "body": {"string": resp.content},
+def _serialize_response(real_response, real_response_content):
+    return {
+        "status": {"code": real_response.status_code, "message": real_response.reason_phrase},
+        "headers": _serialize_headers(real_response),
+        "body": {"string": real_response_content},
     }
 
-    # As the content wasn't decoded, we restore the response to a state which
-    # will be capable of decoding the content for the consumer.
-    del resp._decoder
-    resp._content = resp._get_content_decoder().decode(resp.content)
-    return result
 
-
-def _from_serialized_headers(headers):
+def _deserialize_headers(headers):
     """
     httpx accepts headers as list of tuples of header key and value.
     """
 
-    header_list = []
-    for key, values in headers.items():
-        for v in values:
-            header_list.append((key, v))
-    return header_list
+    return [(name, value) for name, values in headers.items() for value in values]
 
 
-@patch("httpx.Response.close", MagicMock())
-@patch("httpx.Response.read", MagicMock())
-def _from_serialized_response(request, serialized_response, history=None):
+def _deserialize_response(vcr_response, httpx):
     # Cassette format generated for HTTPX requests by older versions of
     # vcrpy. We restructure the content to resemble what a regular
     # cassette looks like.
-    if "status_code" in serialized_response:
-        serialized_response = decode_response(
+    if "status_code" in vcr_response:
+        vcr_response = decode_response(
             convert_body_to_bytes(
                 {
-                    "headers": serialized_response["headers"],
-                    "body": {"string": serialized_response["content"]},
-                    "status": {"code": serialized_response["status_code"]},
+                    "headers": vcr_response["headers"],
+                    "body": {"string": vcr_response["content"]},
+                    "status": {"code": vcr_response["status_code"]},
                 },
             ),
         )
         extensions = None
     else:
-        extensions = {"reason_phrase": serialized_response["status"]["message"].encode()}
+        # Cassettes recorded before 8.2.0 have no reason phrase. Leave
+        # extensions unset for those, as the httpcore stub that recorded them
+        # did, so httpx derives the phrase from the status code.
+        message = vcr_response["status"]["message"]
+        extensions = {"reason_phrase": message.encode("ascii")} if message else None
 
-    response = httpx.Response(
-        status_code=serialized_response["status"]["code"],
-        request=request,
-        headers=_from_serialized_headers(serialized_response["headers"]),
-        content=serialized_response["body"]["string"],
-        history=history or [],
+    return httpx.Response(
+        vcr_response["status"]["code"],
+        headers=_deserialize_headers(vcr_response["headers"]),
+        # Don't use content, because that closes the response,
+        # which we do not want as the real response is unclosed
+        stream=httpx.ByteStream(vcr_response["body"]["string"]),
         extensions=extensions,
     )
 
-    return response
+
+def _make_vcr_request(real_request, real_request_body):
+    return VcrRequest(real_request.method, str(real_request.url), real_request_body, real_request.headers)
 
 
-def _make_vcr_request(httpx_request, **kwargs):
-    body = httpx_request.read().decode("utf-8")
-    uri = str(httpx_request.url)
-    headers = dict(httpx_request.headers)
-    return VcrRequest(httpx_request.method, uri, body, headers)
-
-
-def _shared_vcr_send(cassette, real_send, *args, **kwargs):
-    real_request = args[1]
-
-    vcr_request = _make_vcr_request(real_request, **kwargs)
+def _vcr_request(cassette, real_request, real_request_body, httpx):
+    vcr_request = _make_vcr_request(real_request, real_request_body)
 
     if cassette.can_play_response_for(vcr_request):
-        return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0], kwargs)
+        return vcr_request, _play_responses(cassette, vcr_request, httpx)
 
     if cassette.write_protected and cassette.filter_request(vcr_request):
         raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
     _logger.info("%s not in cassette, sending to real server", vcr_request)
+
     return vcr_request, None
 
 
-async def _record_responses(cassette, vcr_request, real_response, aread):
-    for past_real_response in real_response.history:
-        past_vcr_request = _make_vcr_request(past_real_response.request)
-        cassette.append(past_vcr_request, await _to_serialized_response(past_real_response, aread))
-
-    if real_response.history:
-        # If there was a redirection keep we want the request which will hold the
-        # final redirect value
-        vcr_request = _make_vcr_request(real_response.request)
-
-    cassette.append(vcr_request, await _to_serialized_response(real_response, aread))
-    return real_response
+def _record_responses(cassette, vcr_request, real_response, real_response_content):
+    cassette.append(vcr_request, _serialize_response(real_response, real_response_content))
 
 
-def _play_responses(cassette, request, vcr_request, client, kwargs):
+def _play_responses(cassette, vcr_request, httpx):
     vcr_response = cassette.play_response(vcr_request)
-    response = _from_serialized_response(request, vcr_response)
-    return response
+    real_response = _deserialize_response(vcr_response, httpx)
 
-
-async def _async_vcr_send(cassette, real_send, *args, **kwargs):
-    vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
-    if response:
-        # add cookies from response to session cookie store
-        args[0].cookies.extract_cookies(response)
-        return response
-
-    real_response = await real_send(*args, **kwargs)
-    await _record_responses(cassette, vcr_request, real_response, aread=True)
     return real_response
 
 
-def async_vcr_send(cassette, real_send):
-    @functools.wraps(real_send)
-    def _inner_send(*args, **kwargs):
-        return _async_vcr_send(cassette, real_send, *args, **kwargs)
+async def _vcr_handle_async_request(cassette, real_handle_async_request, self, real_request, httpx):
+    # Reading the request stream consumes the iterator, so we need to restore it afterwards
+    real_request_body = b"".join([part async for part in real_request.stream])
+    real_request.stream = httpx.ByteStream(real_request_body)
 
-    return _inner_send
+    vcr_request, vcr_response = _vcr_request(cassette, real_request, real_request_body, httpx)
 
+    if vcr_response:
+        return vcr_response
 
-def _run_async_function(sync_func, *args, **kwargs):
-    """
-    Safely run an asynchronous function from a synchronous context.
-    Handles both cases:
-    - An event loop is already running.
-    - No event loop exists yet.
-    """
+    real_response = await real_handle_async_request(self, real_request)
     try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(sync_func(*args, **kwargs))
-    else:
-        # If inside a running loop, create a task and wait for it
-        return asyncio.ensure_future(sync_func(*args, **kwargs))
+        real_response_content = b"".join([part async for part in real_response.stream])
+    except BaseException:
+        # The client has not received this response and cannot close its stream yet.
+        with suppress(Exception):
+            await real_response.stream.aclose()
+        raise
 
+    # Close the original stream so that the connection is released back to the connection pool
+    with httpx._exceptions.request_context(request=real_response._request):
+        await real_response.stream.aclose()
 
-def _sync_vcr_send(cassette, real_send, *args, **kwargs):
-    vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
-    if response:
-        # add cookies from response to session cookie store
-        args[0].cookies.extract_cookies(response)
-        return response
+    # Reading the response stream consumes the iterator, so we need to restore it
+    real_response.stream = httpx.ByteStream(real_response_content)
 
-    real_response = real_send(*args, **kwargs)
-    _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
+    _record_responses(cassette, vcr_request, real_response, real_response_content)
+
     return real_response
 
 
-def sync_vcr_send(cassette, real_send):
-    @functools.wraps(real_send)
-    def _inner_send(*args, **kwargs):
-        return _sync_vcr_send(cassette, real_send, *args, **kwargs)
+def vcr_handle_async_request(cassette, real_handle_async_request, httpx):
+    @functools.wraps(real_handle_async_request)
+    def _inner_handle_async_request(self, real_request):
+        return _vcr_handle_async_request(cassette, real_handle_async_request, self, real_request, httpx)
 
-    return _inner_send
+    return _inner_handle_async_request
+
+
+def _vcr_handle_request(cassette, real_handle_request, self, real_request, httpx):
+    # Reading the request stream consumes the iterator, so we need to restore it afterwards
+    real_request_body = b"".join(real_request.stream)
+    real_request.stream = httpx.ByteStream(real_request_body)
+
+    vcr_request, vcr_response = _vcr_request(cassette, real_request, real_request_body, httpx)
+
+    if vcr_response:
+        return vcr_response
+
+    real_response = real_handle_request(self, real_request)
+    try:
+        real_response_content = b"".join(real_response.stream)
+    except BaseException:
+        # The client has not received this response and cannot close its stream yet.
+        with suppress(Exception):
+            real_response.stream.close()
+        raise
+
+    # Close the original stream so that the connection is released back to the connection pool
+    with httpx._exceptions.request_context(request=real_response._request):
+        real_response.stream.close()
+
+    # Reading the response stream consumes the iterator, so we need to restore it
+    real_response.stream = httpx.ByteStream(real_response_content)
+
+    _record_responses(cassette, vcr_request, real_response, real_response_content)
+
+    return real_response
+
+
+def vcr_handle_request(cassette, real_handle_request, httpx):
+    @functools.wraps(real_handle_request)
+    def _inner_handle_request(self, real_request):
+        return _vcr_handle_request(cassette, real_handle_request, self, real_request, httpx)
+
+    return _inner_handle_request

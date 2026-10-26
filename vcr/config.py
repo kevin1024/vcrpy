@@ -4,12 +4,11 @@ import inspect
 import os
 import types
 from collections import abc as collections_abc
-from pathlib import Path
 
 from . import filters, matchers
 from .cassette import Cassette
 from .persisters.filesystem import FilesystemPersister
-from .record_mode import RecordMode
+from .record_mode import RecordMode, validate_record_mode
 from .serializers import jsonserializer, yamlserializer
 from .util import auto_decorate, compose
 
@@ -22,6 +21,7 @@ class VCR:
     @staticmethod
     def ensure_suffix(suffix):
         def ensure(path):
+            path = os.fspath(path)
             if not path.endswith(suffix):
                 return path + suffix
             return path
@@ -40,6 +40,7 @@ class VCR:
         filter_headers=(),
         before_record_response=None,
         filter_post_data_parameters=(),
+        filter_nested_post_data_parameters=False,
         match_on=("method", "scheme", "host", "port", "path", "query"),
         before_record=None,
         inject_cassette=False,
@@ -49,6 +50,9 @@ class VCR:
         decode_compressed_response=False,
         record_on_exception=True,
         drop_unused_requests=False,
+        filter_sensitive_data=(),
+        before_save_interaction=None,
+        after_load_interaction=None,
     ):
         self.serializer = serializer
         self.match_on = match_on
@@ -68,10 +72,11 @@ class VCR:
             "body": matchers.body,
         }
         self.persister = FilesystemPersister
-        self.record_mode = record_mode
+        self.record_mode = validate_record_mode(record_mode)
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
         self.filter_post_data_parameters = filter_post_data_parameters
+        self.filter_nested_post_data_parameters = filter_nested_post_data_parameters
         self.before_record_request = before_record_request or before_record
         self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
@@ -83,6 +88,9 @@ class VCR:
         self.record_on_exception = record_on_exception
         self._custom_patches = tuple(custom_patches)
         self.drop_unused_requests = drop_unused_requests
+        self.filter_sensitive_data = filter_sensitive_data
+        self.before_save_interaction = before_save_interaction
+        self.after_load_interaction = after_load_interaction
 
     def _get_serializer(self, serializer_name):
         try:
@@ -101,7 +109,7 @@ class VCR:
         return matchers
 
     def use_cassette(self, path=None, **kwargs):
-        if path is not None and not isinstance(path, (str, Path)):
+        if path is not None and not isinstance(path, (str, os.PathLike)):
             function = path
             # Assume this is an attempt to decorate a function
             return self._use_cassette(**kwargs)(function)
@@ -128,10 +136,12 @@ class VCR:
         record_on_exception = kwargs.get("record_on_exception", self.record_on_exception)
 
         if cassette_library_dir:
+            library_dir = os.fspath(cassette_library_dir)
 
             def add_cassette_library_dir(path):
-                if not path.startswith(cassette_library_dir):
-                    return os.path.join(cassette_library_dir, path)
+                path = os.fspath(path)
+                if not path.startswith(library_dir):
+                    return os.path.join(library_dir, path)
                 return path
 
             path_transformer = compose(add_cassette_library_dir, path_transformer)
@@ -142,9 +152,9 @@ class VCR:
 
         merged_config = {
             "serializer": self._get_serializer(serializer_name),
-            "persister": self.persister,
+            "persister": kwargs.get("persister", self.persister),
             "match_on": self._get_matchers(tuple(matcher_names) + tuple(additional_matchers)),
-            "record_mode": kwargs.get("record_mode", self.record_mode),
+            "record_mode": validate_record_mode(kwargs.get("record_mode", self.record_mode)),
             "before_record_request": self._build_before_record_request(kwargs),
             "before_record_response": self._build_before_record_response(kwargs),
             "custom_patches": self._custom_patches + kwargs.get("custom_patches", ()),
@@ -154,6 +164,9 @@ class VCR:
             "allow_playback_repeats": kwargs.get("allow_playback_repeats", False),
             "record_on_exception": record_on_exception,
             "drop_unused_requests": kwargs.get("drop_unused_requests", self.drop_unused_requests),
+            "filter_sensitive_data": kwargs.get("filter_sensitive_data", self.filter_sensitive_data),
+            "before_save_interaction": kwargs.get("before_save_interaction", self.before_save_interaction),
+            "after_load_interaction": kwargs.get("after_load_interaction", self.after_load_interaction),
         }
         path = kwargs.get("path")
         if path:
@@ -191,6 +204,10 @@ class VCR:
             "filter_post_data_parameters",
             self.filter_post_data_parameters,
         )
+        filter_nested_post_data_parameters = options.get(
+            "filter_nested_post_data_parameters",
+            self.filter_nested_post_data_parameters,
+        )
         before_record_request = options.get(
             "before_record_request",
             options.get("before_record", self.before_record_request),
@@ -206,19 +223,18 @@ class VCR:
                 functools.partial(filters.replace_query_parameters, replacements=replacements),
             )
         if filter_post_data_parameters:
-            recursive = options.get("recursive_filter", False)
             replacements = [p if isinstance(p, tuple) else (p, None) for p in filter_post_data_parameters]
             filter_functions.append(
                 functools.partial(
-                    filters.replace_post_data_parameters,
+                    filters.replace_body_parameters,
                     replacements=replacements,
-                    recursive=recursive,
+                    recursive=filter_nested_post_data_parameters,
                 ),
             )
 
         hosts_to_ignore = set(ignore_hosts)
         if ignore_localhost:
-            hosts_to_ignore.update(("localhost", "0.0.0.0", "127.0.0.1"))
+            hosts_to_ignore.update(("localhost", "0.0.0.0", "127.0.0.1", "::1"))
         if hosts_to_ignore:
             filter_functions.append(self._build_ignore_hosts(hosts_to_ignore))
 

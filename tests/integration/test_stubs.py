@@ -66,7 +66,7 @@ def test_original_decoded_response_is_not_modified(tmpdir, httpbin):
 
         # Assert that we do not modify the original response while appending
         # to the cassette.
-        assert "gzip" == inside.headers["content-encoding"]
+        assert inside.headers["content-encoding"] == "gzip"
 
         # They should effectively be the same response.
         inside_headers = (h for h in inside.headers.items() if h[0].lower() != "date")
@@ -122,7 +122,7 @@ def test_original_response_is_not_modified_by_before_filter(tmpdir, httpbin):
         # Furthermore, the responses should be identical.
         inside_body = json.loads(inside.read())
         outside_body = json.loads(outside.read())
-        assert not inside_body[field_to_scrub] == replacement
+        assert inside_body[field_to_scrub] != replacement
         assert inside_body[field_to_scrub] == outside_body[field_to_scrub]
 
     # Ensure that when a cassette exists, the scrubbed response is returned.
@@ -133,3 +133,27 @@ def test_original_response_is_not_modified_by_before_filter(tmpdir, httpbin):
 
         inside_body = json.loads(inside.read())
         assert inside_body[field_to_scrub] == replacement
+
+
+def test_before_record_response_also_runs_when_replaying_existing_cassette(tmpdir, httpbin):
+    testfile = str(tmpdir.join("before_record_response.yml"))
+    host, port = httpbin.host, httpbin.port
+    calls = []
+
+    def before_record_response(response):
+        calls.append(response)
+        return response
+
+    def do_request():
+        conn = httplib.HTTPConnection(host, port)
+        conn.request("GET", "/get")
+        conn.getresponse().read()
+
+    with vcr.use_cassette(testfile, before_record_response=before_record_response):
+        do_request()
+    assert len(calls) == 1, "before_record_response did not run while recording a new cassette"
+
+    calls.clear()
+    with vcr.use_cassette(testfile, before_record_response=before_record_response):
+        do_request()
+    assert len(calls) == 1, "before_record_response did not run while replaying the existing cassette"
