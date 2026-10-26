@@ -11,7 +11,11 @@ import pytest
 import yaml
 
 from vcr.cassette import Cassette
-from vcr.errors import UnhandledHTTPRequestError
+from vcr.errors import (
+    CannotOverwriteExistingCassetteException,
+    MissingMetadataError,
+    UnhandledHTTPRequestError,
+)
 from vcr.patch import force_reset
 from vcr.persisters.filesystem import CassetteNotFoundError
 from vcr.request import Request
@@ -729,3 +733,82 @@ def test_interaction_hooks_accept_a_tuple():
     cassette.append(*_interaction())
     cassette._save()
     assert calls == ["/", "/"]
+
+
+def test_metadata_write(tmpdir):
+    file = tmpdir.join("test_cassette.yml")
+    cassette = Cassette(path=str(file))
+
+    assert cassette.get_metadata("key", "value") == "value"
+    assert cassette.get_metadata("key", "default") == "value"
+    assert cassette.get_metadata("otherkey", "othervalue") == "othervalue"
+
+    cassette._save()
+    assert yaml.safe_load(file.read())["metadata"] == {"key": "value", "otherkey": "othervalue"}
+
+
+def test_no_metadata_is_not_saved(tmpdir):
+    file = tmpdir.join("test_cassette.yml")
+    cassette = Cassette(path=str(file))
+    cassette.append(Request("GET", "http://example.com/", "", {}), "response")
+    cassette._save()
+    assert "metadata" not in yaml.safe_load(file.read())
+
+
+def _cassette_with_metadata(tmpdir):
+    file = tmpdir.join("test_cassette.yml")
+    file.write(
+        yaml.dump(
+            {
+                "interactions": [
+                    {
+                        "request": {"body": "", "uri": "foo1", "method": "GET", "headers": {}},
+                        "response": "bar1",
+                    },
+                ],
+                "metadata": {"key": "value"},
+            },
+        ),
+    )
+    return file
+
+
+def test_metadata_load(tmpdir):
+    file = _cassette_with_metadata(tmpdir)
+    cassette = Cassette.load(path=str(file))
+    assert cassette.get_metadata("key", "default") == "value"
+
+    with pytest.raises(MissingMetadataError) as excinfo:
+        cassette.get_metadata("otherkey", "default")
+    # It's a CannotOverwriteExistingCassetteException, so code that catches those catches it too.
+    assert isinstance(excinfo.value, CannotOverwriteExistingCassetteException)
+    assert excinfo.value.key == "otherkey"
+    assert excinfo.value.reason == "missing_metadata"
+    assert "'otherkey'" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "options",
+    [{"record_mode": "new_episodes"}, {"record_mode": "all"}, {"drop_unused_requests": True}],
+)
+def test_metadata_kept_and_added(tmpdir, options):
+    file = _cassette_with_metadata(tmpdir)
+    cassette = Cassette.load(path=str(file), **options)
+    assert cassette.get_metadata("key", "default") == "value"
+    if options.get("record_mode") == "new_episodes":
+        assert cassette.get_metadata("otherkey", "othervalue") == "othervalue"
+    cassette._save(force=True)
+
+    expected = {"key": "value"}
+    if options.get("record_mode") == "new_episodes":
+        expected["otherkey"] = "othervalue"
+    assert yaml.safe_load(file.read())["metadata"] == expected
+
+
+def test_metadata_with_persister_without_metadata():
+    # Persisters written before metadata return (requests, responses).
+    path = "no-metadata"
+    _MemoryPersister.cassettes[path] = ([Request("GET", "http://example.com/", "", {})], ["response"])
+    cassette = Cassette.load(path=path, persister=_MemoryPersister, record_mode="new_episodes")
+    assert len(cassette) == 1
+    assert cassette.get_metadata("key", "value") == "value"

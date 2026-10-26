@@ -656,3 +656,31 @@ option to ``True``, VCR will not save old HTTP interactions if they are not used
     my_vcr = VCR(drop_unused_requests=True)
     with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
         ...  # your HTTP interactions here
+
+Cassette Metadata
+-----------------
+
+Sometimes a test needs values that aren't part of any interaction, but
+have to be the same when it's recorded and when it's played back: e.g. a
+random ID the test sends in its requests, or a value it got from outside
+VCR.py, such as a browser redirect. ``cassette.get_metadata(key, default)``
+stores such values in the cassette. It returns the value the cassette has
+for ``key``; if it has none, it stores ``default`` and returns it.
+
+.. code:: python
+
+    import random
+    import uuid
+
+    with my_vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
+        # A new seed when the cassette is recorded, the recorded seed when it's played back
+        seed = cass.get_metadata("seed", random.getrandbits(128))
+        rng = random.Random(seed)
+        order_id = uuid.UUID(int=rng.getrandbits(128), version=4)
+        ...  # your HTTP interactions here, using order_id
+
+The values are saved under ``metadata`` in the cassette file, so they have
+to be serializable, e.g. strings, numbers, lists and dicts. If the cassette
+has no value for ``key`` and the record mode doesn't allow changing it, e.g.
+``once`` with an existing cassette, ``get_metadata`` raises
+``vcr.errors.MissingMetadataError``, a ``CannotOverwriteExistingCassetteException``.

@@ -41,6 +41,30 @@ class CannotOverwriteExistingCassetteException(Exception):
         return _message(cassette, failed_request, similar_requests, _reason(cassette, similar_requests))
 
 
+class MissingMetadataError(CannotOverwriteExistingCassetteException):
+    """Raised by ``Cassette.get_metadata`` for a key the cassette doesn't have,
+    when the record mode doesn't allow adding it.
+
+    It has the ``cassette`` and the missing ``key``. Its ``reason`` is
+    ``"missing_metadata"``, and it has no ``failed_request`` or ``similar_requests``.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.cassette = kwargs["cassette"]
+        self.key = kwargs["key"]
+        self.failed_request = None
+        self.similar_requests = []
+        self.reason = "missing_metadata"
+        record_mode = getattr(self.cassette.record_mode, "value", self.cassette.record_mode)
+        Exception.__init__(
+            self,
+            f"Can't add metadata {self.key!r} to cassette {self.cassette._path}: the cassette "
+            f"doesn't have it, and record_mode {record_mode!r} doesn't allow changing it. Re-record "
+            f"the cassette to store it, e.g. by deleting it, or use record_mode 'new_episodes'. "
+            f"See {RECORD_MODES_DOCS}",
+        )
+
+
 class UnhandledHTTPRequestError(KeyError):
     """Raised when a cassette does not contain the request we want."""
 
