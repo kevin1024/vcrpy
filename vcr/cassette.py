@@ -1,15 +1,16 @@
 import collections
+import collections.abc
 import contextlib
 import copy
 import inspect
 import logging
-import typing
 from inspect import iscoroutinefunction
 
 import wrapt
 
 from ._handle_coroutine import handle_coroutine
-from .errors import CannotOverwriteExistingCassetteException, UnhandledHTTPRequestError
+from .errors import MissingMetadataError, UnhandledHTTPRequestError
+from .filters import sensitive_data_hooks
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
@@ -18,7 +19,6 @@ from .serializers import yamlserializer
 from .util import partition_dict
 
 log = logging.getLogger(__name__)
-T = typing.TypeVar("T")
 
 
 class CassetteContextDecorator:
@@ -180,6 +180,9 @@ class Cassette:
         inject=False,
         allow_playback_repeats=False,
         drop_unused_requests=False,
+        filter_sensitive_data=(),
+        before_save_interaction=None,
+        after_load_interaction=None,
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -193,9 +196,19 @@ class Cassette:
         self.custom_patches = custom_patches
         self.allow_playback_repeats = allow_playback_repeats
         self.drop_unused_requests = drop_unused_requests
+        # Hooks run on each interaction as the cassette is saved and loaded.
+        # filter_sensitive_data hides values after the user's save hooks and
+        # restores them before the user's load hooks, so those see real values.
+        self._before_save_interaction = _hooks(before_save_interaction)
+        self._after_load_interaction = _hooks(after_load_interaction)
+        if filter_sensitive_data:
+            hide, restore = sensitive_data_hooks(filter_sensitive_data)
+            self._before_save_interaction.append(hide)
+            self._after_load_interaction.insert(0, restore)
 
         # self.data is the list of (req, resp) tuples
         self.data = []
+        # Values stored with get_metadata, saved in the cassette next to the interactions.
         self._metadata = {}
         self.play_counts = collections.Counter()
         self.dirty = False
@@ -204,6 +217,13 @@ class Cassette:
         # Subsets of self.data to store old and played interactions
         self._old_interactions = []
         self._played_interactions = []
+        # Number of entries at the start of self.data that came from the file
+        self._loaded_count = 0
+
+    @property
+    def path(self):
+        """The path the cassette is saved to and loaded from."""
+        return self._path
 
     @property
     def play_count(self):
@@ -266,7 +286,8 @@ class Cassette:
         for index, response in self._responses(request):
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 self.play_counts[index] += 1
-                self._played_interactions.append((request, response))
+                # Use stored (possibly modified) request, not the raw incoming request
+                self._played_interactions.append((self.data[index][0], response))
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(
@@ -327,13 +348,19 @@ class Cassette:
 
         return final_best_matches
 
-    def get_metadata(self, key: str, default: T) -> T:
+    def get_metadata(self, key, default):
+        """Return the value stored in the cassette under key.
+
+        If the cassette has no such value, store default and return it, or
+        raise MissingMetadataError if the record mode doesn't allow changing
+        the cassette.
+        """
         if key in self._metadata:
             return self._metadata[key]
         if self.write_protected:
-            raise CannotOverwriteExistingCassetteException(cassette=self, missing_metadata=key)
-        self.dirty = True
+            raise MissingMetadataError(cassette=self, key=key)
         self._metadata[key] = default
+        self.dirty = True
         return default
 
     def _new_interactions(self):
@@ -348,45 +375,93 @@ class Cassette:
         return new_interactions
 
     def _as_dict(self):
-        cassette_dict = {"requests": self.requests, "responses": self.responses}
-        if self._metadata:
-            cassette_dict["metadata"] = self._metadata
-        return cassette_dict
+        return {"requests": self.requests, "responses": self.responses}
 
     def _build_used_interactions_dict(self):
         interactions = self._played_interactions + self._new_interactions()
-        cassette_dict = {
+        cassete_dict = {
             "requests": [request for request, _ in interactions],
             "responses": [response for _, response in interactions],
         }
-        if self._metadata:
-            cassette_dict["metadata"] = self._metadata
-        return cassette_dict
+        return cassete_dict
+
+    def _rerecorded_interactions(self):
+        """Interactions to save in "all" mode.
+
+        Interactions recorded now replace the loaded ones they match, so
+        re-recording doesn't duplicate them. Loaded interactions that weren't
+        re-recorded are kept, unless drop_unused_requests is set.
+        """
+        loaded = self.data[: self._loaded_count]
+        recorded = self.data[self._loaded_count :]
+        if self.drop_unused_requests:
+            return recorded
+        kept = [
+            (old_request, old_response)
+            for old_request, old_response in loaded
+            if not any(requests_match(request, old_request, self._match_on) for request, _ in recorded)
+        ]
+        return kept + recorded
 
     def _save(self, force=False):
+        if self.record_mode == RecordMode.ALL:
+            if force or self.dirty:
+                interactions = self._rerecorded_interactions()
+                cassete_dict = {
+                    "requests": [request for request, _ in interactions],
+                    "responses": [response for _, response in interactions],
+                }
+                self._persist(cassete_dict)
+                self.dirty = False
+            return
         if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
             cassete_dict = self._build_used_interactions_dict()
             force = True
         else:
             cassete_dict = self._as_dict()
         if force or self.dirty:
-            self._persister.save_cassette(self._path, cassete_dict, serializer=self._serializer)
+            self._persist(cassete_dict)
             self.dirty = False
+
+    def _persist(self, cassette_dict):
+        if self._before_save_interaction:
+            interactions = []
+            for request, response in zip(cassette_dict["requests"], cassette_dict["responses"], strict=True):
+                # Hooks get copies, so they can't change the interactions in memory.
+                interaction = _run_hooks(
+                    self._before_save_interaction,
+                    copy.deepcopy(request),
+                    copy.deepcopy(response),
+                    self,
+                )
+                if interaction is not None:
+                    interactions.append(interaction)
+            cassette_dict = {
+                "requests": [request for request, _ in interactions],
+                "responses": [response for _, response in interactions],
+            }
+        if self._metadata:
+            cassette_dict = {**cassette_dict, "metadata": self._metadata}
+        self._persister.save_cassette(self._path, cassette_dict, serializer=self._serializer)
 
     def _load(self):
         try:
-            loaded = self._persister.load_cassette(self._path, serializer=self._serializer)
-            if len(loaded) == 3:
-                requests, responses, metadata = loaded
-            else:
-                requests, responses = loaded
-                metadata = None
+            # Persisters return (requests, responses), and metadata third if the cassette has any.
+            requests, responses, *metadata = self._persister.load_cassette(
+                self._path,
+                serializer=self._serializer,
+            )
             for request, response in zip(requests, responses, strict=False):
+                interaction = _run_hooks(self._after_load_interaction, request, response, self)
+                if interaction is None:
+                    continue
+                request, response = interaction
                 self.append(request, response)
                 self._old_interactions.append((request, response))
+            self._loaded_count = len(self.data)
             self.dirty = False
             self.rewound = True
-            self._metadata = metadata or {}
+            self._metadata = metadata[0] if metadata else {}
         except (CassetteDecodeError, CassetteNotFoundError):
             pass
 
@@ -403,3 +478,48 @@ class Cassette:
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
                 return True
         return False
+
+
+def _hooks(hooks):
+    """A list of interaction hooks from None, one function, or several.
+
+    Like before_record_request and before_record_response, anything that
+    isn't iterable is a single hook.
+    """
+    if hooks is None:
+        return []
+    if not isinstance(hooks, collections.abc.Iterable):
+        return [hooks]
+    return list(hooks)
+
+
+def _accepts_cassette(hook):
+    """Whether an interaction hook takes the cassette as a third argument."""
+    try:
+        inspect.signature(hook).bind(None, None, None)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def _run_hooks(hooks, request, response, cassette):
+    """Run interaction hooks in order. Returns None if one of them drops the interaction.
+
+    Hooks are called with the request and response, and with the cassette
+    too if they accept a third argument.
+    """
+    for hook in hooks:
+        if _accepts_cassette(hook):
+            interaction = hook(request, response, cassette)
+        else:
+            interaction = hook(request, response)
+        if interaction is None:
+            return None
+        if not isinstance(interaction, (tuple, list)) or len(interaction) != 2:
+            name = getattr(hook, "__qualname__", repr(hook))
+            raise TypeError(
+                f"Interaction hook {name} must return (request, response) or None, "
+                f"not {type(interaction).__name__}",
+            )
+        request, response = interaction
+    return request, response
