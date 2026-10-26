@@ -1,5 +1,7 @@
 import io
 
+import pytest
+
 from vcr.stubs import VCRHTTPResponse
 
 
@@ -14,6 +16,24 @@ def test_replayed_response_can_release_connection():
 
     assert response.read() == b"recorded body"
     assert response.release_conn() is None
+
+
+@pytest.mark.parametrize(
+    ("has_original_response", "expected"),
+    [(False, False), (True, True), (None, True)],
+)
+def test_original_response_matches_recorded_response(has_original_response, expected):
+    recorded_response = {
+        "status": {"message": "OK", "code": 200},
+        "headers": {},
+        "body": {"string": b""},
+    }
+    if has_original_response is not None:
+        recorded_response["has_original_response"] = has_original_response
+
+    response = VCRHTTPResponse(recorded_response)
+
+    assert hasattr(response, "_original_response") is expected
 
 
 def test_response_should_have_headers_field():

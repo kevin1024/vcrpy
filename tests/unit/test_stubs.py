@@ -2,13 +2,15 @@ import contextlib
 import http.client as httplib
 from io import BytesIO
 from tempfile import NamedTemporaryFile
+from types import SimpleNamespace
 from unittest import mock
 
 from pytest import mark, raises
 
 from vcr import mode, use_cassette
 from vcr.cassette import Cassette
-from vcr.stubs import VCRFakeSocket, VCRHTTPSConnection
+from vcr.request import Request
+from vcr.stubs import VCRFakeSocket, VCRHTTPConnection, VCRHTTPSConnection, compat
 
 
 def test_fake_socket_has_nothing_to_read():
@@ -18,6 +20,35 @@ def test_fake_socket_has_nothing_to_read():
     assert sock.gettimeout() is None
     with raises(BlockingIOError):
         sock.recv(65536)
+
+
+@mark.parametrize("has_original_response", [False, True])
+def test_record_original_response_presence(has_original_response):
+    conn = VCRHTTPConnection("example.com")
+    conn.cassette = mock.Mock(write_protected=False)
+    conn.cassette.can_play_response_for.return_value = False
+    conn._vcr_request = Request("GET", "http://example.com/", None, {})
+    real_response = SimpleNamespace(
+        status=200,
+        reason="OK",
+        msg=compat.get_httpmessage(b""),
+        read=lambda: b"",
+    )
+    if has_original_response:
+        real_response._original_response = object()
+
+    with (
+        mock.patch.object(conn.real_connection, "request"),
+        mock.patch.object(
+            conn.real_connection,
+            "getresponse",
+            return_value=real_response,
+        ),
+    ):
+        conn.getresponse()
+
+    recorded_response = conn.cassette.append.call_args.args[1]
+    assert recorded_response["has_original_response"] is has_original_response
 
 
 class TestVCRConnection:
