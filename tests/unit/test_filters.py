@@ -254,6 +254,63 @@ def test_replace_body_parameters_json(method):
     assert request_data == expected_data
 
 
+NESTED_BODY = {
+    "password": "top",
+    "params": {
+        "credentials": {"login": "name", "password": "secret"},
+        "users": [{"name": "a", "password": "p1"}, {"name": "b"}, "password"],
+        "empty": {},
+        "token": "t0k3n",
+    },
+}
+
+
+def test_replace_body_parameters_json_recursive():
+    request = Request("PUT", "http://google.com", json.dumps(NESTED_BODY).encode(), {})
+    request.headers["Content-Type"] = "application/json"
+    replace_body_parameters(
+        request,
+        [("password", None), ("token", lambda key, value, request: value.upper()), ("login", "<LOGIN>")],
+        recursive=True,
+    )
+    assert json.loads(request.body) == {
+        "params": {
+            "credentials": {"login": "<LOGIN>"},
+            # Lists are searched too, and strings in them aren't keys.
+            "users": [{"name": "a"}, {"name": "b"}, "password"],
+            # Objects left empty, or empty to begin with, are kept.
+            "empty": {},
+            "token": "T0K3N",
+        },
+    }
+
+
+def test_replace_body_parameters_dict_recursive():
+    request = Request("POST", "http://google.com", "", {})
+    request.body = NESTED_BODY
+    replace_body_parameters(request, [("password", None)], recursive=True)
+    assert request.body["params"]["credentials"] == {"login": "name"}
+    assert "password" not in request.body
+    # The original body isn't changed.
+    assert NESTED_BODY["params"]["credentials"]["password"] == "secret"
+
+
+def test_replace_body_parameters_json_not_recursive_by_default():
+    request = Request("POST", "http://google.com", json.dumps(NESTED_BODY).encode(), {})
+    request.headers["Content-Type"] = "application/json"
+    replace_body_parameters(request, [("password", None)])
+    data = json.loads(request.body)
+    assert "password" not in data
+    assert data["params"]["credentials"]["password"] == "secret"
+
+
+def test_replace_post_data_parameters_recursive():
+    request = Request("POST", "http://google.com", json.dumps(NESTED_BODY).encode(), {})
+    request.headers["Content-Type"] = "application/json"
+    replace_post_data_parameters(request, [("password", None)], recursive=True)
+    assert json.loads(request.body)["params"]["credentials"] == {"login": "name"}
+
+
 @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
 def test_remove_body_parameters_json(method):
     body = b'{"id": "secret", "foo": "bar", "baz": "qux"}'

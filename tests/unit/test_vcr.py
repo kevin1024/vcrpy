@@ -1,4 +1,5 @@
 import http.client as httplib
+import json
 import os
 from pathlib import Path
 from unittest import mock
@@ -56,6 +57,16 @@ def test_vcr_record_mode_validation():
     # Both the enum and its string value remain valid.
     assert VCR(record_mode=mode.ALL).record_mode == mode.ALL
     assert VCR(record_mode="all").record_mode == mode.ALL
+
+
+@pytest.mark.parametrize("nested", [False, True])
+def test_filter_nested_post_data_parameters(nested):
+    body = b'{"password": "a", "params": {"password": "b"}}'
+    request = Request("POST", "http://example.com/", body, {"Content-Type": "application/json"})
+    vcr = VCR(filter_post_data_parameters=["password"], filter_nested_post_data_parameters=nested)
+    with vcr.use_cassette("test") as cassette:
+        filtered = cassette.filter_request(request)
+    assert json.loads(filtered.body) == {"params": {} if nested else {"password": "b"}}
 
 
 def test_ignore_localhost_includes_ipv6():

@@ -4,6 +4,7 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - New ``filter_nested_post_data_parameters`` option: make ``filter_post_data_parameters`` also filter keys in nested objects of JSON request bodies, such as JSON-RPC ``params``. ``vcr.filters.replace_body_parameters`` and ``replace_post_data_parameters`` take a matching ``recursive`` argument (#936, #937) - thanks @tighwm and @JargeZ
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
     - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
 

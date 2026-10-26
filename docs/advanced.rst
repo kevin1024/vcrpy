@@ -268,6 +268,24 @@ of post data parameters to filter.
     with my_vcr.use_cassette('test.yml', filter_post_data_parameters=['api_key']):
         requests.post('http://api.com/postdata', data={'api_key': 'secretstring'})
 
+In JSON bodies, only top-level keys are filtered by default. Set
+``filter_nested_post_data_parameters=True`` to also filter keys in nested
+objects, including objects in lists, e.g. for request bodies wrapped in an
+envelope like JSON-RPC's:
+
+.. code:: python
+
+    my_vcr = VCR(filter_post_data_parameters=['password'], filter_nested_post_data_parameters=True)
+    with my_vcr.use_cassette('test.yml'):
+        # Recorded as {"method": "login", "params": {"credentials": {"login": "name"}}}
+        requests.post('http://api.com/rpc', json={
+            'method': 'login',
+            'params': {'credentials': {'login': 'name', 'password': 'secret'}},
+        })
+
+This filters every key with that name, wherever it is, so make sure the
+request doesn't use the same name for something that should be recorded.
+
 Advanced use of filter_headers, filter_query_parameters and filter_post_data_parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
