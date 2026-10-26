@@ -2,6 +2,7 @@ import copy
 import functools
 import inspect
 import os
+import re
 import types
 from collections import abc as collections_abc
 
@@ -245,8 +246,14 @@ class VCR:
 
     @staticmethod
     def _build_ignore_hosts(hosts_to_ignore):
+        # Strings are host names; compiled patterns match whole host names.
+        patterns = [host for host in hosts_to_ignore if isinstance(host, re.Pattern)]
+        names = {host for host in hosts_to_ignore if not isinstance(host, re.Pattern)}
+
         def filter_ignored_hosts(request):
-            if hasattr(request, "host") and request.host in hosts_to_ignore:
+            if hasattr(request, "host") and (
+                request.host in names or any(pattern.fullmatch(request.host) for pattern in patterns)
+            ):
                 return
             return request
 
