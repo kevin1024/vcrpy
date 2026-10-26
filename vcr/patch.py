@@ -162,7 +162,7 @@ def validate_skip_patchers(skip_patchers):
     if unknown:
         raise ValueError(
             f"Unknown patcher(s) in skip_patchers: {', '.join(unknown)}. "
-            f"Valid patcher names are: {', '.join(PATCHER_NAMES)}"
+            f"Valid patcher names are: {', '.join(PATCHER_NAMES)}",
         )
     return skip_patchers
 

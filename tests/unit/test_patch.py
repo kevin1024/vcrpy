@@ -7,10 +7,6 @@ from vcr.cassette import Cassette
 from vcr.patch import PATCHER_NAMES, validate_skip_patchers
 
 
-def _patched(obj, attribute):
-    return getattr(obj, attribute)
-
-
 def test_validate_skip_patchers_accepts_known_names():
     assert validate_skip_patchers(["httpx"]) == ("httpx",)
     assert validate_skip_patchers(()) == ()
