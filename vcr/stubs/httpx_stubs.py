@@ -10,6 +10,7 @@ request/response.
 import functools
 import logging
 from collections import defaultdict
+from contextlib import suppress
 
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.filters import decode_response
@@ -65,7 +66,11 @@ def _deserialize_response(vcr_response, httpx):
         )
         extensions = None
     else:
-        extensions = {"reason_phrase": vcr_response["status"]["message"].encode("ascii")}
+        # Cassettes recorded before 8.2.0 have no reason phrase. Leave
+        # extensions unset for those, as the httpcore stub that recorded them
+        # did, so httpx derives the phrase from the status code.
+        message = vcr_response["status"]["message"]
+        extensions = {"reason_phrase": message.encode("ascii")} if message else None
 
     return httpx.Response(
         vcr_response["status"]["code"],
@@ -117,7 +122,13 @@ async def _vcr_handle_async_request(cassette, real_handle_async_request, self, r
         return vcr_response
 
     real_response = await real_handle_async_request(self, real_request)
-    real_response_content = b"".join([part async for part in real_response.stream])
+    try:
+        real_response_content = b"".join([part async for part in real_response.stream])
+    except BaseException:
+        # The client has not received this response and cannot close its stream yet.
+        with suppress(Exception):
+            await real_response.stream.aclose()
+        raise
 
     # Close the original stream so that the connection is released back to the connection pool
     with httpx._exceptions.request_context(request=real_response._request):
@@ -150,7 +161,13 @@ def _vcr_handle_request(cassette, real_handle_request, self, real_request, httpx
         return vcr_response
 
     real_response = real_handle_request(self, real_request)
-    real_response_content = b"".join(real_response.stream)
+    try:
+        real_response_content = b"".join(real_response.stream)
+    except BaseException:
+        # The client has not received this response and cannot close its stream yet.
+        with suppress(Exception):
+            real_response.stream.close()
+        raise
 
     # Close the original stream so that the connection is released back to the connection pool
     with httpx._exceptions.request_context(request=real_response._request):

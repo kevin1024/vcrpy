@@ -3,6 +3,53 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - New ``skip_patchers`` option to leave some HTTP libraries unpatched, e.g. ``skip_patchers=["httpx"]`` when an httpx client uses an aiohttp transport (httpx-aiohttp), so requests aren't recorded twice (#944, #1070) - thanks @smoltafet
+    - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
+    - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
+
+-  9.2.0
+    - New ``before_save_interaction`` and ``after_load_interaction`` options: hooks that get each interaction's request and response (and the cassette, if they take a third argument) when a cassette is saved and loaded, and can change them or leave the interaction out. Cassettes also get a public ``path``. Like Ruby VCR's ``before_record`` and ``before_playback`` hooks (#527, #556) - thanks @tzturner and co-authors for #679, and @akaihola for #594, which explored this
+    - New ``filter_sensitive_data`` option: replace secrets with placeholders everywhere in recorded interactions (URL, headers and bodies), and put the real values back when a cassette is loaded, built on the new hooks, so requests still match and your code sees the same responses whether they're recorded or played back. Inspired by Ruby VCR's option of the same name (#527, #544, #912)
+
+-  9.1.0
+    - Set ``raw_headers`` on replayed aiohttp responses, so code that reads them (e.g. httpx-aiohttp) works on replay (#970, #1034) - thanks @HostX0
+    - Add ``release_conn()`` to replayed urllib3 responses, for code that releases pooled responses (#816, #1054) - thanks @cristianchiriac
+    - Accept ``pathlib.Path`` and other path-like objects for cassette paths and ``cassette_library_dir`` (#567, #920, #1064) - thanks @fredrikblau
+    - Make ``filter_post_data_parameters`` match urlencoded parameter names, so e.g. ``api:key`` also filters ``api%3Akey`` (#686, #1066) - thanks @b84330808
+    - Fix the ``body`` matcher crashing on form-urlencoded and XML-RPC requests without a body (#913, #1032) - thanks @M001N
+    - Close the response stream when reading an httpx response fails while recording (#1068) - thanks @Claire-ovo
+    - ``ignore_localhost`` also ignores ``::1`` (#639) - thanks @dragonpaw for the report
+    - Add ``json()`` to replayed urllib3 responses, as urllib3 2.x responses have (#774) - thanks @gschnellOnera for the report
+    - Allow a ``persister`` option on ``use_cassette``, to use a custom persister for one cassette (#575) - thanks @gioele for the report
+    - Publish releases to PyPI from GitHub Actions with trusted publishing (#860, #1078)
+
+-  9.0.0
+    - Fix the ``body`` matcher crashing (e.g. with ``JSONDecodeError``) when a body doesn't parse as its headers say, such as invalid JSON sent as ``application/json`` or malformed XML-RPC. Such bodies are now compared as raw bytes
+    - **Breaking:** drop support for Python 3.10, which reached its end of life on 2026-10-01 - thanks @pylaterreur
+    - **Breaking:** aiohttp error responses are now recorded and replayed when ``raise_for_status`` is used, on the session or the request. Before, aiohttp raised before vcrpy could record the response, and a replayed error response didn't raise even with ``raise_for_status`` set. Tests that relied on either need updating (#635, #925) - thanks @andrescollares
+    - **Breaking:** ``filter_post_data_parameters`` now filters the body of requests with any method (``PUT``, ``PATCH``, ``DELETE``, ...), not just ``POST`` (#328, #1004). Requests are filtered before they're matched, so if you match on ``body``, re-record cassettes that have unfiltered bodies for those methods. ``vcr.filters.replace_post_data_parameters`` still only filters ``POST``; the new ``replace_body_parameters`` filters any method - thanks @andrescollares
+    - **Breaking:** rewrite the ``CannotOverwriteExistingCassetteException`` message. It now starts with what went wrong (the cassette doesn't exist, the matching interactions were already played back, or no recorded interaction matches), shows the cassette's settings and the closest recorded requests with how they differ, and ends with suggestions for fixing it. Body mismatches show a short diff instead of nothing, and the message stays short when a cassette holds many similar requests. Code that matched the old message text (e.g. ``"Can't overwrite existing cassette"``) needs updating; the exception class and its ``cassette`` and ``failed_request`` attributes are unchanged, and new ``reason`` and ``similar_requests`` attributes describe the failure (#516, #673, #837, #838, #840, #929). Thanks @philsong4-ai (#1027) and @ChrisJr404 (#1037) for the PRs that started this
+    - urllib3 (and requests) responses now have ``HTTPHeaderDict`` headers, as they do without vcrpy, instead of an ``HTTPMessage``. Headers sent more than once (e.g. two ``Link`` headers) now keep every value (#841, #947) - thanks @Sanjays2402
+
+-  8.5.0
+    - Fix ``filter_post_data_parameters`` crashing with ``UnicodeDecodeError`` on binary request bodies passed as ``bytes`` or ``bytearray``, which are now left untouched, and stop it mangling form segments without a ``=`` (#660) - thanks @philsong4-ai
+    - Fix recording aiohttp requests that upload an open file as a form field (``data={"file": f}``), which crashed with ``TypeError: cannot pickle '_io.BufferedReader' object``. The file's contents are recorded and the whole file is still sent (#737) - thanks @LilSpazJoekp for the report
+    - Fix recording aiohttp requests whose body is an async generator (e.g. a streaming upload), which crashed with ``TypeError: cannot pickle 'async_generator' object``. The chunks are recorded and still sent as before (#974) - thanks @smoltafet
+    - Fix aiohttp response bodies being empty when streamed from ``response.content`` while recording a cassette (#502, #1055) - thanks @pylaterreur
+    - Fix aiohttp ``response.content`` restarting from the start of the body on each access when replaying, which made ``readline()`` loops (e.g. google-genai streaming) never end (#927, #1055) - thanks @pylaterreur
+    - Make ``response.content`` an aiohttp ``StreamReader`` when replaying aiohttp responses, as it is when recording: ``iter_any()`` and ``iter_chunks()`` no longer raise ``AttributeError``, lines over 64 KiB are no longer refused, and ``readuntil()``, ``is_eof()``, ``total_bytes`` and the rest of its API work (#1055) - thanks @pylaterreur
+    - If your tests patch ``vcr.stubs.aiohttp_stubs`` to work around #502 or #927 (e.g. overriding ``MockClientResponse.content``, or putting the recorded body back with ``unread_data()``), remove the patch: it is no longer needed, and no longer works (#1055)
+    - Support Python 3.14 and 3.15, and test them in CI along with their free-threaded builds, 3.14t and 3.15t (#940) - thanks @pylaterreur
+
+-  8.4.0
+    - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
+    - Make the urllib3 POST test send its form fields again: since urllib3 2.0 it sent the dict as a chunked body, which the local httpbin server rejects, so the test failed now and then with ``BrokenPipeError`` - thanks @pylaterreur
+    - Fix ``httpx`` and ``httpx2`` replay crashing on cassettes that store a null reason phrase, as those recorded before 8.2.0 do (#1028) - thanks @dgunning
+    - Fix bare-host URLs such as ``https://example.com`` not matching cassettes that recorded them as ``https://example.com/``, a regression in 8.2.0 (#1013, #1031) - thanks @DSeaStar
+    - Forward streaming (file-like or iterator) request bodies with ``Content-Length`` instead of chunked encoding, which some servers reject (#1002)
+    - Fix the ``all`` record mode: a re-recorded interaction now replaces the one it matches instead of being saved next to it, and with ``drop_unused_requests`` the cassette keeps what was just recorded instead of being saved empty (#578, #208). **Behavior change:** re-recording in ``all`` mode now removes every previously recorded interaction that matches a new one under your ``match_on`` setting, so with loose matchers (e.g. ``match_on=["method"]``) one new request can replace many old ones. Cassettes re-recorded with ``all`` also no longer accumulate responses across runs.
+
 -  8.3.0
     - Add support for niquests (#980) - thanks @ionelmc
     - Refuse to record a cassette containing a Python object the safe YAML loader could not read back, so recording fails fast instead of producing a cassette that breaks on replay (#1007, #1009) - thanks @Polandia94
