@@ -606,7 +606,9 @@ By default, each response in a cassette can only be matched and played back
 once while the cassette is in use, unless the cassette is rewound.
 
 If you want to allow playback repeats without rewinding the cassette, use
-the Cassette ``allow_playback_repeats`` option.
+the Cassette ``allow_playback_repeats`` option. It also applies while
+recording: once a request has been recorded, matching requests get the
+recorded response instead of being sent and recorded again.
 
 .. code:: python
 
