@@ -519,7 +519,9 @@ in a few ways:
    record any requests sent to (or responses from) localhost, 127.0.0.1,
    ::1 or 0.0.0.0.
 -  Set the ``ignore_hosts`` configuration option to a list of hosts to
-   ignore
+   ignore. A host can also be a compiled regular expression, which has to
+   match the whole host name, e.g.
+   ``ignore_hosts=["example.com", re.compile(r".*\.actions\.githubusercontent\.com")]``
 -  Add a ``before_record_request`` or ``before_record_response`` callback
    that returns ``None`` for requests you want to ignore (see above).
 
