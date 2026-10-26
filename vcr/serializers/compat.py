@@ -56,16 +56,16 @@ def convert_body_to_unicode(resp):
     If the request or responses body is bytes, decode it to a string
     (for python3 support)
     """
-    if type(resp) is not dict:
+    if not isinstance(resp, dict):
         # Some of the tests just serialize and deserialize a string.
         return _convert_string_to_unicode(resp)
     else:
         body = resp.get("body")
 
         if body is not None:
-            try:
+            if isinstance(body, dict) and "string" in body:
                 body["string"] = _convert_string_to_unicode(body["string"])
-            except (KeyError, TypeError, AttributeError):
+            else:
                 # The thing we were converting either wasn't a dictionary or
                 # didn't have the keys we were expecting.
                 # For example request object has no 'string' key.

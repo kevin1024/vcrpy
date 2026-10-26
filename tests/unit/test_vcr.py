@@ -7,12 +7,13 @@ import pytest
 
 from vcr import VCR, mode, use_cassette
 from vcr.patch import _HTTPConnection, force_reset
+from vcr.persisters.filesystem import CassetteNotFoundError
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 
 
 def test_vcr_use_cassette():
-    record_mode = mock.Mock()
+    record_mode = mode.ONCE
     test_vcr = VCR(record_mode=record_mode)
     with mock.patch(
         "vcr.cassette.Cassette.load",
@@ -25,20 +26,55 @@ def test_vcr_use_cassette():
 
         assert mock_cassette_load.call_count == 0
         function()
-        assert mock_cassette_load.call_args[1]["record_mode"] is record_mode
+        assert mock_cassette_load.call_args[1]["record_mode"] == record_mode
 
         # Make sure that calls to function now use cassettes with the
         # new filter_header_settings
-        test_vcr.record_mode = mock.Mock()
+        test_vcr.record_mode = mode.ALL
         function()
         assert mock_cassette_load.call_args[1]["record_mode"] == test_vcr.record_mode
 
         # Ensure that explicitly provided arguments still supersede
         # those on the vcr.
-        new_record_mode = mock.Mock()
+        new_record_mode = mode.NEW_EPISODES
 
     with test_vcr.use_cassette("test", record_mode=new_record_mode) as cassette:
         assert cassette.record_mode == new_record_mode
+
+
+def test_vcr_record_mode_validation():
+    # An invalid record mode raises a helpful error rather than silently
+    # behaving like ``new_episodes``.
+    with pytest.raises(ValueError, match="not a valid record_mode"):
+        VCR(record_mode="onec")
+
+    # Invalid mode supplied per-cassette is also rejected.
+    test_vcr = VCR()
+    with pytest.raises(ValueError, match="not a valid record_mode"):
+        test_vcr.use_cassette("test", record_mode="bogus").__enter__()
+
+    # Both the enum and its string value remain valid.
+    assert VCR(record_mode=mode.ALL).record_mode == mode.ALL
+    assert VCR(record_mode="all").record_mode == mode.ALL
+
+
+def test_ignore_localhost_includes_ipv6():
+    with VCR(ignore_localhost=True).use_cassette("test") as cassette:
+        assert cassette.filter_request(Request("GET", "http://[::1]:8000/", "", {})) is None
+
+
+def test_use_cassette_persister_option():
+    class CustomPersister:
+        @staticmethod
+        def load_cassette(cassette_path, serializer):
+            raise CassetteNotFoundError
+
+        @staticmethod
+        def save_cassette(cassette_path, cassette_dict, serializer):
+            pass
+
+    with VCR().use_cassette("test", persister=CustomPersister) as cassette:
+        assert cassette._persister is CustomPersister
 
 
 def test_vcr_before_record_request_params():
@@ -275,6 +311,33 @@ def test_cassette_library_dir_with_path_transformer():
     function_name()
 
 
+@pytest.mark.parametrize("library_dir_type", [str, Path])
+@pytest.mark.parametrize("path_type", [str, Path])
+@pytest.mark.parametrize("cassette_name", ["custom_name", os.path.join("/library_dir", "custom_name")])
+def test_cassette_library_dir_accepts_pathlike(library_dir_type, path_type, cassette_name):
+    vcr = VCR(inject_cassette=True, cassette_library_dir=library_dir_type("/library_dir"))
+
+    @vcr.use_cassette(path_type(cassette_name))
+    def function_name(cassette):
+        assert cassette._path == os.path.join("/library_dir", "custom_name")
+
+    function_name()
+
+
+def test_cassette_library_dir_with_pathlike_func_path_generator():
+    vcr = VCR(
+        inject_cassette=True,
+        cassette_library_dir="/library_dir",
+        func_path_generator=lambda function: Path(function.__name__),
+    )
+
+    @vcr.use_cassette
+    def function_name(cassette):
+        assert cassette._path == os.path.join("/library_dir", "function_name")
+
+    function_name()
+
+
 def test_use_cassette_with_no_extra_invocation():
     vcr = VCR(inject_cassette=True, cassette_library_dir="/")
 
@@ -311,6 +374,16 @@ def test_ensure_suffix():
     @vcr.use_cassette
     def function_name(cassette):
         assert cassette._path == os.path.join(os.path.dirname(__file__), "function_name.yaml")
+
+    function_name()
+
+
+def test_ensure_suffix_with_pathlike():
+    vcr = VCR(inject_cassette=True, path_transformer=VCR.ensure_suffix(".yaml"))
+
+    @vcr.use_cassette(Path("custom_name"))
+    def function_name(cassette):
+        assert cassette._path == "custom_name.yaml"
 
     function_name()
 
@@ -372,3 +445,32 @@ def test_path_class_as_cassette():
     )
     with use_cassette(path):
         pass
+
+
+def test_use_cassette_generator_return():
+    ret_val = object()
+
+    vcr = VCR()
+
+    @vcr.use_cassette("test")
+    def gen():
+        return ret_val
+        yield
+
+    with pytest.raises(StopIteration) as exc_info:
+        next(gen())
+
+    assert exc_info.value.value is ret_val
+
+
+def test_interaction_hook_options():
+    def on_save(request, response):
+        return request, response
+
+    def on_load(request, response):
+        return request, response
+
+    my_vcr = VCR(before_save_interaction=on_save)
+    with my_vcr.use_cassette("test", after_load_interaction=[on_load]) as cassette:
+        assert cassette._before_save_interaction == [on_save]
+        assert cassette._after_load_interaction == [on_load]

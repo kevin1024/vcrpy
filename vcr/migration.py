@@ -23,13 +23,8 @@ import yaml
 from . import request
 from .serialize import serialize
 from .serializers import jsonserializer, yamlserializer
+from .serializers.yamlserializer import _CassetteLoader as Loader
 from .stubs.compat import get_httpmessage
-
-# Use the libYAML versions if possible
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
 
 
 def preprocess_yaml(cassette):

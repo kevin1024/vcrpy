@@ -3,8 +3,6 @@ from unittest import TextTestRunner, defaultTestLoader
 from unittest.mock import MagicMock
 from urllib.request import urlopen
 
-import pytest
-
 from vcr.unittest import VCRTestCase
 
 
@@ -128,16 +126,16 @@ def test_vcr_kwargs_cassette_dir():
     assert test._get_cassette_library_dir.call_count == 0
 
 
-@pytest.mark.online
-def test_get_vcr_with_matcher(tmpdir):
+def test_get_vcr_with_matcher(tmpdir, httpbin):
     cassette_dir = tmpdir.mkdir("cassettes")
     assert len(cassette_dir.listdir()) == 0
 
     mock_matcher = MagicMock(return_value=True, __name__="MockMatcher")
+    url = httpbin.url + "/html"
 
     class MyTest(VCRTestCase):
         def test_foo(self):
-            self.response = urlopen("http://example.com").read()
+            self.response = urlopen(url).read()
 
         def _get_vcr(self):
             myvcr = super()._get_vcr()
@@ -157,28 +155,24 @@ def test_get_vcr_with_matcher(tmpdir):
     test = run_testcase(MyTest)[0][0]
     assert len(test.cassette.requests) == 1
     assert mock_matcher.called
-    assert (
-        repr(mock_matcher.mock_calls[0])
-        == "call(<Request (GET) http://example.com>, <Request (GET) http://example.com>)"
-    )
+    assert repr(mock_matcher.mock_calls[0]) == f"call(<Request (GET) {url}>, <Request (GET) {url}>)"
 
 
-@pytest.mark.online
-def test_testcase_playback(tmpdir):
+def test_testcase_playback(tmpdir, httpbin):
     cassette_dir = tmpdir.mkdir("cassettes")
     assert len(cassette_dir.listdir()) == 0
 
-    # First test actually reads from the web.
+    # First test actually reads from the server.
 
     class MyTest(VCRTestCase):
         def test_foo(self):
-            self.response = urlopen("http://example.com").read()
+            self.response = urlopen(httpbin.url + "/html").read()
 
         def _get_cassette_library_dir(self):
             return str(cassette_dir)
 
     test = run_testcase(MyTest)[0][0]
-    assert b"illustrative examples" in test.response
+    assert b"Moby-Dick" in test.response
     assert len(test.cassette.requests) == 1
     assert test.cassette.play_count == 0
 
@@ -186,7 +180,7 @@ def test_testcase_playback(tmpdir):
 
     test2 = run_testcase(MyTest)[0][0]
     assert test.cassette is not test2.cassette
-    assert b"illustrative examples" in test.response
+    assert b"Moby-Dick" in test2.response
     assert len(test2.cassette.requests) == 1
     assert test2.cassette.play_count == 1
 

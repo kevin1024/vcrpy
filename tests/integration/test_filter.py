@@ -5,9 +5,11 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import pytest
-from assertions import assert_cassette_has_one_response, assert_is_json_bytes
 
 import vcr
+from vcr.filters import brotli
+
+from ..assertions import assert_cassette_has_one_response, assert_is_json_bytes
 
 
 def _request_with_auth(url, username, password):
@@ -69,6 +71,16 @@ def test_filter_post_data(tmpdir, httpbin):
         assert b"id=secret" not in cass.requests[0].body
 
 
+def test_filter_post_data_with_encoded_name(tmpdir, httpbin):
+    url = httpbin.url + "/post"
+    data = urlencode({"api:key": "secret", "foo": "bar"}).encode("utf-8")
+    cass_file = str(tmpdir.join("filter_pd_encoded_name.yaml"))
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=["api:key"]):
+        urlopen(url, data)
+    with vcr.use_cassette(cass_file, filter_post_data_parameters=["api:key"]) as cass:
+        assert cass.requests[0].body == b"foo=bar"
+
+
 def test_filter_json_post_data(tmpdir, httpbin):
     data = json.dumps({"id": "secret", "foo": "bar"}).encode("utf-8")
     request = Request(httpbin.url + "/post", data=data)
@@ -101,6 +113,31 @@ def test_filter_callback(tmpdir, httpbin):
         assert len(cass) == 0
 
 
+def test_filter_sensitive_data(tmpdir, httpbin):
+    secret = "s3cret-value"
+    url = httpbin.url + "/post?" + urlencode({"key": secret})
+    cass_file = str(tmpdir.join("sensitive_data.yaml"))
+    my_vcr = vcr.VCR(filter_sensitive_data={"<KEY>": secret})
+
+    def post():
+        request = Request(url, data=urlencode({"token": secret}).encode(), headers={"X-Api-Key": secret})
+        return json.loads(urlopen(request).read())
+
+    with my_vcr.use_cassette(cass_file):
+        recorded = post()
+    # The code saw the real values, but the cassette only has the placeholder.
+    assert recorded["args"]["key"] == recorded["form"]["token"] == recorded["headers"]["X-Api-Key"] == secret
+    with open(cass_file) as f:
+        cassette_text = f.read()
+    assert secret not in cassette_text
+    assert "<KEY>" in cassette_text
+
+    # On replay, the request matches and the real values are restored.
+    with my_vcr.use_cassette(cass_file, record_mode="none") as cass:
+        assert post() == recorded
+        assert cass.play_count == 1
+
+
 def test_decompress_gzip(tmpdir, httpbin):
     url = httpbin.url + "/gzip"
     request = Request(url, headers={"Accept-Encoding": ["gzip, deflate"]})
@@ -129,6 +166,22 @@ def test_decompress_deflate(tmpdir, httpbin):
     url = httpbin.url + "/deflate"
     request = Request(url, headers={"Accept-Encoding": ["gzip, deflate"]})
     cass_file = str(tmpdir.join("deflate_response.yaml"))
+    with vcr.use_cassette(cass_file, decode_compressed_response=True):
+        urlopen(request)
+    with vcr.use_cassette(cass_file) as cass:
+        decoded_response = urlopen(url).read()
+        assert_cassette_has_one_response(cass)
+    assert_is_json_bytes(decoded_response)
+
+
+def test_decompress_brotli(tmpdir, httpbin):
+    if brotli is None:
+        # XXX: this is never true, because brotlipy is installed with "httpbin"
+        pytest.skip("Brotli is not installed")
+
+    url = httpbin.url + "/brotli"
+    request = Request(url, headers={"Accept-Encoding": ["gzip, deflate, br"]})
+    cass_file = str(tmpdir.join("brotli_response.yaml"))
     with vcr.use_cassette(cass_file, decode_compressed_response=True):
         urlopen(request)
     with vcr.use_cassette(cass_file) as cass:

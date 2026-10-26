@@ -15,9 +15,9 @@
             },
             "response": {
                 "status": {
-                    "message": "OK", 
+                    "message": "OK",
                     "code": 200
-                }, 
+                },
                 "headers": {
                     "access-control-allow-origin": ["*"],
                     "content-type": ["application/json"],
@@ -25,7 +25,7 @@
                     "server": ["gunicorn/0.17.4"],
                     "content-length": ["32"],
                     "connection": ["keep-alive"]
-                }, 
+                },
                 "body": {
                     "string": "{\n  \"origin\": \"217.122.164.194\"\n}"
                 }

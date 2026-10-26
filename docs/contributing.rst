@@ -5,18 +5,10 @@ Contributing
    :alt: vcr.py logo
    :align: right
 
-🚀 Milestones
---------------
-For anyone interested in the roadmap and projected release milestones please see the following link:
-
-`MILESTONES <https://github.com/kevin1024/vcrpy/milestones>`_
-
-----
-
 🎁 Contributing Issues and PRs
 -------------------------------
 
- - Issues and PRs will get triaged and assigned to the appropriate milestone.
+ - Issues and PRs will get triaged.
  - PRs get priority over issues.
  - The maintainers have limited bandwidth and do so **voluntarily**.
 
@@ -24,7 +16,7 @@ So whilst reporting issues are valuable, please consider:
  - contributing an issue with a toy repo that replicates the issue.
  - contributing PRs is a more valuable donation of your time and effort.
 
-Thanks again for your interest and support in VCRpy. 
+Thanks again for your interest and support in VCRpy.
 
 We really appreciate it.
 
@@ -57,7 +49,7 @@ Simply adding these three labels for incoming issues means a lot for maintaining
  - Which library does it affect? ``core``, ``aiohttp``, ``requests``, ``urllib3``, ``tornado4``, ``httplib2``
  - If it is a bug, is it ``Verified Can Replicate`` or ``Requires Help Replicating``
  - Thanking people for raising issues. Feedback is always appreciated.
- - Politely asking if they are able to link to an example repo that replicates the issue if they haven't already. Being able to *clone and go* helps the next person and we like that. 😃 
+ - Politely asking if they are able to link to an example repo that replicates the issue if they haven't already. Being able to *clone and go* helps the next person and we like that. 😃
 
 **Maintainer:**
 
@@ -68,14 +60,15 @@ This involves creating PRs to address bugs and enhancement requests. It also mea
 The PR reviewer is a second set of eyes to see if:
  - Are there tests covering the code paths added/modified?
  - Do the tests and modifications make sense seem appropriate?
- - Add specific feedback, even on approvals, why it is accepted. eg "I like how you use a context manager there. 😄 " 
+ - Add specific feedback, even on approvals, why it is accepted. eg "I like how you use a context manager there. 😄 "
  - Also make sure they add a line to `docs/changelog.rst` to claim credit for their contribution.
 
 **Release Manager:**
+ - Bump ``__version__`` in ``vcr/__init__.py`` and rename the "Unreleased" section of ``docs/changelog.rst`` to the new version.
  - Ensure CI is passing.
- - Create a release on github and tag it with the changelog release notes.
- - ``python3 setup.py build sdist bdist_wheel``
- - ``twine upload dist/*``
+ - Create a release on github, with a ``v<version>`` tag (e.g. ``v9.1.0``) and the changelog release notes.
+   Publishing the release runs the "Publish to PyPI" workflow, which builds the package and uploads it
+   with PyPI trusted publishing. It refuses to publish if the tag doesn't match ``__version__``.
  - Go to ReadTheDocs build page and trigger a build https://readthedocs.org/projects/vcrpy/builds/
 
 ----
@@ -83,39 +76,21 @@ The PR reviewer is a second set of eyes to see if:
 Running VCR's test suite
 ------------------------
 
-The tests are all run automatically on `Travis
-CI <https://travis-ci.org/kevin1024/vcrpy>`__, but you can also run them
-yourself using `pytest <http://pytest.org/>`__ and
-`Tox <http://tox.testrun.org/>`__. 
+The tests are all run automatically on `Github Actions CI <https://github.com/kevin1024/vcrpy/actions>`__,
+but you can also run them yourself using `pytest <http://pytest.org/>`__.
 
-Tox will automatically run them in all environments VCR.py supports if they are available on your `PATH`. Alternatively you can use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ with 
-`pyenv <https://github.com/pyenv/pyenv>`_. 
-We recommend you read the documentation for each and see the section further below.
-
-The test suite is pretty big and slow, but you can tell tox to only run specific tests like this::
-
-    tox -e {pyNN}-{HTTP_LIBRARY} -- <pytest flags passed through>
-
-    tox -e py38-requests -- -v -k "'test_status_code or test_gzip'"
-    tox -e py38-requests -- -v --last-failed
-
-This will run only tests that look like ``test_status_code`` or
-``test_gzip`` in the test suite, and only in the python 3.8 environment
-that has ``requests`` installed.
-
-Also, in order for the boto3 tests to run, you will need an AWS key.
+In order for the boto3 tests to run, you will need an AWS key.
 Refer to the `boto3
 documentation <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/index.html>`__
 for how to set this up. I have marked the boto3 tests as optional in
 Travis so you don't have to worry about them failing if you submit a
 pull request.
 
-Using PyEnv with VCR's test suite
+Using Pyenv with VCR's test suite
 ---------------------------------
 
-PyEnv is a tool for managing multiple installation of python on your system.
-See the full documentation at their `github <https://github.com/pyenv/pyenv>`_ 
-but we are also going to use `tox-pyenv <https://pypi.org/project/tox-pyenv/>`_ 
+Pyenv is a tool for managing multiple installation of python on your system.
+See the full documentation at their `github <https://github.com/pyenv/pyenv>`_
 in this example::
 
     git clone https://github.com/pyenv/pyenv ~/.pyenv
@@ -126,27 +101,21 @@ in this example::
     # Setup shim paths
     eval "$(pyenv init -)"
 
-    # Setup your local system tox tooling
-    pip3 install tox tox-pyenv
-
     # Install supported versions (at time of writing), this does not activate them
-    pyenv install 3.8.0 pypy3.8
+    pyenv install 3.12.0 pypy3.11
 
     # This activates them
-    pyenv local 3.8.0 pypy3.8
+    pyenv local 3.12.0 pypy3.11
 
     # Run the whole test suite
-    tox
-
-    # Run the whole test suite or just part of it
-    tox -e lint
-    tox -e py38-requests
+    pip install .[tests]
+    ./runtests.sh
 
 
 Troubleshooting on MacOSX
 -------------------------
 
-If you have this kind of error when running tox :
+If you have this kind of error when running tests :
 
 .. code:: python
 
