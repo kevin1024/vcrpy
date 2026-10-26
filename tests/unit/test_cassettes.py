@@ -41,6 +41,14 @@ def test_cassette_load_nonexistent():
     assert len(a_cassette) == 0
 
 
+def test_cassette_load_empty_file(tmpdir):
+    a_file = tmpdir.join("empty.yml")
+    a_file.write("")
+    a_cassette = Cassette.load(path=str(a_file))
+    assert len(a_cassette) == 0
+    assert not a_cassette.write_protected
+
+
 def test_cassette_load_invalid_encoding(tmpdir):
     a_file = tmpdir.join("invalid_encoding.yml")
     with open(a_file, "wb") as fd:

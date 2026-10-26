@@ -1,6 +1,6 @@
 import pytest
 
-from vcr.persisters.filesystem import FilesystemPersister
+from vcr.persisters.filesystem import CassetteNotFoundError, FilesystemPersister
 from vcr.serializers import jsonserializer, yamlserializer
 
 
@@ -32,3 +32,12 @@ def test_load_cassette_with_invalid_cassettes(cassette_path, serializer):
     with pytest.raises(Exception) as excinfo:
         FilesystemPersister.load_cassette(cassette_path, serializer)
     assert "run the migration script" not in excinfo.exconly()
+
+
+@pytest.mark.parametrize("content", ["", "\n"])
+@pytest.mark.parametrize("serializer", [jsonserializer, yamlserializer])
+def test_load_empty_cassette(tmpdir, serializer, content):
+    cassette_path = tmpdir.join("empty_cassette")
+    cassette_path.write(content)
+    with pytest.raises(CassetteNotFoundError):
+        FilesystemPersister.load_cassette(str(cassette_path), serializer)
