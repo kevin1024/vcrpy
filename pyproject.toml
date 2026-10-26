@@ -9,10 +9,11 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
@@ -21,7 +22,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 urls = {Homepage = "https://github.com/kevin1024/vcrpy"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "PyYAML",
     "wrapt",
@@ -37,11 +38,13 @@ tests = [
     "aiohttp",
     "boto3",
     "cryptography",
-    "httpbin",
-    "httpcore",
+    "httpbin>=0.10.3",
     "httplib2",
     "httpx",
-    "pycurl; platform_python_implementation !='PyPy'",
+    "httpx-curl-cffi",
+    "httpx2",
+    "pycurl; platform_python_implementation != 'PyPy'",
+    "pyreqwest",
     "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
@@ -50,7 +53,15 @@ tests = [
     "requests>=2.22.0",
     "tornado",
     "urllib3",
-    "werkzeug==2.0.3",
+]
+tests-niquests = [
+    "httpbin>=0.10.3",
+    "pytest",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-httpbin",
+    "niquests",
 ]
 
 [tool.setuptools]
@@ -79,7 +90,7 @@ markers = ["online"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [

@@ -63,9 +63,9 @@ def convert_body_to_unicode(resp):
         body = resp.get("body")
 
         if body is not None:
-            try:
+            if isinstance(body, dict) and "string" in body:
                 body["string"] = _convert_string_to_unicode(body["string"])
-            except (KeyError, TypeError, AttributeError):
+            else:
                 # The thing we were converting either wasn't a dictionary or
                 # didn't have the keys we were expecting.
                 # For example request object has no 'string' key.

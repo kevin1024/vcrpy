@@ -1,5 +1,6 @@
 """Stubs for patching HTTP and HTTPS requests"""
 
+import json
 import logging
 from contextlib import suppress
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
@@ -25,6 +26,14 @@ class VCRFakeSocket:
 
     def settimeout(self, *args, **kwargs):
         pass
+
+    def gettimeout(self):
+        return None
+
+    def recv(self, *args, **kwargs):
+        # Nothing is ever waiting to be read. urllib3-future (niquests) peeks at
+        # idle pooled connections with a non-blocking read before reusing them.
+        raise BlockingIOError
 
     def fileno(self):
         """
@@ -61,8 +70,10 @@ class VCRHTTPResponse(HTTPResponse):
     Stub response class that gets returned instead of a HTTPResponse
     """
 
-    def __init__(self, recorded_response):
+    def __init__(self, recorded_response, request_url=None):
         self.fp = None
+        if request_url:
+            self.url = request_url
         self.recorded_response = recorded_response
         self.reason = recorded_response["status"]["message"]
         self.status = self.code = recorded_response["status"]["code"]
@@ -92,7 +103,7 @@ class VCRHTTPResponse(HTTPResponse):
         # self.closed from the superclass
         return self._closed
 
-    def read(self, *args, **kwargs):
+    def read(self, *args, decode_content=None, **kwargs):
         return self._content.read(*args, **kwargs)
 
     def read1(self, *args, **kwargs):
@@ -169,7 +180,15 @@ class VCRHTTPResponse(HTTPResponse):
     def data(self):
         return self._content.getbuffer().tobytes()
 
+    def json(self):
+        # urllib3 2.x responses can decode a JSON body themselves.
+        return json.loads(self.data.decode("utf-8"))
+
     def drain_conn(self):
+        pass
+
+    def release_conn(self):
+        # A replayed response has no connection to return to a pool.
         pass
 
     def stream(self, amt=65536, decode_content=None):
@@ -271,7 +290,7 @@ class VCRConnection:
         if self.cassette.can_play_response_for(self._vcr_request):
             log.info(f"Playing response for {self._vcr_request} from cassette")
             response = self.cassette.play_response(self._vcr_request)
-            return VCRHTTPResponse(response)
+            return VCRHTTPResponse(response, self._vcr_request.uri)
         else:
             if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
                 raise CannotOverwriteExistingCassetteException(
@@ -291,7 +310,7 @@ class VCRConnection:
                 self.real_connection.request(
                     method=self._vcr_request.method,
                     url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body,
+                    body=self._vcr_request.body_bytes,
                     headers=self._vcr_request.headers,
                 )
 
@@ -306,7 +325,7 @@ class VCRConnection:
                 "body": {"string": response_data},
             }
             self.cassette.append(self._vcr_request, response)
-        return VCRHTTPResponse(response)
+        return VCRHTTPResponse(response, self._vcr_request.uri)
 
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
@@ -401,6 +420,7 @@ class VCRHTTPConnection(VCRConnection):
     _protocol = "http"
     debuglevel = _baseclass.debuglevel
     _http_vsn = _baseclass._http_vsn
+    _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)
 
 
 class VCRHTTPSConnection(VCRConnection):
@@ -411,3 +431,4 @@ class VCRHTTPSConnection(VCRConnection):
     is_verified = True
     debuglevel = _baseclass.debuglevel
     _http_vsn = _baseclass._http_vsn
+    _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)

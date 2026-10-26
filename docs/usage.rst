@@ -88,6 +88,10 @@ all
    temporarily used to force VCR to re-record a cassette (i.e. to ensure
    the responses are not out of date) or can be used when you simply
    want to log all HTTP requests.
+-  A newly recorded interaction replaces any previously recorded
+   interaction it matches. Previously recorded interactions that were not
+   re-recorded are kept, unless ``drop_unused_requests`` is set, in which
+   case the cassette is replaced with only what was recorded this time.
 
 Unittest Integration
 --------------------
@@ -163,8 +167,9 @@ instead.
 Pytest Integration
 ------------------
 
-A Pytest plugin is available here : `pytest-vcr
-<https://github.com/ktosiek/pytest-vcr>`__.
+A Pytest plugin is available here : `pytest-recording
+<https://github.com/kiwicom/pytest-recording>`__. It provides fixtures for
+recording cassettes and also supports network access blocking.
 
-Alternative plugin, that also provides network access blocking: `pytest-recording
-<https://github.com/kiwicom/pytest-recording>`__.
+An older plugin, `pytest-vcr <https://github.com/ktosiek/pytest-vcr>`__, is no
+longer actively maintained and is kept here only for reference.
