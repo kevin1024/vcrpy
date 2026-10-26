@@ -4,6 +4,7 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - New ``skip_patchers`` option to leave some HTTP libraries unpatched, e.g. ``skip_patchers=["httpx"]`` when an httpx client uses an aiohttp transport (httpx-aiohttp), so requests aren't recorded twice (#944, #1070) - thanks @smoltafet
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
     - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
 

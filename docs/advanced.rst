@@ -546,6 +546,27 @@ like this:
 
     @my_vcr.use_cassette(...)
 
+Skipping Patchers
+-----------------
+
+VCR.py patches every HTTP library it supports while a cassette is in use.
+If one library sends its requests through another, e.g. an httpx client
+using an aiohttp transport (httpx-aiohttp), each request would be recorded
+twice, once by each patcher. The ``skip_patchers`` option of ``VCR`` and
+``use_cassette`` leaves the named libraries unpatched, so the request is
+recorded only by the library underneath:
+
+.. code:: python
+
+    my_vcr = vcr.VCR(skip_patchers=["httpx"])
+
+The names are ``httplib``, ``requests``, ``boto3``, ``urllib3``,
+``httplib2``, ``tornado``, ``aiohttp``, ``httpx`` and ``httpx2``, also
+available as ``vcr.patch.PATCHER_NAMES``. Requests made through a skipped
+library aren't recorded or played back unless another patched library
+handles them, so e.g. ``skip_patchers=["httpx"]`` stops recording httpx's
+default transport.
+
 Automatic Cassette Naming
 -------------------------
 
