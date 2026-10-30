@@ -191,3 +191,42 @@ def test_repeated_headers(tmpdir, httpbin_both, verify_pool_mgr):
     with vcr.use_cassette(str(tmpdir.join("repeated_headers.yaml"))) as cassette:
         assert verify_pool_mgr.request("GET", url).headers.getlist("Link") == ["a", "b"]
         assert cassette.play_count == 1
+
+
+@pytest.mark.parametrize("record_mode", ["all", "none"])
+@pytest.mark.parametrize("preload_content", [False, True])
+def test_release_conn_restores_pool_capacity(tmpdir, httpbin, record_mode, preload_content):
+    path = str(tmpdir.join("release_conn.yaml"))
+    urls = [f"{httpbin.url}/get?request={number}" for number in range(2)]
+    with vcr.use_cassette(path), urllib3.PoolManager() as manager:
+        for url in urls:
+            assert manager.request("GET", url).status == 200
+
+    with (
+        vcr.use_cassette(path, record_mode=record_mode) as cassette,
+        urllib3.PoolManager(maxsize=1, block=True) as manager,
+    ):
+        pool = manager.connection_from_url(httpbin.url)
+        previous = None
+        for number, url in enumerate(urls):
+            response = manager.request(
+                "GET",
+                url,
+                preload_content=preload_content,
+                pool_timeout=0.1,
+                timeout=2,
+                retries=False,
+            )
+            if previous is not None:
+                previous.close()
+            assert response.status == 200
+            assert json.loads(response.read())["args"] == {"request": str(number)}
+            assert pool.pool.qsize() == int(preload_content)
+            assert response.release_conn() is None
+            assert pool.pool.qsize() == 1
+            previous = response
+            assert response._connection is None
+            assert response.release_conn() is None
+            assert pool.pool.qsize() == 1
+
+        assert cassette.play_count == (2 if record_mode == "none" else 0)

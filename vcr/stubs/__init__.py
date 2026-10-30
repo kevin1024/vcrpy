@@ -188,8 +188,12 @@ class VCRHTTPResponse(HTTPResponse):
         pass
 
     def release_conn(self):
-        # A replayed response has no connection to return to a pool.
-        pass
+        # urllib3 attaches the leased connection even to a replayed response.
+        pool = getattr(self, "_pool", None)
+        connection = getattr(self, "_connection", None)
+        if pool is not None and connection is not None:
+            pool._put_conn(connection)
+            self._connection = None
 
     def stream(self, amt=65536, decode_content=None):
         while True:
