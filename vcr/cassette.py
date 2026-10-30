@@ -438,8 +438,24 @@ class Cassette:
             self._loaded_count = len(self.data)
             self.dirty = False
             self.rewound = True
-        except (CassetteDecodeError, CassetteNotFoundError):
+        except CassetteNotFoundError:
             pass
+        except CassetteDecodeError:
+            # Unlike CassetteNotFoundError (the normal, expected case
+            # the first time a cassette is recorded), this means a
+            # cassette file exists on disk but couldn't be read back.
+            # Without a warning here, the user has no indication that
+            # anything went wrong before vcrpy silently proceeds as if
+            # there were no prior recording at all -- potentially
+            # re-recording and overwriting the existing file. See
+            # GH #501.
+            log.warning(
+                "Cassette at %s exists but could not be loaded (it will "
+                "be treated as empty, and may be overwritten if the "
+                "current record mode allows recording).",
+                self._path,
+                exc_info=True,
+            )
 
     def __str__(self):
         return f"<Cassette containing {len(self)} recorded response(s)>"

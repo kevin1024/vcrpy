@@ -49,6 +49,42 @@ def test_cassette_load_invalid_encoding(tmpdir):
     assert len(a_cassette) == 0
 
 
+def test_cassette_load_invalid_encoding_logs_warning(tmpdir, caplog):
+    """
+    Regression test for
+    https://github.com/kevin1024/vcrpy/issues/501
+
+    A cassette file that exists but fails to decode is a genuinely
+    different situation from a cassette that simply doesn't exist yet
+    (the normal first-recording case): silently treating both the
+    same way, with no indication to the user, risks re-recording and
+    overwriting a cassette that actually exists but failed to load
+    for some other reason (e.g. transient corruption). A warning must
+    be logged for the decode-failure case specifically.
+    """
+    a_file = tmpdir.join("invalid_encoding.yml")
+    with open(a_file, "wb") as fd:
+        fd.write(b"\xda")
+
+    with caplog.at_level("WARNING"):
+        a_cassette = Cassette.load(path=str(a_file))
+
+    assert len(a_cassette) == 0
+    assert any("could not be loaded" in record.message for record in caplog.records)
+
+
+def test_cassette_load_nonexistent_does_not_log_warning(caplog):
+    """
+    The normal "no cassette recorded yet" case must remain silent --
+    only a genuine decode failure (see test above) should warn.
+    """
+    with caplog.at_level("WARNING"):
+        a_cassette = Cassette.load(path="something/nonexistent.yml")
+
+    assert len(a_cassette) == 0
+    assert len(caplog.records) == 0
+
+
 def test_cassette_not_played():
     a = Cassette("test")
     assert not a.play_count
