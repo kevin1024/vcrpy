@@ -472,8 +472,16 @@ class Cassette:
             self.dirty = False
             self.rewound = True
             self._metadata = metadata[0] if metadata else {}
-        except (CassetteDecodeError, CassetteNotFoundError):
+        except CassetteNotFoundError:
             pass
+        except CassetteDecodeError:
+            # Unlike a missing cassette, this one exists, so say why it's treated as empty (#501).
+            log.warning(
+                "Cassette %s exists but couldn't be loaded, so it's treated as empty, "
+                "and recording may overwrite it.",
+                self._path,
+                exc_info=True,
+            )
 
     def __str__(self):
         return f"<Cassette containing {len(self)} recorded response(s)>"
