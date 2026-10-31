@@ -64,10 +64,11 @@ The PR reviewer is a second set of eyes to see if:
  - Also make sure they add a line to `docs/changelog.rst` to claim credit for their contribution.
 
 **Release Manager:**
+ - Bump ``__version__`` in ``vcr/__init__.py`` and rename the "Unreleased" section of ``docs/changelog.rst`` to the new version.
  - Ensure CI is passing.
- - Create a release on github and tag it with the changelog release notes.
- - ``python3 setup.py build sdist bdist_wheel``
- - ``twine upload dist/*``
+ - Create a release on github, with a ``v<version>`` tag (e.g. ``v9.1.0``) and the changelog release notes.
+   Publishing the release runs the "Publish to PyPI" workflow, which builds the package and uploads it
+   with PyPI trusted publishing. It refuses to publish if the tag doesn't match ``__version__``.
  - Go to ReadTheDocs build page and trigger a build https://readthedocs.org/projects/vcrpy/builds/
 
 ----
@@ -101,10 +102,10 @@ in this example::
     eval "$(pyenv init -)"
 
     # Install supported versions (at time of writing), this does not activate them
-    pyenv install 3.12.0 pypy3.10
+    pyenv install 3.12.0 pypy3.11
 
     # This activates them
-    pyenv local 3.12.0 pypy3.10
+    pyenv local 3.12.0 pypy3.11
 
     # Run the whole test suite
     pip install .[tests]
