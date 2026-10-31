@@ -274,7 +274,12 @@ class Cassette:
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        return request and request in self and self.record_mode != RecordMode.ALL and self.rewound
+        return (
+            request
+            and request in self
+            and self.record_mode != RecordMode.ALL
+            and (self.rewound or self.allow_playback_repeats)
+        )
 
     def play_response(self, request):
         """
@@ -283,9 +288,12 @@ class Cassette:
         """
         for index, response in self._responses(request):
             if self.play_counts[index] == 0 or self.allow_playback_repeats:
+                # Remember each loaded interaction once, however often it's played,
+                # for drop_unused_requests. Interactions recorded now are saved anyway.
+                if self.play_counts[index] == 0 and index < self._loaded_count:
+                    # Use stored (possibly modified) request, not the raw incoming request
+                    self._played_interactions.append((self.data[index][0], response))
                 self.play_counts[index] += 1
-                # Use stored (possibly modified) request, not the raw incoming request
-                self._played_interactions.append((self.data[index][0], response))
                 return response
         # The cassette doesn't contain the request asked for.
         raise UnhandledHTTPRequestError(

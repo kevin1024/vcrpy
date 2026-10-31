@@ -737,3 +737,39 @@ def test_interaction_hooks_accept_a_tuple():
     cassette.append(*_interaction())
     cassette._save()
     assert calls == ["/", "/"]
+
+
+def test_drop_unused_requests_saves_repeated_interactions_once(tmpdir):
+    interactions = [
+        {"request": {"body": "", "uri": "foo1", "method": "GET", "headers": {}}, "response": "bar1"},
+        {"request": {"body": "", "uri": "foo2", "method": "GET", "headers": {}}, "response": "bar2"},
+    ]
+    file = tmpdir.join("test_cassette.yml")
+    file.write(yaml.dump({"interactions": interactions}))
+
+    cassette = Cassette.load(path=str(file), allow_playback_repeats=True, drop_unused_requests=True)
+    request = Request._from_dict(interactions[0]["request"])
+    cassette.play_response(request)
+    cassette.play_response(request)
+    cassette._save()
+
+    saved = yaml.safe_load(file.read())["interactions"]
+    assert [interaction["request"]["uri"] for interaction in saved] == ["foo1"]
+
+
+def test_allow_playback_repeats_while_recording():
+    cassette = Cassette("test", allow_playback_repeats=True)
+    request = Request("GET", "http://example.com/", "", {})
+    assert not cassette.can_play_response_for(request)
+
+    cassette.append(request, "response")
+    assert cassette.can_play_response_for(request)
+    assert cassette.play_response(request) == "response"
+    assert len(cassette) == 1
+
+
+def test_no_playback_while_recording_without_repeats():
+    cassette = Cassette("test")
+    request = Request("GET", "http://example.com/", "", {})
+    cassette.append(request, "response")
+    assert not cassette.can_play_response_for(request)
