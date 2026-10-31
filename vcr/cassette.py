@@ -12,7 +12,7 @@ from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError
 from .filters import sensitive_data_hooks
 from .matchers import get_matchers_results, method, requests_match, uri
-from .patch import CassettePatcherBuilder
+from .patch import CassettePatcherBuilder, validate_skip_patchers
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 from .record_mode import RecordMode
 from .serializers import yamlserializer
@@ -183,6 +183,7 @@ class Cassette:
         filter_sensitive_data=(),
         before_save_interaction=None,
         after_load_interaction=None,
+        skip_patchers=(),
     ):
         self._persister = persister or FilesystemPersister
         self._path = path
@@ -205,6 +206,7 @@ class Cassette:
             hide, restore = sensitive_data_hooks(filter_sensitive_data)
             self._before_save_interaction.append(hide)
             self._after_load_interaction.insert(0, restore)
+        self.skip_patchers = validate_skip_patchers(skip_patchers)
 
         # self.data is the list of (req, resp) tuples
         self.data = []
