@@ -311,6 +311,10 @@ class VCRConnection:
             from vcr.patch import force_reset
 
             with force_reset():
+                if self.__dict__.get("_deferred_connect"):
+                    args, kwargs = self._deferred_connect
+                    self._deferred_connect = None
+                    self.real_connection.connect(*args, **kwargs)
                 self.real_connection.request(
                     method=self._vcr_request.method,
                     url=self._url(self._vcr_request.uri),
@@ -344,7 +348,8 @@ class VCRConnection:
 
         if not hasattr(self, "_vcr_request"):
             # The request isn't known yet, so we can't tell whether it will be
-            # played back. If it's sent, the real connection connects then (#515).
+            # played back. Connect only if it's sent (#515).
+            self._deferred_connect = (args, kwargs)
             return
 
         if self.cassette.can_play_response_for(self._vcr_request):
