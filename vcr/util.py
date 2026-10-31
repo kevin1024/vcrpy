@@ -96,21 +96,35 @@ def _is_nonsequence_iterator(obj):
     )
 
 
+def _is_async_iterator(obj):
+    return hasattr(obj, "__aiter__")
+
+
+def _join_body_chunks(chunks):
+    """Join an iterable of body chunks into a single ``bytes`` object.
+
+    Mirrors the chunk handling in :func:`read_body`: chunks may be
+    ``bytes``/``bytearray``/``memoryview``, ``str`` (encoded as UTF-8),
+    or ints (a bytes-like sequence of byte values).
+    """
+    chunks = list(chunks)
+    if not chunks:
+        return b""
+    first = chunks[0]
+    if isinstance(first, str):
+        return "".join(chunks).encode("utf-8")
+    if isinstance(first, (bytes, bytearray, memoryview)):
+        return b"".join(bytes(chunk) for chunk in chunks)
+    if isinstance(first, int):
+        return bytes(chunks)
+    raise ValueError(f"Body type {type(first)} not supported")
+
+
 def read_body(request):
     if hasattr(request.body, "read"):
         return request.body.read()
     if _is_nonsequence_iterator(request.body):
-        body = list(request.body)
-        if body:
-            if isinstance(body[0], str):
-                return "".join(body).encode("utf-8")
-            elif isinstance(body[0], (bytes, bytearray)):
-                return b"".join(body)
-            elif isinstance(body[0], int):
-                return bytes(body)
-            else:
-                raise ValueError(f"Body type {type(body[0])} not supported")
-        return b""
+        return _join_body_chunks(list(request.body))
     return request.body
 
 

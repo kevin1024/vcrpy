@@ -25,6 +25,10 @@ class FilesystemPersister:
         except UnicodeDecodeError as err:
             raise CassetteDecodeError("Can't read Cassette, Encoding is broken") from err
 
+        if not data.strip():
+            # An empty file is treated like a missing cassette and recorded again, as in Ruby VCR.
+            raise CassetteNotFoundError()
+
         return deserialize(data, serializer)
 
     @staticmethod

@@ -1,3 +1,4 @@
+import re
 import socket
 from contextlib import contextmanager
 from urllib.request import urlopen
@@ -38,6 +39,16 @@ def test_ignore_httpbin(tmpdir, httpbin):
     with overridden_dns({"httpbin.org": "127.0.0.1"}):
         cass_file = str(tmpdir.join("filter_qs.yaml"))
         with vcr.use_cassette(cass_file, ignore_hosts=["httpbin.org"]) as cass:
+            urlopen(f"http://httpbin.org:{httpbin.port}/")
+            assert len(cass) == 0
+            urlopen(f"http://localhost:{httpbin.port}/")
+            assert len(cass) == 1
+
+
+def test_ignore_httpbin_regex(tmpdir, httpbin):
+    with overridden_dns({"httpbin.org": "127.0.0.1"}):
+        cass_file = str(tmpdir.join("filter_qs.yaml"))
+        with vcr.use_cassette(cass_file, ignore_hosts=[re.compile(r"h\w*bin\.org")]) as cass:
             urlopen(f"http://httpbin.org:{httpbin.port}/")
             assert len(cass) == 0
             urlopen(f"http://localhost:{httpbin.port}/")

@@ -53,6 +53,8 @@ def deserialize(cassette_string, serializer):
 
     requests = [Request._from_dict(r["request"]) for r in data["interactions"]]
     responses = [compat.convert_to_bytes(r["response"]) for r in data["interactions"]]
+    if data.get("metadata"):
+        return requests, responses, data["metadata"]
     return requests, responses
 
 
@@ -65,4 +67,6 @@ def serialize(cassette_dict, serializer):
         for request, response in zip(cassette_dict["requests"], cassette_dict["responses"], strict=False)
     ]
     data = {"version": CASSETTE_FORMAT_VERSION, "interactions": interactions}
+    if cassette_dict.get("metadata"):
+        data["metadata"] = cassette_dict["metadata"]
     return serializer.serialize(data)

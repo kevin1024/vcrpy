@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class RecordMode(str, Enum):
+class RecordMode(str, Enum):  # noqa: UP042 - StrEnum would change str() and format() of members
     """
     Configures when VCR will record to the cassette.
 
