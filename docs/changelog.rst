@@ -8,6 +8,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Return leased urllib3 connections to their pool when ``release_conn()`` is called on a streamed response, during recording and playback (#949) - thanks @edsonsims
     - ``allow_playback_repeats`` now also applies while recording: a request that matches one already recorded in the cassette gets the recorded response, instead of being sent again and recorded a second time. When played back, such requests got the first response anyway (#878, #879) - thanks @pyoor
     - Fix ``drop_unused_requests`` saving an interaction once per playback when ``allow_playback_repeats`` is set
+    - ``ignore_hosts`` also accepts compiled regular expressions, which match whole host names, e.g. ``re.compile(r".*\.example\.com")`` (#779) - thanks @silviumarcu
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
     - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
     - Fix ``use_cassette`` crashing with ``TypeError: 'NoneType' object is not subscriptable`` (or ``JSONDecodeError`` with the JSON serializer) when the cassette file is empty, e.g. after emptying it to record it again. An empty cassette is now recorded like a missing one, as in Ruby VCR (#579) - thanks @nk-batman21

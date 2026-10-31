@@ -1,5 +1,6 @@
 import http.client as httplib
 import os
+import re
 from pathlib import Path
 from unittest import mock
 
@@ -61,6 +62,22 @@ def test_vcr_record_mode_validation():
 def test_ignore_localhost_includes_ipv6():
     with VCR(ignore_localhost=True).use_cassette("test") as cassette:
         assert cassette.filter_request(Request("GET", "http://[::1]:8000/", "", {})) is None
+
+
+def test_ignore_hosts_with_patterns():
+    ignore_hosts = ["exact.example.com", re.compile(r".*\.actions\.example\.com")]
+    with VCR(ignore_hosts=ignore_hosts).use_cassette("test") as cassette:
+
+        def ignored(url):
+            return cassette.filter_request(Request("GET", url, "", {})) is None
+
+        assert ignored("http://exact.example.com/")
+        assert ignored("https://pipelines1.actions.example.com/")
+        # Strings match whole host names, as before, and patterns match whole host names too.
+        assert not ignored("http://notexact.example.com/")
+        assert not ignored("http://exact.example.com.evil.test/")
+        assert not ignored("http://pipelines1.actions.example.com.evil.test/")
+        assert not ignored("http://actions.example.com/")
 
 
 def test_use_cassette_persister_option():
