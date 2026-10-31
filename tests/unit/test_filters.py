@@ -367,6 +367,13 @@ def test_remove_body_parameters_dict(method):
     assert request.body == expected_data
 
 
+def test_replace_body_parameters_leaves_iterator_body():
+    # A generator body is recorded as an iterator body, which isn't filtered (#814).
+    request = Request("POST", "http://google.com", iter([b"api_key=secret"]), {})
+    replace_body_parameters(request, [("api_key", None)])
+    assert b"".join(request.body) == b"api_key=secret"
+
+
 @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
 def test_remove_all_body_parameters_dict(method):
     body = {"id": "secret", "foo": "bar"}

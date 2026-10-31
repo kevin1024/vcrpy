@@ -78,6 +78,13 @@ class CassetteContextDecorator:
             lambda key, _: key in self._non_cassette_arguments,
             self._args_getter(),
         )
+        if "path" not in cassette_kwargs:
+            # Only a decorator can name a cassette after its function (#570).
+            raise TypeError(
+                "use_cassette() needs a path when it's used as a context manager. "
+                "It can be left out only when decorating a function, to name the "
+                "cassette after the function.",
+            )
         if other_kwargs.get("path_transformer"):
             transformer = other_kwargs["path_transformer"]
             cassette_kwargs["path"] = transformer(cassette_kwargs["path"])

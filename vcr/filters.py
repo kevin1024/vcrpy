@@ -235,7 +235,8 @@ def replace_body_parameters(request, replacements, recursive=False):
         # Nothing to replace
         return request
 
-    if isinstance(request.body, BytesIO):
+    if not isinstance(request.body, (bytes, bytearray, str, dict)):
+        # A file or iterator body, e.g. a streaming upload, isn't filtered (#814).
         return request
 
     replacements = dict(replacements)

@@ -251,6 +251,24 @@ def test_custom_patchers():
         assert Test.attribute is Test.attribute2
 
 
+def test_inject_cassette_into_method():
+    class Test:
+        @VCR(inject_cassette=True).use_cassette("test")
+        def method(self, cassette, value):
+            return self, cassette, value
+
+    test = Test()
+    instance, cassette, value = test.method(1)
+    assert instance is test
+    assert cassette.__class__.__name__ == "Cassette"
+    assert value == 1
+
+
+def test_use_cassette_context_manager_without_path():
+    with pytest.raises(TypeError, match="needs a path"), VCR(cassette_library_dir="dir").use_cassette():
+        pass
+
+
 def test_inject_cassette():
     vcr = VCR(inject_cassette=True)
 
