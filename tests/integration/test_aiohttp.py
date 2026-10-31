@@ -10,7 +10,7 @@ import yarl
 
 import vcr
 from vcr.request import Request
-from vcr.stubs.aiohttp_stubs import build_response
+from vcr.stubs.aiohttp_stubs import MockStream, build_response
 
 asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")
@@ -763,3 +763,21 @@ def test_aiohttp_sync_generator_body_is_rejected_as_without_vcr(tmpdir):
 
     with pytest.raises(TypeError, match=r"Only io\.IOBase"):
         asyncio.run(_post_generator_body(str(tmpdir.join("sync_gen.yaml")), body_gen))
+
+
+def test_ignore_localhost_does_not_read_response_body(tmpdir, httpbin):
+    # A request that isn't recorded shouldn't have its body read by vcrpy, so the
+    # caller streams it from the connection as it would without a cassette (#978).
+    async def run():
+        async with aiohttp.ClientSession() as session:
+            response = await session.get(httpbin.url + "/get")
+            stream = response.content
+            assert not isinstance(stream, MockStream)
+            body = await response.read()
+            response.release()
+            return body
+
+    with vcr.use_cassette(str(tmpdir.join("ignore.yaml")), ignore_localhost=True) as cass:
+        body = asyncio.run(run())
+        assert json.loads(body)["url"].endswith("/get")
+        assert len(cass) == 0
