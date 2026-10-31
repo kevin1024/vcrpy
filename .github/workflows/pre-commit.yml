@@ -1,0 +1,28 @@
+# Copyright (c) 2023 Sebastian Pipping <sebastian@pipping.org>
+# Licensed under the MIT license
+
+name: Run pre-commit
+
+on:
+- pull_request
+- push
+- workflow_dispatch
+
+jobs:
+  pre-commit:
+    name: Run pre-commit
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v7
+      with:
+        python-version: 3.12
+    # The steps of pre-commit/action@v3.0.1, which is in maintenance-only
+    # mode and still runs actions/cache@v4 on the deprecated Node.js 20
+    - run: python -m pip install pre-commit
+    - run: python -m pip freeze --local
+    - uses: actions/cache@v6
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+    - run: pre-commit run --show-diff-on-failure --color=always --all-files

@@ -1,28 +1,154 @@
 Changelog
 ---------
 
-For a full list of triaged issues, bugs and PRs and what release they are targeted for please see the following link.
-
-`ROADMAP MILESTONES <https://github.com/kevin1024/vcrpy/milestones>`_
-
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  9.3.0
+    - New ``Cassette.get_metadata(key, default)``: store values that aren't part of an interaction in the cassette, such as a seed for random values a test sends, so they're the same when the cassette is recorded and played back. Cassettes with metadata have a ``metadata`` key, and custom persisters' ``load_cassette`` can return it as a third value (#934) - thanks @hasier
+    - New ``skip_patchers`` option to leave some HTTP libraries unpatched, e.g. ``skip_patchers=["httpx"]`` when an httpx client uses an aiohttp transport (httpx-aiohttp), so requests aren't recorded twice (#944, #1070) - thanks @smoltafet
+    - New ``filter_nested_post_data_parameters`` option: make ``filter_post_data_parameters`` also filter keys in nested objects of JSON request bodies, such as JSON-RPC ``params``. ``vcr.filters.replace_body_parameters`` and ``replace_post_data_parameters`` take a matching ``recursive`` argument (#936, #937) - thanks @tighwm and @JargeZ
+    - ``ignore_hosts`` also accepts compiled regular expressions, which match whole host names, e.g. ``re.compile(r".*\.example\.com")`` (#779) - thanks @silviumarcu
+    - ``allow_playback_repeats`` now also applies while recording: a request that matches one already recorded in the cassette gets the recorded response, instead of being sent again and recorded a second time. When played back, such requests got the first response anyway (#878, #879) - thanks @pyoor
+    - Fix ``drop_unused_requests`` saving an interaction once per playback when ``allow_playback_repeats`` is set
+    - Fix ``use_cassette`` crashing with ``TypeError: 'NoneType' object is not subscriptable`` (or ``JSONDecodeError`` with the JSON serializer) when the cassette file is empty, e.g. after emptying it to record it again. An empty cassette is now recorded like a missing one, as in Ruby VCR (#579) - thanks @nk-batman21
+    - Don't read aiohttp response bodies for requests that aren't recorded, e.g. with ``ignore_localhost`` or ``ignore_hosts``, so they can be streamed as usual (#978) - thanks @AronsonDan
+    - Return leased urllib3 connections to their pool when ``release_conn()`` is called on a streamed response, during recording and playback (#949) - thanks @edsonsims
+    - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
+    - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
+    - CI: run pre-commit's steps directly, with ``actions/cache@v6`` on Node.js 24 (#1072) - thanks @pylaterreur
+    - CI: bump ruff to 0.17.2 (#1083), and allow Sphinx 9 for the docs (#1082)
+
+-  9.2.0
+    - New ``before_save_interaction`` and ``after_load_interaction`` options: hooks that get each interaction's request and response (and the cassette, if they take a third argument) when a cassette is saved and loaded, and can change them or leave the interaction out. Cassettes also get a public ``path``. Like Ruby VCR's ``before_record`` and ``before_playback`` hooks (#527, #556) - thanks @tzturner and co-authors for #679, and @akaihola for #594, which explored this
+    - New ``filter_sensitive_data`` option: replace secrets with placeholders everywhere in recorded interactions (URL, headers and bodies), and put the real values back when a cassette is loaded, built on the new hooks, so requests still match and your code sees the same responses whether they're recorded or played back. Inspired by Ruby VCR's option of the same name (#527, #544, #912)
+
+-  9.1.0
+    - Set ``raw_headers`` on replayed aiohttp responses, so code that reads them (e.g. httpx-aiohttp) works on replay (#970, #1034) - thanks @HostX0
+    - Add ``release_conn()`` to replayed urllib3 responses, for code that releases pooled responses (#816, #1054) - thanks @cristianchiriac
+    - Accept ``pathlib.Path`` and other path-like objects for cassette paths and ``cassette_library_dir`` (#567, #920, #1064) - thanks @fredrikblau
+    - Make ``filter_post_data_parameters`` match urlencoded parameter names, so e.g. ``api:key`` also filters ``api%3Akey`` (#686, #1066) - thanks @b84330808
+    - Fix the ``body`` matcher crashing on form-urlencoded and XML-RPC requests without a body (#913, #1032) - thanks @M001N
+    - Close the response stream when reading an httpx response fails while recording (#1068) - thanks @Claire-ovo
+    - ``ignore_localhost`` also ignores ``::1`` (#639) - thanks @dragonpaw for the report
+    - Add ``json()`` to replayed urllib3 responses, as urllib3 2.x responses have (#774) - thanks @gschnellOnera for the report
+    - Allow a ``persister`` option on ``use_cassette``, to use a custom persister for one cassette (#575) - thanks @gioele for the report
+    - Publish releases to PyPI from GitHub Actions with trusted publishing (#860, #1078)
+
+-  9.0.0
+    - Fix the ``body`` matcher crashing (e.g. with ``JSONDecodeError``) when a body doesn't parse as its headers say, such as invalid JSON sent as ``application/json`` or malformed XML-RPC. Such bodies are now compared as raw bytes
+    - **Breaking:** drop support for Python 3.10, which reached its end of life on 2026-10-01 - thanks @pylaterreur
+    - **Breaking:** aiohttp error responses are now recorded and replayed when ``raise_for_status`` is used, on the session or the request. Before, aiohttp raised before vcrpy could record the response, and a replayed error response didn't raise even with ``raise_for_status`` set. Tests that relied on either need updating (#635, #925) - thanks @andrescollares
+    - **Breaking:** ``filter_post_data_parameters`` now filters the body of requests with any method (``PUT``, ``PATCH``, ``DELETE``, ...), not just ``POST`` (#328, #1004). Requests are filtered before they're matched, so if you match on ``body``, re-record cassettes that have unfiltered bodies for those methods. ``vcr.filters.replace_post_data_parameters`` still only filters ``POST``; the new ``replace_body_parameters`` filters any method - thanks @andrescollares
+    - **Breaking:** rewrite the ``CannotOverwriteExistingCassetteException`` message. It now starts with what went wrong (the cassette doesn't exist, the matching interactions were already played back, or no recorded interaction matches), shows the cassette's settings and the closest recorded requests with how they differ, and ends with suggestions for fixing it. Body mismatches show a short diff instead of nothing, and the message stays short when a cassette holds many similar requests. Code that matched the old message text (e.g. ``"Can't overwrite existing cassette"``) needs updating; the exception class and its ``cassette`` and ``failed_request`` attributes are unchanged, and new ``reason`` and ``similar_requests`` attributes describe the failure (#516, #673, #837, #838, #840, #929). Thanks @philsong4-ai (#1027) and @ChrisJr404 (#1037) for the PRs that started this
+    - urllib3 (and requests) responses now have ``HTTPHeaderDict`` headers, as they do without vcrpy, instead of an ``HTTPMessage``. Headers sent more than once (e.g. two ``Link`` headers) now keep every value (#841, #947) - thanks @Sanjays2402
+
+-  8.5.0
+    - Fix ``filter_post_data_parameters`` crashing with ``UnicodeDecodeError`` on binary request bodies passed as ``bytes`` or ``bytearray``, which are now left untouched, and stop it mangling form segments without a ``=`` (#660) - thanks @philsong4-ai
+    - Fix recording aiohttp requests that upload an open file as a form field (``data={"file": f}``), which crashed with ``TypeError: cannot pickle '_io.BufferedReader' object``. The file's contents are recorded and the whole file is still sent (#737) - thanks @LilSpazJoekp for the report
+    - Fix recording aiohttp requests whose body is an async generator (e.g. a streaming upload), which crashed with ``TypeError: cannot pickle 'async_generator' object``. The chunks are recorded and still sent as before (#974) - thanks @smoltafet
+    - Fix aiohttp response bodies being empty when streamed from ``response.content`` while recording a cassette (#502, #1055) - thanks @pylaterreur
+    - Fix aiohttp ``response.content`` restarting from the start of the body on each access when replaying, which made ``readline()`` loops (e.g. google-genai streaming) never end (#927, #1055) - thanks @pylaterreur
+    - Make ``response.content`` an aiohttp ``StreamReader`` when replaying aiohttp responses, as it is when recording: ``iter_any()`` and ``iter_chunks()`` no longer raise ``AttributeError``, lines over 64 KiB are no longer refused, and ``readuntil()``, ``is_eof()``, ``total_bytes`` and the rest of its API work (#1055) - thanks @pylaterreur
+    - If your tests patch ``vcr.stubs.aiohttp_stubs`` to work around #502 or #927 (e.g. overriding ``MockClientResponse.content``, or putting the recorded body back with ``unread_data()``), remove the patch: it is no longer needed, and no longer works (#1055)
+    - Support Python 3.14 and 3.15, and test them in CI along with their free-threaded builds, 3.14t and 3.15t (#940) - thanks @pylaterreur
+
+-  8.4.0
+    - Fix ``AttributeError: 'VCRFakeSocket' object has no attribute 'gettimeout'`` when niquests reuses a pooled connection, with urllib3-future 2.25.901 or later - thanks @pylaterreur
+    - Make the urllib3 POST test send its form fields again: since urllib3 2.0 it sent the dict as a chunked body, which the local httpbin server rejects, so the test failed now and then with ``BrokenPipeError`` - thanks @pylaterreur
+    - Fix ``httpx`` and ``httpx2`` replay crashing on cassettes that store a null reason phrase, as those recorded before 8.2.0 do (#1028) - thanks @dgunning
+    - Fix bare-host URLs such as ``https://example.com`` not matching cassettes that recorded them as ``https://example.com/``, a regression in 8.2.0 (#1013, #1031) - thanks @DSeaStar
+    - Forward streaming (file-like or iterator) request bodies with ``Content-Length`` instead of chunked encoding, which some servers reject (#1002)
+    - Fix the ``all`` record mode: a re-recorded interaction now replaces the one it matches instead of being saved next to it, and with ``drop_unused_requests`` the cassette keeps what was just recorded instead of being saved empty (#578, #208). **Behavior change:** re-recording in ``all`` mode now removes every previously recorded interaction that matches a new one under your ``match_on`` setting, so with loose matchers (e.g. ``match_on=["method"]``) one new request can replace many old ones. Cassettes re-recorded with ``all`` also no longer accumulate responses across runs.
+
+-  8.3.0
+    - Add support for niquests (#980) - thanks @ionelmc
+    - Refuse to record a cassette containing a Python object the safe YAML loader could not read back, so recording fails fast instead of producing a cassette that breaks on replay (#1007, #1009) - thanks @Polandia94
+    - Add ``vcr.serializers.yamlserializer.with_custom_tags`` to build a YAML serializer supporting custom Python object tags on both record and replay, registered per VCR instance via ``register_serializer`` (#1007, #1009) - thanks @Polandia94
+    - Clearer error when a cassette contains an unsupported YAML tag, and remove the stale git.io migration link (#1007, #1008) - thanks @gaoflow
+    - Fix stale keep-alive connection reuse across cassettes; unpin werkzeug (#1001)
+
+-  8.2.1
+    - SECURITY: Load cassettes with a safe YAML loader, preventing arbitrary code execution when a cassette from an untrusted source is loaded (GHSA-rpj2-4hq8-938g) - thanks @RamiAltai and @EQSTLab
+    - Validate ``record_mode`` and raise a clear error on an invalid value (#208)
+    - Recommend pytest-recording over the unmaintained pytest-vcr in the docs (#986)
+
+-  8.2.0
+    - Add support for httpx 2.x (#993) - thanks @dsfaccini
+    - Patch httpx transports instead of httpcore (#972) - thanks @seowalex
+    - Fix aiohttp 3.14 compatibility: ``AsyncStreamReaderMixin`` removed and ``ClientResponse`` now requires ``stream_writer`` (#995) - thanks @dsfaccini
+    - Account for modified requests when storing played cassettes, so ``drop_unused_requests`` honours ``before_record_request`` filtering (#962) - thanks @jamesbraza
+    - Make the request URL available on ``VCRHTTPResponse`` (#976) - thanks @dAnjou
+    - Improve error message when a matching request has already been consumed (#985) - thanks @Polandia94
+    - Fix body check in ``convert_body_to_unicode`` to use an explicit type check (#982) - thanks @Polandia94
+    - Add env proxy cassette regression test (#994) - thanks @tine1117
+    - Remove milestone references from docs (#984) - thanks @Polandia94
+    - CI: bump sphinx-rtd-theme from 3.0.2 to 3.1.0 (#973)
+
+-  8.1.1
+    - Fix sync requests in async contexts for HTTPX (#965) - thanks @seowalex
+    - CI: bump peter-evans/create-pull-request from 7 to 8 (#969)
+
+-  8.1.0
+    - Enable brotli decompression if available (via ``brotli``, ``brotlipy`` or ``brotlicffi``) (#620) - thanks @immerrr
+    - Fix aiohttp allowing both ``data`` and ``json`` arguments when one is None (#624) - thanks @leorochael
+    - Fix usage of io-like interface with VCR.py (#906) - thanks @tito and @kevdevg
+    - Migrate to declarative Python package config (#767) - thanks @deronnax
+    - Various linting fixes - thanks @jairhenrique
+    - CI: bump actions/checkout from 5 to 6 (#955)
+
+-  8.0.0
+    - BREAKING: Drop support for Python 3.9 (major version bump) - thanks @jairhenrique
+    - BREAKING: Drop support for urllib3 < 2 - fixes CVE warnings from urllib3 1.x (#926, #880) - thanks @jairhenrique
+    - New feature: ``drop_unused_requests`` option to remove unused interactions from cassettes (#763) - thanks @danielnsilva
+    - Rewrite httpx support to patch httpcore instead of httpx (#943) - thanks @seowalex
+        - Fixes ``httpx.ResponseNotRead`` exceptions (#832, #834)
+        - Fixes ``KeyError: 'follow_redirects'`` (#945)
+        - Adds support for custom httpx transports
+    - Fix HTTPS proxy handling - proxy address no longer ends up in cassette URIs (#809, #914) - thanks @alga
+    - Fix ``iscoroutinefunction`` deprecation warning on Python 3.14 - thanks @kloczek
+    - Only log message if response is appended - thanks @talfus-laddus
+    - Optimize urllib.parse calls - thanks @Martin-Brunthaler
+    - Fix CI for Ubuntu 24.04 - thanks @hartwork
+    - Various CI improvements: migrate to uv, update GitHub Actions - thanks @jairhenrique
+    - Various linting and test improvements - thanks @jairhenrique and @hartwork
+
+-  7.0.0
+    - Drop support for python 3.8 (major version bump) - thanks @jairhenrique
+    - Various linting and test fixes - thanks @jairhenrique
+    - Bugfix for urllib2>=2.3.0 - missing version_string (#888)
+    - Bugfix for asyncio.run - thanks @alekeik1
+-  6.0.2
+    - Ensure body is consumed only once (#846) - thanks @sathieu
+    - Permit urllib3 2.x for non-PyPy Python >=3.10
+    - Fix typos in test commands - thanks @chuckwondo
+    - Several test and workflow improvements - thanks @hartwork and @graingert
+-  6.0.1
+    - Bugfix with to Tornado cassette generator (thanks @graingert)
+-  6.0.0
+    - BREAKING: Fix issue with httpx support (thanks @parkerhancock) in #784. NOTE: You may have to recreate some of your cassettes produced in previous releases due to the binary format being saved incorrectly in previous releases
+    - BREAKING: Drop support for `boto` (vcrpy still supports boto3, but is dropping the deprecated `boto` support in this release. (thanks @jairhenrique)
+    - Fix compatibility issue with Python 3.12 (thanks @hartwork)
+    - Drop simplejson (fixes some compatibility issues) (thanks @jairhenrique)
+    - Run CI on Python 3.12 and PyPy 3.9-3.10 (thanks @mgorny)
+    - Various linting and docs improvements (thanks @jairhenrique)
+    - Tornado fixes (thanks @graingert)
 -  5.1.0
-   - Use ruff for linting (instead of current flake8/isort/pyflakes) - thanks @jairhenrique
-   - Enable rule B (flake8-bugbear) on ruff - thanks @jairhenrique
-   - Configure read the docs V2 - thanks @jairhenrique
-   - Fix typo in docs - thanks @quasimik
-   - Make json.loads of Python >=3.6 decode bytes by itself - thanks @hartwork
-   - Fix body matcher for chunked requests (fixes #734) - thanks @hartwork
-   - Fix query param filter for aiohttp (fixes #517) - thanks @hartwork and @salomvary
-   - Remove unnecessary dependency on six. - thanks @charettes
-   - build(deps): update sphinx requirement from <7 to <8 - thanks @jairhenrique
-   - Add action to validate docs - thanks @jairhenrique
-   - Add editorconfig file - thanks @jairhenrique
-   - Drop iscoroutinefunction fallback function for unsupported python thanks @jairhenrique
+    - Use ruff for linting (instead of current flake8/isort/pyflakes) - thanks @jairhenrique
+    - Enable rule B (flake8-bugbear) on ruff - thanks @jairhenrique
+    - Configure read the docs V2 - thanks @jairhenrique
+    - Fix typo in docs - thanks @quasimik
+    - Make json.loads of Python >=3.6 decode bytes by itself - thanks @hartwork
+    - Fix body matcher for chunked requests (fixes #734) - thanks @hartwork
+    - Fix query param filter for aiohttp (fixes #517) - thanks @hartwork and @salomvary
+    - Remove unnecessary dependency on six. - thanks @charettes
+    - build(deps): update sphinx requirement from <7 to <8 - thanks @jairhenrique
+    - Add action to validate docs - thanks @jairhenrique
+    - Add editorconfig file - thanks @jairhenrique
+    - Drop iscoroutinefunction fallback function for unsupported python thanks @jairhenrique
 -  5.0.0
     - BREAKING CHANGE: Drop support for Python 3.7.  3.7 is EOL as of 6/27/23 Thanks @jairhenrique
     - BREAKING CHANGE: Custom Cassette persisters no longer catch ValueError.  If you have implemented a custom persister (has anyone implemented a custom persister?  Let us know!) then you will need to throw a CassetteNotFoundError when unable to find a cassette.  See #681 for discussion and reason for this change. Thanks @amosjyng for the PR and the review from @hartwork
+
 -  4.4.0
     - HUGE thanks to @hartwork for all the work done on this release!
     - Bring vcr/unittest in to vcrpy as a full feature of vcr instead of a separate library.  Big thanks to @hartwork for doing this and to @agriffis for originally creating the library
@@ -70,8 +196,8 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Bugfix: Fix test suite by switching to mockbin (thanks @jairhenrique)
 -  4.0.2
     - Fix mock imports as reported in #504 by @llybin. Thank you.
--  4.0.1 
-    - Fix logo alignment for PyPI 
+-  4.0.1
+    - Fix logo alignment for PyPI
 -  4.0.0
     - Remove Python2 support (@hugovk)
     - Add Python 3.8 TravisCI support (@neozenith)
@@ -83,7 +209,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Add support for `request_info` on mocked responses in aiohttp stub #495 (@nickdirienzo)
     - doc: fixed variable name (a -> cass) in an example for rewind #492 (@yarikoptic)
 
--  2.1.1 
+-  2.1.1
     - Format code with black (@neozenith)
     - Use latest pypy3 in Travis (@hugovk)
     - Improve documentation about custom matchers (@gward)
@@ -91,7 +217,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Add `pytest-recording` to the documentation as an alternative Pytest plugin (@Stranger6667)
     - Fix yarl and python3.5 version issue (@neozenith)
     - Fix header matcher for boto3 - fixes #474 (@simahawk)
--  2.1.0 
+-  2.1.0
     - Add a `rewind` method to reset a cassette (thanks @khamidou)
     - New error message with more details on why the cassette failed to play a request (thanks @arthurHamon2, @neozenith)
     - Handle connect tunnel URI (thanks @jeking3)
@@ -103,9 +229,9 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Fix bugs on aiohttp integration (thanks @graingert, @steinnes, @stj, @lamenezes, @lmazuel)
     - Fix Biopython incompatibility (thanks @rishab121)
     - Fix Boto3 integration (thanks @1oglop1, @arthurHamon2)
--  2.0.1 
+-  2.0.1
     - Fix bug when using vcrpy with python 3.4
--  2.0.0 
+-  2.0.0
     - Support python 3.7 (fix httplib2 and urllib2, thanks @felixonmars)
     - [#356] Fixes `before_record_response` so the original response isn't changed (thanks @kgraves)
     - Fix requests stub when using proxy (thanks @samuelfekete @daneoshiga)
@@ -115,56 +241,56 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Improve docs (thanks @adamchainz)
 
 
--  1.13.0 
+-  1.13.0
     - Fix support to latest aiohttp version (3.3.2). Fix content-type bug in aiohttp stub. Save URL with query params properly when using aiohttp.
--  1.12.0 
+-  1.12.0
     - Fix support to latest aiohttp version (3.2.1), Adapted setup to PEP508, Support binary responses on aiohttp, Dropped support for EOL python versions (2.6 and 3.3)
--  1.11.1 
+-  1.11.1
     - Fix compatibility with newest requests and urllib3 releases
--  1.11.0 
+-  1.11.0
     - Allow injection of persistence methods + bugfixes (thanks @j-funk and @IvanMalison),
     - Support python 3.6 + CI tests (thanks @derekbekoe and @graingert),
     - Support pytest-asyncio coroutines (thanks @graingert)
--  1.10.5 
+-  1.10.5
     - Added a fix to httplib2 (thanks @carlosds730), Fix an issue with
     - aiohttp (thanks @madninja), Add missing requirement yarl (thanks @lamenezes),
     - Remove duplicate mock triple (thanks @FooBarQuaxx)
--  1.10.4 
+-  1.10.4
     - Fix an issue with asyncio aiohttp (thanks @madninja)
--  1.10.3 
+-  1.10.3
     - Fix some issues with asyncio and params (thanks @anovikov1984 and @lamenezes)
     - Fix some issues with cassette serialize / deserialize and empty response bodies (thanks @gRoussac and @dz0ny)
--  1.10.2 
+-  1.10.2
     - Fix 1.10.1 release - add aiohttp support back in
--  1.10.1 
+-  1.10.1
     - [bad release] Fix build for Fedora package + python2 (thanks @puiterwijk and @lamenezes)
--  1.10.0 
+-  1.10.0
     - Add support for aiohttp (thanks @lamenezes)
--  1.9.0 
-    - Add support for boto3 (thanks @desdm, @foorbarna). 
+-  1.9.0
+    - Add support for boto3 (thanks @desdm, @foorbarna).
     - Fix deepcopy issue for response headers when `decode_compressed_response` is enabled (thanks @nickdirienzo)
--  1.8.0 
-    - Fix for Serialization errors with JSON adapter (thanks @aliaksandrb). 
-    - Avoid concatenating bytes with strings (thanks @jaysonsantos). 
-    - Exclude __pycache__ dirs & compiled files in sdist (thanks @koobs). 
-    - Fix Tornado support behavior for Tornado 3 (thanks @abhinav). 
+-  1.8.0
+    - Fix for Serialization errors with JSON adapter (thanks @aliaksandrb).
+    - Avoid concatenating bytes with strings (thanks @jaysonsantos).
+    - Exclude __pycache__ dirs & compiled files in sdist (thanks @koobs).
+    - Fix Tornado support behavior for Tornado 3 (thanks @abhinav).
     - decode_compressed_response option and filter (thanks @jayvdb).
--  1.7.4 [#217] 
-    - Make use_cassette decorated functions actually return a value (thanks @bcen). 
+-  1.7.4 [#217]
+    - Make use_cassette decorated functions actually return a value (thanks @bcen).
     - [#199] Fix path transformation defaults.
     - Better headers dictionary management.
--  1.7.3 [#188] 
+-  1.7.3 [#188]
     - ``additional_matchers`` kwarg on ``use_cassette``.
     - [#191] Actually support passing multiple before_record_request functions (thanks @agriffis).
--  1.7.2 
+-  1.7.2
     - [#186] Get effective_url in tornado (thanks @mvschaik)
     - [#187] Set request_time on Response object in tornado (thanks @abhinav).
--  1.7.1 
+-  1.7.1
     - [#183] Patch ``fetch_impl`` instead of the entire HTTPClient class for Tornado (thanks @abhinav).
--  1.7.0 
-    - [#177] Properly support coroutine/generator decoration. 
+-  1.7.0
+    - [#177] Properly support coroutine/generator decoration.
     - [#178] Support distribute (thanks @graingert). [#163] Make compatibility between python2 and python3 recorded cassettes more robust (thanks @gward).
--  1.6.1 
+-  1.6.1
     - [#169] Support conditional requirements in old versions of pip
     - Fix RST parse errors generated by pandoc
     - [Tornado] Fix unsupported features exception not being raised
@@ -178,17 +304,17 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Fix crash when cassette path contains cassette library directory (thanks @gazpachoking).
 -  1.5.0
     - Automatic cassette naming and 'application/json' post data filtering (thanks @marco-santamaria).
--  1.4.2 
+-  1.4.2
     - Fix a bug caused by requests 2.7 and chunked transfer encoding
--  1.4.1 
+-  1.4.1
     - Include README, tests, LICENSE in package. Thanks @ralphbean.
--  1.4.0 
+-  1.4.0
     - Filter post data parameters (thanks @eadmundo)
     - Support for posting files through requests, inject\_cassette kwarg to access cassette from ``use_cassette`` decorated function, ``with_current_defaults`` actually works (thanks @samstav).
 -  1.3.0
     - Fix/add support for urllib3 (thanks @aisch)
     - Fix default port  for https (thanks @abhinav).
--  1.2.0 
+-  1.2.0
     - Add custom\_patches argument to VCR/Cassette objects to allow users to stub custom classes when cassettes become active.
 -  1.1.4
     - Add force reset around calls to actual connection from stubs, to ensure compatibility with the version of httplib/urlib2 in python 2.7.9.
@@ -199,22 +325,22 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - fix Windows connectionpool stub bug (thanks @gazpachoking)
     - add support for requests 2.5
 -  1.1.2
-    - Add urllib==1.7.1 support. 
+    - Add urllib==1.7.1 support.
     - Make json serialize error handling correct
     - Improve logging of match failures.
--  1.1.1 
-    - Use function signature preserving ``wrapt.decorator`` to write the decorator version of use\_cassette in order to ensure compatibility with py.test fixtures and python 2. 
+-  1.1.1
+    - Use function signature preserving ``wrapt.decorator`` to write the decorator version of use\_cassette in order to ensure compatibility with py.test fixtures and python 2.
     - Move all request filtering into the ``before_record_callable``.
--  1.1.0 
+-  1.1.0
     - Add ``before_record_response``. Fix several bugs related to the context management of cassettes.
--  1.0.3 
+-  1.0.3
     - Fix an issue with requests 2.4 and make sure case sensitivity is consistent across python versions
 -  1.0.2
     - Fix an issue with requests 2.3
 -  1.0.1
     - Fix a bug with the new ignore requests feature and the once record mode
--  1.0.0 
-    - *BACKWARDS INCOMPATIBLE*: Please see the 'upgrade' section in the README. Take a look at the matcher section as well, you might want to update your ``match_on`` settings. 
+-  1.0.0
+    - *BACKWARDS INCOMPATIBLE*: Please see the 'upgrade' section in the README. Take a look at the matcher section as well, you might want to update your ``match_on`` settings.
     - Add support for filtering sensitive data from requests, matching query strings after the order changes and improving the built-in matchers, (thanks to @mshytikov)
     - Support for ignoring requests to certain hosts, bump supported Python3 version to 3.4, fix some bugs with Boto support (thanks @marusich)
     - Fix error with URL field capitalization in README (thanks @simon-weber)
@@ -222,27 +348,27 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Added ``all_played`` property on cassette (thanks @mshytikov)
 
 -  0.7.0
-    - VCR.py now supports Python 3! (thanks @asundg) 
+    - VCR.py now supports Python 3! (thanks @asundg)
     - Also I refactored the stub connections quite a bit to add support for the putrequest and putheader calls.
-    - This version also adds support for httplib2 (thanks @nilp0inter). 
+    - This version also adds support for httplib2 (thanks @nilp0inter).
     - I have added a couple tests for boto since it is an http client in its own right.
     - Finally, this version includes a fix for a bug where requests wasn't being patched properly (thanks @msabramo).
 -  0.6.0
     - Store response headers as a list since a HTTP response can have the same header twice (happens with set-cookie sometimes).
-        - This has the added benefit of preserving the order of headers. 
-        - Thanks @smallcode for the bug report leading to this change. 
+        - This has the added benefit of preserving the order of headers.
+        - Thanks @smallcode for the bug report leading to this change.
     - I have made an effort to ensure backwards compatibility with the old cassettes' header storage mechanism, but if you want to upgrade to the new header storage, you should delete your cassettes and re-record them.
-    - Also this release adds better error messages (thanks @msabramo) 
+    - Also this release adds better error messages (thanks @msabramo)
     - and adds support for using VCR as a decorator (thanks @smallcode for the motivation)
 -  0.5.0
-    - Change the ``response_of`` method to ``responses_of`` since cassettes can now contain more than one response for a request. 
-        - Since this changes the API, I'm bumping the version. 
-    - Also includes 2 bugfixes: 
-        - a better error message when attempting to overwrite a cassette file, 
+    - Change the ``response_of`` method to ``responses_of`` since cassettes can now contain more than one response for a request.
+        - Since this changes the API, I'm bumping the version.
+    - Also includes 2 bugfixes:
+        - a better error message when attempting to overwrite a cassette file,
         - and a fix for a bug with requests sessions (thanks @msabramo)
 -  0.4.0
     - Change default request recording behavior for multiple requests.
-        - If you make the same request multiple times to the same URL, the response might be different each time (maybe the response has a timestamp in it or something), so this will make the same request multiple times and save them all. 
+        - If you make the same request multiple times to the same URL, the response might be different each time (maybe the response has a timestamp in it or something), so this will make the same request multiple times and save them all.
         - Then, when you are replaying the cassette, the responses will be played back in the same order in which they were received.
         - If you were making multiple requests to the same URL in a cassette before version 0.4.0, you might need to regenerate your cassette files.
         - Also, removes support for the cassette.play\_count counter API, since individual requests aren't unique anymore.
@@ -262,7 +388,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 -  0.3.0
     - *Backwards incompatible release*
     - Added support for record modes, and changed the default recording behavior to the "once" record mode. Please see the documentation on record modes for more.
-    - Added support for custom request matching, and changed the default request matching behavior to match only on the URL and method. 
+    - Added support for custom request matching, and changed the default request matching behavior to match only on the URL and method.
     - Also, improved the httplib mocking to add support for the ``HTTPConnection.send()`` method.
         - This means that requests won't actually be sent until the response is read, since I need to record the entire request in order to match up the appropriate response.
         - I don't think this should cause any issues unless you are sending requests without ever loading the response (which none of the standard httplib wrappers do, as far as I know).
@@ -270,13 +396,13 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 -  0.2.1
     - Fixed missing modules in setup.py
 -  0.2.0
-    - Added configuration API, which lets you configure some settings on VCR (see the README). 
+    - Added configuration API, which lets you configure some settings on VCR (see the README).
     - Also, VCR no longer saves cassettes if they haven't changed at all and supports JSON as well as YAML (thanks @sirpengi).
     - Added amazing new skeumorphic logo, thanks @hairarrow.
 -  0.1.0
     - *backwards incompatible release - delete your old cassette files*
     - This release adds the ability to access the cassette to make assertions on it
-    - as well as a major code refactor thanks to @dlecocq. 
+    - as well as a major code refactor thanks to @dlecocq.
     - It also fixes a couple longstanding bugs with redirects and HTTPS. [#3 and #4]
 -  0.0.4
     - If you have libyaml installed, vcrpy will use the c bindings instead. Speed up your tests! Thanks @dlecocq
@@ -286,4 +412,3 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Add support for requests / urllib3
 -  0.0.1
     - Initial Release
-

@@ -2,13 +2,17 @@
 
 # coding=utf-8
 
+import json
+import queue
+from collections.abc import Mapping
+
 import pytest
 import pytest_httpbin
-from assertions import assert_cassette_empty, assert_is_json_bytes
 
 import vcr
 from vcr.patch import force_reset
-from vcr.stubs.compat import get_headers
+
+from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
 urllib3 = pytest.importorskip("urllib3")
 
@@ -36,15 +40,27 @@ def test_status_code(httpbin_both, tmpdir, verify_pool_mgr):
         assert status_code == verify_pool_mgr.request("GET", url).status
 
 
+def test_url(httpbin_both, tmpdir, verify_pool_mgr):
+    """Ensure that we can read the URL"""
+    url = httpbin_both.url
+    with vcr.use_cassette(str(tmpdir.join("url.yaml"))):
+        url = verify_pool_mgr.request("GET", url).geturl()
+
+    with vcr.use_cassette(str(tmpdir.join("url.yaml"))):
+        assert url == verify_pool_mgr.request("GET", url).geturl()
+
+
 def test_headers(tmpdir, httpbin_both, verify_pool_mgr):
     """Ensure that we can read the headers back"""
     url = httpbin_both.url
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         headers = verify_pool_mgr.request("GET", url).headers
+        assert isinstance(headers, Mapping)
 
     with vcr.use_cassette(str(tmpdir.join("headers.yaml"))):
         new_headers = verify_pool_mgr.request("GET", url).headers
-        assert sorted(get_headers(headers)) == sorted(get_headers(new_headers))
+        assert isinstance(new_headers, Mapping)
+        assert sorted(headers.items()) == sorted(new_headers.items())
 
 
 def test_body(tmpdir, httpbin_both, verify_pool_mgr):
@@ -90,18 +106,19 @@ def test_post(tmpdir, httpbin_both, verify_pool_mgr):
     data = {"key1": "value1", "key2": "value2"}
     url = httpbin_both.url + "/post"
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
-        req1 = verify_pool_mgr.request("POST", url, data).data
+        req1 = verify_pool_mgr.request("POST", url, fields=data).data
 
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
-        req2 = verify_pool_mgr.request("POST", url, data).data
+        req2 = verify_pool_mgr.request("POST", url, fields=data).data
 
+    assert json.loads(req1)["form"] == data
     assert req1 == req2
 
 
 @pytest.mark.online
-def test_redirects(tmpdir, verify_pool_mgr):
+def test_redirects(tmpdir, verify_pool_mgr, httpbin):
     """Ensure that we can handle redirects"""
-    url = "http://mockbin.org/redirect/301"
+    url = httpbin.url + "/redirect/1"
 
     with vcr.use_cassette(str(tmpdir.join("verify_pool_mgr.yaml"))):
         content = verify_pool_mgr.request("GET", url).data
@@ -164,3 +181,56 @@ def test_urllib3_force_reset():
         assert conn.HTTPConnection is first_cassette_HTTPConnection
         assert conn.HTTPSConnection is first_cassette_HTTPSConnection
         assert conn.VerifiedHTTPSConnection is first_cassette_VerifiedHTTPSConnection
+
+
+def test_repeated_headers(tmpdir, httpbin_both, verify_pool_mgr):
+    # A header sent more than once keeps every value (#947).
+    url = httpbin_both.url + "/response-headers?Link=a&Link=b"
+    with vcr.use_cassette(str(tmpdir.join("repeated_headers.yaml"))):
+        assert verify_pool_mgr.request("GET", url).headers.getlist("Link") == ["a", "b"]
+
+    with vcr.use_cassette(str(tmpdir.join("repeated_headers.yaml"))) as cassette:
+        assert verify_pool_mgr.request("GET", url).headers.getlist("Link") == ["a", "b"]
+        assert cassette.play_count == 1
+
+
+@pytest.mark.parametrize("record_mode", ["all", "none"])
+@pytest.mark.parametrize("preload_content", [False, True])
+def test_release_conn_restores_pool_capacity(tmpdir, httpbin, record_mode, preload_content):
+    path = str(tmpdir.join("release_conn.yaml"))
+    urls = [f"{httpbin.url}/get?request={number}" for number in range(2)]
+    with vcr.use_cassette(path), urllib3.PoolManager() as manager:
+        for url in urls:
+            assert manager.request("GET", url).status == 200
+
+    with (
+        vcr.use_cassette(path, record_mode=record_mode) as cassette,
+        urllib3.PoolManager(maxsize=1, block=True) as manager,
+    ):
+        pool = manager.connection_from_url(httpbin.url)
+        if not isinstance(pool.pool, queue.LifoQueue):
+            # urllib3-future (installed with niquests) keeps leased connections in its pool.
+            pytest.skip("checks urllib3's pool of idle connections")
+        previous = None
+        for number, url in enumerate(urls):
+            response = manager.request(
+                "GET",
+                url,
+                preload_content=preload_content,
+                pool_timeout=0.1,
+                timeout=2,
+                retries=False,
+            )
+            if previous is not None:
+                previous.close()
+            assert response.status == 200
+            assert json.loads(response.read())["args"] == {"request": str(number)}
+            assert pool.pool.qsize() == int(preload_content)
+            assert response.release_conn() is None
+            assert pool.pool.qsize() == 1
+            previous = response
+            assert response._connection is None
+            assert response.release_conn() is None
+            assert pool.pool.qsize() == 1
+
+        assert cassette.play_count == (2 if record_mode == "none" else 0)

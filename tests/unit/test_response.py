@@ -3,6 +3,19 @@ import io
 from vcr.stubs import VCRHTTPResponse
 
 
+def test_replayed_response_can_release_connection():
+    response = VCRHTTPResponse(
+        {
+            "status": {"message": "OK", "code": 200},
+            "headers": {},
+            "body": {"string": b"recorded body"},
+        },
+    )
+
+    assert response.read() == b"recorded body"
+    assert response.release_conn() is None
+
+
 def test_response_should_have_headers_field():
     recorded_response = {
         "status": {"message": "OK", "code": 200},
@@ -96,3 +109,15 @@ def test_response_parses_correctly_and_fp_attribute_error_is_not_thrown():
     handle = iter(handle)
     articles = list(handle)
     assert len(articles) > 1
+
+
+def test_replayed_response_decodes_json():
+    response = VCRHTTPResponse(
+        {
+            "status": {"message": "OK", "code": 200},
+            "headers": {"Content-Type": ["application/json"]},
+            "body": {"string": b'{"answer": 42}'},
+        },
+    )
+
+    assert response.json() == {"answer": 42}

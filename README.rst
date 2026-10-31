@@ -4,7 +4,7 @@ VCR.py 📼
 ###########
 
 
-|PyPI| |Python versions| |Build Status| |CodeCov| |Gitter| |CodeStyleBlack|
+|PyPI| |Python versions| |Build Status| |CodeCov| |Gitter|
 
 ----
 
@@ -70,6 +70,3 @@ more details
 .. |CodeCov| image:: https://codecov.io/gh/kevin1024/vcrpy/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/kevin1024/vcrpy
    :alt: Code Coverage Status
-.. |CodeStyleBlack| image:: https://img.shields.io/badge/code%20style-black-000000.svg 
-   :target: https://github.com/psf/black
-   :alt: Code Style: black

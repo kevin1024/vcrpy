@@ -120,13 +120,63 @@ def test_all_record_mode(tmpdir, httpbin):
         assert cass.play_count == 0
 
 
+def _recorded(testfile):
+    cass = vcr.cassette.Cassette.load(path=testfile)
+    return [(request.path, response["body"]["string"]) for request, response in cass.data]
+
+
+def test_all_record_mode_replaces_matching_interactions(tmpdir, httpbin):
+    testfile = str(tmpdir.join("recordmode.yml"))
+    with vcr.use_cassette(testfile):
+        urlopen(httpbin.url + "/uuid").read()
+        urlopen(httpbin.url + "/get").read()
+    before = dict(_recorded(testfile))
+
+    with vcr.use_cassette(testfile, record_mode=vcr.mode.ALL):
+        fresh = urlopen(httpbin.url + "/uuid").read()
+
+    # The re-recorded request replaces the old one instead of being added
+    # next to it, and the request that wasn't re-recorded is kept.
+    after = _recorded(testfile)
+    assert sorted(path for path, _ in after) == ["/get", "/uuid"]
+    assert dict(after)["/uuid"] == fresh != before["/uuid"]
+    assert dict(after)["/get"] == before["/get"]
+
+
+def test_all_record_mode_with_drop_unused_requests(tmpdir, httpbin):
+    testfile = str(tmpdir.join("recordmode.yml"))
+    with vcr.use_cassette(testfile):
+        urlopen(httpbin.url + "/uuid").read()
+        urlopen(httpbin.url + "/get").read()
+
+    with vcr.use_cassette(testfile, record_mode=vcr.mode.ALL, drop_unused_requests=True):
+        fresh = urlopen(httpbin.url + "/uuid").read()
+
+    # Only what was recorded this time is saved.
+    assert _recorded(testfile) == [("/uuid", fresh)]
+
+
+def test_all_record_mode_without_requests_leaves_cassette_alone(tmpdir, httpbin):
+    testfile = str(tmpdir.join("recordmode.yml"))
+    with vcr.use_cassette(testfile):
+        urlopen(httpbin.url + "/uuid").read()
+    before = _recorded(testfile)
+
+    with vcr.use_cassette(testfile, record_mode=vcr.mode.ALL, drop_unused_requests=True):
+        pass
+
+    assert _recorded(testfile) == before
+
+
 def test_none_record_mode(tmpdir, httpbin):
     # Cassette file doesn't exist, yet we are trying to make a request.
     # raise hell.
     testfile = str(tmpdir.join("recordmode.yml"))
-    with vcr.use_cassette(testfile, record_mode=vcr.mode.NONE):
-        with pytest.raises(CannotOverwriteExistingCassetteException):
-            urlopen(httpbin.url).read()
+    with (
+        vcr.use_cassette(testfile, record_mode=vcr.mode.NONE),
+        pytest.raises(CannotOverwriteExistingCassetteException),
+    ):
+        urlopen(httpbin.url).read()
 
 
 def test_none_record_mode_with_existing_cassette(tmpdir, httpbin):
