@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - Log a warning when a cassette file exists but can't be decoded, instead of silently treating it as empty (#501, #1022) - thanks @agu2347, and @philsong4-ai for #1023
+    - ``Request`` can be imported from ``vcr``, e.g. ``vcr.Request("GET", uri, body, headers)``, as the docs already called it (#759) - thanks @lewisdawson
 
 -  9.3.0
     - New ``Cassette.get_metadata(key, default)``: store values that aren't part of an interaction in the cassette, such as a seed for random values a test sends, so they're the same when the cassette is recorded and played back. Cassettes with metadata have a ``metadata`` key, and custom persisters' ``load_cassette`` can return it as a third value (#934) - thanks @hasier
