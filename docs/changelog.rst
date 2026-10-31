@@ -3,7 +3,7 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  Unreleased
+-  9.3.0
     - New ``Cassette.get_metadata(key, default)``: store values that aren't part of an interaction in the cassette, such as a seed for random values a test sends, so they're the same when the cassette is recorded and played back. Cassettes with metadata have a ``metadata`` key, and custom persisters' ``load_cassette`` can return it as a third value (#934) - thanks @hasier
     - New ``skip_patchers`` option to leave some HTTP libraries unpatched, e.g. ``skip_patchers=["httpx"]`` when an httpx client uses an aiohttp transport (httpx-aiohttp), so requests aren't recorded twice (#944, #1070) - thanks @smoltafet
     - New ``filter_nested_post_data_parameters`` option: make ``filter_post_data_parameters`` also filter keys in nested objects of JSON request bodies, such as JSON-RPC ``params``. ``vcr.filters.replace_body_parameters`` and ``replace_post_data_parameters`` take a matching ``recursive`` argument (#936, #937) - thanks @tighwm and @JargeZ
