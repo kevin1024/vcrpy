@@ -624,6 +624,25 @@ cassette names, use ``VCR.ensure_suffix`` as follows:
     @my_vcr.use_cassette
     def my_test_function():
 
+Accessing the Cassette in a Decorated Function
+----------------------------------------------
+
+With ``use_cassette`` as a context manager, ``with ... as cass`` gives
+you the cassette. To get it in a decorated function, e.g. to make
+assertions about it or to rewind it, set ``inject_cassette=True``, and
+the cassette is passed as the first argument (after ``self`` for a
+method):
+
+.. code:: python
+
+    @my_vcr.use_cassette(inject_cassette=True)
+    def test_synopsis(cassette):
+        urllib.request.urlopen('http://www.zombo.com/').read()
+        assert cassette.all_played
+
+``inject_cassette`` can also be set for all cassettes, as an argument of
+``VCR``.
+
 Rewind Cassette
 ---------------
 
