@@ -3,6 +3,9 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Fix requests escaping a cassette, e.g. a write-protected one not raising ``CannotOverwriteExistingCassetteException``, when a ``vcr.patch.force_reset()`` window opened elsewhere closes inside it, or is open on another thread. ``force_reset()`` no longer resets the ``ConnectionCls`` of urllib3 and botocore connection pools, which vcrpy's own real connections don't use (#1051, #1052) - thanks @yeion7
+
 -  9.3.0
     - New ``Cassette.get_metadata(key, default)``: store values that aren't part of an interaction in the cassette, such as a seed for random values a test sends, so they're the same when the cassette is recorded and played back. Cassettes with metadata have a ``metadata`` key, and custom persisters' ``load_cassette`` can return it as a third value (#934) - thanks @hasier
     - New ``skip_patchers`` option to leave some HTTP libraries unpatched, e.g. ``skip_patchers=["httpx"]`` when an httpx client uses an aiohttp transport (httpx-aiohttp), so requests aren't recorded twice (#944, #1070) - thanks @smoltafet

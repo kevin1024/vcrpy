@@ -1,17 +1,20 @@
+import gc
 import http.client as httplib
 import json
 import os
 import re
+import threading
 from pathlib import Path
 from unittest import mock
 
 import pytest
+import urllib3.connectionpool as cpool
 
 from vcr import VCR, mode, use_cassette
 from vcr.patch import _HTTPConnection, force_reset
 from vcr.persisters.filesystem import CassetteNotFoundError
 from vcr.request import Request
-from vcr.stubs import VCRHTTPSConnection
+from vcr.stubs import VCRConnection, VCRHTTPSConnection
 
 
 def test_vcr_use_cassette():
@@ -502,3 +505,47 @@ def test_interaction_hook_options():
     with my_vcr.use_cassette("test", after_load_interaction=[on_load]) as cassette:
         assert cassette._before_save_interaction == [on_save]
         assert cassette._after_load_interaction == [on_load]
+
+
+def test_force_reset_does_not_unpatch_a_cassette_opened_during_the_window():
+    """An abandoned window is unwound by the collector, inside a later cassette."""
+    gc.disable()
+    try:
+        cycle = {"window": force_reset()}
+        cycle["self"] = cycle  # only the cyclic collector can free this window
+        cycle["window"].__enter__()
+        del cycle
+
+        with use_cassette(path="test"):
+            patched = httplib.HTTPConnection
+            assert patched is not _HTTPConnection
+            gc.enable()
+            gc.collect()
+            assert httplib.HTTPConnection is patched
+    finally:
+        gc.enable()
+
+    assert httplib.HTTPConnection is _HTTPConnection
+
+
+def test_force_reset_on_another_thread_does_not_unpatch_a_live_cassette():
+    """The window is global, so an open one reaches every other thread's cassette."""
+    window_open = threading.Event()
+    state_read = threading.Event()
+
+    def hold_window():
+        with force_reset():
+            window_open.set()
+            state_read.wait(10)
+
+    with use_cassette(path="test"):
+        holder = threading.Thread(target=hold_window)
+        holder.start()
+        try:
+            assert window_open.wait(10)
+            connection_cls = cpool.HTTPSConnectionPool.ConnectionCls
+        finally:
+            state_read.set()
+            holder.join(10)
+
+    assert issubclass(connection_cls, VCRConnection)
