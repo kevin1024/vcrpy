@@ -5,6 +5,9 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - Don't open a real connection for HTTPS requests that are played back from a cassette in the ``new_episodes`` record mode. urllib3 connects before sending a request, before vcrpy knows whether it will be played back, so every such request made a TLS handshake, and failed without network access (#515)
+    - Raise a clear ``TypeError`` when ``use_cassette()`` without a path is used as a context manager, instead of ``KeyError: 'path'``. A path can be left out only when decorating a function (#570)
+    - Fix ``filter_post_data_parameters`` crashing with ``AttributeError`` on iterator request bodies, e.g. a generator passed as ``data``. Like file bodies, they're left unfiltered (#814)
+    - Docs: document ``inject_cassette``, which passes the cassette to a decorated function (#207, #493)
 
 -  9.3.1
     - Log a warning when a cassette file exists but can't be decoded, instead of silently treating it as empty (#501, #1022) - thanks @agu2347, and @philsong4-ai for #1023
