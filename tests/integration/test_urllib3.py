@@ -3,6 +3,7 @@
 # coding=utf-8
 
 import json
+import queue
 from collections.abc import Mapping
 
 import pytest
@@ -207,6 +208,9 @@ def test_release_conn_restores_pool_capacity(tmpdir, httpbin, record_mode, prelo
         urllib3.PoolManager(maxsize=1, block=True) as manager,
     ):
         pool = manager.connection_from_url(httpbin.url)
+        if not isinstance(pool.pool, queue.LifoQueue):
+            # urllib3-future (installed with niquests) keeps leased connections in its pool.
+            pytest.skip("checks urllib3's pool of idle connections")
         previous = None
         for number, url in enumerate(urls):
             response = manager.request(
