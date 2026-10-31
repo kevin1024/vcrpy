@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - Don't read aiohttp response bodies for requests that aren't recorded, e.g. with ``ignore_localhost`` or ``ignore_hosts``, so they can be streamed as usual (#978) - thanks @AronsonDan
+    - Return leased urllib3 connections to their pool when ``release_conn()`` is called on a streamed response, during recording and playback (#949) - thanks @edsonsims
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
     - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
     - Fix ``use_cassette`` crashing with ``TypeError: 'NoneType' object is not subscriptable`` (or ``JSONDecodeError`` with the JSON serializer) when the cassette file is empty, e.g. after emptying it to record it again. An empty cassette is now recorded like a missing one, as in Ruby VCR (#579) - thanks @nk-batman21
