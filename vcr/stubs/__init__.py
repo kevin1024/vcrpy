@@ -336,13 +336,18 @@ class VCRConnection:
 
     def connect(self, *args, **kwargs):
         """
-        httplib2 uses this.  Connects to the server I'm assuming.
+        httplib2 uses this, and urllib3 calls it before sending an HTTPS request.
 
         Only pass to the baseclass if we don't have a recorded response
         and are not write-protected.
         """
 
-        if hasattr(self, "_vcr_request") and self.cassette.can_play_response_for(self._vcr_request):
+        if not hasattr(self, "_vcr_request"):
+            # The request isn't known yet, so we can't tell whether it will be
+            # played back. If it's sent, the real connection connects then (#515).
+            return
+
+        if self.cassette.can_play_response_for(self._vcr_request):
             # We already have a response we are going to play, don't
             # actually connect
             return

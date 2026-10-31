@@ -11,6 +11,7 @@ import pytest_httpbin
 
 import vcr
 from vcr.patch import force_reset
+from vcr.stubs.urllib3_stubs import VCRRequestsHTTPSConnection
 
 from ..assertions import assert_cassette_empty, assert_is_json_bytes
 
@@ -234,3 +235,30 @@ def test_release_conn_restores_pool_capacity(tmpdir, httpbin, record_mode, prelo
             assert pool.pool.qsize() == 1
 
         assert cassette.play_count == (2 if record_mode == "none" else 0)
+
+
+@pytest.mark.parametrize("record_mode", ["once", "new_episodes", "all"])
+def test_https_connects_only_to_send(tmpdir, httpbin_secure, record_mode, monkeypatch):
+    # urllib3 connects before sending an HTTPS request, but a request that's
+    # played back shouldn't open a connection, whatever the record mode (#515).
+    path = str(tmpdir.join("connect.yaml"))
+    url = httpbin_secure.url + "/get"
+    with vcr.use_cassette(path):
+        urllib3.PoolManager(cert_reqs="CERT_NONE").request("GET", url)
+
+    # The class of the real connections vcrpy makes for urllib3
+    real_connection_class = VCRRequestsHTTPSConnection._baseclass
+    connect = real_connection_class.connect
+    connections = []
+
+    def counting_connect(self, *args, **kwargs):
+        connections.append(self.host)
+        return connect(self, *args, **kwargs)
+
+    monkeypatch.setattr(real_connection_class, "connect", counting_connect)
+    with vcr.use_cassette(path, record_mode=record_mode) as cassette:
+        assert urllib3.PoolManager(cert_reqs="CERT_NONE").request("GET", url).status == 200
+
+    played = record_mode != "all"
+    assert cassette.play_count == int(played)
+    assert len(connections) == int(not played)
