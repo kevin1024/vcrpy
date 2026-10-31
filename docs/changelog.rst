@@ -10,6 +10,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - Fix ``drop_unused_requests`` saving an interaction once per playback when ``allow_playback_repeats`` is set
     - ``ignore_hosts`` also accepts compiled regular expressions, which match whole host names, e.g. ``re.compile(r".*\.example\.com")`` (#779) - thanks @silviumarcu
     - New ``skip_patchers`` option to leave some HTTP libraries unpatched, e.g. ``skip_patchers=["httpx"]`` when an httpx client uses an aiohttp transport (httpx-aiohttp), so requests aren't recorded twice (#944, #1070) - thanks @smoltafet
+    - New ``filter_nested_post_data_parameters`` option: make ``filter_post_data_parameters`` also filter keys in nested objects of JSON request bodies, such as JSON-RPC ``params``. ``vcr.filters.replace_body_parameters`` and ``replace_post_data_parameters`` take a matching ``recursive`` argument (#936, #937) - thanks @tighwm and @JargeZ
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
     - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
     - Fix ``use_cassette`` crashing with ``TypeError: 'NoneType' object is not subscriptable`` (or ``JSONDecodeError`` with the JSON serializer) when the cassette file is empty, e.g. after emptying it to record it again. An empty cassette is now recorded like a missing one, as in Ruby VCR (#579) - thanks @nk-batman21

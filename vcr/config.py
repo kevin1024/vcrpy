@@ -42,6 +42,7 @@ class VCR:
         filter_headers=(),
         before_record_response=None,
         filter_post_data_parameters=(),
+        filter_nested_post_data_parameters=False,
         match_on=("method", "scheme", "host", "port", "path", "query"),
         before_record=None,
         inject_cassette=False,
@@ -78,6 +79,7 @@ class VCR:
         self.filter_headers = filter_headers
         self.filter_query_parameters = filter_query_parameters
         self.filter_post_data_parameters = filter_post_data_parameters
+        self.filter_nested_post_data_parameters = filter_nested_post_data_parameters
         self.before_record_request = before_record_request or before_record
         self.before_record_response = before_record_response
         self.ignore_hosts = ignore_hosts
@@ -207,6 +209,10 @@ class VCR:
             "filter_post_data_parameters",
             self.filter_post_data_parameters,
         )
+        filter_nested_post_data_parameters = options.get(
+            "filter_nested_post_data_parameters",
+            self.filter_nested_post_data_parameters,
+        )
         before_record_request = options.get(
             "before_record_request",
             options.get("before_record", self.before_record_request),
@@ -224,7 +230,11 @@ class VCR:
         if filter_post_data_parameters:
             replacements = [p if isinstance(p, tuple) else (p, None) for p in filter_post_data_parameters]
             filter_functions.append(
-                functools.partial(filters.replace_body_parameters, replacements=replacements),
+                functools.partial(
+                    filters.replace_body_parameters,
+                    replacements=replacements,
+                    recursive=filter_nested_post_data_parameters,
+                ),
             )
 
         hosts_to_ignore = set(ignore_hosts)

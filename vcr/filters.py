@@ -200,7 +200,26 @@ def _replace_urlencoded_parameters(body, replacements, request):
     return b"&".join(k if not sep else b"".join([k, sep, v]) for k, sep, v in new_splits)
 
 
-def replace_body_parameters(request, replacements):
+def _replace_nested_parameters(data, replacements, request):
+    """Return a copy of data with replacements applied to the keys of dicts at any depth, in lists too."""
+    if isinstance(data, dict):
+        new_data = {}
+        for k, ov in data.items():
+            if k not in replacements:
+                new_data[k] = _replace_nested_parameters(ov, replacements, request)
+                continue
+            rv = replacements[k]
+            if callable(rv):
+                rv = rv(key=k, value=ov, request=request)
+            if rv is not None:
+                new_data[k] = rv
+        return new_data
+    if isinstance(data, list):
+        return [_replace_nested_parameters(item, replacements, request) for item in data]
+    return data
+
+
+def replace_body_parameters(request, replacements, recursive=False):
     """Replace body parameters in request--either form data or json--according to replacements.
 
     The replacements should be a list of (key, value) pairs where the value can be any of:
@@ -208,6 +227,9 @@ def replace_body_parameters(request, replacements):
       2. None to remove the given header.
       3. A callable which accepts (key, value, request) and returns a string
          value or None.
+
+    If recursive is true, keys are also replaced in objects nested in JSON
+    and dict bodies, including objects in lists.
     """
     if not request.body:
         # Nothing to replace
@@ -217,7 +239,12 @@ def replace_body_parameters(request, replacements):
         return request
 
     replacements = dict(replacements)
-    if isinstance(request.body, dict):
+    if recursive and isinstance(request.body, dict):
+        request.body = _replace_nested_parameters(request.body, replacements, request)
+    elif recursive and request.headers.get("Content-Type") == "application/json":
+        json_data = _replace_nested_parameters(json.loads(request.body), replacements, request)
+        request.body = json.dumps(json_data).encode("utf-8")
+    elif isinstance(request.body, dict):
         new_body = request.body.copy()
         for k, rv in replacements.items():
             if k in new_body:
@@ -250,14 +277,14 @@ def replace_body_parameters(request, replacements):
     return request
 
 
-def replace_post_data_parameters(request, replacements):
+def replace_post_data_parameters(request, replacements, recursive=False):
     """
     Wrap replace_body_parameters() for API backward compatibility: only filters POST requests.
     """
     if request.method != "POST":
         return request
 
-    return replace_body_parameters(request, replacements)
+    return replace_body_parameters(request, replacements, recursive=recursive)
 
 
 def remove_post_data_parameters(request, post_data_parameters_to_remove):
