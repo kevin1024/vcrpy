@@ -3,7 +3,7 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  Unreleased
+-  9.3.1
     - Log a warning when a cassette file exists but can't be decoded, instead of silently treating it as empty (#501, #1022) - thanks @agu2347, and @philsong4-ai for #1023
     - ``Request`` can be imported from ``vcr``, e.g. ``vcr.Request("GET", uri, body, headers)``, as the docs already called it (#759) - thanks @lewisdawson
 
