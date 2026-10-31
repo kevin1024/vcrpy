@@ -311,6 +311,10 @@ class VCRConnection:
             from vcr.patch import force_reset
 
             with force_reset():
+                if self.__dict__.get("_deferred_connect"):
+                    args, kwargs = self._deferred_connect
+                    self._deferred_connect = None
+                    self.real_connection.connect(*args, **kwargs)
                 self.real_connection.request(
                     method=self._vcr_request.method,
                     url=self._url(self._vcr_request.uri),
@@ -336,13 +340,19 @@ class VCRConnection:
 
     def connect(self, *args, **kwargs):
         """
-        httplib2 uses this.  Connects to the server I'm assuming.
+        httplib2 uses this, and urllib3 calls it before sending an HTTPS request.
 
         Only pass to the baseclass if we don't have a recorded response
         and are not write-protected.
         """
 
-        if hasattr(self, "_vcr_request") and self.cassette.can_play_response_for(self._vcr_request):
+        if not hasattr(self, "_vcr_request"):
+            # The request isn't known yet, so we can't tell whether it will be
+            # played back. Connect only if it's sent (#515).
+            self._deferred_connect = (args, kwargs)
+            return
+
+        if self.cassette.can_play_response_for(self._vcr_request):
             # We already have a response we are going to play, don't
             # actually connect
             return
