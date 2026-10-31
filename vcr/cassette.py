@@ -9,7 +9,7 @@ from inspect import iscoroutinefunction
 import wrapt
 
 from ._handle_coroutine import handle_coroutine
-from .errors import UnhandledHTTPRequestError
+from .errors import MissingMetadataError, UnhandledHTTPRequestError
 from .filters import sensitive_data_hooks
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder, validate_skip_patchers
@@ -210,6 +210,8 @@ class Cassette:
 
         # self.data is the list of (req, resp) tuples
         self.data = []
+        # Values stored with get_metadata, saved in the cassette next to the interactions.
+        self._metadata = {}
         self.play_counts = collections.Counter()
         self.dirty = False
         self.rewound = False
@@ -356,6 +358,21 @@ class Cassette:
 
         return final_best_matches
 
+    def get_metadata(self, key, default):
+        """Return the value stored in the cassette under key.
+
+        If the cassette has no such value, store default and return it, or
+        raise MissingMetadataError if the record mode doesn't allow changing
+        the cassette.
+        """
+        if key in self._metadata:
+            return self._metadata[key]
+        if self.write_protected:
+            raise MissingMetadataError(cassette=self, key=key)
+        self._metadata[key] = default
+        self.dirty = True
+        return default
+
     def _new_interactions(self):
         """List of new HTTP interactions (request/response tuples)"""
         new_interactions = []
@@ -433,11 +450,17 @@ class Cassette:
                 "requests": [request for request, _ in interactions],
                 "responses": [response for _, response in interactions],
             }
+        if self._metadata:
+            cassette_dict = {**cassette_dict, "metadata": self._metadata}
         self._persister.save_cassette(self._path, cassette_dict, serializer=self._serializer)
 
     def _load(self):
         try:
-            requests, responses = self._persister.load_cassette(self._path, serializer=self._serializer)
+            # Persisters return (requests, responses), and metadata third if the cassette has any.
+            requests, responses, *metadata = self._persister.load_cassette(
+                self._path,
+                serializer=self._serializer,
+            )
             for request, response in zip(requests, responses, strict=False):
                 interaction = _run_hooks(self._after_load_interaction, request, response, self)
                 if interaction is None:
@@ -448,6 +471,7 @@ class Cassette:
             self._loaded_count = len(self.data)
             self.dirty = False
             self.rewound = True
+            self._metadata = metadata[0] if metadata else {}
         except (CassetteDecodeError, CassetteNotFoundError):
             pass
 

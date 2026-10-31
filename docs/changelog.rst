@@ -4,16 +4,19 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
-    - Don't read aiohttp response bodies for requests that aren't recorded, e.g. with ``ignore_localhost`` or ``ignore_hosts``, so they can be streamed as usual (#978) - thanks @AronsonDan
-    - Return leased urllib3 connections to their pool when ``release_conn()`` is called on a streamed response, during recording and playback (#949) - thanks @edsonsims
-    - ``allow_playback_repeats`` now also applies while recording: a request that matches one already recorded in the cassette gets the recorded response, instead of being sent again and recorded a second time. When played back, such requests got the first response anyway (#878, #879) - thanks @pyoor
-    - Fix ``drop_unused_requests`` saving an interaction once per playback when ``allow_playback_repeats`` is set
-    - ``ignore_hosts`` also accepts compiled regular expressions, which match whole host names, e.g. ``re.compile(r".*\.example\.com")`` (#779) - thanks @silviumarcu
+    - New ``Cassette.get_metadata(key, default)``: store values that aren't part of an interaction in the cassette, such as a seed for random values a test sends, so they're the same when the cassette is recorded and played back. Cassettes with metadata have a ``metadata`` key, and custom persisters' ``load_cassette`` can return it as a third value (#934) - thanks @hasier
     - New ``skip_patchers`` option to leave some HTTP libraries unpatched, e.g. ``skip_patchers=["httpx"]`` when an httpx client uses an aiohttp transport (httpx-aiohttp), so requests aren't recorded twice (#944, #1070) - thanks @smoltafet
     - New ``filter_nested_post_data_parameters`` option: make ``filter_post_data_parameters`` also filter keys in nested objects of JSON request bodies, such as JSON-RPC ``params``. ``vcr.filters.replace_body_parameters`` and ``replace_post_data_parameters`` take a matching ``recursive`` argument (#936, #937) - thanks @tighwm and @JargeZ
+    - ``ignore_hosts`` also accepts compiled regular expressions, which match whole host names, e.g. ``re.compile(r".*\.example\.com")`` (#779) - thanks @silviumarcu
+    - ``allow_playback_repeats`` now also applies while recording: a request that matches one already recorded in the cassette gets the recorded response, instead of being sent again and recorded a second time. When played back, such requests got the first response anyway (#878, #879) - thanks @pyoor
+    - Fix ``drop_unused_requests`` saving an interaction once per playback when ``allow_playback_repeats`` is set
+    - Fix ``use_cassette`` crashing with ``TypeError: 'NoneType' object is not subscriptable`` (or ``JSONDecodeError`` with the JSON serializer) when the cassette file is empty, e.g. after emptying it to record it again. An empty cassette is now recorded like a missing one, as in Ruby VCR (#579) - thanks @nk-batman21
+    - Don't read aiohttp response bodies for requests that aren't recorded, e.g. with ``ignore_localhost`` or ``ignore_hosts``, so they can be streamed as usual (#978) - thanks @AronsonDan
+    - Return leased urllib3 connections to their pool when ``release_conn()`` is called on a streamed response, during recording and playback (#949) - thanks @edsonsims
     - Docs: note that ``before_record_response`` also runs when a cassette is loaded, so it should be idempotent (#1042, #1044) - thanks @ciastek
     - Docs: replace Python 2's ``urllib2`` with ``urllib.request`` in the examples - thanks @TejasAmle
-    - Fix ``use_cassette`` crashing with ``TypeError: 'NoneType' object is not subscriptable`` (or ``JSONDecodeError`` with the JSON serializer) when the cassette file is empty, e.g. after emptying it to record it again. An empty cassette is now recorded like a missing one, as in Ruby VCR (#579) - thanks @nk-batman21
+    - CI: run pre-commit's steps directly, with ``actions/cache@v6`` on Node.js 24 (#1072) - thanks @pylaterreur
+    - CI: bump ruff to 0.17.2 (#1083), and allow Sphinx 9 for the docs (#1082)
 
 -  9.2.0
     - New ``before_save_interaction`` and ``after_load_interaction`` options: hooks that get each interaction's request and response (and the cassette, if they take a third argument) when a cassette is saved and loaded, and can change them or leave the interaction out. Cassettes also get a public ``path``. Like Ruby VCR's ``before_record`` and ``before_playback`` hooks (#527, #556) - thanks @tzturner and co-authors for #679, and @akaihola for #594, which explored this
