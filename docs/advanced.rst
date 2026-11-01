@@ -261,7 +261,8 @@ Filter information from HTTP post data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use the ``filter_post_data_parameters`` configuration option with a list
-of post data parameters to filter.
+of post data parameters to filter. It filters urlencoded and
+``multipart/form-data`` forms, and the top-level keys of JSON bodies.
 
 .. code:: python
 

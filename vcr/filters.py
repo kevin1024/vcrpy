@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 import zlib
 from io import BytesIO
 from urllib.parse import unquote_plus, urlencode, urlparse, urlunparse
@@ -219,6 +220,46 @@ def _replace_nested_parameters(data, replacements, request):
     return data
 
 
+def _multipart_boundary(content_type):
+    """The boundary of a multipart/form-data Content-Type, or None."""
+    if not content_type or not content_type.lower().startswith("multipart/form-data"):
+        return None
+    match = re.search(r'boundary="?([^";]+)"?', content_type, re.IGNORECASE)
+    return match.group(1).encode("utf-8") if match else None
+
+
+def _replace_multipart_parameters(body, boundary, replacements, request):
+    """Replace the content of form fields in a multipart/form-data body (#521).
+
+    A field that's removed is left out of the body.
+    """
+    delimiter = b"--" + boundary
+    preamble, *parts = body.split(delimiter)
+    new_parts = []
+    for part in parts:
+        headers, separator, content = part.partition(b"\r\n\r\n")
+        name = re.search(rb';\s*name="([^"]*)"', headers)
+        key = name and name.group(1).decode("utf-8", "replace")
+        if not separator or key not in replacements:
+            new_parts.append(part)
+            continue
+        # The content ends before the CRLF that precedes the next delimiter.
+        value, ending = (content[:-2], content[-2:]) if content.endswith(b"\r\n") else (content, b"")
+        rv = replacements[key]
+        if callable(rv):
+            try:
+                ov = value.decode("utf-8")
+            except UnicodeDecodeError:
+                ov = value
+            rv = rv(key=key, value=ov, request=request)
+        if rv is None:
+            continue
+        if isinstance(rv, str):
+            rv = rv.encode("utf-8")
+        new_parts.append(headers + separator + rv + ending)
+    return delimiter.join([preamble, *new_parts])
+
+
 def replace_body_parameters(request, replacements, recursive=False):
     """Replace body parameters in request--either form data or json--according to replacements.
 
@@ -265,6 +306,9 @@ def replace_body_parameters(request, replacements, recursive=False):
                 if rv is not None:
                     json_data[k] = rv
         request.body = json.dumps(json_data).encode("utf-8")
+    elif boundary := _multipart_boundary(request.headers.get("Content-Type")):
+        body = request.body.encode("utf-8") if isinstance(request.body, str) else bytes(request.body)
+        request.body = _replace_multipart_parameters(body, boundary, replacements, request)
     else:
         try:
             body = request.body.encode("utf-8") if isinstance(request.body, str) else request.body

@@ -5,6 +5,7 @@ from io import BytesIO
 from unittest import mock
 
 import pytest
+from urllib3 import encode_multipart_formdata
 
 from vcr.filters import (
     decode_response,
@@ -365,6 +366,56 @@ def test_remove_body_parameters_dict(method):
     replace_body_parameters(request, [("id", None)])
     expected_data = {"foo": "bar", "baz": "qux"}
     assert request.body == expected_data
+
+
+def _multipart_request(fields, boundary="vcrpy-boundary", content_type=None):
+    body, default_content_type = encode_multipart_formdata(fields, boundary=boundary)
+    return Request("POST", "http://google.com", body, {"Content-Type": content_type or default_content_type})
+
+
+def test_replace_body_parameters_multipart():
+    request = _multipart_request(
+        {
+            "keep": "kept",
+            "remove": "secret",
+            "replace": "secret",
+            "shout": "whisper",
+            "file": ("name", b"\xff\xfe binary secret"),
+        },
+    )
+    replace_body_parameters(
+        request,
+        [
+            ("remove", None),
+            ("replace", "<REPLACED>"),
+            ("shout", lambda key, value, request: value.upper()),
+            ("missing", "doesntexist"),
+        ],
+    )
+    expected = _multipart_request(
+        {
+            "keep": "kept",
+            "replace": "<REPLACED>",
+            "shout": "WHISPER",
+            "file": ("name", b"\xff\xfe binary secret"),
+        },
+    )
+    assert request.body == expected.body
+
+
+def test_replace_body_parameters_multipart_matches_name_not_filename():
+    request = _multipart_request({"upload": ("secret", b"content")})
+    replace_body_parameters(request, [("secret", None)])
+    assert request.body == _multipart_request({"upload": ("secret", b"content")}).body
+
+
+def test_replace_body_parameters_multipart_quoted_boundary():
+    request = _multipart_request(
+        {"api_key": "secret", "a": "b"},
+        content_type='multipart/form-data; boundary="vcrpy-boundary"',
+    )
+    replace_body_parameters(request, [("api_key", None)])
+    assert request.body == _multipart_request({"a": "b"}).body
 
 
 def test_replace_body_parameters_leaves_iterator_body():
