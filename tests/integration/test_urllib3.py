@@ -5,12 +5,14 @@
 import json
 import queue
 from collections.abc import Mapping
+from contextlib import nullcontext
 
 import pytest
 import pytest_httpbin
 
 import vcr
 from vcr.patch import force_reset
+from vcr.stubs import VCRHTTPResponse
 from vcr.stubs.urllib3_stubs import VCRRequestsHTTPSConnection
 
 from ..assertions import assert_cassette_empty, assert_is_json_bytes
@@ -225,16 +227,95 @@ def test_release_conn_restores_pool_capacity(tmpdir, httpbin, record_mode, prelo
             if previous is not None:
                 previous.close()
             assert response.status == 200
-            assert json.loads(response.read())["args"] == {"request": str(number)}
             assert pool.pool.qsize() == int(preload_content)
             assert response.release_conn() is None
             assert pool.pool.qsize() == 1
+            assert json.loads(response.read())["args"] == {"request": str(number)}
             previous = response
             assert response._connection is None
             assert response.release_conn() is None
             assert pool.pool.qsize() == 1
 
         assert cassette.play_count == (2 if record_mode == "none" else 0)
+
+
+@pytest.mark.parametrize("record_mode", ["all", "none"])
+@pytest.mark.parametrize("read", ["read", "stream"])
+def test_reading_the_body_returns_the_connection(tmpdir, httpbin, record_mode, read):
+    # requests reads a response with stream() and doesn't release it, so with a
+    # blocking pool (e.g. pool_block=True) its next request waited forever (#949).
+    path = str(tmpdir.join("read_body.yaml"))
+    urls = [f"{httpbin.url}/get?request={number}" for number in range(2)]
+    with vcr.use_cassette(path), urllib3.PoolManager() as manager:
+        for url in urls:
+            assert manager.request("GET", url).status == 200
+
+    with (
+        vcr.use_cassette(path, record_mode=record_mode) as cassette,
+        urllib3.PoolManager(maxsize=1, block=True) as manager,
+    ):
+        if not isinstance(manager.connection_from_url(httpbin.url).pool, queue.LifoQueue):
+            pytest.skip("checks urllib3's pool of idle connections")
+        for number, url in enumerate(urls):
+            response = manager.request(
+                "GET",
+                url,
+                preload_content=False,
+                pool_timeout=0.1,
+                timeout=2,
+                retries=False,
+            )
+            body = response.read() if read == "read" else b"".join(response.stream())
+            assert json.loads(body)["args"] == {"request": str(number)}
+
+        assert cassette.play_count == (2 if record_mode == "none" else 0)
+
+
+@pytest.mark.parametrize("record_mode", ["all", "none"])
+@pytest.mark.parametrize("finish", ["read", "stream", "release_conn"])
+def test_finishing_a_response_after_its_cassette(tmpdir, httpbin, record_mode, finish):
+    # The cassette's connection mustn't go back into the pool once the cassette has exited.
+    path = str(tmpdir.join("finish_after.yaml"))
+    url = f"{httpbin.url}/get"
+    with vcr.use_cassette(path), urllib3.PoolManager() as manager:
+        assert manager.request("GET", url).status == 200
+
+    with urllib3.PoolManager(maxsize=1, block=True) as manager:
+        if not isinstance(manager.connection_from_url(url).pool, queue.LifoQueue):
+            pytest.skip("checks urllib3's pool of idle connections")
+        with vcr.use_cassette(path, record_mode=record_mode):
+            response = manager.request("GET", url, preload_content=False, timeout=2, retries=False)
+        if finish == "read":
+            response.read()
+        elif finish == "stream":
+            b"".join(response.stream())
+        else:
+            response.release_conn()
+
+        response = manager.request("GET", url, pool_timeout=0.1, timeout=2, retries=False)
+        assert response.status == 200
+        assert not isinstance(response, VCRHTTPResponse)
+
+
+@pytest.mark.parametrize("record_mode", ["all", "none"])
+@pytest.mark.parametrize("uses", ["cassette, live", "live, cassette", "cassette, cassette"])
+def test_blocking_pool_used_around_cassettes(tmpdir, httpbin, record_mode, uses):
+    # vcrpy takes connections out of a pool when a cassette starts and stops
+    # using it. Without their slots, a blocking pool waited forever (#949).
+    path = str(tmpdir.join("around.yaml"))
+    url = f"{httpbin.url}/get"
+    with vcr.use_cassette(path), urllib3.PoolManager() as manager:
+        assert manager.request("GET", url).status == 200
+
+    with urllib3.PoolManager(maxsize=1, block=True) as manager:
+        if not isinstance(manager.connection_from_url(url).pool, queue.LifoQueue):
+            pytest.skip("checks urllib3's pool of idle connections")
+        for use in uses.split(", "):
+            in_cassette = use == "cassette"
+            with vcr.use_cassette(path, record_mode=record_mode) if in_cassette else nullcontext():
+                response = manager.request("GET", url, pool_timeout=0.1, timeout=2, retries=False)
+            assert response.status == 200
+            assert isinstance(response, VCRHTTPResponse) is in_cassette
 
 
 @pytest.mark.parametrize("record_mode", ["once", "new_episodes", "all"])

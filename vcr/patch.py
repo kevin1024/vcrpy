@@ -5,6 +5,7 @@ import functools
 import http.client as httplib
 import itertools
 import logging
+import queue
 from unittest import mock
 
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
@@ -296,6 +297,10 @@ class CassettePatcherBuilder:
             # class) around. This while loop will terminate because
             # eventually the pool will run out of connections.
             while not isinstance(connection, connection_class):
+                if isinstance(pool.pool, queue.Queue):
+                    # Drop it but keep its slot, or a blocking pool runs out of them (#949).
+                    connection.close()
+                    pool._put_conn(None)
                 connection = get_conn(pool, timeout, **kwargs)
             return connection
 
@@ -608,11 +613,15 @@ class ConnectionRemover:
                 if isinstance(connection, self._connection_class):
                     connections.remove(connection)
                     connection.close()
+                    if isinstance(pool.pool, queue.Queue):
+                        readd_connections.append(None)  # keep its slot
                 else:
                     readd_connections.append(connection)
             for connection in readd_connections:
                 pool._put_conn(connection)
             for connection in connections:
+                # If a response still holds it, releasing it gives back only its slot.
+                connection._vcr_cassette_exited = True
                 connection.close()
 
 
