@@ -566,9 +566,25 @@ class CassettePatcherBuilder:
             ),
         )
 
+        connection_removers = [http_connection_remover, https_connection_remover]
+        if hasattr(stubs, "VCRRequestsSOCKSConnection"):
+            # Pools for SOCKS proxies use their own connection classes (#547, #548).
+            from urllib3.contrib import socks
+
+            for pool_class, stub in (
+                (socks.SOCKSHTTPConnectionPool, stubs.VCRRequestsSOCKSConnection),
+                (socks.SOCKSHTTPSConnectionPool, stubs.VCRRequestsSOCKSHTTPSConnection),
+            ):
+                connection_remover = ConnectionRemover(self._get_cassette_subclass(stub))
+                connection_removers.append(connection_remover)
+                mock_triples += (
+                    (pool_class, "ConnectionCls", stub),
+                    (pool_class, "_new_conn", self._patched_new_conn(pool_class, connection_remover)),
+                )
+
         return itertools.chain(
             self._build_patchers_from_mock_triples(mock_triples),
-            (http_connection_remover, https_connection_remover),
+            connection_removers,
         )
 
 

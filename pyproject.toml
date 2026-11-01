@@ -45,6 +45,7 @@ tests = [
     "httpx2",
     "pycurl; platform_python_implementation != 'PyPy'",
     "pyreqwest",
+    "pysocks",
     "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
