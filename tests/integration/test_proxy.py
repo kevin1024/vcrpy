@@ -2,11 +2,14 @@
 
 import asyncio
 import http.server
+import select
+import socket
 import socketserver
 import threading
 from urllib.request import ProxyHandler, build_opener
 
 import pytest
+import pytest_httpbin.certs
 
 import vcr
 
@@ -126,3 +129,68 @@ def test_use_https_proxy(tmpdir, httpbin_secure, proxy_server):
 
     # The cassette URL points to httpbin, not the proxy
     assert cassette.requests[0].url == httpbin_secure.url + "/"
+
+
+class Socks5Proxy(socketserver.BaseRequestHandler):
+    """A SOCKS5 proxy without authentication that only supports CONNECT."""
+
+    connections = 0
+
+    def handle(self):
+        client = self.request
+        client.recv(client.recv(2)[1])  # the authentication methods the client offers
+        client.sendall(b"\x05\x00")  # no authentication
+        _, _, _, address_type = client.recv(4)
+        if address_type == 1:
+            host = socket.inet_ntoa(client.recv(4))
+        else:
+            host = client.recv(client.recv(1)[0]).decode()
+        port = int.from_bytes(client.recv(2), "big")
+        type(self).connections += 1
+        with socket.create_connection((host, port)) as upstream:
+            client.sendall(b"\x05\x00\x00\x01" + socket.inet_aton("0.0.0.0") + b"\x00\x00")
+            sockets = [client, upstream]
+            while True:
+                readable, _, _ = select.select(sockets, [], [])
+                for sock in readable:
+                    data = sock.recv(65536)
+                    if not data:
+                        return
+                    (upstream if sock is client else client).sendall(data)
+
+
+@pytest.fixture(scope="session")
+def socks_proxy():
+    pytest.importorskip("socks")
+    with socketserver.ThreadingTCPServer(("127.0.0.1", 0), Socks5Proxy) as server:
+        server.daemon_threads = True
+        thread = threading.Thread(target=server.serve_forever)
+        thread.start()
+        yield f"socks5h://127.0.0.1:{server.server_address[1]}"
+        server.shutdown()
+        thread.join()
+
+
+@pytest.mark.parametrize("scheme", ["http", "https"])
+def test_use_socks_proxy(tmpdir, httpbin, httpbin_secure, socks_proxy, scheme):
+    # Pools for SOCKS proxies use their own connection classes, which weren't
+    # patched, so their requests skipped the cassette (#547, #548).
+    url = (httpbin if scheme == "http" else httpbin_secure).url + "/get"
+    proxies = {"http": socks_proxy, "https": socks_proxy}
+    verify = pytest_httpbin.certs.where()
+    path = str(tmpdir.join("socks.yaml"))
+
+    with vcr.use_cassette(path), requests.Session() as session:
+        recorded = session.get(url, proxies=proxies, verify=verify)
+    assert recorded.status_code == 200
+
+    connections = Socks5Proxy.connections
+    with vcr.use_cassette(path, record_mode="none") as cassette, requests.Session() as session:
+        played = session.get(url, proxies=proxies, verify=verify)
+    assert cassette.play_count == 1
+    assert played.content == recorded.content
+    assert Socks5Proxy.connections == connections
+
+    with requests.Session() as session:
+        assert session.get(url, proxies=proxies, verify=verify).status_code == 200
+    assert Socks5Proxy.connections == connections + 1
