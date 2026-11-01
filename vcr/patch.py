@@ -741,9 +741,22 @@ def reset_patchers():
         )
 
 
+def _undo_reset(patcher, target, attribute, reset_to):
+    replaced_by = getattr(target, attribute, reset_to)
+    patcher.__exit__(None, None, None)
+    # A reset window is a suspended generator, so an abandoned one is unwound by
+    # the collector -- inside whatever cassette is running by then. Keep that
+    # cassette's patches: they are newer than the originals the patcher saved.
+    if replaced_by is not reset_to:
+        setattr(target, attribute, replaced_by)
+
+
 @contextlib.contextmanager
 def force_reset():
+    """Temporarily put back the real classes a cassette replaced."""
     with contextlib.ExitStack() as exit_stack:
         for patcher in reset_patchers():
-            exit_stack.enter_context(patcher)
+            patcher.__enter__()
+            target, attribute = patcher.target, patcher.attribute
+            exit_stack.callback(_undo_reset, patcher, target, attribute, getattr(target, attribute))
         yield
