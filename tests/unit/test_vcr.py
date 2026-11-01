@@ -1,3 +1,4 @@
+import gc
 import http.client as httplib
 import json
 import os
@@ -520,3 +521,24 @@ def test_interaction_hook_options():
     with my_vcr.use_cassette("test", after_load_interaction=[on_load]) as cassette:
         assert cassette._before_save_interaction == [on_save]
         assert cassette._after_load_interaction == [on_load]
+
+
+def test_force_reset_does_not_unpatch_a_cassette_opened_during_the_window():
+    """An abandoned window is unwound by the collector, inside a later cassette (#1051)."""
+    gc.disable()
+    try:
+        cycle = {"window": force_reset()}
+        cycle["self"] = cycle  # only the cyclic collector can free this window
+        cycle["window"].__enter__()
+        del cycle
+
+        with use_cassette(path="test"):
+            patched = httplib.HTTPConnection
+            assert patched is not _HTTPConnection
+            gc.enable()
+            gc.collect()
+            assert httplib.HTTPConnection is patched
+    finally:
+        gc.enable()
+
+    assert httplib.HTTPConnection is _HTTPConnection
