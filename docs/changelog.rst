@@ -3,7 +3,7 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  Unreleased
+-  9.4.0
     - Record and play back requests made through SOCKS proxies with requests and urllib3 (``socks5://`` and ``socks5h://`` proxies, with PySocks installed). urllib3 uses its own connection classes for them, which weren't patched, so these requests skipped the cassette (#547, #548)
     - Fix requests escaping a cassette, e.g. a write-protected one not raising ``CannotOverwriteExistingCassetteException``, when a ``vcr.patch.force_reset()`` window opened elsewhere is closed late by the garbage collector while the cassette is in use (#979, #1051) - thanks @yeion7, from #1052
     - Fix ``AttributeError: 'str' object has no attribute 'get_all'`` when requests builds a response from a ``urllib.request`` response, e.g. with ``HTTPAdapter.build_response()``. urllib.request replaces the response's ``msg`` with the reason phrase, and requests then read it as headers to extract cookies from (#956)
