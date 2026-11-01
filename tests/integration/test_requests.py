@@ -1,5 +1,7 @@
 """Test requests' interaction with vcr"""
 
+import urllib.request
+
 import pytest
 
 import vcr
@@ -320,3 +322,15 @@ def test_duplicate_get_allow_playback_repeats(tmpdir, httpbin_both):
         requests.get(httpbin_both + "/same")
 
         assert len(cass) == 2
+
+
+def test_build_response_from_urllib_response(tmpdir, httpbin):
+    # urllib.request replaces a response's msg with the reason phrase, which
+    # requests then read as headers to extract cookies from (#956).
+    url = httpbin.url + "/cookies/set?k=v"
+    request = requests.Request("GET", url).prepare()
+    for _ in range(2):  # record, then play back
+        with vcr.use_cassette(str(tmpdir.join("urllib_response.yaml"))):
+            urllib_response = urllib.request.urlopen(url)
+            response = requests.adapters.HTTPAdapter().build_response(request, urllib_response)
+        assert response.status_code == 200

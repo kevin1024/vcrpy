@@ -6,6 +6,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 -  Unreleased
     - Record and play back requests made through SOCKS proxies with requests and urllib3 (``socks5://`` and ``socks5h://`` proxies, with PySocks installed). urllib3 uses its own connection classes for them, which weren't patched, so these requests skipped the cassette (#547, #548)
     - Fix requests escaping a cassette, e.g. a write-protected one not raising ``CannotOverwriteExistingCassetteException``, when a ``vcr.patch.force_reset()`` window opened elsewhere is closed late by the garbage collector while the cassette is in use (#979, #1051) - thanks @yeion7, from #1052
+    - Fix ``AttributeError: 'str' object has no attribute 'get_all'`` when requests builds a response from a ``urllib.request`` response, e.g. with ``HTTPAdapter.build_response()``. urllib.request replaces the response's ``msg`` with the reason phrase, and requests then read it as headers to extract cookies from (#956)
 
 -  9.3.2
     - Don't open a real connection for HTTPS requests that are played back from a cassette in the ``new_episodes`` record mode. urllib3 connects before sending a request, before vcrpy knows whether it will be played back, so every such request made a TLS handshake, and failed without network access (#515)
