@@ -3,6 +3,7 @@
 import json
 import logging
 from contextlib import suppress
+from email.message import Message
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
 
@@ -81,7 +82,6 @@ class VCRHTTPResponse(HTTPResponse):
         self.version_string = None
         self._content = BytesIO(self.recorded_response["body"]["string"])
         self._closed = False
-        self._original_response = self  # for requests.session.Session cookie extraction
 
         headers = self.recorded_response["headers"]
         # Since we are loading a response that has already been serialized, our
@@ -95,6 +95,13 @@ class VCRHTTPResponse(HTTPResponse):
         self.headers = self.msg = parse_headers(headers)
 
         self.length = compat.get_header(self.msg, "content-length") or None
+
+    @property
+    def _original_response(self):
+        # requests extracts cookies from _original_response.msg. urllib.request
+        # replaces msg with the reason phrase, as it does on real responses,
+        # which have no _original_response, so then there's none here either (#956).
+        return self if isinstance(self.msg, Message) else None
 
     @property
     def closed(self):

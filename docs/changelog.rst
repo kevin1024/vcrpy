@@ -3,6 +3,9 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  Unreleased
+    - Fix ``AttributeError: 'str' object has no attribute 'get_all'`` when requests builds a response from a ``urllib.request`` response, e.g. with ``HTTPAdapter.build_response()``. urllib.request replaces the response's ``msg`` with the reason phrase, and requests then read it as headers to extract cookies from (#956)
+
 -  9.3.2
     - Don't open a real connection for HTTPS requests that are played back from a cassette in the ``new_episodes`` record mode. urllib3 connects before sending a request, before vcrpy knows whether it will be played back, so every such request made a TLS handshake, and failed without network access (#515)
     - Raise a clear ``TypeError`` when ``use_cassette()`` without a path is used as a context manager, instead of ``KeyError: 'path'``. A path can be left out only when decorating a function (#570)
