@@ -585,3 +585,13 @@ def test_replace_text():
     # The original is left untouched.
     assert original["uri"] == "http://x/?key=SECRET"
     assert original["body"] == b"token=SECRET"
+
+
+@pytest.mark.parametrize("body", [{}, {"string": None}], ids=["no string", "None"])
+def test_decode_response_without_a_body(body):
+    response = {
+        "status": {"code": 200, "message": "OK"},
+        "headers": {"content-encoding": ["gzip"]},
+        "body": body,
+    }
+    assert decode_response(response) == response

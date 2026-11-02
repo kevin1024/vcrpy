@@ -357,14 +357,16 @@ def decode_response(response):
     if not content_encoding:
         return response
     decompressor = AVAILABLE_DECOMPRESSORS.get(content_encoding[0])
-    if not decompressor:
+    body = response["body"].get("string")
+    if not decompressor or body is None:
+        # A response without a body, like one to a HEAD request, has nothing to decompress.
         return response
 
     headers["content-encoding"].remove(content_encoding[0])
     if not headers["content-encoding"]:
         del headers["content-encoding"]
 
-    new_body = decompressor(response["body"]["string"])
+    new_body = decompressor(body)
     response["body"]["string"] = new_body
     headers["content-length"] = [str(len(new_body))]
     response["headers"] = dict(headers)
