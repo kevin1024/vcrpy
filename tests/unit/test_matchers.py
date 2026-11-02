@@ -462,3 +462,11 @@ def test_body_matcher_compares_form_fields(content_type):
     matchers.body(form_request({"a": "1"}), form_request({"a": "1"}))
     with pytest.raises(AssertionError):
         matchers.body(form_request({"a": "1"}), form_request({"a": "2"}))
+
+
+def test_body_matcher_with_an_empty_chunked_bytearray_body():
+    headers = {"Transfer-Encoding": "chunked"}
+    matchers.body(
+        request.Request("POST", "http://host.com/", bytearray(), headers),
+        request.Request("POST", "http://host.com/", bytearray(), headers),
+    )

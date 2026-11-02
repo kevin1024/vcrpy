@@ -181,6 +181,7 @@ def _dechunk(body):
     pos: int = 0
 
     while True:
+        i = pos
         for i in range(pos, BODY_LEN):
             if body[i] not in _HEXDIG_CODE_POINTS:
                 break
