@@ -1,0 +1,30 @@
+name: Type check
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  typing:
+    name: Check types
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.12
+      # Not editable, so that the public API is checked as users install it, with py.typed.
+      - run: uv pip install --system '.[typing]'
+      - run: mypy
+      - run: pyright
+      - name: Check that the public API is fully typed
+        run: |
+          # This reports the stubs of the HTTP libraries too, which aren't annotated yet,
+          # so its exit status is left to check_completeness.py.
+          pyright --verifytypes vcr --ignoreexternal --outputjson > verifytypes.json || true
+          python tests/typing/check_completeness.py verifytypes.json
