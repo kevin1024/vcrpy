@@ -18,6 +18,7 @@ from vcr.errors import (
 )
 from vcr.patch import force_reset
 from vcr.persisters.filesystem import CassetteNotFoundError
+from vcr.record_mode import RecordMode
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 
@@ -876,3 +877,9 @@ def test_metadata_with_persister_without_metadata():
     cassette = Cassette.load(path=path, persister=_MemoryPersister, record_mode="new_episodes")
     assert len(cassette) == 1
     assert cassette.get_metadata("key", "value") == "value"
+
+
+def test_cassette_checks_the_record_mode():
+    assert Cassette("path", record_mode="new_episodes").record_mode is RecordMode.NEW_EPISODES
+    with pytest.raises(ValueError, match="'sometimes' is not a valid record_mode"):
+        Cassette("path", record_mode="sometimes")

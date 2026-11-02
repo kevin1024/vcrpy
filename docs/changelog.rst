@@ -6,6 +6,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 -  Unreleased
     - ``request.body = request.body`` no longer breaks a request with a file-like or iterator body. Assigning a body converts it as ``Request()`` does, so assigning bytes to a request with a file-like body gives it a bytes body, which it used to keep as a file
     - Saving a cassette no longer turns the response bodies of the cassette in memory into ``str``
+    - ``Cassette(record_mode=...)`` checks the record mode, as ``VCR()`` does
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2

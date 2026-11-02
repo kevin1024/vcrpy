@@ -14,7 +14,7 @@ from .filters import sensitive_data_hooks
 from .matchers import get_matchers_results, method, requests_match, uri
 from .patch import CassettePatcherBuilder, validate_skip_patchers
 from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
-from .record_mode import RecordMode
+from .record_mode import RecordMode, validate_record_mode
 from .serializers import yamlserializer
 from .util import partition_dict
 
@@ -200,7 +200,7 @@ class Cassette:
         log.info(self._before_record_request)
         self._before_record_response = before_record_response or (lambda x: x)
         self.inject = inject
-        self.record_mode = record_mode
+        self.record_mode = validate_record_mode(record_mode)
         self.custom_patches = custom_patches
         self.allow_playback_repeats = allow_playback_repeats
         self.drop_unused_requests = drop_unused_requests
