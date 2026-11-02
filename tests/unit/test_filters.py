@@ -602,3 +602,11 @@ def test_replace_post_data_parameters_leaves_a_json_array_alone():
     request = Request("POST", "http://google.com", body, {"Content-Type": "application/json"})
     replace_post_data_parameters(request, [("id", None)])
     assert json.loads(request.body) == ["id", "other"]
+
+
+def test_replace_body_parameters_multipart_with_a_bytes_content_type():
+    request = _multipart_request({"keep": "kept", "remove": "secret"})
+    request.headers["Content-Type"] = request.headers["Content-Type"].encode("latin-1")
+    replace_body_parameters(request, [("remove", None)])
+    assert b"secret" not in request.body
+    assert b"kept" in request.body
