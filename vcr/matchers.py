@@ -216,23 +216,35 @@ def _dechunk(body):
         pos = chunk_data_after_last + len(CHUNK_GAP)
 
 
+def _transform_form(body):
+    if isinstance(body, (bytes, bytearray)):
+        return urllib.parse.parse_qs(body.decode("ascii"))
+    return body
+
+
 def _transform_json(body):
-    if body:
+    if not body:
+        return None
+    if isinstance(body, (bytes, bytearray, str)):
         return json.loads(body)
+    return body
+
+
+def _transform_xmlrpc(body):
+    if isinstance(body, (bytes, bytearray, str)):
+        return xmlrpc.client.loads(body)
+    return body
 
 
 _xml_header_checker = _header_checker("text/xml")
 _xmlrpc_header_checker = _header_checker("xmlrpc", header="User-Agent")
 _checker_transformer_pairs = (
     (_header_checker("chunked", header="Transfer-Encoding"), _dechunk),
-    (
-        _header_checker("application/x-www-form-urlencoded"),
-        lambda body: None if body is None else urllib.parse.parse_qs(body.decode("ascii")),
-    ),
+    (_header_checker("application/x-www-form-urlencoded"), _transform_form),
     (_header_checker("application/json"), _transform_json),
     (
         lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request),
-        lambda body: None if body is None else xmlrpc.client.loads(body),
+        _transform_xmlrpc,
     ),
 )
 
