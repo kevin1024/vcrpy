@@ -32,6 +32,10 @@ jobs:
           # source, it gives an abi3 wheel, which free-threaded Python can't load.
           - python-version: "3.15t"
             test-dependencies: tests-niquests
+        include:
+          # vcrpy doesn't require urllib3 2, and some systems still ship 1.26, like Debian 12's Python 3.11.
+          - python-version: "3.11"
+            test-dependencies: tests-urllib3-1
 
     steps:
       - uses: actions/checkout@v7
