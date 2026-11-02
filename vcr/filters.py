@@ -56,19 +56,20 @@ def replace_text(obj, text, replacement):
 
     Replaces in strings and bytes (encoded as UTF-8), and in the keys and
     values of dicts and the items of lists and tuples, at any depth.
-    Anything else is returned unchanged.
+    Anything else is returned unchanged. The copy has the type of obj.
     """
     if isinstance(obj, str):
-        return obj.replace(text, replacement)
+        return type(obj)(obj.replace(text, replacement))
     if isinstance(obj, (bytes, bytearray)):
-        return bytes(obj).replace(text.encode("utf-8"), replacement.encode("utf-8"))
+        return type(obj)(obj.replace(text.encode("utf-8"), replacement.encode("utf-8")))
     if isinstance(obj, BytesIO):
-        return BytesIO(replace_text(obj.getvalue(), text, replacement))
+        return type(obj)(replace_text(obj.getvalue(), text, replacement))
     if isinstance(obj, dict):
-        return {
-            replace_text(key, text, replacement): replace_text(value, text, replacement)
-            for key, value in obj.items()
-        }
+        new = copy.copy(obj)
+        new.clear()
+        for key, value in obj.items():
+            new[replace_text(key, text, replacement)] = replace_text(value, text, replacement)
+        return new
     if isinstance(obj, (list, tuple)):
         return type(obj)(replace_text(item, text, replacement) for item in obj)
     return obj

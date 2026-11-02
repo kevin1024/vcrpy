@@ -610,3 +610,12 @@ def test_replace_body_parameters_multipart_with_a_bytes_content_type():
     replace_body_parameters(request, [("remove", None)])
     assert b"secret" not in request.body
     assert b"kept" in request.body
+
+
+def test_replace_text_keeps_the_types_of_values():
+    class Fields(dict):
+        pass
+
+    assert replace_text(bytearray(b"a secret"), "secret", "XXX") == bytearray(b"a XXX")
+    assert type(replace_text(bytearray(b"a secret"), "secret", "XXX")) is bytearray
+    assert type(replace_text(Fields(name="secret"), "secret", "XXX")) is Fields
