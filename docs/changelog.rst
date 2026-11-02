@@ -3,7 +3,7 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
--  Unreleased
+-  9.4.2
     - Fix urllib3 pools with ``block=True``, e.g. a requests session with ``HTTPAdapter(pool_block=True)``, waiting forever for a free connection in a cassette, or when used before, after or across cassettes. A response now returns its connection to the pool once its body has been read, as in urllib3, and vcrpy keeps a pool's free slots when it takes connections out of it as a cassette starts or stops using the pool. A response finished after its cassette has exited gives back only the slot, not the cassette's connection (#949) - thanks @nk-batman21
 
 -  9.4.1
