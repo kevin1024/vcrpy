@@ -542,3 +542,8 @@ def test_force_reset_does_not_unpatch_a_cassette_opened_during_the_window():
         gc.enable()
 
     assert httplib.HTTPConnection is _HTTPConnection
+
+
+def test_ignore_hosts_with_patterns_and_a_request_without_a_host():
+    with VCR(ignore_hosts=[re.compile(r".*\.example\.com")]).use_cassette("test") as cassette:
+        assert cassette.filter_request(Request("GET", "http:///no-host", "", {})) is not None

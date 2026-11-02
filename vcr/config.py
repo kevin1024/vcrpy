@@ -265,7 +265,7 @@ class VCR:
         names = {host for host in hosts_to_ignore if not isinstance(host, re.Pattern)}
 
         def filter_ignored_hosts(request):
-            if hasattr(request, "host") and (
+            if hasattr(request, "host") and request.host is not None and (
                 request.host in names or any(pattern.fullmatch(request.host) for pattern in patterns)
             ):
                 return
