@@ -250,3 +250,10 @@ def test_deserialize_no_body_string():
     data = {"body": {"string": None}}
     output = compat.convert_to_bytes(data)
     assert data == output
+
+
+def test_serialize_leaves_the_responses_alone():
+    response = {"status": {"code": 200, "message": "OK"}, "headers": {}, "body": {"string": b"body"}}
+    cassette_dict = {"requests": [Request("GET", "http://example.com/", None, {})], "responses": [response]}
+    serialize(cassette_dict, yamlserializer)
+    assert response["body"]["string"] == b"body"

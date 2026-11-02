@@ -1,3 +1,5 @@
+import copy
+
 import yaml
 
 from vcr.request import Request
@@ -62,7 +64,8 @@ def serialize(cassette_dict, serializer):
     interactions = [
         {
             "request": compat.convert_to_unicode(request._to_dict()),
-            "response": compat.convert_to_unicode(response),
+            # A copy, as converting changes the response in place.
+            "response": compat.convert_to_unicode(copy.deepcopy(response)),
         }
         for request, response in zip(cassette_dict["requests"], cassette_dict["responses"], strict=False)
     ]

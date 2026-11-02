@@ -181,9 +181,10 @@ def test_gzip__decode_compressed_response_true(tmpdir, httpbin_both):
         assert r.headers["content-encoding"] == "gzip"  # i.e. not removed
         assert r.content == expected_content
 
-    # Has the cassette body been decompressed?
+    # Has the cassette body been decompressed? Compressed, it would start with gzip's magic number.
     cassette_response_body = cassette.responses[0]["body"]["string"]
-    assert isinstance(cassette_response_body, str)
+    assert isinstance(cassette_response_body, bytes)
+    assert cassette_response_body[0:1] == b"{"
 
     with vcr.use_cassette(str(tmpdir.join("decode_compressed.yaml")), decode_compressed_response=True):
         r = requests.get(url)
