@@ -44,6 +44,7 @@ tests = [
     "httpx",
     "httpx-curl-cffi",
     "httpx2",
+    "hypothesis",
     "pycurl; platform_python_implementation != 'PyPy'",
     "pyreqwest",
     "pysocks",
@@ -58,6 +59,7 @@ tests = [
 ]
 tests-niquests = [
     "httpbin>=0.10.3",
+    "hypothesis",
     "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
@@ -67,6 +69,7 @@ tests-niquests = [
 ]
 tests-urllib3-1 = [
     "httpbin>=0.10.3",
+    "hypothesis",
     "pysocks",
     "pytest",
     "pytest-aiohttp",
@@ -137,7 +140,7 @@ known-first-party = ["vcr"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["vcr", "tests/typing"]
+files = ["vcr", "tests/typing", "tests/unit/test_laws.py", "tests/unit/test_cassette_model.py"]
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unreachable = true
@@ -180,6 +183,8 @@ module = [
     "vcr.unittest",
     "vcr.util",
     "tests.typing.*",
+    "tests.unit.test_laws",
+    "tests.unit.test_cassette_model",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
@@ -194,7 +199,7 @@ extra_checks = true
 
 [tool.pyright]
 pythonVersion = "3.11"
-include = ["vcr", "tests/typing"]
+include = ["vcr", "tests/typing", "tests/unit/test_laws.py", "tests/unit/test_cassette_model.py"]
 exclude = ["vcr/stubs", "vcr/patch.py", "vcr/migration.py"]
 # Strict for what users of vcrpy see; the implementation is checked in standard mode.
-strict = ["vcr/types.py", "tests/typing"]
+strict = ["vcr/types.py", "tests/typing", "tests/unit/test_laws.py", "tests/unit/test_cassette_model.py"]
