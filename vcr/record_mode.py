@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 
@@ -23,7 +25,7 @@ class RecordMode(str, Enum):  # noqa: UP042 - StrEnum would change str() and for
     ONCE = "once"
 
 
-def validate_record_mode(record_mode):
+def validate_record_mode(record_mode: RecordMode | str) -> RecordMode:
     """Coerce and validate a user-supplied record mode.
 
     Accepts either a ``RecordMode`` or one of its string values and returns the

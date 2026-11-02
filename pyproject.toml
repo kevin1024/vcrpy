@@ -25,6 +25,7 @@ urls = {Homepage = "https://github.com/kevin1024/vcrpy"}
 requires-python = ">=3.11"
 dependencies = [
     "PyYAML",
+    "typing_extensions>=4.6; python_version < '3.13'",
     "wrapt",
 ]
 dynamic = ["version"]
@@ -78,6 +79,9 @@ tests-urllib3-1 = [
 
 [tool.setuptools]
 include-package-data = false
+
+[tool.setuptools.package-data]
+vcr = ["py.typed"]
 
 [tool.setuptools.packages.find]
 exclude = ["tests*"]

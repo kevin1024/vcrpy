@@ -1,8 +1,26 @@
+from __future__ import annotations
+
 import os
 import textwrap
 from collections import Counter
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 from .util import read_body
+
+if TYPE_CHECKING:
+    from .cassette import Cassette
+    from .request import Request
+    from .types import SimilarRequest, StrPath
+
+Reason: TypeAlias = Literal[
+    "cassette_not_found",
+    "already_played",
+    "no_match",
+    "nothing_similar",
+    "missing_metadata",
+]
+_Suggestion: TypeAlias = tuple[str, str | None]
 
 DOCS = "https://vcrpy.readthedocs.io/en/latest/"
 RECORD_MODES_DOCS = DOCS + "usage.html#record-modes"
@@ -27,15 +45,20 @@ class CannotOverwriteExistingCassetteException(Exception):
       is a list of ``(matcher_name, message)`` tuples.
     """
 
-    def __init__(self, *args, **kwargs):
-        self.cassette = kwargs["cassette"]
-        self.failed_request = kwargs["failed_request"]
-        self.similar_requests = self.cassette.find_requests_with_most_matches(self.failed_request)
-        self.reason = _reason(self.cassette, self.similar_requests)
-        super().__init__(_message(self.cassette, self.failed_request, self.similar_requests, self.reason))
+    cassette: Cassette
+    failed_request: Request | None
+    similar_requests: list[SimilarRequest]
+    reason: Reason
+
+    def __init__(self, *args: object, cassette: Cassette, failed_request: Request) -> None:
+        self.cassette = cassette
+        self.failed_request = failed_request
+        self.similar_requests = cassette.find_requests_with_most_matches(failed_request)
+        self.reason = _reason(cassette, self.similar_requests)
+        super().__init__(_message(cassette, failed_request, self.similar_requests, self.reason))
 
     @staticmethod
-    def _get_message(cassette, failed_request):
+    def _get_message(cassette: Cassette, failed_request: Request) -> str:
         """Get the final message related to the exception"""
         similar_requests = cassette.find_requests_with_most_matches(failed_request)
         return _message(cassette, failed_request, similar_requests, _reason(cassette, similar_requests))
@@ -49,13 +72,17 @@ class MissingMetadataError(CannotOverwriteExistingCassetteException):
     ``"missing_metadata"``, and it has no ``failed_request`` or ``similar_requests``.
     """
 
-    def __init__(self, *args, **kwargs):
-        self.cassette = kwargs["cassette"]
-        self.key = kwargs["key"]
+    failed_request: Request | None
+    similar_requests: list[SimilarRequest]
+    reason: Reason
+
+    def __init__(self, *args: object, cassette: Cassette, key: str) -> None:
+        self.cassette = cassette
+        self.key: str = key
         self.failed_request = None
         self.similar_requests = []
         self.reason = "missing_metadata"
-        record_mode = getattr(self.cassette.record_mode, "value", self.cassette.record_mode)
+        record_mode = self.cassette.record_mode.value
         Exception.__init__(
             self,
             f"Can't add metadata {self.key!r} to cassette {self.cassette._path}: the cassette "
@@ -69,7 +96,7 @@ class UnhandledHTTPRequestError(KeyError):
     """Raised when a cassette does not contain the request we want."""
 
 
-def _reason(cassette, similar_requests):
+def _reason(cassette: Cassette, similar_requests: list[SimilarRequest]) -> Reason:
     if not cassette.rewound and not len(cassette):
         return "cassette_not_found"
     if similar_requests and not similar_requests[0][2]:
@@ -79,9 +106,14 @@ def _reason(cassette, similar_requests):
     return "nothing_similar"
 
 
-def _message(cassette, request, similar_requests, reason):
-    record_mode = getattr(cassette.record_mode, "value", cassette.record_mode)
-    matcher_names = [getattr(matcher, "__name__", repr(matcher)) for matcher in cassette._match_on]
+def _message(
+    cassette: Cassette,
+    request: Request,
+    similar_requests: list[SimilarRequest],
+    reason: Reason,
+) -> str:
+    record_mode = cassette.record_mode.value
+    matcher_names: list[str] = [getattr(matcher, "__name__", repr(matcher)) for matcher in cassette._match_on]
 
     lines = [_headline(cassette, similar_requests, reason, record_mode), ""]
     lines += [f"  {line}" for line in _describe_request(request, matcher_names)]
@@ -107,7 +139,12 @@ def _message(cassette, request, similar_requests, reason):
     return "\n".join(lines)
 
 
-def _headline(cassette, similar_requests, reason, record_mode):
+def _headline(
+    cassette: Cassette,
+    similar_requests: list[SimilarRequest],
+    reason: Reason,
+    record_mode: str,
+) -> str:
     if reason == "cassette_not_found":
         problem = (
             "the cassette file couldn't be loaded"
@@ -138,7 +175,7 @@ def _headline(cassette, similar_requests, reason, record_mode):
     return f"Can't play back this request: {problem}.\n{not_recorded}"
 
 
-def _describe_request(request, matcher_names):
+def _describe_request(request: Request, matcher_names: Iterable[str]) -> list[str]:
     method, uri = getattr(request, "method", None), getattr(request, "uri", None)
     if method is None or uri is None:
         return [repr(request)]
@@ -150,7 +187,7 @@ def _describe_request(request, matcher_names):
     return lines
 
 
-def _preview(body):
+def _preview(body: object) -> str:
     if isinstance(body, (bytes, bytearray)):
         try:
             text = body.decode("utf-8")
@@ -163,7 +200,7 @@ def _preview(body):
     return f"{text[:MAX_BODY_PREVIEW]}… ({len(text)} characters)"
 
 
-def _describe_similar_requests(similar_requests):
+def _describe_similar_requests(similar_requests: list[SimilarRequest]) -> list[str]:
     shown = similar_requests[:MAX_SHOWN_SIMILAR_REQUESTS]
     lines = ["Closest recorded requests:"]
     for number, (request, _succeeded, failed) in enumerate(shown, start=1):
@@ -188,7 +225,7 @@ def _describe_similar_requests(similar_requests):
     return lines
 
 
-def _suggestions(reason, record_mode):
+def _suggestions(reason: Reason, record_mode: str) -> list[_Suggestion]:
     record_it = (
         "record_mode='new_episodes' to add it to the cassette, or record_mode='all' with "
         "drop_unused_requests=True to re-record the cassette from scratch"
@@ -241,14 +278,14 @@ def _suggestions(reason, record_mode):
     ]
 
 
-def _join_names(names):
-    names = list(names)
-    if len(names) <= 1:
-        return "".join(names)
-    return f"{', '.join(names[:-1])} and {names[-1]}"
+def _join_names(names: Iterable[str]) -> str:
+    name_list = list(names)
+    if len(name_list) <= 1:
+        return "".join(name_list)
+    return f"{', '.join(name_list[:-1])} and {name_list[-1]}"
 
 
-def _exists(path):
+def _exists(path: StrPath) -> bool:
     try:
         return os.path.exists(path)
     except (TypeError, ValueError):

@@ -310,7 +310,7 @@ async def _raise_for_status(
     if raise_for_status is None:
         raise_for_status = self._raise_for_status
     if raise_for_status is None:
-        pass
+        pass  # type: ignore[unreachable]
     elif callable(raise_for_status):
         await raise_for_status(response)
     elif raise_for_status:

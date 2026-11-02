@@ -1,29 +1,37 @@
+from __future__ import annotations
+
 import difflib
 import json
 import logging
-import urllib
+import urllib.parse
 import xmlrpc.client
+from collections.abc import Callable, Iterable, Iterator, Sized
 from string import hexdigits
+from typing import TYPE_CHECKING
 from xml.parsers.expat import ExpatError
 
 from .util import _join_body_chunks, read_body
 
+if TYPE_CHECKING:
+    from .request import HeadersDict, Request
+    from .types import JSON, Matcher, MatcherFailure
+
 _HEXDIG_CODE_POINTS: set[int] = {ord(s.encode("ascii")) for s in hexdigits}
 
-log = logging.getLogger(__name__)
+log: logging.Logger = logging.getLogger(__name__)
 
 
-def method(r1, r2):
+def method(r1: Request, r2: Request) -> None:
     if r1.method != r2.method:
         raise AssertionError(f"{r1.method} != {r2.method}")
 
 
-def _normalized_path(path):
+def _normalized_path(path: str) -> str:
     """RFC 3986 section 6.2.3: an empty path is equivalent to "/"."""
     return path if path else "/"
 
 
-def _normalized_uri(r):
+def _normalized_uri(r: Request) -> str:
     # httpx records bare-host URLs as https://example.com; cassettes often
     # store the RFC-canonical https://example.com/. Insert the "/" so those
     # compare equal, and compare everything else exactly.
@@ -35,32 +43,32 @@ def _normalized_uri(r):
     return authority + "/" + r.uri[len(authority) :]
 
 
-def uri(r1, r2):
+def uri(r1: Request, r2: Request) -> None:
     if _normalized_uri(r1) != _normalized_uri(r2):
         raise AssertionError(f"{r1.uri} != {r2.uri}")
 
 
-def host(r1, r2):
+def host(r1: Request, r2: Request) -> None:
     if r1.host != r2.host:
         raise AssertionError(f"{r1.host} != {r2.host}")
 
 
-def scheme(r1, r2):
+def scheme(r1: Request, r2: Request) -> None:
     if r1.scheme != r2.scheme:
         raise AssertionError(f"{r1.scheme} != {r2.scheme}")
 
 
-def port(r1, r2):
+def port(r1: Request, r2: Request) -> None:
     if r1.port != r2.port:
         raise AssertionError(f"{r1.port} != {r2.port}")
 
 
-def path(r1, r2):
+def path(r1: Request, r2: Request) -> None:
     if _normalized_path(r1.path) != _normalized_path(r2.path):
         raise AssertionError(f"{r1.path} != {r2.path}")
 
 
-def query(r1, r2):
+def query(r1: Request, r2: Request) -> None:
     if r1.query != r2.query:
         raise AssertionError(f"{r1.query} != {r2.query}")
 
@@ -69,22 +77,24 @@ MAX_DIFF_LINES = 20
 MAX_DIFF_LINE_LENGTH = 200
 
 
-def _body_text(body):
+def _body_text(body: object) -> str | None:
     """Text to diff for a body, or None for a body that isn't text."""
-    if body is None:
-        return ""
-    if isinstance(body, (bytes, bytearray)):
-        try:
-            return body.decode("utf-8")
-        except UnicodeDecodeError:
-            return None
-    if isinstance(body, str):
-        return body
-    # A parsed body (JSON, form data, XML-RPC): sorted keys show only real differences.
-    return json.dumps(body, indent=2, sort_keys=True, default=str)
+    match body:
+        case None:
+            return ""
+        case bytes() | bytearray():
+            try:
+                return body.decode("utf-8")
+            except UnicodeDecodeError:
+                return None
+        case str():
+            return body
+        case _:
+            # A parsed body (JSON, form data, XML-RPC): sorted keys show only real differences.
+            return json.dumps(body, indent=2, sort_keys=True, default=str)
 
 
-def _body_diff(new, recorded):
+def _body_diff(new: object, recorded: object) -> str:
     """A short diff explaining how two bodies differ, for matcher failure messages.
 
     vcrpy calls matchers with the request being made first and the recorded one second.
@@ -111,20 +121,19 @@ def _body_diff(new, recorded):
     return "\n".join(lines)
 
 
-def _size(body):
-    try:
+def _size(body: object) -> str:
+    if isinstance(body, Sized):
         return f"{len(body)} bytes"
-    except TypeError:
-        return "no body" if body is None else type(body).__name__
+    return "no body" if body is None else type(body).__name__
 
 
-def raw_body(r1, r2):
+def raw_body(r1: Request, r2: Request) -> None:
     b1, b2 = read_body(r1), read_body(r2)
     if b1 != b2:
         raise AssertionError(_body_diff(b1, b2))
 
 
-def body(r1, r2):
+def body(r1: Request, r2: Request) -> None:
     transformers = list(_get_transformers(r1))
     if transformers != list(_get_transformers(r2)):
         transformers = []
@@ -132,7 +141,8 @@ def body(r1, r2):
     b1 = read_body(r1)
     b2 = read_body(r2)
     try:
-        t1, t2 = b1, b2
+        t1: object = b1
+        t2: object = b2
         for transform in transformers:
             t1 = transform(t1)
             t2 = transform(t2)
@@ -145,13 +155,13 @@ def body(r1, r2):
         raise AssertionError(_body_diff(t1, t2))
 
 
-def headers(r1, r2):
+def headers(r1: Request, r2: Request) -> None:
     if r1.headers != r2.headers:
         raise AssertionError(f"{r1.headers} != {r2.headers}")
 
 
-def _header_checker(value, header="Content-Type"):
-    def checker(headers):
+def _header_checker(value: str, header: str = "Content-Type") -> Callable[[HeadersDict], bool]:
+    def checker(headers: HeadersDict) -> bool:
         _header = headers.get(header, "")
         if isinstance(_header, bytes):
             _header = _header.decode("utf-8")
@@ -160,14 +170,15 @@ def _header_checker(value, header="Content-Type"):
     return checker
 
 
-def _dechunk(body):
-    if isinstance(body, str):
-        body = body.encode("utf-8")
-    elif isinstance(body, bytearray):
-        body = bytes(body)
-    elif hasattr(body, "__iter__"):
-        parts = list(body)
-        body = _join_body_chunks(parts) if parts else None
+def _dechunk(body: object) -> object:
+    match body:
+        case str():
+            body = body.encode("utf-8")
+        case bytearray():
+            body = bytes(body)
+        case Iterable():
+            parts = list(body)
+            body = _join_body_chunks(parts) if parts else None
 
     if not isinstance(body, bytes):
         return body
@@ -207,53 +218,55 @@ def _dechunk(body):
         pos = chunk_data_after_last + len(CHUNK_GAP)
 
 
-def _transform_form(body):
+def _transform_form(body: object) -> object:
     if isinstance(body, (bytes, bytearray)):
         return urllib.parse.parse_qs(body.decode("ascii"))
     return body
 
 
-def _transform_json(body):
+def _transform_json(body: object) -> object:
     if not body:
         return None
     if isinstance(body, (bytes, bytearray, str)):
-        return json.loads(body)
+        parsed: JSON = json.loads(body)
+        return parsed
     return body
 
 
-def _transform_xmlrpc(body):
+def _transform_xmlrpc(body: object) -> object:
     if isinstance(body, (bytes, bytearray, str)):
         return xmlrpc.client.loads(body)
     return body
 
 
+def _is_xmlrpc(headers: HeadersDict) -> bool:
+    return _xml_header_checker(headers) and _xmlrpc_header_checker(headers)
+
+
 _xml_header_checker = _header_checker("text/xml")
 _xmlrpc_header_checker = _header_checker("xmlrpc", header="User-Agent")
-_checker_transformer_pairs = (
+_checker_transformer_pairs: tuple[tuple[Callable[[HeadersDict], bool], Callable[[object], object]], ...] = (
     (_header_checker("chunked", header="Transfer-Encoding"), _dechunk),
     (_header_checker("application/x-www-form-urlencoded"), _transform_form),
     (_header_checker("application/json"), _transform_json),
-    (
-        lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request),
-        _transform_xmlrpc,
-    ),
+    (_is_xmlrpc, _transform_xmlrpc),
 )
 
 
-def _get_transformers(request):
+def _get_transformers(request: Request) -> Iterator[Callable[[object], object]]:
     for checker, transformer in _checker_transformer_pairs:
         if checker(request.headers):
             yield transformer
 
 
-def requests_match(r1, r2, matchers):
+def requests_match(r1: Request, r2: Request, matchers: Iterable[Matcher]) -> bool:
     _, failures = get_matchers_results(r1, r2, matchers)
     if failures:
         log.debug(f"Requests {r1} and {r2} differ.\nFailure details:\n{failures}")
     return len(failures) == 0
 
 
-def _evaluate_matcher(matcher_function, *args):
+def _evaluate_matcher(matcher_function: Matcher, r1: Request, r2: Request) -> tuple[bool, str | None]:
     """
     Evaluate the result of a given matcher as a boolean with an assertion error message if any.
     It handles two types of matcher :
@@ -262,7 +275,7 @@ def _evaluate_matcher(matcher_function, *args):
     """
     assertion_message = None
     try:
-        match = matcher_function(*args)
+        match = matcher_function(r1, r2)
         match = True if match is None else match
     except AssertionError as e:
         match = False
@@ -270,15 +283,20 @@ def _evaluate_matcher(matcher_function, *args):
     return match, assertion_message
 
 
-def get_matchers_results(r1, r2, matchers):
+def get_matchers_results(
+    r1: Request,
+    r2: Request,
+    matchers: Iterable[Matcher],
+) -> tuple[list[str], list[MatcherFailure]]:
     """
     Get the comparison results of two requests as two list.
     The first returned list represents the matchers names that passed.
     The second list is the failed matchers as a string with failed assertion details if any.
     """
-    matches_success, matches_fails = [], []
+    matches_success: list[str] = []
+    matches_fails: list[MatcherFailure] = []
     for m in matchers:
-        matcher_name = m.__name__
+        matcher_name: str = getattr(m, "__name__", repr(m))
         match, assertion_message = _evaluate_matcher(m, r1, r2)
         if match:
             matches_success.append(matcher_name)
@@ -288,7 +306,7 @@ def get_matchers_results(r1, r2, matchers):
     return matches_success, matches_fails
 
 
-def get_assertion_message(assertion_details):
+def get_assertion_message(assertion_details: str | None) -> str | None:
     """
     Get a detailed message about the failing matcher.
     """

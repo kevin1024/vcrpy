@@ -1,23 +1,27 @@
+from __future__ import annotations
+
+import contextlib
 import copy
+import importlib
 import json
 import re
 import zlib
+from collections.abc import Callable, Iterable, Mapping
 from io import BytesIO
+from types import ModuleType
+from typing import TYPE_CHECKING, TypeVar
 from urllib.parse import unquote_plus, urlencode, urlparse, urlunparse
 
 from .util import CaseInsensitiveDict
 
-try:
-    # This supports both brotli & brotlipy packages
-    import brotli
-except ImportError:
-    try:
-        import brotlicffi as brotli
-    except ImportError:
-        brotli = None
+if TYPE_CHECKING:
+    from .request import Request
+    from .types import JSON, Interaction, Replacement, Response, SensitiveData
+
+_T = TypeVar("_T")
 
 
-def decompress_deflate(body):
+def decompress_deflate(body: bytes) -> bytes:
     try:
         return zlib.decompress(body)
     except zlib.error:
@@ -25,7 +29,7 @@ def decompress_deflate(body):
         return body
 
 
-def decompress_gzip(body):
+def decompress_gzip(body: bytes) -> bytes:
     # To (de-)compress gzip format, use wbits = zlib.MAX_WBITS | 16.
     try:
         return zlib.decompress(body, zlib.MAX_WBITS | 16)
@@ -34,48 +38,73 @@ def decompress_gzip(body):
         return body
 
 
-AVAILABLE_DECOMPRESSORS = {
+AVAILABLE_DECOMPRESSORS: dict[str, Callable[[bytes], bytes]] = {
     "deflate": decompress_deflate,
     "gzip": decompress_gzip,
 }
 
-if brotli is not None:
 
-    def decompress_brotli(body):
+def _import_brotli() -> ModuleType | None:
+    # This supports both brotli & brotlipy packages, which needn't be installed.
+    for name in ("brotli", "brotlicffi"):
         try:
-            return brotli.decompress(body)
-        except brotli.error:
+            return importlib.import_module(name)
+        except ImportError:
+            continue
+    return None
+
+
+brotli: ModuleType | None = _import_brotli()
+
+
+def _brotli_decompressor(module: ModuleType) -> Callable[[bytes], bytes]:
+    decompress: Callable[[bytes], bytes] = module.decompress
+    error: type[Exception] = module.error
+
+    def decompress_brotli(body: bytes) -> bytes:
+        try:
+            return decompress(body)
+        except error:
             # Assume the response was already decompressed
             return body
 
+    return decompress_brotli
+
+
+if brotli is not None:
+    decompress_brotli: Callable[[bytes], bytes] = _brotli_decompressor(brotli)
     AVAILABLE_DECOMPRESSORS["br"] = decompress_brotli
 
 
-def replace_text(obj, text, replacement):
+def replace_text(obj: _T, text: str, replacement: str) -> _T:
     """Return a copy of obj with every occurrence of text replaced by replacement.
 
     Replaces in strings and bytes (encoded as UTF-8), and in the keys and
     values of dicts and the items of lists and tuples, at any depth.
     Anything else is returned unchanged. The copy has the type of obj.
     """
-    if isinstance(obj, str):
-        return type(obj)(obj.replace(text, replacement))
-    if isinstance(obj, (bytes, bytearray)):
-        return type(obj)(obj.replace(text.encode("utf-8"), replacement.encode("utf-8")))
-    if isinstance(obj, BytesIO):
-        return type(obj)(replace_text(obj.getvalue(), text, replacement))
-    if isinstance(obj, dict):
-        new = copy.copy(obj)
-        new.clear()
-        for key, value in obj.items():
-            new[replace_text(key, text, replacement)] = replace_text(value, text, replacement)
-        return new
-    if isinstance(obj, (list, tuple)):
-        return type(obj)(replace_text(item, text, replacement) for item in obj)
-    return obj
+    match obj:
+        case str():
+            return type(obj)(obj.replace(text, replacement))
+        case bytes() | bytearray():
+            return type(obj)(obj.replace(text.encode("utf-8"), replacement.encode("utf-8")))
+        case BytesIO():
+            return type(obj)(replace_text(obj.getvalue(), text, replacement))
+        case dict():
+            new = copy.copy(obj)
+            new.clear()
+            for key, value in obj.items():
+                new[replace_text(key, text, replacement)] = replace_text(value, text, replacement)
+            return new
+        case list() | tuple():
+            return type(obj)(replace_text(item, text, replacement) for item in obj)
+        case _:
+            return obj
 
 
-def sensitive_data_hooks(sensitive_data):
+def sensitive_data_hooks(
+    sensitive_data: SensitiveData,
+) -> tuple[Callable[[Request, Response], Interaction], Callable[[Request, Response], Interaction]]:
     """Build the interaction hooks that implement ``filter_sensitive_data``.
 
     ``sensitive_data`` maps placeholders to the values they stand for, as a
@@ -84,35 +113,36 @@ def sensitive_data_hooks(sensitive_data):
     replaces values with their placeholders, for ``before_save_interaction``,
     and ``restore`` puts the values back, for ``after_load_interaction``.
     """
-    if isinstance(sensitive_data, dict):
-        sensitive_data = sensitive_data.items()
-    sensitive_data = list(sensitive_data)
+    pairs = list(sensitive_data.items() if isinstance(sensitive_data, Mapping) else sensitive_data)
 
-    def replace(request, response, restore):
-        for placeholder, value in sensitive_data:
+    def replace(request: Request, response: Response, restore: bool) -> Interaction:
+        for placeholder, value in pairs:
             if callable(value):
                 value = value(request, response)
             if value is None:
                 continue
             # Non-string values, like a port number, are matched as text.
-            placeholder, value = str(placeholder), str(value)
-            if not placeholder or not value:
+            placeholder_text, value_text = str(placeholder), str(value)
+            if not placeholder_text or not value_text:
                 continue
-            text, replacement = (placeholder, value) if restore else (value, placeholder)
+            text, replacement = (placeholder_text, value_text) if restore else (value_text, placeholder_text)
             request = type(request)._from_dict(replace_text(request._to_dict(), text, replacement))
             response = replace_text(response, text, replacement)
         return request, response
 
-    def hide(request, response):
+    def hide(request: Request, response: Response) -> Interaction:
         return replace(request, response, restore=False)
 
-    def restore(request, response):
+    def restore(request: Request, response: Response) -> Interaction:
         return replace(request, response, restore=True)
 
     return hide, restore
 
 
-def replace_headers(request, replacements):
+def replace_headers(
+    request: Request,
+    replacements: Iterable[tuple[str, Replacement[str | bytes]]],
+) -> Request:
     """Replace headers in request according to replacements.
     The replacements should be a list of (key, value) pairs where the value can be any of:
     1. A simple replacement string value.
@@ -123,23 +153,25 @@ def replace_headers(request, replacements):
     for k, rv in replacements:
         if k in new_headers:
             ov = new_headers.pop(k)
-            if callable(rv):
-                rv = rv(key=k, value=ov, request=request)
-            if rv is not None:
-                new_headers[k] = rv
+            new_value = rv(key=k, value=ov, request=request) if callable(rv) else rv
+            if new_value is not None:
+                new_headers[k] = new_value
     request.headers = new_headers
     return request
 
 
-def remove_headers(request, headers_to_remove):
+def remove_headers(request: Request, headers_to_remove: Iterable[str]) -> Request:
     """
     Wrap replace_headers() for API backward compatibility.
     """
-    replacements = [(k, None) for k in headers_to_remove]
+    replacements: list[tuple[str, Replacement[str | bytes]]] = [(k, None) for k in headers_to_remove]
     return replace_headers(request, replacements)
 
 
-def replace_query_parameters(request, replacements):
+def replace_query_parameters(
+    request: Request,
+    replacements: Iterable[tuple[str, Replacement[str]]],
+) -> Request:
     """Replace query parameters in request according to replacements.
 
     The replacements should be a list of (key, value) pairs where the value can be any of:
@@ -149,39 +181,42 @@ def replace_query_parameters(request, replacements):
          value or None.
     """
     query = request.query
-    new_query = []
-    replacements = dict(replacements)
+    new_query: list[tuple[str, str]] = []
+    replacement_for = dict(replacements)
     for k, ov in query:
-        if k not in replacements:
+        if k not in replacement_for:
             new_query.append((k, ov))
         else:
-            rv = replacements[k]
-            if callable(rv):
-                rv = rv(key=k, value=ov, request=request)
-            if rv is not None:
-                new_query.append((k, rv))
+            rv = replacement_for[k]
+            new_value = rv(key=k, value=ov, request=request) if callable(rv) else rv
+            if new_value is not None:
+                new_query.append((k, new_value))
     uri_parts = list(urlparse(request.uri))
     uri_parts[4] = urlencode(new_query)
     request.uri = urlunparse(uri_parts)
     return request
 
 
-def remove_query_parameters(request, query_parameters_to_remove):
+def remove_query_parameters(request: Request, query_parameters_to_remove: Iterable[str]) -> Request:
     """
     Wrap replace_query_parameters() for API backward compatibility.
     """
-    replacements = [(k, None) for k in query_parameters_to_remove]
+    replacements: list[tuple[str, Replacement[str]]] = [(k, None) for k in query_parameters_to_remove]
     return replace_query_parameters(request, replacements)
 
 
-def _replace_urlencoded_parameters(body, replacements, request):
+def _replace_urlencoded_parameters(
+    body: bytes,
+    replacements: Mapping[str, Replacement[object]],
+    request: Request,
+) -> bytes:
     """Replace parameters in a urlencoded form data body.
 
     Raises UnicodeError if the body (or one of its keys/values) can not be
     decoded as UTF-8, in which case it is not urlencoded form data.
     """
     splits = [p.partition(b"=") for p in body.split(b"&")]
-    new_splits = []
+    new_splits: list[tuple[bytes, bytes, bytes]] = []
     for k, sep, ov in splits:
         if not sep:
             # no "=" in this segment, so it is not a key/value pair
@@ -195,33 +230,43 @@ def _replace_urlencoded_parameters(body, replacements, request):
                 new_splits.append((k, sep, ov))
             else:
                 rv = replacements[rk]
-                if callable(rv):
-                    rv = rv(key=rk, value=ov.decode("utf-8"), request=request)
-                if rv is not None:
-                    new_splits.append((k, sep, rv.encode("utf-8")))
+                new_value = rv(key=rk, value=ov.decode("utf-8"), request=request) if callable(rv) else rv
+                if new_value is not None:
+                    new_splits.append((k, sep, new_value.encode("utf-8")))
     return b"&".join(k if not sep else b"".join([k, sep, v]) for k, sep, v in new_splits)
 
 
-def _replace_nested_parameters(data, replacements, request):
+def _replace_nested_dict(
+    data: dict[str, object],
+    replacements: Mapping[str, Replacement[object]],
+    request: Request,
+) -> dict[str, object]:
     """Return a copy of data with replacements applied to the keys of dicts at any depth, in lists too."""
+    new_data: dict[str, object] = {}
+    for k, ov in data.items():
+        if k not in replacements:
+            new_data[k] = _replace_nested_parameters(ov, replacements, request)
+            continue
+        rv = replacements[k]
+        new_value = rv(key=k, value=ov, request=request) if callable(rv) else rv
+        if new_value is not None:
+            new_data[k] = new_value
+    return new_data
+
+
+def _replace_nested_parameters(
+    data: object,
+    replacements: Mapping[str, Replacement[object]],
+    request: Request,
+) -> object:
     if isinstance(data, dict):
-        new_data = {}
-        for k, ov in data.items():
-            if k not in replacements:
-                new_data[k] = _replace_nested_parameters(ov, replacements, request)
-                continue
-            rv = replacements[k]
-            if callable(rv):
-                rv = rv(key=k, value=ov, request=request)
-            if rv is not None:
-                new_data[k] = rv
-        return new_data
+        return _replace_nested_dict(data, replacements, request)
     if isinstance(data, list):
         return [_replace_nested_parameters(item, replacements, request) for item in data]
     return data
 
 
-def _multipart_boundary(content_type):
+def _multipart_boundary(content_type: str | bytes | None) -> bytes | None:
     """The boundary of a multipart/form-data Content-Type, or None."""
     if isinstance(content_type, bytes):
         content_type = content_type.decode("latin-1")
@@ -231,7 +276,12 @@ def _multipart_boundary(content_type):
     return match.group(1).encode("utf-8") if match else None
 
 
-def _replace_multipart_parameters(body, boundary, replacements, request):
+def _replace_multipart_parameters(
+    body: bytes,
+    boundary: bytes,
+    replacements: Mapping[str, Replacement[object]],
+    request: Request,
+) -> bytes:
     """Replace the content of form fields in a multipart/form-data body (#521).
 
     A field that's removed is left out of the body.
@@ -242,28 +292,54 @@ def _replace_multipart_parameters(body, boundary, replacements, request):
     for part in parts:
         headers, separator, content = part.partition(b"\r\n\r\n")
         name = re.search(rb';\s*name="([^"]*)"', headers)
-        key = name and name.group(1).decode("utf-8", "replace")
-        if not separator or key not in replacements:
+        key = name.group(1).decode("utf-8", "replace") if name else None
+        if not separator or key is None or key not in replacements:
             new_parts.append(part)
             continue
         # The content ends before the CRLF that precedes the next delimiter.
         value, ending = (content[:-2], content[-2:]) if content.endswith(b"\r\n") else (content, b"")
         rv = replacements[key]
         if callable(rv):
+            ov: str | bytes
             try:
                 ov = value.decode("utf-8")
             except UnicodeDecodeError:
                 ov = value
-            rv = rv(key=key, value=ov, request=request)
-        if rv is None:
+            new_value = rv(key=key, value=ov, request=request)
+        else:
+            new_value = rv
+        if new_value is None:
             continue
-        if isinstance(rv, str):
-            rv = rv.encode("utf-8")
-        new_parts.append(headers + separator + rv + ending)
+        # Untyped callers' functions may return bytes, which are used as they are.
+        new_content = new_value.encode("utf-8") if isinstance(new_value, str) else new_value
+        new_parts.append(headers + separator + new_content + ending)
     return delimiter.join([preamble, *new_parts])
 
 
-def replace_body_parameters(request, replacements, recursive=False):
+def _replace_json_parameters(
+    body: bytes | bytearray,
+    replacements: Mapping[str, Replacement[object]],
+    request: Request,
+    recursive: bool,
+) -> bytes:
+    json_data: JSON = json.loads(body)
+    if recursive:
+        return json.dumps(_replace_nested_parameters(json_data, replacements, request)).encode("utf-8")
+    if isinstance(json_data, dict):
+        for k, rv in replacements.items():
+            if k in json_data:
+                ov = json_data.pop(k)
+                new_value = rv(key=k, value=ov, request=request) if callable(rv) else rv
+                if new_value is not None:
+                    json_data[k] = new_value
+    return json.dumps(json_data).encode("utf-8")
+
+
+def replace_body_parameters(
+    request: Request,
+    replacements: Iterable[tuple[str, Replacement[object]]],
+    recursive: bool = False,
+) -> Request:
     """Replace body parameters in request--either form data or json--according to replacements.
 
     The replacements should be a list of (key, value) pairs where the value can be any of:
@@ -275,58 +351,48 @@ def replace_body_parameters(request, replacements, recursive=False):
     If recursive is true, keys are also replaced in objects nested in JSON
     and dict bodies, including objects in lists.
     """
-    if not request.body:
+    body = request.body
+    if not body:
         # Nothing to replace
         return request
 
-    if not isinstance(request.body, (bytes, bytearray, str, dict)):
+    if not isinstance(body, (bytes, bytearray, dict)):
         # A file or iterator body, e.g. a streaming upload, isn't filtered (#814).
         return request
 
-    replacements = dict(replacements)
-    if recursive and isinstance(request.body, dict):
-        request.body = _replace_nested_parameters(request.body, replacements, request)
-    elif recursive and request.headers.get("Content-Type") == "application/json":
-        json_data = _replace_nested_parameters(json.loads(request.body), replacements, request)
-        request.body = json.dumps(json_data).encode("utf-8")
-    elif isinstance(request.body, dict):
-        new_body = request.body.copy()
-        for k, rv in replacements.items():
-            if k in new_body:
-                ov = new_body.pop(k)
-                if callable(rv):
-                    rv = rv(key=k, value=ov, request=request)
-                if rv is not None:
-                    new_body[k] = rv
-        request.body = new_body
-    elif request.headers.get("Content-Type") == "application/json":
-        json_data = json.loads(request.body)
-        if isinstance(json_data, dict):
-            for k, rv in replacements.items():
-                if k in json_data:
-                    ov = json_data.pop(k)
-                    if callable(rv):
-                        rv = rv(key=k, value=ov, request=request)
-                    if rv is not None:
-                        json_data[k] = rv
-        request.body = json.dumps(json_data).encode("utf-8")
-    elif boundary := _multipart_boundary(request.headers.get("Content-Type")):
-        body = request.body.encode("utf-8") if isinstance(request.body, str) else bytes(request.body)
-        request.body = _replace_multipart_parameters(body, boundary, replacements, request)
+    replacement_for = dict(replacements)
+    content_type = request.headers.get("Content-Type")
+    if isinstance(body, dict):
+        if recursive:
+            request.body = _replace_nested_dict(body, replacement_for, request)
+        else:
+            new_body = body.copy()
+            for k, rv in replacement_for.items():
+                if k in new_body:
+                    ov = new_body.pop(k)
+                    new_value = rv(key=k, value=ov, request=request) if callable(rv) else rv
+                    if new_value is not None:
+                        new_body[k] = new_value
+            request.body = new_body
+    elif content_type == "application/json":
+        request.body = _replace_json_parameters(body, replacement_for, request, recursive)
+    elif boundary := _multipart_boundary(content_type):
+        request.body = _replace_multipart_parameters(bytes(body), boundary, replacement_for, request)
     else:
-        try:
-            body = request.body.encode("utf-8") if isinstance(request.body, str) else request.body
-            request.body = _replace_urlencoded_parameters(body, replacements, request)
-        except UnicodeError:
-            # The body isn't UTF-8 encoded text -- e.g. a binary file
-            # upload -- so it can't be urlencoded form data and there is
-            # nothing we can safely replace. Leave it untouched instead of
-            # blowing up while recording/replaying (#660).
-            pass
+        # A body that isn't UTF-8 encoded text -- e.g. a binary file upload --
+        # can't be urlencoded form data, and there is nothing we can safely
+        # replace. Leave it untouched instead of blowing up while
+        # recording/replaying (#660).
+        with contextlib.suppress(UnicodeError):
+            request.body = _replace_urlencoded_parameters(bytes(body), replacement_for, request)
     return request
 
 
-def replace_post_data_parameters(request, replacements, recursive=False):
+def replace_post_data_parameters(
+    request: Request,
+    replacements: Iterable[tuple[str, Replacement[object]]],
+    recursive: bool = False,
+) -> Request:
     """
     Wrap replace_body_parameters() for API backward compatibility: only filters POST requests.
     """
@@ -336,15 +402,15 @@ def replace_post_data_parameters(request, replacements, recursive=False):
     return replace_body_parameters(request, replacements, recursive=recursive)
 
 
-def remove_post_data_parameters(request, post_data_parameters_to_remove):
+def remove_post_data_parameters(request: Request, post_data_parameters_to_remove: Iterable[str]) -> Request:
     """
     Wrap replace_post_data_parameters() for API backward compatibility.
     """
-    replacements = [(k, None) for k in post_data_parameters_to_remove]
+    replacements: list[tuple[str, Replacement[object]]] = [(k, None) for k in post_data_parameters_to_remove]
     return replace_post_data_parameters(request, replacements)
 
 
-def decode_response(response):
+def decode_response(response: Response) -> Response:
     """
     If the response is compressed with any supported compression (gzip,
     deflate, br if available):
