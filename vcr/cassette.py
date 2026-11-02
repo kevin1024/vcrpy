@@ -527,6 +527,20 @@ def _accepts_cassette(hook):
     return True
 
 
+def _takes_request_and_response(hook):
+    """Whether an interaction hook can be called with the request and response.
+
+    A hook whose signature can't be inspected is assumed to.
+    """
+    try:
+        inspect.signature(hook).bind(None, None)
+    except TypeError:
+        return False
+    except ValueError:
+        return True
+    return True
+
+
 def _run_hooks(hooks, request, response, cassette):
     """Run interaction hooks in order. Returns None if one of them drops the interaction.
 
@@ -536,8 +550,11 @@ def _run_hooks(hooks, request, response, cassette):
     for hook in hooks:
         if _accepts_cassette(hook):
             interaction = hook(request, response, cassette)
-        else:
+        elif _takes_request_and_response(hook):
             interaction = hook(request, response)
+        else:
+            name = getattr(hook, "__qualname__", repr(hook))
+            raise TypeError(f"Interaction hook {name} must take (request, response) or (request, response, cassette)")
         if interaction is None:
             return None
         if not isinstance(interaction, (tuple, list)) or len(interaction) != 2:

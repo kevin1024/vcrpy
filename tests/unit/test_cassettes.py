@@ -883,3 +883,14 @@ def test_cassette_checks_the_record_mode():
     assert Cassette("path", record_mode="new_episodes").record_mode is RecordMode.NEW_EPISODES
     with pytest.raises(ValueError, match="'sometimes' is not a valid record_mode"):
         Cassette("path", record_mode="sometimes")
+
+
+def test_interaction_hook_that_takes_neither_signature():
+    def hook(request):
+        return request, None
+
+    cassette = Cassette("path", persister=_MemoryPersister, before_save_interaction=hook)
+    cassette.append(Request("GET", "http://example.com/", "", {}), {"body": {"string": b""}})
+    message = r"must take \(request, response\) or \(request, response, cassette\)"
+    with pytest.raises(TypeError, match=message):
+        cassette._save(force=True)
