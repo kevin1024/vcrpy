@@ -15,6 +15,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - ``ignore_hosts`` with a regular expression no longer fails on a request without a host
     - ``filter_post_data_parameters`` leaves a JSON body that isn't an object as it is, instead of failing when it contains a filtered name
     - ``filter_post_data_parameters`` filters ``multipart/form-data`` bodies whose ``Content-Type`` header is bytes
+    - ``Cassette.responses_of()`` and ``Cassette.find_requests_with_most_matches()`` no longer fail with ``AttributeError`` for a request that ``before_record_request`` drops
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2

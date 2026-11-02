@@ -279,6 +279,8 @@ class Cassette:
         the request.
         """
         request = self._before_record_request(request)
+        if request is None:
+            return
         for index, (stored_request, response) in enumerate(self.data):
             if requests_match(request, stored_request, self._match_on):
                 yield index, response
@@ -342,6 +344,8 @@ class Cassette:
         """
         best_matches = []
         request = self._before_record_request(request)
+        if request is None:
+            return []
         for _, (stored_request, _) in enumerate(self.data):
             successes, fails = get_matchers_results(request, stored_request, self._match_on)
             best_matches.append((len(successes), stored_request, successes, fails))

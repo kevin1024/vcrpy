@@ -894,3 +894,12 @@ def test_interaction_hook_that_takes_neither_signature():
     message = r"must take \(request, response\) or \(request, response, cassette\)"
     with pytest.raises(TypeError, match=message):
         cassette._save(force=True)
+
+
+def test_looking_up_a_request_that_before_record_request_drops():
+    cassette = Cassette("path", before_record_request=lambda request: None)
+    cassette.data.append((Request("GET", "http://example.com/", "", {}), {"body": {"string": b""}}))
+    request = Request("GET", "http://example.com/", "", {})
+    assert cassette.find_requests_with_most_matches(request) == []
+    with pytest.raises(UnhandledHTTPRequestError):
+        cassette.responses_of(request)
