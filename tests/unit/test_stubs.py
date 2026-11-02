@@ -82,3 +82,16 @@ class TestVCRConnection:
                 conn3.getresponse()
             assert cass.play_counts[0] == 0
             assert cass.play_counts[1] == 1
+
+
+def test_urllib3_stub_headers_use_urllib3_header_dict():
+    # urllib3 only exports HTTPHeaderDict at the top level from 2.0 on, so the
+    # stub has to fall back to urllib3._collections on older releases (#1092).
+    from urllib3._collections import HTTPHeaderDict
+
+    from vcr.stubs import urllib3_stubs
+
+    assert urllib3_stubs.HTTPHeaderDict is HTTPHeaderDict
+
+    headers = urllib3_stubs.HTTPHeaderDict([("Link", "</a>; rel=next"), ("Link", "</b>; rel=prev")])
+    assert headers.getlist("Link") == ["</a>; rel=next", "</b>; rel=prev"]
