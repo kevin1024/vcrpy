@@ -108,16 +108,22 @@ def _join_body_chunks(chunks):
     or ints (a bytes-like sequence of byte values).
     """
     chunks = list(chunks)
-    if not chunks:
-        return b""
-    first = chunks[0]
-    if isinstance(first, str):
-        return "".join(chunks).encode("utf-8")
-    if isinstance(first, (bytes, bytearray, memoryview)):
-        return b"".join(bytes(chunk) for chunk in chunks)
-    if isinstance(first, int):
-        return bytes(chunks)
-    raise ValueError(f"Body type {type(first)} not supported")
+    texts = [chunk for chunk in chunks if isinstance(chunk, str)]
+    if len(texts) == len(chunks):
+        return "".join(texts).encode("utf-8")
+    buffers = [chunk for chunk in chunks if isinstance(chunk, (bytes, bytearray, memoryview))]
+    if len(buffers) == len(chunks):
+        return b"".join(bytes(chunk) for chunk in buffers)
+    values = [chunk for chunk in chunks if isinstance(chunk, int)]
+    if len(values) == len(chunks):
+        return bytes(values)
+    unsupported = [
+        chunk for chunk in chunks if not isinstance(chunk, (str, bytes, bytearray, memoryview, int))
+    ]
+    if unsupported:
+        raise ValueError(f"Body type {type(unsupported[0])} not supported")
+    types_found = ", ".join(sorted({type(chunk).__name__ for chunk in chunks}))
+    raise ValueError(f"Body chunks must all be str, all bytes-like or all ints, not a mix of {types_found}")
 
 
 def read_body(request):

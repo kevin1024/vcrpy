@@ -10,6 +10,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - ``decode_compressed_response`` no longer fails on a compressed response without a body, e.g. to a ``HEAD`` request
     - The ``body`` matcher no longer fails with ``AttributeError`` on form data bodies (as aiohttp records them) sent as JSON or urlencoded
     - An interaction hook that takes neither ``(request, response)`` nor ``(request, response, cassette)`` raises a ``TypeError`` that says so
+    - An iterable request body with chunks of different types, e.g. bytes and ints, raises ``ValueError`` instead of being read wrongly
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2

@@ -6,7 +6,7 @@ import xmlrpc.client
 from string import hexdigits
 from xml.parsers.expat import ExpatError
 
-from .util import read_body
+from .util import _join_body_chunks, read_body
 
 _HEXDIG_CODE_POINTS: set[int] = {ord(s.encode("ascii")) for s in hexdigits}
 
@@ -166,18 +166,8 @@ def _dechunk(body):
     elif isinstance(body, bytearray):
         body = bytes(body)
     elif hasattr(body, "__iter__"):
-        body = list(body)
-        if body:
-            if isinstance(body[0], str):
-                body = ("".join(body)).encode("utf-8")
-            elif isinstance(body[0], bytes):
-                body = b"".join(body)
-            elif isinstance(body[0], int):
-                body = bytes(body)
-            else:
-                raise ValueError(f"Body chunk type {type(body[0])} not supported")
-        else:
-            body = None
+        parts = list(body)
+        body = _join_body_chunks(parts) if parts else None
 
     if not isinstance(body, bytes):
         return body
