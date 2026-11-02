@@ -17,19 +17,7 @@ class Request:
     def __init__(self, method, uri, body, headers):
         self.method = method
         self.uri = uri
-        self._was_file = hasattr(body, "read")
-        self._was_iter = _is_nonsequence_iterator(body)
-        if self._was_file:
-            if hasattr(body, "tell"):
-                tell = body.tell()
-                self.body = body.read()
-                body.seek(tell)
-            else:
-                self.body = body.read()
-        elif self._was_iter:
-            self.body = list(body)
-        else:
-            self.body = body
+        self.body = body
         self.headers = headers
         log.debug("Invoking Request %s", self.uri)
 
@@ -74,6 +62,19 @@ class Request:
 
     @body.setter
     def body(self, value):
+        # Converts the body as Request() does, so that request.body = request.body changes nothing.
+        self._was_file = hasattr(value, "read")
+        self._was_iter = _is_nonsequence_iterator(value)
+        if self._was_file:
+            if hasattr(value, "tell"):
+                tell = value.tell()
+                content = value.read()
+                value.seek(tell)
+            else:
+                content = value.read()
+            value = content
+        elif self._was_iter:
+            value = list(value)
         if isinstance(value, str):
             value = value.encode("utf-8")
         self._body = value

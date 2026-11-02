@@ -1,4 +1,5 @@
 import copy
+from io import BytesIO
 
 import pytest
 
@@ -107,3 +108,15 @@ def test_HeadersDict():
     assert h == {"Content-Type": "text/plain"}
     h["CONtent-tyPE"] = "whoa"
     assert h == {"Content-Type": "whoa"}
+
+
+@pytest.mark.parametrize(
+    "make_body",
+    [lambda: BytesIO(b"body"), lambda: iter([b"bo", b"dy"])],
+    ids=["file", "iterator"],
+)
+def test_assigning_a_body_to_itself_changes_nothing(make_body):
+    request = Request("POST", "http://example.com/", make_body(), {})
+    request.body = request.body
+    assert request.body_bytes == b"body"
+    assert read_body(request) == b"body"

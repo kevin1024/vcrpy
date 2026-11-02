@@ -4,6 +4,7 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - ``request.body = request.body`` no longer breaks a request with a file-like or iterator body. Assigning a body converts it as ``Request()`` does, so assigning bytes to a request with a file-like body gives it a bytes body, which it used to keep as a file
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2
