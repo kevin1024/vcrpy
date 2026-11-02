@@ -2,7 +2,11 @@
 
 from importlib.util import find_spec
 
-from urllib3 import HTTPHeaderDict
+try:
+    from urllib3 import HTTPHeaderDict
+except ImportError:  # urllib3 < 2.0
+    from urllib3._collections import HTTPHeaderDict
+
 from urllib3.connection import HTTPConnection, VerifiedHTTPSConnection
 
 from ..stubs import VCRHTTPConnection, VCRHTTPSConnection

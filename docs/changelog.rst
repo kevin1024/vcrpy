@@ -3,6 +3,9 @@ Changelog
 
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
+-  9.4.1
+    - Don't fail with ``ImportError: cannot import name 'HTTPHeaderDict'`` on urllib3 1.x, such as the 1.26 that Debian oldstable ships. The urllib3 stub imported ``HTTPHeaderDict`` from the top level of ``urllib3``, which only exports it from 2.0 on, so ``use_cassette()`` raised while building its patchers and nothing could be recorded (#1092)
+
 -  9.4.0
     - Record and play back requests made through SOCKS proxies with requests and urllib3 (``socks5://`` and ``socks5h://`` proxies, with PySocks installed). urllib3 uses its own connection classes for them, which weren't patched, so these requests skipped the cassette (#547, #548)
     - Fix requests escaping a cassette, e.g. a write-protected one not raising ``CannotOverwriteExistingCassetteException``, when a ``vcr.patch.force_reset()`` window opened elsewhere is closed late by the garbage collector while the cassette is in use (#979, #1051) - thanks @yeion7, from #1052
