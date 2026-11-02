@@ -111,7 +111,11 @@ class VCRHTTPResponse(HTTPResponse):
         return self._closed
 
     def read(self, *args, decode_content=None, **kwargs):
-        return self._content.read(*args, **kwargs)
+        data = self._content.read(*args, **kwargs)
+        if self._content.tell() == len(self.recorded_response["body"]["string"]):
+            # urllib3 returns the connection to its pool once the body is read (#949).
+            self.release_conn()
+        return data
 
     def read1(self, *args, **kwargs):
         return self._content.read1(*args, **kwargs)
@@ -199,12 +203,14 @@ class VCRHTTPResponse(HTTPResponse):
         pool = getattr(self, "_pool", None)
         connection = getattr(self, "_connection", None)
         if pool is not None and connection is not None:
+            if getattr(connection, "_vcr_cassette_exited", False):
+                connection = None  # its cassette took it out of the pool
             pool._put_conn(connection)
             self._connection = None
 
     def stream(self, amt=65536, decode_content=None):
         while True:
-            b = self._content.read(amt)
+            b = self.read(amt)
             yield b
             if not b:
                 break
