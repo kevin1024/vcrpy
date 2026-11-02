@@ -595,3 +595,10 @@ def test_decode_response_without_a_body(body):
         "body": body,
     }
     assert decode_response(response) == response
+
+
+def test_replace_post_data_parameters_leaves_a_json_array_alone():
+    body = json.dumps(["id", "other"]).encode()
+    request = Request("POST", "http://google.com", body, {"Content-Type": "application/json"})
+    replace_post_data_parameters(request, [("id", None)])
+    assert json.loads(request.body) == ["id", "other"]

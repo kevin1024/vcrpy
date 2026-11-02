@@ -13,6 +13,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
     - An iterable request body with chunks of different types, e.g. bytes and ints, raises ``ValueError`` instead of being read wrongly
     - The ``body`` matcher no longer fails with ``UnboundLocalError`` on an empty ``bytearray`` body sent with ``Transfer-Encoding: chunked``
     - ``ignore_hosts`` with a regular expression no longer fails on a request without a host
+    - ``filter_post_data_parameters`` leaves a JSON body that isn't an object as it is, instead of failing when it contains a filtered name
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2

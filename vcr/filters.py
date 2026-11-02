@@ -298,13 +298,14 @@ def replace_body_parameters(request, replacements, recursive=False):
         request.body = new_body
     elif request.headers.get("Content-Type") == "application/json":
         json_data = json.loads(request.body)
-        for k, rv in replacements.items():
-            if k in json_data:
-                ov = json_data.pop(k)
-                if callable(rv):
-                    rv = rv(key=k, value=ov, request=request)
-                if rv is not None:
-                    json_data[k] = rv
+        if isinstance(json_data, dict):
+            for k, rv in replacements.items():
+                if k in json_data:
+                    ov = json_data.pop(k)
+                    if callable(rv):
+                        rv = rv(key=k, value=ov, request=request)
+                    if rv is not None:
+                        json_data[k] = rv
         request.body = json.dumps(json_data).encode("utf-8")
     elif boundary := _multipart_boundary(request.headers.get("Content-Type")):
         body = request.body.encode("utf-8") if isinstance(request.body, str) else bytes(request.body)
