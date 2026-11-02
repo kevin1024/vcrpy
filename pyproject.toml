@@ -64,6 +64,17 @@ tests-niquests = [
     "pytest-httpbin",
     "niquests",
 ]
+tests-urllib3-1 = [
+    "httpbin>=0.10.3",
+    "pysocks",
+    "pytest",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-httpbin",
+    "requests>=2.22.0",
+    "urllib3<2",
+]
 
 [tool.setuptools]
 include-package-data = false
