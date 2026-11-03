@@ -20,7 +20,7 @@ class FilesystemPersister:
         if not cassette_path.is_file():
             raise CassetteNotFoundError()
         try:
-            with cassette_path.open() as f:
+            with cassette_path.open(encoding="utf-8") as f:
                 data = f.read()
         except UnicodeDecodeError as err:
             raise CassetteDecodeError("Can't read Cassette, Encoding is broken") from err
@@ -40,5 +40,5 @@ class FilesystemPersister:
         if not cassette_folder.exists():
             cassette_folder.mkdir(parents=True)
 
-        with cassette_path.open("w") as f:
+        with cassette_path.open("w", encoding="utf-8") as f:
             f.write(data)

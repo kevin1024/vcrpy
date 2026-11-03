@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
+    - Read and write cassette files as UTF-8 instead of the locale's encoding. Opening them without one made Python report ``EncodingWarning`` when it's asked to warn about the implicit locale encoding, and on a system whose locale can't represent the text (e.g. Windows using cp936 or cp1252), a cassette holding non-ASCII text that wasn't escaped -- one edited by hand, or written by a custom serializer -- failed to load with ``UnicodeDecodeError`` and was then treated as an empty cassette and recorded over, or failed to save with ``UnicodeEncodeError`` (#618)
 
 -  9.4.2
     - Fix urllib3 pools with ``block=True``, e.g. a requests session with ``HTTPAdapter(pool_block=True)``, waiting forever for a free connection in a cassette, or when used before, after or across cassettes. A response now returns its connection to the pool once its body has been read, as in urllib3, and vcrpy keeps a pool's free slots when it takes connections out of it as a cassette starts or stops using the pool. A response finished after its cassette has exited gives back only the slot, not the cassette's connection (#949) - thanks @nk-batman21
