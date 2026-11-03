@@ -73,7 +73,7 @@ tests-urllib3-1 = [
     "pytest-cov",
     "pytest-httpbin",
     "requests>=2.22.0",
-    "urllib3<2",
+    "urllib3<3",
 ]
 
 [tool.setuptools]
