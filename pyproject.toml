@@ -25,7 +25,7 @@ urls = {Homepage = "https://github.com/kevin1024/vcrpy"}
 requires-python = ">=3.11"
 dependencies = [
     "PyYAML",
-    "wrapt",
+    "wrapt>=1.14.0",
 ]
 dynamic = ["version"]
 
