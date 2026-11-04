@@ -18,6 +18,7 @@ from vcr.errors import (
 )
 from vcr.patch import force_reset
 from vcr.persisters.filesystem import CassetteNotFoundError
+from vcr.record_mode import RecordMode
 from vcr.request import Request
 from vcr.stubs import VCRHTTPSConnection
 
@@ -876,3 +877,29 @@ def test_metadata_with_persister_without_metadata():
     cassette = Cassette.load(path=path, persister=_MemoryPersister, record_mode="new_episodes")
     assert len(cassette) == 1
     assert cassette.get_metadata("key", "value") == "value"
+
+
+def test_cassette_checks_the_record_mode():
+    assert Cassette("path", record_mode="new_episodes").record_mode is RecordMode.NEW_EPISODES
+    with pytest.raises(ValueError, match="'sometimes' is not a valid record_mode"):
+        Cassette("path", record_mode="sometimes")
+
+
+def test_interaction_hook_that_takes_neither_signature():
+    def hook(request):
+        return request, None
+
+    cassette = Cassette("path", persister=_MemoryPersister, before_save_interaction=hook)
+    cassette.append(Request("GET", "http://example.com/", "", {}), {"body": {"string": b""}})
+    message = r"must take \(request, response\) or \(request, response, cassette\)"
+    with pytest.raises(TypeError, match=message):
+        cassette._save(force=True)
+
+
+def test_looking_up_a_request_that_before_record_request_drops():
+    cassette = Cassette("path", before_record_request=lambda request: None)
+    cassette.data.append((Request("GET", "http://example.com/", "", {}), {"body": {"string": b""}}))
+    request = Request("GET", "http://example.com/", "", {})
+    assert cassette.find_requests_with_most_matches(request) == []
+    with pytest.raises(UnhandledHTTPRequestError):
+        cassette.responses_of(request)

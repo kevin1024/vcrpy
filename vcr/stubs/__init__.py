@@ -446,7 +446,7 @@ class VCRHTTPConnection(VCRConnection):
     _baseclass = HTTPConnection
     _protocol = "http"
     debuglevel = _baseclass.debuglevel
-    _http_vsn = _baseclass._http_vsn
+    _http_vsn = _baseclass._http_vsn  # type: ignore[attr-defined]
     _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)
 
 
@@ -457,5 +457,5 @@ class VCRHTTPSConnection(VCRConnection):
     _protocol = "https"
     is_verified = True
     debuglevel = _baseclass.debuglevel
-    _http_vsn = _baseclass._http_vsn
+    _http_vsn = _baseclass._http_vsn  # type: ignore[attr-defined]
     _http_vsn_str = getattr(_baseclass, "_http_vsn_str", None)

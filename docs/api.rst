@@ -1,6 +1,13 @@
 API
 ===
 
+:mod:`~vcr.types`
+-----------------
+
+.. automodule:: vcr.types
+   :members:
+   :exclude-members: CassetteContextDecorator, InjectingCassetteContextDecorator, Readable, SupportsKeysAndGetItem
+
 :mod:`~vcr.config`
 ------------------
 

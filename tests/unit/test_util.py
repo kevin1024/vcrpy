@@ -31,3 +31,9 @@ def test_unsupported_read_body():
     with pytest.raises(ValueError) as excinfo:
         assert read_body(r)
     assert excinfo.value.args == ("Body type <class 'list'> not supported",)
+
+
+def test_read_body_of_chunks_of_different_types():
+    r = request.Request("POST", "http://example.com", iter([b"a", 1]), {})
+    with pytest.raises(ValueError, match="all bytes-like or all ints, not a mix of bytes, int"):
+        read_body(r)

@@ -1,8 +1,14 @@
 # .. _persister_example:
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..serialize import deserialize, serialize
+
+if TYPE_CHECKING:
+    from ..types import CassetteDict, LoadedCassette, Serializer, StrPath
 
 
 class CassetteNotFoundError(FileNotFoundError):
@@ -15,12 +21,12 @@ class CassetteDecodeError(ValueError):
 
 class FilesystemPersister:
     @classmethod
-    def load_cassette(cls, cassette_path, serializer):
-        cassette_path = Path(cassette_path)  # if cassette path is already Path this is no operation
-        if not cassette_path.is_file():
+    def load_cassette(cls, cassette_path: StrPath, serializer: Serializer) -> LoadedCassette:
+        path = Path(cassette_path)  # if cassette path is already Path this is no operation
+        if not path.is_file():
             raise CassetteNotFoundError()
         try:
-            with cassette_path.open() as f:
+            with path.open() as f:
                 data = f.read()
         except UnicodeDecodeError as err:
             raise CassetteDecodeError("Can't read Cassette, Encoding is broken") from err
@@ -32,13 +38,13 @@ class FilesystemPersister:
         return deserialize(data, serializer)
 
     @staticmethod
-    def save_cassette(cassette_path, cassette_dict, serializer):
+    def save_cassette(cassette_path: StrPath, cassette_dict: CassetteDict, serializer: Serializer) -> None:
         data = serialize(cassette_dict, serializer)
-        cassette_path = Path(cassette_path)  # if cassette path is already Path this is no operation
+        path = Path(cassette_path)  # if cassette path is already Path this is no operation
 
-        cassette_folder = cassette_path.parent
+        cassette_folder = path.parent
         if not cassette_folder.exists():
             cassette_folder.mkdir(parents=True)
 
-        with cassette_path.open("w") as f:
+        with path.open("w") as f:
             f.write(data)

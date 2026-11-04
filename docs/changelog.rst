@@ -4,6 +4,19 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - vcrpy is typed: its public API is annotated, and it has a ``py.typed`` marker, so type checkers check code that uses it (#780). ``vcr.types`` has the types of hooks, matchers, serializers, persisters and options, e.g. ``Response`` for ``before_record_response`` hooks. It needs ``typing_extensions`` below Python 3.13
+    - ``request.body = request.body`` no longer breaks a request with a file-like or iterator body. Assigning a body converts it as ``Request()`` does, so assigning bytes to a request with a file-like body gives it a bytes body, which it used to keep as a file
+    - Saving a cassette no longer turns the response bodies of the cassette in memory into ``str``
+    - ``Cassette(record_mode=...)`` checks the record mode, as ``VCR()`` does
+    - ``decode_compressed_response`` no longer fails on a compressed response without a body, e.g. to a ``HEAD`` request
+    - The ``body`` matcher no longer fails with ``AttributeError`` on form data bodies (as aiohttp records them) sent as JSON or urlencoded
+    - An interaction hook that takes neither ``(request, response)`` nor ``(request, response, cassette)`` raises a ``TypeError`` that says so
+    - An iterable request body with chunks of different types, e.g. bytes and ints, raises ``ValueError`` instead of being read wrongly
+    - The ``body`` matcher no longer fails with ``UnboundLocalError`` on an empty ``bytearray`` body sent with ``Transfer-Encoding: chunked``
+    - ``ignore_hosts`` with a regular expression no longer fails on a request without a host
+    - ``filter_post_data_parameters`` leaves a JSON body that isn't an object as it is, instead of failing when it contains a filtered name
+    - ``filter_post_data_parameters`` filters ``multipart/form-data`` bodies whose ``Content-Type`` header is bytes
+    - ``Cassette.responses_of()`` and ``Cassette.find_requests_with_most_matches()`` no longer fail with ``AttributeError`` for a request that ``before_record_request`` drops
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2

@@ -25,6 +25,7 @@ urls = {Homepage = "https://github.com/kevin1024/vcrpy"}
 requires-python = ">=3.11"
 dependencies = [
     "PyYAML",
+    "typing_extensions>=4.6; python_version < '3.13'",
     "wrapt",
 ]
 dynamic = ["version"]
@@ -43,6 +44,7 @@ tests = [
     "httpx",
     "httpx-curl-cffi",
     "httpx2",
+    "hypothesis",
     "pycurl; platform_python_implementation != 'PyPy'",
     "pyreqwest",
     "pysocks",
@@ -57,6 +59,7 @@ tests = [
 ]
 tests-niquests = [
     "httpbin>=0.10.3",
+    "hypothesis",
     "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
@@ -66,6 +69,7 @@ tests-niquests = [
 ]
 tests-urllib3-1 = [
     "httpbin>=0.10.3",
+    "hypothesis",
     "pysocks",
     "pytest",
     "pytest-aiohttp",
@@ -75,9 +79,20 @@ tests-urllib3-1 = [
     "requests>=2.22.0",
     "urllib3<2",
 ]
+typing = [
+    "vcrpy[tests]",
+    "botocore-stubs",
+    "mypy",
+    "pyright",
+    "types-PyYAML",
+    "types-httplib2",
+]
 
 [tool.setuptools]
 include-package-data = false
+
+[tool.setuptools.package-data]
+vcr = ["py.typed"]
 
 [tool.setuptools.packages.find]
 exclude = ["tests*"]
@@ -122,3 +137,69 @@ select = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["vcr"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["vcr", "tests/typing", "tests/unit/test_laws.py", "tests/unit/test_cassette_model.py"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code"]
+
+[[tool.mypy.overrides]]
+# Optional integrations that are not necessarily installed
+module = ["httpx_curl_cffi"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# The connection stubs combine a VCR mixin with the real connection class of
+# each library and swap `_baseclass`/`endheaders`; the type system cannot
+# express that.
+module = [
+    "vcr.stubs.boto3_stubs",
+    "vcr.stubs.httplib2_stubs",
+    "vcr.stubs.requests_stubs",
+    "vcr.stubs.urllib3_stubs",
+]
+disable_error_code = ["misc", "assignment"]
+
+[[tool.mypy.overrides]]
+# The public API, which is fully annotated. The HTTP library stubs and the
+# patching machinery aren't yet.
+module = [
+    "vcr",
+    "vcr._handle_coroutine",
+    "vcr.cassette",
+    "vcr.config",
+    "vcr.errors",
+    "vcr.filters",
+    "vcr.matchers",
+    "vcr.persisters.*",
+    "vcr.record_mode",
+    "vcr.request",
+    "vcr.serialize",
+    "vcr.serializers.*",
+    "vcr.types",
+    "vcr.unittest",
+    "vcr.util",
+    "tests.typing.*",
+    "tests.unit.test_laws",
+    "tests.unit.test_cassette_model",
+]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+warn_return_any = true
+implicit_reexport = false
+strict_equality = true
+extra_checks = true
+
+[tool.pyright]
+pythonVersion = "3.11"
+include = ["vcr", "tests/typing", "tests/unit/test_laws.py", "tests/unit/test_cassette_model.py"]
+exclude = ["vcr/stubs", "vcr/patch.py", "vcr/migration.py"]
+# Strict for what users of vcrpy see; the implementation is checked in standard mode.
+strict = ["vcr/types.py", "tests/typing", "tests/unit/test_laws.py", "tests/unit/test_cassette_model.py"]

@@ -585,3 +585,37 @@ def test_replace_text():
     # The original is left untouched.
     assert original["uri"] == "http://x/?key=SECRET"
     assert original["body"] == b"token=SECRET"
+
+
+@pytest.mark.parametrize("body", [{}, {"string": None}], ids=["no string", "None"])
+def test_decode_response_without_a_body(body):
+    response = {
+        "status": {"code": 200, "message": "OK"},
+        "headers": {"content-encoding": ["gzip"]},
+        "body": body,
+    }
+    assert decode_response(response) == response
+
+
+def test_replace_post_data_parameters_leaves_a_json_array_alone():
+    body = json.dumps(["id", "other"]).encode()
+    request = Request("POST", "http://google.com", body, {"Content-Type": "application/json"})
+    replace_post_data_parameters(request, [("id", None)])
+    assert json.loads(request.body) == ["id", "other"]
+
+
+def test_replace_body_parameters_multipart_with_a_bytes_content_type():
+    request = _multipart_request({"keep": "kept", "remove": "secret"})
+    request.headers["Content-Type"] = request.headers["Content-Type"].encode("latin-1")
+    replace_body_parameters(request, [("remove", None)])
+    assert b"secret" not in request.body
+    assert b"kept" in request.body
+
+
+def test_replace_text_keeps_the_types_of_values():
+    class Fields(dict):
+        pass
+
+    assert replace_text(bytearray(b"a secret"), "secret", "XXX") == bytearray(b"a XXX")
+    assert type(replace_text(bytearray(b"a secret"), "secret", "XXX")) is bytearray
+    assert type(replace_text(Fields(name="secret"), "secret", "XXX")) is Fields

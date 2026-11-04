@@ -1,14 +1,25 @@
 """Utilities for patching in cassettes"""
 
+from __future__ import annotations
+
 import contextlib
 import functools
 import http.client as httplib
+import importlib
 import itertools
 import logging
 import queue
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Final
 from unittest import mock
 
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeIs
+
+    from .cassette import Cassette
+    from .types import PatcherName
 
 log = logging.getLogger(__name__)
 # Save some of the original types for the purposes of unpatching
@@ -20,7 +31,7 @@ try:
     from botocore.awsrequest import AWSHTTPConnection, AWSHTTPSConnection
 except ImportError as e:
     try:
-        import botocore.vendored.requests  # noqa: F401
+        importlib.import_module("botocore.vendored.requests")
     except ImportError:  # pragma: no cover
         pass
     else:
@@ -33,14 +44,13 @@ else:
     _cpoolBoto3HTTPConnection = AWSHTTPConnection
     _cpoolBoto3HTTPSConnection = AWSHTTPSConnection
 
-cpool = None
-conn = None
 # Try to save the original types for urllib3
 try:
     import urllib3.connection as conn
     import urllib3.connectionpool as cpool
 except ImportError:  # pragma: no cover
-    pass
+    cpool = None  # type: ignore[assignment]
+    conn = None  # type: ignore[assignment]
 else:
     _VerifiedHTTPSConnection = conn.VerifiedHTTPSConnection
     _connHTTPConnection = conn.HTTPConnection
@@ -144,7 +154,7 @@ else:
 # example, skipping "httpx" when a layered client (such as httpx-aiohttp)
 # would otherwise be recorded twice: once by the httpx patcher and once
 # by the patcher for the transport library underneath it.
-PATCHER_NAMES = (
+PATCHER_NAMES: Final[tuple[PatcherName, ...]] = (
     "httplib",
     "requests",
     "boto3",
@@ -157,30 +167,35 @@ PATCHER_NAMES = (
 )
 
 
-def validate_skip_patchers(skip_patchers):
-    skip_patchers = tuple(skip_patchers)
-    unknown = sorted(set(skip_patchers) - set(PATCHER_NAMES))
+def _is_patcher_name(name: str) -> TypeIs[PatcherName]:
+    return name in PATCHER_NAMES
+
+
+def validate_skip_patchers(skip_patchers: Iterable[str]) -> tuple[PatcherName, ...]:
+    names = tuple(skip_patchers)
+    unknown = sorted(set(names) - set(PATCHER_NAMES))
     if unknown:
         raise ValueError(
             f"Unknown patcher(s) in skip_patchers: {', '.join(unknown)}. "
             f"Valid patcher names are: {', '.join(PATCHER_NAMES)}",
         )
-    return skip_patchers
+    return tuple(name for name in names if _is_patcher_name(name))
+
+
+def _build_patchers_from_mock_triples_decorator(function):
+    @functools.wraps(function)
+    def wrapped(self, *args, **kwargs):
+        return self._build_patchers_from_mock_triples(function(self, *args, **kwargs))
+
+    return wrapped
 
 
 class CassettePatcherBuilder:
-    def _build_patchers_from_mock_triples_decorator(function):
-        @functools.wraps(function)
-        def wrapped(self, *args, **kwargs):
-            return self._build_patchers_from_mock_triples(function(self, *args, **kwargs))
-
-        return wrapped
-
-    def __init__(self, cassette):
+    def __init__(self, cassette: Cassette) -> None:
         self._cassette = cassette
-        self._class_to_cassette_subclass = {}
+        self._class_to_cassette_subclass: dict[type, type] = {}
 
-    def build(self):
+    def build(self) -> Iterator[mock._patch[object]]:
         skip = set(getattr(self._cassette, "skip_patchers", ()))
         groups = (
             ("httplib", self._httplib),
@@ -625,7 +640,7 @@ class ConnectionRemover:
                 connection.close()
 
 
-def reset_patchers():
+def reset_patchers() -> Iterator[mock._patch[object]]:
     yield mock.patch.object(httplib, "HTTPConnection", _HTTPConnection)
     yield mock.patch.object(httplib, "HTTPSConnection", _HTTPSConnection)
 
@@ -644,25 +659,33 @@ def reset_patchers():
 
     try:
         # unpatch botocore with awsrequest
-        import botocore.awsrequest as cpool
+        import botocore.awsrequest as awsrequest
     except ImportError:  # pragma: no cover
         pass
     else:
-        if hasattr(cpool.AWSHTTPConnectionPool, "ConnectionCls"):
-            yield mock.patch.object(cpool.AWSHTTPConnectionPool, "ConnectionCls", _cpoolBoto3HTTPConnection)
-            yield mock.patch.object(cpool.AWSHTTPSConnectionPool, "ConnectionCls", _cpoolBoto3HTTPSConnection)
+        if hasattr(awsrequest.AWSHTTPConnectionPool, "ConnectionCls"):
+            yield mock.patch.object(
+                awsrequest.AWSHTTPConnectionPool,
+                "ConnectionCls",
+                _cpoolBoto3HTTPConnection,
+            )
+            yield mock.patch.object(
+                awsrequest.AWSHTTPSConnectionPool,
+                "ConnectionCls",
+                _cpoolBoto3HTTPSConnection,
+            )
 
-        if hasattr(cpool, "AWSHTTPSConnection"):
-            yield mock.patch.object(cpool, "AWSHTTPSConnection", _cpoolBoto3HTTPSConnection)
+        if hasattr(awsrequest, "AWSHTTPSConnection"):
+            yield mock.patch.object(awsrequest, "AWSHTTPSConnection", _cpoolBoto3HTTPSConnection)
 
     try:
-        import httplib2 as cpool
+        import httplib2
     except ImportError:  # pragma: no cover
         pass
     else:
-        yield mock.patch.object(cpool, "HTTPConnectionWithTimeout", _HTTPConnectionWithTimeout)
-        yield mock.patch.object(cpool, "HTTPSConnectionWithTimeout", _HTTPSConnectionWithTimeout)
-        yield mock.patch.object(cpool, "SCHEME_TO_CONNECTION", _SCHEME_TO_CONNECTION)
+        yield mock.patch.object(httplib2, "HTTPConnectionWithTimeout", _HTTPConnectionWithTimeout)
+        yield mock.patch.object(httplib2, "HTTPSConnectionWithTimeout", _HTTPSConnectionWithTimeout)
+        yield mock.patch.object(httplib2, "SCHEME_TO_CONNECTION", _SCHEME_TO_CONNECTION)
 
     try:
         import tornado.simple_httpclient as simple
@@ -766,7 +789,7 @@ def reset_patchers():
         )
 
 
-def _undo_reset(patcher, target, attribute, reset_to):
+def _undo_reset(patcher: mock._patch[object], target: object, attribute: str, reset_to: object) -> None:
     replaced_by = getattr(target, attribute, reset_to)
     patcher.__exit__(None, None, None)
     # A reset window is a suspended generator, so an abandoned one is unwound by
@@ -777,7 +800,7 @@ def _undo_reset(patcher, target, attribute, reset_to):
 
 
 @contextlib.contextmanager
-def force_reset():
+def force_reset() -> Iterator[None]:
     """Temporarily put back the real classes a cassette replaced."""
     with contextlib.ExitStack() as exit_stack:
         for patcher in reset_patchers():
