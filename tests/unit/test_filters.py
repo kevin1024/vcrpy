@@ -418,6 +418,63 @@ def test_replace_body_parameters_multipart_quoted_boundary():
     assert request.body == _multipart_request({"a": "b"}).body
 
 
+def test_replace_body_parameters_multipart_with_bytes_content_type():
+    # boto3 sends Content-Type as bytes, and a cassette that stores the header
+    # as !!binary replays it as bytes (#1100).
+    request = _multipart_request(
+        {"api_key": "secret", "a": "b"},
+        content_type=b"multipart/form-data; boundary=vcrpy-boundary",
+    )
+    replace_body_parameters(request, [("api_key", None)])
+    assert request.body == _multipart_request({"a": "b"}).body
+
+
+def test_replace_body_parameters_json_with_bytes_content_type():
+    request = Request(
+        "POST",
+        "http://google.com",
+        b'{"one": "keep", "two": "lose"}',
+        {"Content-Type": b"application/json"},
+    )
+    replace_body_parameters(request, [("two", None)])
+    assert json.loads(request.body) == {"one": "keep"}
+
+
+def test_replace_body_parameters_json_recursive_with_bytes_content_type():
+    request = Request(
+        "POST",
+        "http://google.com",
+        json.dumps(NESTED_BODY).encode(),
+        {"Content-Type": b"application/json"},
+    )
+    replace_body_parameters(request, [("token", "<TOKEN>")], recursive=True)
+    assert json.loads(request.body)["params"]["token"] == "<TOKEN>"
+
+
+def test_replace_body_parameters_form_encoded_with_bytes_content_type():
+    request = Request(
+        "POST",
+        "http://google.com",
+        b"api_key=secret&a=b",
+        {"Content-Type": b"application/x-www-form-urlencoded"},
+    )
+    replace_body_parameters(request, [("api_key", None)])
+    assert request.body == b"a=b"
+
+
+def test_replace_body_parameters_bytes_content_type_non_ascii():
+    # latin-1 round-trips any byte, so an unusual header value can't raise while
+    # only the type token matters.
+    request = Request(
+        "POST",
+        "http://google.com",
+        b"a=b&api_key=secret",
+        {"Content-Type": b"application/x-www-form-urlencoded; charset=\xff\xfe"},
+    )
+    replace_body_parameters(request, [("api_key", None)])
+    assert request.body == b"a=b"
+
+
 def test_replace_body_parameters_leaves_iterator_body():
     # A generator body is recorded as an iterator body, which isn't filtered (#814).
     request = Request("POST", "http://google.com", iter([b"api_key=secret"]), {})
