@@ -220,6 +220,20 @@ def _replace_nested_parameters(data, replacements, request):
     return data
 
 
+def _content_type(request):
+    """The request's Content-Type as str, or None.
+
+    The header can be bytes instead of str: boto3 sends it that way and a
+    cassette that stores it as ``!!binary`` replays it that way. HTTP header
+    values are byte strings, so latin-1 round-trips every value without
+    raising, and the ASCII type/boundary tokens stay intact (#1100).
+    """
+    value = request.headers.get("Content-Type")
+    if isinstance(value, bytes):
+        return value.decode("latin-1")
+    return value
+
+
 def _multipart_boundary(content_type):
     """The boundary of a multipart/form-data Content-Type, or None."""
     if not content_type or not content_type.lower().startswith("multipart/form-data"):
@@ -283,7 +297,7 @@ def replace_body_parameters(request, replacements, recursive=False):
     replacements = dict(replacements)
     if recursive and isinstance(request.body, dict):
         request.body = _replace_nested_parameters(request.body, replacements, request)
-    elif recursive and request.headers.get("Content-Type") == "application/json":
+    elif recursive and _content_type(request) == "application/json":
         json_data = _replace_nested_parameters(json.loads(request.body), replacements, request)
         request.body = json.dumps(json_data).encode("utf-8")
     elif isinstance(request.body, dict):
@@ -296,7 +310,7 @@ def replace_body_parameters(request, replacements, recursive=False):
                 if rv is not None:
                     new_body[k] = rv
         request.body = new_body
-    elif request.headers.get("Content-Type") == "application/json":
+    elif _content_type(request) == "application/json":
         json_data = json.loads(request.body)
         for k, rv in replacements.items():
             if k in json_data:
@@ -306,7 +320,7 @@ def replace_body_parameters(request, replacements, recursive=False):
                 if rv is not None:
                     json_data[k] = rv
         request.body = json.dumps(json_data).encode("utf-8")
-    elif boundary := _multipart_boundary(request.headers.get("Content-Type")):
+    elif boundary := _multipart_boundary(_content_type(request)):
         body = request.body.encode("utf-8") if isinstance(request.body, str) else bytes(request.body)
         request.body = _replace_multipart_parameters(body, boundary, replacements, request)
     else:
