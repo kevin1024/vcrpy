@@ -418,6 +418,28 @@ def test_replace_body_parameters_multipart_quoted_boundary():
     assert request.body == _multipart_request({"a": "b"}).body
 
 
+def test_replace_body_parameters_multipart_bytes_content_type():
+    # boto3 sends Content-Type as bytes, and so do cassettes that store the
+    # header as !!binary; that must not raise (#1100).
+    request = _multipart_request(
+        {"api_key": "secret", "a": "b"},
+        content_type=b"multipart/form-data; boundary=vcrpy-boundary",
+    )
+    replace_body_parameters(request, [("api_key", None)])
+    assert request.body == _multipart_request({"a": "b"}).body
+
+
+def test_replace_post_data_parameters_bytes_content_type():
+    request = Request(
+        "POST",
+        "http://google.com",
+        b"client_secret=secret&a=b",
+        {"Content-Type": b"application/x-www-form-urlencoded"},
+    )
+    replace_post_data_parameters(request, [("client_secret", None)])
+    assert request.body == b"a=b"
+
+
 def test_replace_body_parameters_leaves_iterator_body():
     # A generator body is recorded as an iterator body, which isn't filtered (#814).
     request = Request("POST", "http://google.com", iter([b"api_key=secret"]), {})

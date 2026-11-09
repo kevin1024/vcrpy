@@ -222,6 +222,9 @@ def _replace_nested_parameters(data, replacements, request):
 
 def _multipart_boundary(content_type):
     """The boundary of a multipart/form-data Content-Type, or None."""
+    if isinstance(content_type, (bytes, bytearray)):
+        # Some clients, e.g. boto3, send header values as bytes (#1100).
+        content_type = bytes(content_type).decode("latin-1")
     if not content_type or not content_type.lower().startswith("multipart/form-data"):
         return None
     match = re.search(r'boundary="?([^";]+)"?', content_type, re.IGNORECASE)
