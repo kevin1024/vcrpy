@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from vcr import matchers, request
+from vcr import VCR, matchers, request
 
 # the dict contains requests with corresponding to its key difference
 # with 'base' request.
@@ -452,3 +452,55 @@ def test_body_matcher_diff_is_capped():
     assert len(lines) == matchers.MAX_DIFF_LINES + 1
     assert lines[-1].startswith("… (") and lines[-1].endswith(" more lines)")
     assert all(len(line) <= matchers.MAX_DIFF_LINE_LENGTH + 1 for line in lines)
+
+
+@pytest.mark.parametrize(
+    "recorded_body,new_body",
+    [
+        (b"name=&mode=edit", b"mode=edit"),
+        (b"name=", b""),
+        (b"name=&name=Alice", b"name=Alice"),
+        (b"name=&name=", b"name="),
+    ],
+)
+def test_form_body_matcher_preserves_blank_values(recorded_body, new_body):
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    recorded = request.Request("POST", "https://example.test/profile", recorded_body, headers)
+    new = request.Request("POST", "https://example.test/profile", new_body, headers)
+    with pytest.raises(AssertionError):
+        matchers.body(new, recorded)
+
+
+@pytest.mark.parametrize(
+    "left,right",
+    [
+        (b"name=&mode=edit", b"mode=edit&name="),
+        (b"name=&name=Alice", b"name=&name=%41lice"),
+        (b"name", b"name="),
+        (b"", b""),
+    ],
+)
+def test_form_body_matcher_keeps_equivalent_forms(left, right):
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    assert (
+        matchers.body(
+            request.Request("POST", "https://example.test/profile", left, headers),
+            request.Request("POST", "https://example.test/profile", right, headers),
+        )
+        is None
+    )
+
+
+def test_cassette_selects_response_with_matching_blank_form_values(tmp_path):
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    empty_name = request.Request("POST", "https://example.test/profile", b"name=&mode=edit", headers)
+    missing_name = request.Request("POST", "https://example.test/profile", b"mode=edit", headers)
+    path = str(tmp_path / "forms.yaml")
+    recorder = VCR(match_on=["method", "uri", "body"])
+    with recorder.use_cassette(path, record_mode="all") as cassette:
+        cassette.append(empty_name, {"body": {"string": b"empty name"}})
+        cassette.append(missing_name, {"body": {"string": b"missing name"}})
+
+    with recorder.use_cassette(path, record_mode="none") as cassette:
+        assert cassette.play_response(missing_name)["body"]["string"] == b"missing name"
+        assert cassette.play_response(empty_name)["body"]["string"] == b"empty name"
