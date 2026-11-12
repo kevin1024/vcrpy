@@ -227,7 +227,9 @@ _checker_transformer_pairs = (
     (_header_checker("chunked", header="Transfer-Encoding"), _dechunk),
     (
         _header_checker("application/x-www-form-urlencoded"),
-        lambda body: None if body is None else urllib.parse.parse_qs(body.decode("ascii")),
+        lambda body: (
+            None if body is None else urllib.parse.parse_qs(body.decode("ascii"), keep_blank_values=True)
+        ),
     ),
     (_header_checker("application/json"), _transform_json),
     (

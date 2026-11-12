@@ -4,6 +4,7 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - Preserve blank form values when matching on ``body``, so an empty field no longer matches an omitted field or a different number of repeated values. Existing cassettes may need re-recording if they relied on these false matches - thanks @anticipate218
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2
