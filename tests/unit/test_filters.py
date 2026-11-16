@@ -451,6 +451,42 @@ def test_replace_body_parameters_json_recursive_with_bytes_content_type():
     assert json.loads(request.body)["params"]["token"] == "<TOKEN>"
 
 
+def test_replace_body_parameters_json_with_charset():
+    # A plain JSON Content-Type carries a charset parameter, and comparing the
+    # raw header value against "application/json" skipped filtering for it
+    # entirely, so the secret stayed in the cassette (#1100).
+    request = Request(
+        "POST",
+        "http://google.com",
+        b'{"one": "keep", "two": "lose"}',
+        {"Content-Type": "application/json; charset=utf-8"},
+    )
+    replace_body_parameters(request, [("two", None)])
+    assert json.loads(request.body) == {"one": "keep"}
+
+
+def test_replace_body_parameters_json_recursive_with_charset():
+    request = Request(
+        "POST",
+        "http://google.com",
+        json.dumps(NESTED_BODY).encode(),
+        {"Content-Type": "application/json; charset=utf-8"},
+    )
+    replace_body_parameters(request, [("token", "<TOKEN>")], recursive=True)
+    assert json.loads(request.body)["params"]["token"] == "<TOKEN>"
+
+
+def test_replace_body_parameters_json_content_type_case_and_spacing():
+    request = Request(
+        "POST",
+        "http://google.com",
+        b'{"one": "keep", "two": "lose"}',
+        {"Content-Type": "Application/JSON ;charset=UTF-8"},
+    )
+    replace_body_parameters(request, [("two", None)])
+    assert json.loads(request.body) == {"one": "keep"}
+
+
 def test_replace_body_parameters_form_encoded_with_bytes_content_type():
     request = Request(
         "POST",

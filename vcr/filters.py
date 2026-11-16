@@ -220,7 +220,7 @@ def _replace_nested_parameters(data, replacements, request):
     return data
 
 
-def _content_type(request):
+def _content_type(request) -> str | None:
     """The request's Content-Type as str, or None.
 
     The header can be bytes instead of str: boto3 sends it that way and a
@@ -232,6 +232,17 @@ def _content_type(request):
     if isinstance(value, bytes):
         return value.decode("latin-1")
     return value
+
+
+def _media_type(request) -> str | None:
+    """The bare ``type/subtype`` of the request's Content-Type, or None.
+
+    The header carries parameters such as ``charset=utf-8`` for ordinary
+    JSON payloads, so comparing the raw value against ``application/json``
+    silently skipped body filtering for them (#1100).
+    """
+    value = _content_type(request)
+    return value.split(";")[0].strip().lower() if value else None
 
 
 def _multipart_boundary(content_type):
@@ -297,7 +308,7 @@ def replace_body_parameters(request, replacements, recursive=False):
     replacements = dict(replacements)
     if recursive and isinstance(request.body, dict):
         request.body = _replace_nested_parameters(request.body, replacements, request)
-    elif recursive and _content_type(request) == "application/json":
+    elif recursive and _media_type(request) == "application/json":
         json_data = _replace_nested_parameters(json.loads(request.body), replacements, request)
         request.body = json.dumps(json_data).encode("utf-8")
     elif isinstance(request.body, dict):
@@ -310,7 +321,7 @@ def replace_body_parameters(request, replacements, recursive=False):
                 if rv is not None:
                     new_body[k] = rv
         request.body = new_body
-    elif _content_type(request) == "application/json":
+    elif _media_type(request) == "application/json":
         json_data = json.loads(request.body)
         for k, rv in replacements.items():
             if k in json_data:
