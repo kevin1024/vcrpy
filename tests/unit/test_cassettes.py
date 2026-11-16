@@ -819,6 +819,60 @@ def test_no_metadata_is_not_saved(tmpdir):
     assert "metadata" not in yaml.safe_load(file.read())
 
 
+def _interaction_dict(uri, response):
+    return {"request": {"body": "", "uri": uri, "method": "GET", "headers": {}}, "response": response}
+
+
+def _saved_uris(file):
+    return [interaction["request"]["uri"] for interaction in yaml.safe_load(file.read())["interactions"]]
+
+
+def test_save_preserves_interactions_written_after_load(tmpdir):
+    # Another cassette (or process) added foo3 to the same file after this
+    # cassette loaded it; saving this cassette must not delete foo3.
+    file = tmpdir.join("test_cassette.yml")
+    interactions = [_interaction_dict("foo1", "bar1"), _interaction_dict("foo2", "bar2")]
+    file.write(yaml.dump({"interactions": interactions}))
+    cassette = Cassette.load(path=str(file))
+    file.write(
+        yaml.dump(
+            {
+                "interactions": [
+                    _interaction_dict("foo1", "bar1"),
+                    _interaction_dict("foo2", "bar2"),
+                    _interaction_dict("foo3", "bar3"),
+                ],
+            },
+        ),
+    )
+    cassette.append(Request("GET", "foo4", "", {}), "bar4")
+    cassette._save()
+    assert _saved_uris(file) == ["foo1", "foo2", "foo4", "foo3"]
+
+
+def test_drop_unused_requests_preserves_interactions_written_after_load(tmpdir):
+    # drop_unused_requests drops the interactions this cassette loaded but
+    # never played (foo2), but not ones it never saw (foo3).
+    file = tmpdir.join("test_cassette.yml")
+    interactions = [_interaction_dict("foo1", "bar1"), _interaction_dict("foo2", "bar2")]
+    file.write(yaml.dump({"interactions": interactions}))
+    cassette = Cassette.load(path=str(file), drop_unused_requests=True)
+    file.write(
+        yaml.dump(
+            {
+                "interactions": [
+                    _interaction_dict("foo1", "bar1"),
+                    _interaction_dict("foo2", "bar2"),
+                    _interaction_dict("foo3", "bar3"),
+                ],
+            },
+        ),
+    )
+    cassette.play_response(Request("GET", "foo1", "", {}))
+    cassette._save()
+    assert _saved_uris(file) == ["foo1", "foo3"]
+
+
 def _cassette_with_metadata(tmpdir):
     file = tmpdir.join("test_cassette.yml")
     file.write(
