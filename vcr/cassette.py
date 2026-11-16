@@ -459,7 +459,57 @@ class Cassette:
             }
         if self._metadata:
             cassette_dict = {**cassette_dict, "metadata": self._metadata}
+        cassette_dict = self._merge_interactions_written_since_load(cassette_dict)
         self._persister.save_cassette(self._path, cassette_dict, serializer=self._serializer)
+
+    def _merge_interactions_written_since_load(self, cassette_dict):
+        """Keep interactions another cassette wrote to the same file after this one loaded it.
+
+        Overlapping cassettes (nested contexts, or separate processes such
+        as pytest-xdist workers) each save their own in-memory interactions,
+        so without merging, the cassette that saves last silently deletes
+        what another one recorded in the meantime. Re-read the file and
+        preserve the interactions on disk that this cassette never loaded
+        and is not saving itself. Interactions this cassette did load are
+        not preserved this way, so removals it intends (for example
+        drop_unused_requests) still take effect.
+        """
+        try:
+            requests, responses, *_ = self._persister.load_cassette(
+                self._path,
+                serializer=self._serializer,
+            )
+        except Exception:
+            # Nothing readable on disk (yet), or a persister that can't
+            # re-read: fall back to overwriting as before.
+            return cassette_dict
+        # On-disk interactions are consumed one by one: an interaction is
+        # accounted for when it pairs (same request, same response) with
+        # one this cassette is saving, or with one it loaded and may since
+        # have dropped. Whatever remains was written after this cassette
+        # loaded the file, and must be kept.
+        unsaved = list(zip(cassette_dict["requests"], cassette_dict["responses"], strict=True))
+        unloaded = list(self._old_interactions)
+
+        def consume(pool, request, response):
+            for index, (pooled_request, pooled_response) in enumerate(pool):
+                if pooled_response == response and requests_match(request, pooled_request, self._match_on):
+                    del pool[index]
+                    return True
+            return False
+
+        foreign = []
+        for request, response in zip(requests, responses, strict=False):
+            if consume(unsaved, request, response) or consume(unloaded, request, response):
+                continue
+            foreign.append((request, response))
+        if not foreign:
+            return cassette_dict
+        return {
+            **cassette_dict,
+            "requests": list(cassette_dict["requests"]) + [request for request, _ in foreign],
+            "responses": list(cassette_dict["responses"]) + [response for _, response in foreign],
+        }
 
     def _load(self):
         try:
