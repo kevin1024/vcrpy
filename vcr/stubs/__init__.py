@@ -257,6 +257,8 @@ class VCRConnection:
     def request(self, method, url, body=None, headers=None, *args, **kwargs):
         """Persist the request metadata in self._vcr_request"""
         self._vcr_request = Request(method=method, uri=self._uri(url), body=body, headers=headers or {})
+        self._vcr_request_args = args
+        self._vcr_request_kwargs = kwargs
         log.debug(f"Got {self._vcr_request}")
 
         # Note: The request may not actually be finished at this point, so
@@ -273,6 +275,8 @@ class VCRConnection:
         of putheader() calls.
         """
         self._vcr_request = Request(method=method, uri=self._uri(url), body="", headers={})
+        self._vcr_request_args = ()
+        self._vcr_request_kwargs = {}
         log.debug(f"Got {self._vcr_request}")
 
     def putheader(self, header, *values):
@@ -309,7 +313,8 @@ class VCRConnection:
             response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response, self._vcr_request.uri)
         else:
-            if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
+            filtered_request = self.cassette.filter_request(self._vcr_request)
+            if self.cassette.write_protected and filtered_request:
                 raise CannotOverwriteExistingCassetteException(
                     cassette=self.cassette,
                     failed_request=self._vcr_request,
@@ -329,14 +334,18 @@ class VCRConnection:
                     self._deferred_connect = None
                     self.real_connection.connect(*args, **kwargs)
                 self.real_connection.request(
-                    method=self._vcr_request.method,
-                    url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body_bytes,
-                    headers=self._vcr_request.headers,
+                    self._vcr_request.method,
+                    self._url(self._vcr_request.uri),
+                    self._vcr_request.body_bytes,
+                    self._vcr_request.headers,
+                    *(self._vcr_request_args if not filtered_request else ()),
+                    **(self._vcr_request_kwargs if not filtered_request else {}),
                 )
 
             # get the response
             response = self.real_connection.getresponse()
+            if not filtered_request:
+                return response
             response_data = response.data if hasattr(response, "data") else response.read()
 
             # put the response into the cassette

@@ -37,6 +37,7 @@ content-type = "text/x-rst"
 tests = [
     "aiohttp",
     "boto3",
+    "cachecontrol",
     "cryptography",
     "httpbin>=0.10.3",
     "httplib2",
@@ -65,6 +66,7 @@ tests-niquests = [
     "niquests",
 ]
 tests-urllib3-1 = [
+    "cachecontrol",
     "httpbin>=0.10.3",
     "pysocks",
     "pytest",

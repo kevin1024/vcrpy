@@ -619,10 +619,29 @@ class ConnectionRemover:
                     readd_connections.append(connection)
             for connection in readd_connections:
                 pool._put_conn(connection)
+            if connections and isinstance(pool.pool, queue.Queue):
+                self._guard_pool_return(pool)
             for connection in connections:
                 # If a response still holds it, releasing it gives back only its slot.
                 connection._vcr_cassette_exited = True
                 connection.close()
+
+    @staticmethod
+    def _guard_pool_return(pool):
+        # Real responses can outlive the cassette too. Keep this on the pool
+        # after its class patches are restored, but do not stack wrappers.
+        if getattr(pool._put_conn, "_vcr_guarded", False):
+            return
+        put_conn = pool._put_conn
+
+        @functools.wraps(put_conn)
+        def put_live_connection(conn):
+            if getattr(conn, "_vcr_cassette_exited", False):
+                conn = None
+            return put_conn(conn)
+
+        put_live_connection._vcr_guarded = True
+        pool._put_conn = put_live_connection
 
 
 def reset_patchers():

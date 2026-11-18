@@ -8,7 +8,7 @@ from pytest import mark, raises
 
 from vcr import mode, use_cassette
 from vcr.cassette import Cassette
-from vcr.stubs import VCRFakeSocket, VCRHTTPSConnection
+from vcr.stubs import VCRFakeSocket, VCRHTTPConnection, VCRHTTPSConnection
 
 
 def test_fake_socket_has_nothing_to_read():
@@ -95,3 +95,26 @@ def test_urllib3_stub_headers_use_urllib3_header_dict():
 
     headers = urllib3_stubs.HTTPHeaderDict([("Link", "</a>; rel=next"), ("Link", "</b>; rel=prev")])
     assert headers.getlist("Link") == ["</a>; rel=next", "</b>; rel=prev"]
+
+
+@mark.parametrize("record_mode", ["all", "none", "once", "new_episodes"])
+def test_ignored_request_keeps_real_response_unread(record_mode):
+    connection = VCRHTTPConnection("ignored.example")
+    connection.cassette = Cassette(
+        "ignored",
+        record_mode=record_mode,
+        before_record_request=lambda request: None,
+    )
+    response = mock.Mock(spec=httplib.HTTPResponse)
+    with (
+        mock.patch.object(connection.real_connection, "request"),
+        mock.patch.object(
+            connection.real_connection,
+            "getresponse",
+            return_value=response,
+        ),
+    ):
+        connection.request("GET", "/stream")
+        assert connection.getresponse() is response
+    response.read.assert_not_called()
+    assert len(connection.cassette) == 0
