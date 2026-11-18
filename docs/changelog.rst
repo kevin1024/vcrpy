@@ -4,6 +4,7 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - Preserve native, unread responses for ignored HTTP requests, including ``ignore_hosts``, ``ignore_localhost`` and ``before_record_request`` returning ``None``. This lets CacheControl wrap the original response and preserves streaming options; leased connections released after the cassette exits restore only their pool slots (#1109) - thanks @mayankdhingra02
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2
