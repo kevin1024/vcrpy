@@ -219,6 +219,30 @@ def test_replace_post_data_parameters_binary_bytearray_body():
     assert request.body == body
 
 
+def test_replace_post_data_parameters_bytes_content_type():
+    # boto3 sends Content-Type as bytes; the filter must not crash (#1100).
+    request = Request("POST", "http://example.com/", b"{}", {"Content-Type": b"application/json"})
+    replace_post_data_parameters(request, {"client_secret": None})
+    assert request.body == b"{}"
+
+
+def test_replace_body_parameters_multipart_bytes_content_type():
+    # The multipart boundary must still be found when Content-Type is bytes (#1100).
+    body, default_content_type = encode_multipart_formdata(
+        {"keep": "kept", "remove": "secret"},
+        boundary="vcrpy-boundary",
+    )
+    request = Request(
+        "POST",
+        "http://google.com",
+        body,
+        {"Content-Type": default_content_type.encode("utf-8")},
+    )
+    replace_body_parameters(request, [("remove", None)])
+    expected_body, _ = encode_multipart_formdata({"keep": "kept"}, boundary="vcrpy-boundary")
+    assert request.body == expected_body
+
+
 def test_replace_post_data_parameters_keyless_segment():
     # A segment without "=" is not a key/value pair, so it must not be treated
     # as a parameter to replace.
