@@ -1,9 +1,12 @@
+import http.client
+import io
 import re
 import socket
 from contextlib import contextmanager
 from urllib.request import urlopen
 
 import vcr
+from vcr.stubs import VCRHTTPResponse
 
 
 @contextmanager
@@ -77,3 +80,26 @@ def test_ignore_localhost_twice(tmpdir, httpbin):
             urlopen(f"http://localhost:{httpbin.port}")
             urlopen(f"http://httpbin.org:{httpbin.port}")
             assert len(cass) == 1
+
+
+def test_ignored_host_returns_real_response(tmpdir, httpbin):
+    """An ignored host's response must be the real http.client response.
+
+    The VCRHTTPResponse wrapper sets ``fp`` but not ``_fp``, which breaks
+    consumers that rely on real response internals (e.g. CacheControl)
+    even though the request was never going to be recorded.
+    """
+    cass_file = str(tmpdir.join("ignore_real_response.yaml"))
+    with vcr.use_cassette(cass_file, ignore_localhost=True) as cass:
+        conn = http.client.HTTPConnection("localhost", httpbin.port)
+        conn.request("GET", "/")
+        response = conn.getresponse()
+        assert not isinstance(response, VCRHTTPResponse)
+        assert type(response) is http.client.HTTPResponse
+        # The body has not been pre-read into a BytesIO by VCR: the
+        # caller reads it from the real response stream.
+        assert not isinstance(response.fp, io.BytesIO)
+        assert response.status == 200
+        assert response.read()
+        conn.close()
+        assert len(cass) == 0
