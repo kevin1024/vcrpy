@@ -309,7 +309,10 @@ class VCRConnection:
             response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response, self._vcr_request.uri)
         else:
-            if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
+            # Compute the filter result once: before_record_request hooks
+            # must run exactly once per request.
+            record_request = self.cassette.filter_request(self._vcr_request)
+            if self.cassette.write_protected and record_request:
                 raise CannotOverwriteExistingCassetteException(
                     cassette=self.cassette,
                     failed_request=self._vcr_request,
@@ -337,6 +340,15 @@ class VCRConnection:
 
             # get the response
             response = self.real_connection.getresponse()
+            if not record_request:
+                # The cassette excludes this request from recording
+                # (an ignored host, or before_record_request returned
+                # None): return the real response untouched. Reading
+                # it here and wrapping it in a VCRHTTPResponse would
+                # hand the caller a response that lacks the real
+                # response's internals (e.g. ``_fp``), breaking
+                # consumers such as CacheControl.
+                return response
             response_data = response.data if hasattr(response, "data") else response.read()
 
             # put the response into the cassette
