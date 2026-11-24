@@ -4,6 +4,7 @@ Changelog
 All help in providing PRs to close out bug issues is appreciated. Even if that is providing a repo that fully replicates issues. We have very generous contributors that have added these to bug issues which meant another contributor picked up the bug and closed it out.
 
 -  Unreleased
+    - Fix ``decode_compressed_response`` emptying some short response bodies, like ``3``, of brotli-compressed responses recorded with aiohttp or urllib3 2 (also under requests). These clients record bodies already decoded, and such a body is also valid brotli data, which decodes to nothing. A brotli body is now only decoded if its length matches the response's ``Content-Length``, when it has one (#1114) - thanks @pylaterreur
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
 
 -  9.4.2

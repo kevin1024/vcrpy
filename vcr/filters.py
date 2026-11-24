@@ -340,6 +340,22 @@ def remove_post_data_parameters(request, post_data_parameters_to_remove):
     return replace_post_data_parameters(request, replacements)
 
 
+def _decoded_by_client(body, headers):
+    """Whether the body's length differs from the Content-Length it was sent with.
+
+    aiohttp and urllib3 2 decode bodies before VCR.py records them, and keep
+    the Content-Encoding and Content-Length headers they were sent with.
+    Without a Content-Length, e.g. in a chunked response, there's no telling.
+    """
+    content_length = headers.get("content-length")
+    if not content_length:
+        return False
+    try:
+        return int(content_length[0]) != len(body)
+    except ValueError:
+        return False
+
+
 def decode_response(response):
     """
     If the response is compressed with any supported compression (gzip,
@@ -356,15 +372,21 @@ def decode_response(response):
     content_encoding = headers.get("content-encoding")
     if not content_encoding:
         return response
-    decompressor = AVAILABLE_DECOMPRESSORS.get(content_encoding[0])
+    encoding = content_encoding[0]
+    decompressor = AVAILABLE_DECOMPRESSORS.get(encoding)
     if not decompressor:
         return response
 
-    headers["content-encoding"].remove(content_encoding[0])
+    headers["content-encoding"].remove(encoding)
     if not headers["content-encoding"]:
         del headers["content-encoding"]
 
-    new_body = decompressor(response["body"]["string"])
+    body = response["body"]["string"]
+    # A body that the client already decoded fails to decompress as gzip or
+    # deflate data, which have a header and a checksum. Brotli data has
+    # neither, so some decoded bodies are also brotli data: b"3" decodes to b"".
+    already_decoded = encoding == "br" and _decoded_by_client(body, headers)
+    new_body = body if already_decoded else decompressor(body)
     response["body"]["string"] = new_body
     headers["content-length"] = [str(len(new_body))]
     response["headers"] = dict(headers)
