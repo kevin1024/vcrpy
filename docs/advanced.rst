@@ -230,8 +230,11 @@ A few things to keep in mind:
 - The replacement is plain text, so a value that is encoded differently
   in part of the interaction (e.g. URL-encoded in a query string, or
   escaped in JSON) needs its own entry with that encoded form.
-- Compressed response bodies are stored compressed unless you also set
+- Some HTTP clients, like httpx, hand VCR.py compressed response bodies as
+  they were sent. These are stored compressed unless you also set
   ``decode_compressed_response=True``, so a secret inside one isn't found.
+  aiohttp (by default) and urllib3 2 (also under requests) decompress them
+  first.
 - Choose placeholders and values that don't occur in the interactions by
   chance; very short values could replace unrelated text.
 
@@ -518,9 +521,9 @@ Decode compressed response
 ---------------------------
 
 When the ``decode_compressed_response`` keyword argument of a ``VCR`` object
-is set to True, VCR will decompress "gzip" and "deflate" response bodies
-before recording. This ensures that these interactions become readable and
-editable after being serialized.
+is set to True, VCR will decompress "gzip", "deflate" and, if brotli or
+brotlicffi is installed, "br" response bodies before recording. This ensures
+that these interactions become readable and editable after being serialized.
 
 .. note::
     Decompression is done before any other specified `Custom Response Filtering`_.
