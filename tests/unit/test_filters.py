@@ -8,6 +8,7 @@ import pytest
 from urllib3 import encode_multipart_formdata
 
 from vcr.filters import (
+    brotli,
     decode_response,
     remove_headers,
     remove_post_data_parameters,
@@ -550,6 +551,41 @@ def test_decode_response_gzip_already_decompressed():
     }
     decoded_response = decode_response(gzip_response)
     assert decoded_response["body"]["string"] == body
+
+
+def test_decode_response_brotli_already_decompressed():
+    if brotli is None:
+        pytest.skip("Brotli is not installed")
+    # Like aiohttp and urllib3 2 record it: decoded, with the headers it was sent with.
+    # This body is also valid brotli data, which decodes to b"".
+    body = b"3"
+    brotli_response = {
+        "body": {"string": body},
+        "headers": {
+            "content-encoding": ["br"],
+            "content-length": [str(len(brotli.compress(body)))],
+        },
+    }
+    decoded_response = decode_response(brotli_response)
+    assert decoded_response["body"]["string"] == body
+    assert decoded_response["headers"]["content-length"] == [str(len(body))]
+
+
+@pytest.mark.parametrize("chunked", [False, True], ids=["content-length", "chunked"])
+def test_decode_response_brotli_empty_body(chunked):
+    if brotli is None:
+        pytest.skip("Brotli is not installed")
+    # Recorded as it was sent, e.g. by httpx: one byte, like the decoded body above.
+    compressed_body = brotli.compress(b"")
+    headers = {"content-encoding": ["br"]}
+    if chunked:
+        headers["transfer-encoding"] = ["chunked"]
+    else:
+        headers["content-length"] = [str(len(compressed_body))]
+    brotli_response = {"body": {"string": compressed_body}, "headers": headers}
+    decoded_response = decode_response(brotli_response)
+    assert decoded_response["body"]["string"] == b""
+    assert decoded_response["headers"]["content-length"] == ["0"]
 
 
 def test_replace_post_data_parameters_still_only_filters_post():
