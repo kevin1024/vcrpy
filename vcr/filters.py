@@ -344,6 +344,7 @@ def decode_response(response):
     """
     If the response is compressed with any supported compression (gzip,
     deflate, br if available):
+
       1. decompress the response body
       2. delete the content-encoding header
       3. update content-length header to decompressed length

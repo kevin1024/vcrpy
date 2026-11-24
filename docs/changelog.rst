@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
+    - Docs: correct which response bodies are stored compressed, out of ``filter_sensitive_data``'s reach: httpx's, for example, but not aiohttp's or urllib3 2's, which they decompress first. ``decode_compressed_response`` also decompresses ``br`` bodies if brotli or brotlicffi is installed (#1115) - thanks @pylaterreur
 
 -  9.4.2
     - Fix urllib3 pools with ``block=True``, e.g. a requests session with ``HTTPAdapter(pool_block=True)``, waiting forever for a free connection in a cassette, or when used before, after or across cassettes. A response now returns its connection to the pool once its body has been read, as in urllib3, and vcrpy keeps a pool's free slots when it takes connections out of it as a cassette starts or stops using the pool. A response finished after its cassette has exited gives back only the slot, not the cassette's connection (#949) - thanks @nk-batman21
