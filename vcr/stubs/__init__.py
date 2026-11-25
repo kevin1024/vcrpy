@@ -8,6 +8,7 @@ from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
 
 from vcr.errors import CannotOverwriteExistingCassetteException
+from vcr.filters import AVAILABLE_DECOMPRESSORS
 from vcr.request import Request
 
 from . import compat
@@ -81,6 +82,7 @@ class VCRHTTPResponse(HTTPResponse):
         self.version = None
         self.version_string = None
         self._content = BytesIO(self.recorded_response["body"]["string"])
+        self._decoded_content = None
         self._closed = False
 
         headers = self.recorded_response["headers"]
@@ -110,39 +112,66 @@ class VCRHTTPResponse(HTTPResponse):
         # self.closed from the superclass
         return self._closed
 
+    def _decoded_body(self):
+        """Body with its Content-Encoding undone.
+
+        Cassettes recorded before raw storage kept an already-decoded
+        body next to its Content-Encoding header; the decompressors
+        return such a body unchanged, so those cassettes keep working.
+        """
+        raw = self.recorded_response["body"]["string"]
+        encoding = None
+        if isinstance(self.msg, Message):
+            encoding = self.msg.get("content-encoding")
+        if encoding:
+            decompressor = AVAILABLE_DECOMPRESSORS.get(encoding.strip().lower())
+            if decompressor is not None:
+                return decompressor(raw)
+        return raw
+
+    def _body_for(self, decode_content):
+        """Buffer a read should consume: the decoded body, unless
+        decode_content is False, in which case the stored (raw) bytes."""
+        if decode_content is False:
+            return self._content
+        if self._decoded_content is None:
+            self._decoded_content = BytesIO(self._decoded_body())
+        return self._decoded_content
+
     def read(self, *args, decode_content=None, **kwargs):
-        data = self._content.read(*args, **kwargs)
-        if self._content.tell() == len(self.recorded_response["body"]["string"]):
+        content = self._body_for(decode_content)
+        data = content.read(*args, **kwargs)
+        if content.tell() == content.getbuffer().nbytes:
             # urllib3 returns the connection to its pool once the body is read (#949).
             self.release_conn()
         return data
 
     def read1(self, *args, **kwargs):
-        return self._content.read1(*args, **kwargs)
+        return self._body_for(None).read1(*args, **kwargs)
 
     def readall(self):
-        return self._content.readall()
+        return self._body_for(None).readall()
 
     def readinto(self, *args, **kwargs):
-        return self._content.readinto(*args, **kwargs)
+        return self._body_for(None).readinto(*args, **kwargs)
 
     def readline(self, *args, **kwargs):
-        return self._content.readline(*args, **kwargs)
+        return self._body_for(None).readline(*args, **kwargs)
 
     def readlines(self, *args, **kwargs):
-        return self._content.readlines(*args, **kwargs)
+        return self._body_for(None).readlines(*args, **kwargs)
 
     def seekable(self):
-        return self._content.seekable()
+        return self._body_for(None).seekable()
 
     def tell(self):
-        return self._content.tell()
+        return self._body_for(None).tell()
 
     def isatty(self):
-        return self._content.isatty()
+        return self._body_for(None).isatty()
 
     def seek(self, *args, **kwargs):
-        return self._content.seek(*args, **kwargs)
+        return self._body_for(None).seek(*args, **kwargs)
 
     def close(self):
         self._closed = True
@@ -170,11 +199,12 @@ class VCRHTTPResponse(HTTPResponse):
             return default
 
     def readable(self):
-        return self._content.readable()
+        return self._body_for(None).readable()
 
     @property
     def length_remaining(self):
-        return self._content.getbuffer().nbytes - self._content.tell()
+        content = self._body_for(None)
+        return content.getbuffer().nbytes - content.tell()
 
     def get_redirect_location(self):
         """
@@ -189,7 +219,8 @@ class VCRHTTPResponse(HTTPResponse):
 
     @property
     def data(self):
-        return self._content.getbuffer().tobytes()
+        # urllib3's .data is the decoded body.
+        return self._body_for(None).getbuffer().tobytes()
 
     def json(self):
         # urllib3 2.x responses can decode a JSON body themselves.
@@ -210,7 +241,7 @@ class VCRHTTPResponse(HTTPResponse):
 
     def stream(self, amt=65536, decode_content=None):
         while True:
-            b = self.read(amt)
+            b = self.read(amt, decode_content=decode_content)
             yield b
             if not b:
                 break
@@ -328,16 +359,34 @@ class VCRConnection:
                     args, kwargs = self._deferred_connect
                     self._deferred_connect = None
                     self.real_connection.connect(*args, **kwargs)
-                self.real_connection.request(
-                    method=self._vcr_request.method,
-                    url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body_bytes,
-                    headers=self._vcr_request.headers,
-                )
+                try:
+                    # Ask urllib3 for the raw bytes: with preloading, the
+                    # body would be read and decoded before we ever see it,
+                    # and the cassette would store a decoded body next to
+                    # its Content-Encoding header (#1116). Other connections
+                    # do not take these keywords and already return raw bytes.
+                    self.real_connection.request(
+                        method=self._vcr_request.method,
+                        url=self._url(self._vcr_request.uri),
+                        body=self._vcr_request.body_bytes,
+                        headers=self._vcr_request.headers,
+                        preload_content=False,
+                        decode_content=False,
+                    )
+                except TypeError:
+                    self.real_connection.request(
+                        method=self._vcr_request.method,
+                        url=self._url(self._vcr_request.uri),
+                        body=self._vcr_request.body_bytes,
+                        headers=self._vcr_request.headers,
+                    )
 
             # get the response
             response = self.real_connection.getresponse()
-            response_data = response.data if hasattr(response, "data") else response.read()
+            try:
+                response_data = response.read(decode_content=False)
+            except TypeError:
+                response_data = response.data if hasattr(response, "data") else response.read()
 
             # put the response into the cassette
             response = {

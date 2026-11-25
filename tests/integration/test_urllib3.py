@@ -2,6 +2,7 @@
 
 # coding=utf-8
 
+import gzip
 import json
 import queue
 from collections.abc import Mapping
@@ -161,6 +162,34 @@ def test_gzip(tmpdir, httpbin_both, verify_pool_mgr):
 
     with vcr.use_cassette(str(tmpdir.join("gzip.yaml"))):
         assert_is_json_bytes(response.data)
+
+
+def test_gzip_decode_content_false(tmpdir, httpbin_both, verify_pool_mgr):
+    """
+    read(decode_content=False) returns the raw (compressed) bytes both
+    when recording and when replaying (#1116).
+    """
+    url = httpbin_both.url + "/gzip"
+
+    def raw_body():
+        response = verify_pool_mgr.request("GET", url, preload_content=False, decode_content=False)
+        return response.read(decode_content=False)
+
+    def decoded_body():
+        return verify_pool_mgr.request("GET", url).data
+
+    assert gzip.decompress(raw_body()) == decoded_body()
+
+    with vcr.use_cassette(str(tmpdir.join("gzip-decode-content-false.yaml"))):
+        assert gzip.decompress(raw_body()) == decoded_body()
+
+    with vcr.use_cassette(
+        str(tmpdir.join("gzip-decode-content-false.yaml")),
+        record_mode="none",
+        allow_playback_repeats=True,
+    ):
+        assert gzip.decompress(raw_body()) == decoded_body()
+        assert decoded_body() == verify_pool_mgr.request("GET", url).data
 
 
 def test_https_with_cert_validation_disabled(tmpdir, httpbin_secure, pool_mgr):
