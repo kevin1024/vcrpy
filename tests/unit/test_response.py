@@ -1,6 +1,65 @@
+import gzip
 import io
+import zlib
 
 from vcr.stubs import VCRHTTPResponse
+
+
+def _gzip_response(body, headers=None):
+    recorded = {
+        "status": {"message": "OK", "code": 200},
+        "headers": {"Content-Encoding": ["gzip"]},
+        "body": {"string": gzip.compress(body)},
+    }
+    if headers:
+        recorded["headers"].update(headers)
+    return recorded
+
+
+def test_replayed_response_decodes_content_by_default():
+    response = VCRHTTPResponse(_gzip_response(b'{"answer": 42}'))
+    assert response.read() == b'{"answer": 42}'
+    assert response.data == b'{"answer": 42}'
+
+
+def test_replayed_response_returns_raw_bytes_with_decode_content_false():
+    response = VCRHTTPResponse(_gzip_response(b'{"answer": 42}'))
+    raw = response.read(decode_content=False)
+    assert gzip.decompress(raw) == b'{"answer": 42}'
+
+
+def test_replayed_response_partial_reads_decode():
+    response = VCRHTTPResponse(_gzip_response(b'{"answer": 42}'))
+    assert response.read(5) + response.read() == b'{"answer": 42}'
+
+    response = VCRHTTPResponse(_gzip_response(b'{"answer": 42}'))
+    raw = response.read(5, decode_content=False) + response.read(decode_content=False)
+    assert gzip.decompress(raw) == b'{"answer": 42}'
+
+
+def test_replayed_response_decodes_deflate():
+    response = VCRHTTPResponse(
+        {
+            "status": {"message": "OK", "code": 200},
+            "headers": {"Content-Encoding": ["deflate"]},
+            "body": {"string": zlib.compress(b'{"answer": 42}')},
+        },
+    )
+    assert response.read() == b'{"answer": 42}'
+
+
+def test_replayed_response_already_decoded_body_is_returned_as_is():
+    # Cassettes recorded before raw storage kept an already-decoded body
+    # next to its Content-Encoding header (#1116).
+    response = VCRHTTPResponse(
+        {
+            "status": {"message": "OK", "code": 200},
+            "headers": {"Content-Encoding": ["gzip"]},
+            "body": {"string": b'{"answer": 42}'},
+        },
+    )
+    assert response.read() == b'{"answer": 42}'
+    assert response.read(decode_content=False) == b'{"answer": 42}'
 
 
 def test_replayed_response_can_release_connection():
