@@ -781,6 +781,61 @@ def test_drop_unused_requests_saves_repeated_interactions_once(tmpdir):
     assert [interaction["request"]["uri"] for interaction in saved] == ["foo1"]
 
 
+def _overlapping_cassettes(tmpdir, **second_options):
+    interactions = [
+        {"request": {"body": "", "uri": "foo1", "method": "GET", "headers": {}}, "response": "bar1"},
+        {"request": {"body": "", "uri": "foo2", "method": "GET", "headers": {}}, "response": "bar2"},
+    ]
+    file = tmpdir.join("test_cassette.yml")
+    file.write(yaml.dump({"interactions": interactions}))
+
+    # B loads first, before the other cassette writes anything.
+    second = Cassette.load(path=str(file), record_mode="new_episodes", **second_options)
+    first = Cassette.load(path=str(file), record_mode="new_episodes")
+    first.append(Request("GET", "http://example.com/x", "", {}), "x")
+    first._save()
+    return file, first, second, Request._from_dict(interactions[0]["request"])
+
+
+def test_save_keeps_interactions_added_by_another_cassette(tmpdir):
+    file, _first, second, _request = _overlapping_cassettes(tmpdir)
+
+    second.append(Request("GET", "http://example.com/y", "", {}), "y")
+    second._save()
+
+    saved = yaml.safe_load(file.read())["interactions"]
+    assert sorted(interaction["request"]["uri"] for interaction in saved) == sorted(
+        ["foo1", "foo2", "http://example.com/x", "http://example.com/y"],
+    )
+
+
+def test_drop_unused_keeps_interactions_added_by_another_cassette(tmpdir):
+    file, _first, second, request = _overlapping_cassettes(tmpdir, drop_unused_requests=True)
+
+    second.play_response(request)
+    second._save()
+
+    saved = yaml.safe_load(file.read())["interactions"]
+    assert [interaction["request"]["uri"] for interaction in saved] == [
+        "foo1",
+        "http://example.com/x",
+    ]
+
+
+def test_save_does_not_duplicate_merged_interactions(tmpdir):
+    file, _first, second, request = _overlapping_cassettes(tmpdir, drop_unused_requests=True)
+
+    second.play_response(request)
+    second._save()
+    second._save(force=True)
+
+    saved = yaml.safe_load(file.read())["interactions"]
+    assert [interaction["request"]["uri"] for interaction in saved] == [
+        "foo1",
+        "http://example.com/x",
+    ]
+
+
 def test_allow_playback_repeats_while_recording():
     cassette = Cassette("test", allow_playback_repeats=True)
     request = Request("GET", "http://example.com/", "", {})

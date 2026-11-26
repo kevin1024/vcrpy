@@ -226,6 +226,8 @@ class Cassette:
         # Subsets of self.data to store old and played interactions
         self._old_interactions = []
         self._played_interactions = []
+        # Interactions read from the file, before the after_load hooks ran.
+        self._raw_old_interactions = []
         # Number of entries at the start of self.data that came from the file
         self._loaded_count = 0
 
@@ -422,23 +424,49 @@ class Cassette:
 
     def _save(self, force=False):
         if self.record_mode == RecordMode.ALL:
-            if force or self.dirty:
-                interactions = self._rerecorded_interactions()
-                cassete_dict = {
-                    "requests": [request for request, _ in interactions],
-                    "responses": [response for _, response in interactions],
-                }
-                self._persist(cassete_dict)
-                self.dirty = False
-            return
-        if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
-            cassete_dict = self._build_used_interactions_dict()
+            if not (force or self.dirty):
+                return
+            interactions = self._rerecorded_interactions()
+        elif self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
+            interactions = self._played_interactions + self._new_interactions()
             force = True
+        elif force or self.dirty:
+            interactions = list(self.data)
         else:
-            cassete_dict = self._as_dict()
-        if force or self.dirty:
-            self._persist(cassete_dict)
-            self.dirty = False
+            return
+
+        interactions = self._merge_other_interactions(interactions)
+        cassete_dict = {
+            "requests": [request for request, _ in interactions],
+            "responses": [response for _, response in interactions],
+        }
+        self._persist(cassete_dict)
+        self.dirty = False
+
+    def _merge_other_interactions(self, interactions):
+        """Keep interactions another cassette added to the same file.
+
+        The file may have been written by another cassette whose lifetime
+        overlaps this one. Re-read it so saving only replaces the interactions
+        this cassette knows about.
+        """
+        try:
+            requests, responses, *_ = self._persister.load_cassette(
+                self._path,
+                serializer=self._serializer,
+            )
+        except (CassetteNotFoundError, CassetteDecodeError):
+            return list(interactions)
+
+        merged = list(interactions)
+        for request, response in zip(requests, responses, strict=False):
+            if any(requests_match(request, merged_request, self._match_on) for merged_request, _ in merged):
+                continue
+            if any(requests_match(request, old_request, self._match_on) for old_request, _ in self._raw_old_interactions):
+                # Loaded by this cassette and either saved already or dropped on purpose.
+                continue
+            merged.append((request, response))
+        return merged
 
     def _persist(self, cassette_dict):
         if self._before_save_interaction:
@@ -468,6 +496,7 @@ class Cassette:
                 self._path,
                 serializer=self._serializer,
             )
+            self._raw_old_interactions = list(zip(requests, responses, strict=False))
             for request, response in zip(requests, responses, strict=False):
                 interaction = _run_hooks(self._after_load_interaction, request, response, self)
                 if interaction is None:
