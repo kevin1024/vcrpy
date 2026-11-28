@@ -94,18 +94,20 @@ class CassetteContextDecorator:
 
     def __exit__(self, *exc_info):
         exception_was_raised = any(exc_info)
-        record_on_exception = self._args_getter().get("record_on_exception", True)
-        if record_on_exception or not exception_was_raised:
-            self.__cassette._save()
+        try:
+            record_on_exception = self._args_getter().get("record_on_exception", True)
+            if record_on_exception or not exception_was_raised:
+                self.__cassette._save()
+        finally:
             self.__cassette = None
-        # Fellow programmer, don't remove this `next`, if `self.__finish` is
-        # not consumed the unpatcher functions accumulated in the `exit_stack`
-        # object created in `_patch_generator` will not be called until
-        # `exit_stack` is not garbage collected.
-        # This works in CPython but not in Pypy, where the unpatchers will not
-        # be called until much later.
-        next(self.__finish, None)
-        self.__finish = None
+            # Fellow programmer, don't remove this `next`, if `self.__finish` is
+            # not consumed the unpatcher functions accumulated in the `exit_stack`
+            # object created in `_patch_generator` will not be called until
+            # `exit_stack` is not garbage collected.
+            # This works in CPython but not in Pypy, where the unpatchers will not
+            # be called until much later.
+            next(self.__finish, None)
+            self.__finish = None
 
     @wrapt.decorator
     def __call__(self, function, instance, args, kwargs):

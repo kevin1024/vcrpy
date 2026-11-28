@@ -354,6 +354,23 @@ def test_cassette_use_called_without_path_uses_function_to_generate_path():
     function_name()
 
 
+def test_cassette_unpatches_after_persister_save_fails(tmp_path):
+    original_connection = httplib.HTTPConnection
+    persister = mock.Mock()
+    persister.load_cassette.side_effect = CassetteNotFoundError
+    persister.save_cassette.side_effect = OSError("save failed")
+    context = Cassette.use(path=str(tmp_path / "cassette.yaml"), persister=persister)
+
+    with pytest.raises(OSError, match="save failed") as exc_info, context as cassette:
+        assert httplib.HTTPConnection is not original_connection
+        cassette.dirty = True
+
+    assert exc_info.traceback
+    assert httplib.HTTPConnection is original_connection
+    with context:
+        assert httplib.HTTPConnection is not original_connection
+
+
 def test_path_transformer_with_function_path():
     def path_transformer(path):
         return os.path.join("a", path)
