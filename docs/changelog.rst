@@ -5,6 +5,7 @@ All help in providing PRs to close out bug issues is appreciated. Even if that i
 
 -  Unreleased
     - CI: also test with urllib3 1.26, which vcrpy supports but CI didn't test, so #1092 wasn't caught
+    - Fix a cassette overwriting interactions another cassette recorded to the same file, e.g. nested ``use_cassette()`` blocks or two ``pytest-xdist`` workers sharing one cassette. Saving keeps the interactions the cassette neither loaded nor is writing, so ``drop_unused_requests`` no longer deletes recordings it never saw (#1106) - thanks @StrikeRougeAgent
 
 -  9.4.2
     - Fix urllib3 pools with ``block=True``, e.g. a requests session with ``HTTPAdapter(pool_block=True)``, waiting forever for a free connection in a cassette, or when used before, after or across cassettes. A response now returns its connection to the pool once its body has been read, as in urllib3, and vcrpy keeps a pool's free slots when it takes connections out of it as a cassette starts or stops using the pool. A response finished after its cassette has exited gives back only the slot, not the cassette's connection (#949) - thanks @nk-batman21

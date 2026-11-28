@@ -10,6 +10,8 @@ from unittest import mock
 import pytest
 import yaml
 
+import vcr.cassette as cassette_module
+from vcr import matchers as vcr_matchers
 from vcr.cassette import Cassette
 from vcr.errors import (
     CannotOverwriteExistingCassetteException,
@@ -779,6 +781,124 @@ def test_drop_unused_requests_saves_repeated_interactions_once(tmpdir):
 
     saved = yaml.safe_load(file.read())["interactions"]
     assert [interaction["request"]["uri"] for interaction in saved] == ["foo1"]
+
+
+def _shared_cassette(tmpdir, **options):
+    """Two cassettes loaded from one file before either of them saves."""
+    interactions = [
+        {"request": {"body": "", "uri": "foo1", "method": "GET", "headers": {}}, "response": "bar1"},
+        {"request": {"body": "", "uri": "foo2", "method": "GET", "headers": {}}, "response": "bar2"},
+    ]
+    file = tmpdir.join("shared_cassette.yml")
+    file.write(yaml.dump({"interactions": interactions}))
+
+    first = Cassette.load(path=str(file), record_mode="new_episodes")
+    second = Cassette.load(path=str(file), record_mode="new_episodes", **options)
+    first.append(Request("GET", "http://example.com/first", "", {}), "first")
+    first._save()
+    return file, first, second, Request._from_dict(interactions[0]["request"])
+
+
+def _saved_uris(file):
+    return [interaction["request"]["uri"] for interaction in yaml.safe_load(file.read())["interactions"]]
+
+
+def test_save_keeps_interactions_another_cassette_added(tmpdir):
+    # #1106: the cassette that saves last used to overwrite the other one's work.
+    file, _first, second, _request = _shared_cassette(tmpdir)
+
+    second.append(Request("GET", "http://example.com/second", "", {}), "second")
+    second._save()
+
+    assert sorted(_saved_uris(file)) == sorted(
+        ["foo1", "foo2", "http://example.com/first", "http://example.com/second"],
+    )
+
+
+def test_drop_unused_requests_keeps_interactions_another_cassette_added(tmpdir):
+    # The loaded interactions it did not play are dropped; the foreign ones are not.
+    file, _first, second, request = _shared_cassette(tmpdir, drop_unused_requests=True)
+
+    second.play_response(request)
+    second._save()
+
+    assert _saved_uris(file) == ["foo1", "http://example.com/first"]
+
+
+def test_saving_again_does_not_duplicate_merged_interactions(tmpdir):
+    file, _first, second, request = _shared_cassette(tmpdir, drop_unused_requests=True)
+
+    second.play_response(request)
+    second._save()
+    second._save(force=True)
+
+    assert _saved_uris(file) == ["foo1", "http://example.com/first"]
+
+
+def test_merging_keeps_repeated_interactions_written_by_another_cassette(tmpdir):
+    # A cassette can hold the same request twice with different responses; the
+    # merge must not collapse the other cassette's duplicates into one.
+    file, _first_cassette, second, _request = _shared_cassette(tmpdir)
+    request = Request("GET", "http://example.com/repeated", "", {})
+    other = Cassette.load(path=str(file), record_mode="new_episodes")
+    other.append(request, "one")
+    other.append(request, "two")
+    other._save()
+
+    second.append(Request("GET", "http://example.com/second", "", {}), "second")
+    second._save()
+
+    saved = yaml.safe_load(file.read())["interactions"]
+    repeated = [i["response"] for i in saved if i["request"]["uri"] == "http://example.com/repeated"]
+    assert repeated == ["one", "two"]
+
+
+def test_merging_a_shared_cassette_does_not_compare_every_pair(tmpdir):
+    # Merging must not turn saving a large cassette into a quadratic scan.
+    interactions = [
+        {"request": {"body": "", "uri": f"foo{i}", "method": "GET", "headers": {}}, "response": f"bar{i}"}
+        for i in range(500)
+    ]
+    file = tmpdir.join("large_cassette.yml")
+    file.write(yaml.dump({"interactions": interactions}))
+    cassette = Cassette.load(path=str(file), record_mode="new_episodes")
+    cassette.append(Request("GET", "http://example.com/new", "", {}), "new")
+
+    calls = []
+    real_requests_match = cassette_module.requests_match
+
+    def counting_requests_match(request, other, match_on):
+        calls.append(request)
+        return real_requests_match(request, other, match_on)
+
+    with mock.patch.object(cassette_module, "requests_match", counting_requests_match):
+        cassette._save()
+
+    assert calls == []
+    assert len(_saved_uris(file)) == 501
+
+
+def test_merging_falls_back_to_pairwise_matching_for_custom_matchers(tmpdir):
+    interactions = [
+        {"request": {"body": "one", "uri": "foo1", "method": "GET", "headers": {}}, "response": "bar1"},
+    ]
+    file = tmpdir.join("body_cassette.yml")
+    file.write(yaml.dump({"interactions": interactions}))
+    first = Cassette.load(path=str(file), record_mode="new_episodes", match_on=[vcr_matchers.body])
+    second = Cassette.load(path=str(file), record_mode="new_episodes", match_on=[vcr_matchers.body])
+    first.append(Request("GET", "http://example.com/other", "two", {}), "second")
+    first._save()
+
+    second.append(Request("GET", "http://example.com/third", "three", {}), "third")
+    second._save()
+
+    assert sorted(
+        interaction["request"]["body"] for interaction in yaml.safe_load(file.read())["interactions"]
+    ) == [
+        "one",
+        "three",
+        "two",
+    ]
 
 
 def test_allow_playback_repeats_while_recording():

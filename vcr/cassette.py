@@ -8,6 +8,7 @@ from inspect import iscoroutinefunction
 
 import wrapt
 
+from . import matchers
 from ._handle_coroutine import handle_coroutine
 from .errors import MissingMetadataError, UnhandledHTTPRequestError
 from .filters import sensitive_data_hooks
@@ -19,6 +20,30 @@ from .serializers import yamlserializer
 from .util import partition_dict
 
 log = logging.getLogger(__name__)
+
+# Matchers whose comparison is a plain equality test on one request attribute.
+# They can be turned into a hashable key, which lets a save compare the file it
+# is rewriting against the interactions it holds in linear time. A matcher that
+# is not listed here (body, headers, or a user's own matcher) has no key and
+# makes the merge fall back to pairwise comparisons.
+_MATCHER_KEYS = {
+    matchers.method: lambda request: request.method,
+    matchers.uri: lambda request: matchers._normalized_uri(request),
+    matchers.scheme: lambda request: request.scheme,
+    matchers.host: lambda request: request.host,
+    matchers.port: lambda request: request.port,
+    matchers.path: lambda request: matchers._normalized_path(request.path),
+    # ``Request.query`` is a list of pairs, so it has no hash; its repr compares
+    # the same way the query matcher does.
+    matchers.query: lambda request: repr(request.query),
+}
+
+
+def _interactions_to_dict(interactions):
+    return {
+        "requests": [request for request, _ in interactions],
+        "responses": [response for _, response in interactions],
+    }
 
 
 class CassetteContextDecorator:
@@ -226,6 +251,8 @@ class Cassette:
         # Subsets of self.data to store old and played interactions
         self._old_interactions = []
         self._played_interactions = []
+        # Interactions read from the file, before the after_load hooks ran.
+        self._raw_old_interactions = []
         # Number of entries at the start of self.data that came from the file
         self._loaded_count = 0
 
@@ -391,17 +418,6 @@ class Cassette:
                 new_interactions.append((request, response))
         return new_interactions
 
-    def _as_dict(self):
-        return {"requests": self.requests, "responses": self.responses}
-
-    def _build_used_interactions_dict(self):
-        interactions = self._played_interactions + self._new_interactions()
-        cassete_dict = {
-            "requests": [request for request, _ in interactions],
-            "responses": [response for _, response in interactions],
-        }
-        return cassete_dict
-
     def _rerecorded_interactions(self):
         """Interactions to save in "all" mode.
 
@@ -422,23 +438,83 @@ class Cassette:
 
     def _save(self, force=False):
         if self.record_mode == RecordMode.ALL:
-            if force or self.dirty:
-                interactions = self._rerecorded_interactions()
-                cassete_dict = {
-                    "requests": [request for request, _ in interactions],
-                    "responses": [response for _, response in interactions],
-                }
-                self._persist(cassete_dict)
-                self.dirty = False
-            return
-        if self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
-            cassete_dict = self._build_used_interactions_dict()
-            force = True
+            if not (force or self.dirty):
+                return
+            interactions = self._rerecorded_interactions()
+        elif self.drop_unused_requests and len(self._played_interactions) < len(self._old_interactions):
+            interactions = self._played_interactions + self._new_interactions()
+        elif force or self.dirty:
+            interactions = list(self.data)
         else:
-            cassete_dict = self._as_dict()
-        if force or self.dirty:
-            self._persist(cassete_dict)
-            self.dirty = False
+            return
+
+        interactions = self._merge_foreign_interactions(interactions)
+        self._persist(_interactions_to_dict(interactions))
+        self.dirty = False
+
+    def _merge_foreign_interactions(self, interactions):
+        """Keep interactions another cassette wrote to the same file.
+
+        Two cassettes can be open on one file at the same time, in one process or
+        in two, and the one that saves last would otherwise overwrite the other's
+        work with its own view. Re-read the file and keep everything this cassette
+        neither loaded nor is writing.
+
+        Interactions this cassette loaded but deliberately dropped (for example
+        ``drop_unused_requests``) are still dropped: the loaded ones are compared
+        as they were stored, before hooks such as ``filter_sensitive_data``
+        changed them.
+        """
+        if not self._path:
+            return interactions
+        try:
+            requests, responses, *_ = self._persister.load_cassette(
+                self._path,
+                serializer=self._serializer,
+            )
+        except (CassetteNotFoundError, CassetteDecodeError):
+            return interactions
+
+        keys, unmatched = self._known_interactions(interactions)
+        merged = list(interactions)
+        for request, response in zip(requests, responses, strict=False):
+            if keys is not None:
+                # Deliberately not adding foreign keys here: a cassette may hold
+                # the same request twice (different responses), and those
+                # duplicates belong to the file, not to this cassette.
+                if self._interaction_key(request) in keys:
+                    continue
+            elif any(requests_match(request, loaded, self._match_on) for loaded in unmatched):
+                continue
+            merged.append((request, response))
+        return merged
+
+    def _known_interactions(self, interactions):
+        """Interactions this cassette already accounts for, as keys when possible.
+
+        Returns (keys, requests): a set of request keys, or None for keys with the
+        pairwise fallback list, plus the raw loaded requests. A matcher without a
+        key (a custom matcher, body, headers) means no key can be computed, so the
+        caller compares requests one by one instead.
+        """
+        loaded = [request for request, _ in self._raw_old_interactions]
+        keys = set()
+        for request, _ in list(interactions) + self._raw_old_interactions:
+            key = self._interaction_key(request)
+            if key is None:
+                return None, loaded + [request for request, _ in interactions]
+            keys.add(key)
+        return keys, loaded
+
+    def _interaction_key(self, request):
+        """A hashable key for the requests this cassette considers equal, or None."""
+        parts = []
+        for matcher in self._match_on:
+            key_part = _MATCHER_KEYS.get(matcher)
+            if key_part is None:
+                return None
+            parts.append(key_part(request))
+        return tuple(parts)
 
     def _persist(self, cassette_dict):
         if self._before_save_interaction:
@@ -468,6 +544,7 @@ class Cassette:
                 self._path,
                 serializer=self._serializer,
             )
+            self._raw_old_interactions = list(zip(requests, responses, strict=False))
             for request, response in zip(requests, responses, strict=False):
                 interaction = _run_hooks(self._after_load_interaction, request, response, self)
                 if interaction is None:
